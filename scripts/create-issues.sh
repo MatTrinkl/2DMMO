@@ -15,6 +15,8 @@
 #
 # Das Script erstellt zuerst alle Labels, dann die Issues in der
 # richtigen Reihenfolge, um Verlinkungen zu ermöglichen.
+#
+# Kompatibel mit macOS (Bash 3.x) und Linux (Bash 4+)
 
 set -e
 
@@ -28,8 +30,22 @@ NC='\033[0m' # No Color
 # Repository Info
 REPO="MatTrinkl/2DMMO"
 
-# Tracking für erstellte Issues
-declare -A ISSUE_MAP
+# Tracking für erstellte Issues (dateibasiert für macOS-Kompatibilität)
+ISSUE_MAP_FILE=$(mktemp)
+trap "rm -f $ISSUE_MAP_FILE" EXIT
+
+# Funktion zum Speichern einer Issue-Nummer
+set_issue() {
+    local key="$1"
+    local value="$2"
+    echo "$key=$value" >> "$ISSUE_MAP_FILE"
+}
+
+# Funktion zum Abrufen einer Issue-Nummer
+get_issue() {
+    local key="$1"
+    grep "^$key=" "$ISSUE_MAP_FILE" 2>/dev/null | cut -d'=' -f2 | tail -1
+}
 
 # ============================================
 # Helper Functions
@@ -74,15 +90,19 @@ create_issue() {
     
     log_info "Erstelle Issue: $title"
     
+    local issue_url
     local issue_number
-    issue_number=$(gh issue create \
+    issue_url=$(gh issue create \
         --repo "$REPO" \
         --title "$title" \
         --body "$body" \
-        --label "$labels" 2>&1 | grep -oP 'issues/\K\d+')
+        --label "$labels" 2>&1)
+    
+    # Extrahiere Issue-Nummer aus URL (macOS-kompatibel)
+    issue_number=$(echo "$issue_url" | grep -o 'issues/[0-9]*' | sed 's/issues\///')
     
     if [[ -n "$issue_number" ]]; then
-        ISSUE_MAP["$key"]="$issue_number"
+        set_issue "$key" "$issue_number"
         log_success "Issue #$issue_number erstellt: $title"
     else
         log_error "Fehler beim Erstellen von: $title"
@@ -883,16 +903,33 @@ create_phase4_cleanup_issues() {
 update_parent_issues() {
     log_info "=== Aktualisiere Parent-Issues mit Sub-Issue-Links ==="
     
+    local i8a=$(get_issue "8a")
+    local i8b=$(get_issue "8b")
+    local i8c=$(get_issue "8c")
+    local i9a=$(get_issue "9a")
+    local i9b=$(get_issue "9b")
+    local i11a=$(get_issue "11a")
+    local i11b=$(get_issue "11b")
+    local i11c=$(get_issue "11c")
+    local i12a=$(get_issue "12a")
+    local i12b=$(get_issue "12b")
+    local i14a=$(get_issue "14a")
+    local i14b=$(get_issue "14b")
+    local i14c=$(get_issue "14c")
+    local i15a=$(get_issue "15a")
+    local i15b=$(get_issue "15b")
+    local i15c=$(get_issue "15c")
+    
     # Issue #8 aktualisieren
-    if [[ -n "${ISSUE_MAP[8a]}" ]] && [[ -n "${ISSUE_MAP[8b]}" ]] && [[ -n "${ISSUE_MAP[8c]}" ]]; then
+    if [[ -n "$i8a" ]] && [[ -n "$i8b" ]] && [[ -n "$i8c" ]]; then
         local body_8="Einen einfachen Netzwerkserver (TCP oder WebSocket) und eine \`ClientConnection\`-Abstraktion implementieren, der Verbindungen verwalten kann.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[8a]} NetworkServer TCP-Listener implementieren
-- [ ] #${ISSUE_MAP[8b]} ClientConnection-Klasse implementieren
-- [ ] #${ISSUE_MAP[8c]} Message-Lese-Loop und Events implementieren
+- [ ] #${i8a} NetworkServer TCP-Listener implementieren
+- [ ] #${i8b} ClientConnection-Klasse implementieren
+- [ ] #${i8c} Message-Lese-Loop und Events implementieren
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -920,14 +957,14 @@ update_parent_issues() {
     fi
 
     # Issue #9 aktualisieren
-    if [[ -n "${ISSUE_MAP[9a]}" ]] && [[ -n "${ISSUE_MAP[9b]}" ]]; then
+    if [[ -n "$i9a" ]] && [[ -n "$i9b" ]]; then
         local body_9="Einen Message-Router einführen, der eingehende Nachrichten anhand des Typs an Handler verteilt, sowie einen simplen Login-Fluss in Memory implementieren.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[9a]} MessageRouter-Basisklasse implementieren
-- [ ] #${ISSUE_MAP[9b]} Login-Handler (In-Memory) implementieren
+- [ ] #${i9a} MessageRouter-Basisklasse implementieren
+- [ ] #${i9b} Login-Handler (In-Memory) implementieren
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -955,15 +992,15 @@ update_parent_issues() {
     fi
 
     # Issue #11 aktualisieren
-    if [[ -n "${ISSUE_MAP[11a]}" ]] && [[ -n "${ISSUE_MAP[11b]}" ]] && [[ -n "${ISSUE_MAP[11c]}" ]]; then
+    if [[ -n "$i11a" ]] && [[ -n "$i11b" ]] && [[ -n "$i11c" ]]; then
         local body_11="Eine simple Login-Oberfläche implementieren, über die der Spieler seinen Namen eingibt und ein \`LoginRequest\` an den Server gesendet wird.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[11a]} LoginPanel-UI in Godot erstellen
-- [ ] #${ISSUE_MAP[11b]} Login-Button-Handler und Netzwerk-Integration
-- [ ] #${ISSUE_MAP[11c]} LoginResponse verarbeiten und Fehlerbehandlung
+- [ ] #${i11a} LoginPanel-UI in Godot erstellen
+- [ ] #${i11b} Login-Button-Handler und Netzwerk-Integration
+- [ ] #${i11c} LoginResponse verarbeiten und Fehlerbehandlung
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -992,14 +1029,14 @@ update_parent_issues() {
     fi
 
     # Issue #12 aktualisieren
-    if [[ -n "${ISSUE_MAP[12a]}" ]] && [[ -n "${ISSUE_MAP[12b]}" ]]; then
+    if [[ -n "$i12a" ]] && [[ -n "$i12b" ]]; then
         local body_12="Die serverseitige Verarbeitung von Bewegungsbefehlen implementieren, sodass der Server Positionsänderungen verwaltet.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[12a]} LocalPlayerController im Client implementieren
-- [ ] #${ISSUE_MAP[12b]} HandleMove im Server implementieren
+- [ ] #${i12a} LocalPlayerController im Client implementieren
+- [ ] #${i12b} HandleMove im Server implementieren
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -1026,15 +1063,15 @@ update_parent_issues() {
     fi
 
     # Issue #14 aktualisieren
-    if [[ -n "${ISSUE_MAP[14a]}" ]] && [[ -n "${ISSUE_MAP[14b]}" ]] && [[ -n "${ISSUE_MAP[14c]}" ]]; then
+    if [[ -n "$i14a" ]] && [[ -n "$i14b" ]] && [[ -n "$i14c" ]]; then
         local body_14="Die vom Server gesendeten \`PlayerStateUpdate\`s im Client nutzen, um andere Spieler als Sprites in der Welt darzustellen.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[14a]} GameManager für Spieler-Verwaltung erstellen
-- [ ] #${ISSUE_MAP[14b]} PlayerNode-Szene und Sprite erstellen
-- [ ] #${ISSUE_MAP[14c]} Positions-Interpolation für Remote-Spieler (optional)
+- [ ] #${i14a} GameManager für Spieler-Verwaltung erstellen
+- [ ] #${i14b} PlayerNode-Szene und Sprite erstellen
+- [ ] #${i14c} Positions-Interpolation für Remote-Spieler (optional)
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -1062,15 +1099,15 @@ update_parent_issues() {
     fi
 
     # Issue #15 aktualisieren
-    if [[ -n "${ISSUE_MAP[15a]}" ]] && [[ -n "${ISSUE_MAP[15b]}" ]] && [[ -n "${ISSUE_MAP[15c]}" ]]; then
+    if [[ -n "$i15a" ]] && [[ -n "$i15b" ]] && [[ -n "$i15c" ]]; then
         local body_15="Movement-Prototyp verfeinern, Basis-Tests hinzufügen und das Zusammenspiel von Server und Client kurz harttesten.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #${ISSUE_MAP[15a]} Tickrate und Geschwindigkeit tunen
-- [ ] #${ISSUE_MAP[15b]} Unit-Tests für World und Movement
-- [ ] #${ISSUE_MAP[15c]} Manuelle Integrationstests dokumentieren
+- [ ] #${i15a} Tickrate und Geschwindigkeit tunen
+- [ ] #${i15b} Unit-Tests für World und Movement
+- [ ] #${i15c} Manuelle Integrationstests dokumentieren
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -1174,9 +1211,9 @@ main() {
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo ""
     log_success "Erstellte Issues:"
-    for key in "${!ISSUE_MAP[@]}"; do
-        echo "  - $key: #${ISSUE_MAP[$key]}"
-    done
+    while IFS='=' read -r key value; do
+        echo "  - $key: #$value"
+    done < "$ISSUE_MAP_FILE"
     echo ""
     log_success "Script abgeschlossen!"
     log_info "Überprüfe die Issues unter: https://github.com/$REPO/issues"

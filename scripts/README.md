@@ -9,6 +9,12 @@ Dieses Script erstellt alle Issues aus `docs/ISSUES_ROADMAP.md` automatisch in G
 - **Neue Epik-Issues** für Phase 2-4 (Verbindung, Shared DTOs, Logging, Tilemap, Persistenz, Chat, Gameplay, etc.)
 - **Verlinkungen** zwischen Parent-Issues und Sub-Issues
 
+### Kompatibilität
+
+✅ **macOS** (Bash 3.x)  
+✅ **Linux** (Bash 4+)  
+✅ **Windows** (Git Bash / WSL)
+
 ### Voraussetzungen
 
 1. **GitHub CLI (gh)** muss installiert sein:
