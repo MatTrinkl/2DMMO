@@ -29,6 +29,12 @@ Erstellung eines funktionsfähigen Online-Multiplayer-Prototyps mit:
 │   └── GodotProject/
 │       ├── project.godot      # Godot Projektdatei
 │       ├── GodotProject.csproj
+│       ├── assets/            # Game Assets
+│       │   ├── sprites/       # 2D Sprites und Texturen
+│       │   ├── audio/         # Sound-Effekte und Musik
+│       │   ├── fonts/         # Schriftarten
+│       │   ├── ui/            # UI-Elemente
+│       │   └── shaders/       # Shader-Dateien
 │       ├── scenes/            # Godot Szenen (.tscn)
 │       └── scripts/           # C# Scripts
 ├── server/                    # .NET Server
@@ -127,6 +133,25 @@ Die GitHub Actions Pipeline führt automatisch aus:
 - ✅ Unit Tests
 - ✅ Code-Formatierung
 - ✅ Mutation Tests (Stryker.NET)
+
+### Server-Mocking für Tests
+
+Für Unit- und Integrationstests kann der Server gemockt werden:
+
+```csharp
+// Beispiel mit Moq
+var mockServer = new Mock<IGameServer>();
+mockServer.Setup(s => s.ProcessMessage(It.IsAny<INetworkMessage>()))
+          .Returns(new SuccessResponse());
+
+// Oder mit einem Test-Double
+var testServer = new InMemoryGameServer();
+```
+
+**Geplante Test-Infrastruktur:**
+- `IGameServer` Interface für Dependency Injection
+- `InMemoryGameServer` für schnelle Unit-Tests ohne Netzwerk
+- Integration Tests mit echtem TCP/WebSocket (optional)
 
 ## 📋 Issue-Tracking
 
