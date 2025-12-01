@@ -2,8 +2,8 @@
 
 ## 2DMMO – High Fantasy MMO
 
-**Version:** 0.1.0 (Prototyp-Phase)  
-**Letzte Aktualisierung:** 2025-12-01 22:13:19  
+**Version:** 0.2.0  
+**Letzte Aktualisierung:** 2025-12-01  
 **Status:** In Entwicklung
 
 ---
@@ -17,8 +17,9 @@
 5. [Welt-Design](#5-welt-design)
 6. [Progression](#6-progression)
 7. [Datenbank-Schema](#7-datenbank-schema)
-8. [Meilensteine](#8-meilensteine)
-9. [Offene Fragen](#9-offene-fragen)
+8. [Art Direction & UI](#8-art-direction--ui)
+9. [Meilensteine](#9-meilensteine)
+10. [Offene Fragen](#10-offene-fragen)
 
 ---
 
@@ -26,7 +27,7 @@
 
 ### 1.1 Elevator Pitch
 
-> Ein 2D Top-Down MMO in einer High-Fantasy-Welt, inspiriert von Klassikern wie World of Warcraft und Guild Wars. Spieler erkunden eine lebendige Welt voller verschiedenster Völker, bekämpfen Monster, schließen sich Gilden an und erleben epische Abenteuer – alles in einem charmanten 2D-Grafikstil.
+> Ein 2D Top-Down MMO in einer High-Fantasy-Welt, inspiriert von Klassikern wie World of Warcraft und Guild Wars. Spieler erkunden eine lebendige Welt voller verschiedenster Völker, bekämpfen Monster, schließen sich Gilden an und erleben epische Abenteuer – alles in einem charmanten hochauflösenden Pixel-Art-Stil.
 
 ### 1.2 Kernfeatures
 
@@ -37,6 +38,7 @@
 | **Kampfsystem** | Klassisches Tank/Healer/DPS-System | 📝 Konzept |
 | **Persistente Welt** | Alle Fortschritte werden in Postgres gespeichert | 🔄 In Planung |
 | **Zonen-basierte Welt** | Dynamisch ladende Zonen (WoW-Style) | 📝 Konzept |
+| **PvP-Flagging** | Optionales PvP durch Flagging-System | 📝 Konzept |
 
 ### 1.3 Zielgruppe
 
@@ -47,7 +49,7 @@
 ### 1.4 Unique Selling Points (USPs)
 
 1. **Vielfalt der Völker** – Weit mehr als nur Menschen und klassische Fantasy-Rassen
-2. **2D-Charme** – Retro-inspirierte Grafik mit modernem Gameplay
+2. **2D-Charme** – Hochauflösende Pixel Art (64x64) mit modernem Gameplay
 3. **Skalierbarkeit** – Von Anfang an auf große Spielerzahlen ausgelegt
 
 ---
@@ -164,11 +166,65 @@ Bereits implementiert/geplant:
 6. Server sendet `ActionResult` an alle betroffenen Clients
 7. Clients zeigen Visualisierung (Animation, Damage-Zahlen)
 
-### 3.3 Geplante Systeme (Post-Prototyp)
+### 3.3 PvP-System
+
+**Typ:** Flagging-System (Optional PvP)
+
+| Status | Beschreibung | Regeln |
+|--------|--------------|--------|
+| **Unflagged** | PvP deaktiviert (Standard) | Kann nicht angegriffen werden, kann nicht angreifen |
+| **Flagged** | PvP aktiviert | Kann von anderen Flagged-Spielern angegriffen werden | 
+
+**Flagging-Regeln:**
+- Spieler kann PvP-Flag jederzeit aktivieren (sofort aktiv)
+- Deaktivierung erst nach 5 Minuten ohne Kampf möglich
+- Angriff auf Flagged-Spieler flaggt automatisch
+- Spezielle PvP-Zonen können automatisches Flagging erzwingen
+
+### 3.4 Tod & Respawn-System
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    SPIELER STIRBT                        │
+│                          │                               │
+│                          ▼                               │
+│              ┌───────────────────────┐                   │
+│              │   Geist-Modus aktiv   │                   │
+│              │  (Unsichtbar, kann    │                   │
+│              │   nicht interagieren) │                   │
+│              └───────────┬───────────┘                   │
+│                          │                               │
+│         ┌────────────────┼────────────────┐              │
+│         ▼                                 ▼              │
+│  ┌──────────────┐                 ┌──────────────┐       │
+│  │ GEISTERLAUF  │                 │  FRIEDHOF-   │       │
+│  │              │                 │  RESPAWN     │       │
+│  │ Laufe zur    │                 │              │       │
+│  │ Leiche zurück│                 │ Sofort am    │       │
+│  │              │                 │ Friedhof     │       │
+│  │ ✓ Kein Debuff│                 │              │       │
+│  │ ✓ Volle HP   │                 │ ✗ Debuff:    │       │
+│  └──────────────┘                 │   "Schwäche" │       │
+│                                   │   (2 Min)    │       │
+│                                   │ ✗ 50% HP     │       │
+│                                   └──────────────┘       │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Open World:**
+- **Option A: Geisterlauf** – Spieler läuft als Geist zur Leiche, volle Wiederbelebung
+- **Option B: Friedhof-Respawn** – Sofort am nächsten Friedhof mit Debuff "Schwäche" (2 Min, -25% Stats)
+
+**Instanzen & Raids:**
+- Respawn immer am Instanz-Eingang
+- Kein Geisterlauf möglich
+- Gruppe kann wipen und neu starten
+
+### 3.5 Geplante Systeme (Post-Prototyp)
 
 - [ ] Gruppen-System (5er Gruppen)
 - [ ] Dungeons (instanzierte Bereiche)
-- [ ] PvP (Arenen, Open World)
+- [ ] PvP-Arenen
 - [ ] Crafting
 - [ ] Auktionshaus
 - [ ] Achievements
@@ -251,7 +307,7 @@ Die Spielwelt besteht aus **dynamisch ladenden Zonen**, ähnlich wie in World of
 | **Hauptstädte** | Soziale Hubs, Händler, Gilden | Hauptstadt des Reiches |
 | **Levelgebiete** | Quests, Monster, Erkundung | Düsterer Wald, Wüste |
 | **Dungeons** | Instanziert, Gruppen-Content | Verfluchte Mine |
-| **PvP-Zonen** | Open World PvP (optional) | Grenzlande |
+| **PvP-Zonen** | Automatisches PvP-Flagging | Grenzlande |
 
 ### 5.3 Zonen-Übergang
 
@@ -259,6 +315,15 @@ Die Spielwelt besteht aus **dynamisch ladenden Zonen**, ähnlich wie in World of
 2. Client lädt neue Zone im Hintergrund vor
 3. Bei Übertritt: Handoff zum neuen Zone-Server
 4. Nahtloser Übergang (kein Ladebildschirm wenn möglich)
+
+### 5.4 Fraktionen
+
+> **Status:** Noch offen – abhängig von Lore-Entwicklung
+
+Mögliche Optionen:
+- Keine Fraktionen (alle Spieler neutral)
+- 2 Fraktionen (klassisch)
+- Gilden-basierte Fraktionen (Sandbox)
 
 ---
 
@@ -329,12 +394,13 @@ Die Spielwelt besteht aus **dynamisch ladenden Zonen**, ähnlich wie in World of
                       │ position_x      │              │
                       │ position_y      │       ┌──────┴──────┐
                       │ position_zone   │       │  INVENTORY  │
-                      │ stats (JSON)    │       ├─────────────┤
-                      │ created_at      │◀──────│ char_id(FK) │
-                      └─────────────────┘       │ item_id(FK) │
-                             │                  │ slot        │
+                      │ pvp_flagged     │       ├─────────────┤
+                      │ stats (JSON)    │       │ char_id(FK) │
+                      │ created_at      │◀──────│ item_id(FK) │
+                      └─────────────────┘       │ slot        │
                              │                  │ quantity    │
-                      ┌──────┴──────┐           └─────────────┘
+                             │                  └─────────────┘
+                      ┌──────┴──────┐
                       │    GUILD    │
                       ├─────────────┤
                       │ id (PK)     │
@@ -375,6 +441,7 @@ CREATE TABLE characters (
     max_hp          INTEGER,
     current_mana    INTEGER,
     max_mana        INTEGER,
+    pvp_flagged     BOOLEAN DEFAULT FALSE,
     stats           JSONB,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     played_time     INTERVAL DEFAULT '0 seconds'
@@ -427,7 +494,53 @@ CREATE TABLE guild_members (
 
 ---
 
-## 8. Meilensteine
+## 8. Art Direction & UI
+
+### 8.1 Grafik-Stil
+
+**Typ:** Hochauflösende Pixel Art (64x64 Basis)
+
+| Element | Spezifikation |
+|---------|---------------|
+| **Tile-Größe** | 64x64 Pixel |
+| **Charakter-Sprites** | 64x64 Pixel (mit Animationen) |
+| **Farbpalette** | Reich und vielfältig, Fantasy-inspiriert |
+| **Animationen** | Smooth, mind. 8 Frames für Bewegung |
+
+**Referenzen:**
+- Höhere Auflösung als klassische 16-bit
+- Detailliert aber noch klar als Pixel Art erkennbar
+- Moderne Beleuchtung/Shader möglich
+
+### 8.2 Audio-Konzept
+
+> **Status:** Später zu definieren
+
+**Richtlinien:**
+- Stil muss zur Pixel Art passen
+- Kann orchestral mit leichten Retro-Elementen sein
+- Oder vollständig Chiptune/Synth (je nach Vision)
+
+### 8.3 UI-Design
+
+**Stil:** Modern Pixel Art UI
+
+| Element | Beschreibung |
+|---------|--------------|
+| **Allgemein** | Clean, modern, aber im Pixel-Art-Stil |
+| **Hotbar** | Unten zentriert (klassisches MMO-Layout) |
+| **Minimap** | Oben rechts, eckig mit Pixel-Rahmen |
+| **Chat** | Unten links, semi-transparent |
+| **Inventar** | Grid-basiert, Pixel-Art-Icons |
+
+**Referenzen:**
+- Moderne Indie-RPGs mit Pixel Art UI
+- Skalierbar für verschiedene Auflösungen
+- Accessibility-freundlich (Lesbarkeit!)
+
+---
+
+## 9. Meilensteine
 
 ### Phase 1: Prototyp (Aktuell)
 > **Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen
@@ -446,6 +559,8 @@ CREATE TABLE guild_members (
 - [ ] Monster-Spawning
 - [ ] Inventar-System
 - [ ] Persistenz (Postgres)
+- [ ] Tod/Respawn-System
+- [ ] PvP-Flagging
 
 ### Phase 3: Content
 > **Ziel:** Spielbare Demo mit 1-10 Leveln
@@ -465,14 +580,14 @@ CREATE TABLE guild_members (
 
 ---
 
-## 9. Offene Fragen
+## 10. Offene Fragen
 
 > Diese Fragen müssen im Laufe der Entwicklung geklärt werden:
 
 ### Gameplay
-- [ ] Soll PvP optional oder verpflichtend sein?
-- [ ] Wie funktioniert das Respawn-System? (Friedhof, Geisterlauf?)
-- [ ] Soll es Fraktionen geben? (Allianz vs. Horde Style?)
+- [x] ~~Soll PvP optional oder verpflichtend sein?~~ → Flagging-System
+- [x] ~~Wie funktioniert das Respawn-System?~~ → Geisterlauf + Friedhof-Option
+- [ ] Soll es Fraktionen geben? → Abhängig von Lore
 
 ### Technisch
 - [ ] WebSocket oder reines TCP für die Kommunikation?
@@ -480,9 +595,9 @@ CREATE TABLE guild_members (
 - [ ] Caching-Strategie für häufige DB-Zugriffe? (Redis?)
 
 ### Design
-- [ ] Grafik-Stil? (Pixel Art, Hand-gezeichnet, etc.)
-- [ ] Audio-Konzept? (Musik, Sound-Effekte)
-- [ ] UI-Design-Richtlinien?
+- [x] ~~Grafik-Stil?~~ → Hochauflösende Pixel Art (64x64)
+- [ ] Audio-Konzept? → Passend zu Pixel Art (Details offen)
+- [x] ~~UI-Design-Richtlinien?~~ → Modern Pixel Art UI
 
 ---
 
@@ -491,6 +606,7 @@ CREATE TABLE guild_members (
 | Version | Datum | Änderungen |
 |---------|-------|------------|
 | 0.1.0 | 2025-12-01 | Erstes GDD erstellt (Prototyp-Fokus) |
+| 0.2.0 | 2025-12-01 | PvP-Flagging, Respawn-System, Art Direction hinzugefügt |
 
 ---
 
