@@ -1439,37 +1439,69 @@ Weltgrenzen auf dem Server implementieren, damit Spieler nicht außerhalb der de
 
 ---
 
-#### Issue: Datenmodell für Charakterpersistenz definieren
+### Epik: Datenmodell für Charakterpersistenz definieren
+
+**Labels:** `type:epic`, `area:persistenz`, `priority:p1`
+
+**Beschreibung:**
+Das Datenmodell für die Speicherung von Charakterdaten definieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: CharacterData-Record erstellen
+- [ ] Sub-Issue: Factory-Methoden und Hilfsmethoden
+- [ ] Sub-Issue: Serialisierungs-Tests
+
+---
+
+#### Sub-Issue: CharacterData-Record erstellen
 
 **Labels:** `type:feature`, `area:persistenz`, `priority:p1`
 
 **Beschreibung:**
-Das Datenmodell für die Speicherung von Charakterdaten im Shared-Projekt definieren. Die Klasse muss JSON-serialisierbar sein und alle für den Prototyp relevanten Spielerdaten enthalten.
+Das CharacterData-Record im Shared-Projekt erstellen.
 
 **Aufgaben:**
-- [ ] **CharacterData-Record erstellen:**
-  - [ ] Datei: `shared/Mmo.Shared/Models/CharacterData.cs`
-  - [ ] Als `record` für Immutability:
-    ```csharp
-    namespace Mmo.Shared.Models;
-    
-    public record CharacterData
-    {
-        public required Guid Id { get; init; }
-        public required string Name { get; init; }
-        public float X { get; init; }
-        public float Y { get; init; }
-        public DateTime CreatedAt { get; init; }
-        public DateTime LastLoginAt { get; init; }
-        public int Level { get; init; } = 1;
-        public int Experience { get; init; } = 0;
-    }
-    ```
-- [ ] **JSON-Serialisierbarkeit testen:**
-  - [ ] Unit-Test: Serialisieren und Deserialisieren
-  - [ ] Prüfen ob alle Properties erhalten bleiben
-  - [ ] Prüfen ob Default-Werte (Level=1) funktionieren
-- [ ] **CharacterData.CreateNew() Factory-Methode:**
+- [ ] Datei erstellen: `shared/Mmo.Shared/Models/CharacterData.cs`
+- [ ] Record mit allen Properties:
+  ```csharp
+  namespace Mmo.Shared.Models;
+  
+  public record CharacterData
+  {
+      public required Guid Id { get; init; }
+      public required string Name { get; init; }
+      public float X { get; init; }
+      public float Y { get; init; }
+      public DateTime CreatedAt { get; init; }
+      public DateTime LastLoginAt { get; init; }
+      public int Level { get; init; } = 1;
+      public int Experience { get; init; } = 0;
+  }
+  ```
+- [ ] XML-Kommentare für alle Properties
+
+**Akzeptanzkriterien:**
+- [ ] CharacterData existiert im Shared-Projekt
+- [ ] Alle Properties sind definiert
+- [ ] Record ist immutable
+
+**Ressourcen:**
+- [Records in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/record) – Immutable Data Types
+- [Required Properties](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required) – Pflichtfelder
+
+---
+
+#### Sub-Issue: Factory-Methoden und Hilfsmethoden
+
+**Labels:** `type:feature`, `area:persistenz`, `priority:p1`
+
+**Beschreibung:**
+Factory-Methoden für CharacterData erstellen.
+
+**Aufgaben:**
+- [ ] `CharacterData.CreateNew()` Factory-Methode:
   ```csharp
   public static CharacterData CreateNew(string name, float x, float y)
   {
@@ -1477,344 +1509,406 @@ Das Datenmodell für die Speicherung von Charakterdaten im Shared-Projekt defini
       {
           Id = Guid.NewGuid(),
           Name = name,
-          X = x,
-          Y = y,
+          X = x, Y = y,
           CreatedAt = DateTime.UtcNow,
           LastLoginAt = DateTime.UtcNow
       };
   }
   ```
-- [ ] **CharacterData.WithPosition() Methode:**
+- [ ] `CharacterData.WithPosition()` Methode:
   ```csharp
   public CharacterData WithPosition(float x, float y)
   {
       return this with { X = x, Y = y, LastLoginAt = DateTime.UtcNow };
   }
   ```
-- [ ] **Dokumentation:**
-  - [ ] XML-Kommentare für alle Properties
-  - [ ] Beschreibung der Einheiten (X/Y in Server-Koordinaten)
 
 **Akzeptanzkriterien:**
-- [ ] `CharacterData` ist im Shared-Projekt definiert
-- [ ] JSON-Roundtrip funktioniert fehlerfrei
-- [ ] Immutability durch `record` und `init` gewährleistet
-- [ ] Factory-Methoden vereinfachen die Erstellung
+- [ ] Factory-Methode erstellt valide Charaktere
+- [ ] WithPosition erstellt neue Instanz mit Position
+- [ ] Timestamps werden korrekt gesetzt
 
 **Ressourcen:**
-- [Records in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/record) – Immutable Data Types mit `with`-Expressions
-- [Required Properties](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required) – Pflichtfelder in C# 11
-- [System.Text.Json und Records](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/immutability) – Serialisierung von Records
-- [DateTime Best Practices](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?#datetime-values) – UTC vs Local Time
-
----
-
-#### Issue: Persistenzschicht implementieren (File/JSON oder SQLite)
-
-**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
-
-**Beschreibung:**
-Eine einfache Persistenzschicht implementieren mit austauschbarem Repository-Pattern. Für den Prototyp wird ein JSON-File-basiertes Repository implementiert, das später durch SQLite ersetzt werden kann.
-
-**Aufgaben:**
-- [ ] **ICharacterRepository Interface definieren:**
-  - [ ] Datei: `server/Mmo.Server/Persistence/ICharacterRepository.cs`
-    ```csharp
-    public interface ICharacterRepository
-    {
-        Task<CharacterData?> GetByNameAsync(string name);
-        Task<CharacterData?> GetByIdAsync(Guid id);
-        Task<bool> ExistsAsync(string name);
-        Task SaveAsync(CharacterData character);
-        Task DeleteAsync(Guid id);
-        Task<IEnumerable<CharacterData>> GetAllAsync();
-    }
-    ```
-- [ ] **FileCharacterRepository implementieren:**
-  - [ ] Datei: `server/Mmo.Server/Persistence/FileCharacterRepository.cs`
-  - [ ] Speicherort: `data/characters/` Ordner
-  - [ ] Ein JSON-File pro Charakter: `{name}.json`
-  - [ ] Thread-Safe durch `SemaphoreSlim`:
-    ```csharp
-    public class FileCharacterRepository : ICharacterRepository
-    {
-        private readonly string _dataPath;
-        private readonly SemaphoreSlim _lock = new(1, 1);
-        
-        public FileCharacterRepository(string dataPath = "data/characters")
-        {
-            _dataPath = dataPath;
-            Directory.CreateDirectory(_dataPath);
-        }
-        
-        public async Task SaveAsync(CharacterData character)
-        {
-            await _lock.WaitAsync();
-            try
-            {
-                var filePath = GetFilePath(character.Name);
-                var json = JsonSerializer.Serialize(character, _jsonOptions);
-                await File.WriteAllTextAsync(filePath, json);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-        }
-        
-        private string GetFilePath(string name) 
-        {
-            // WICHTIG: Spielernamen sanitieren um Directory Traversal zu verhindern!
-            var sanitizedName = SanitizeFileName(name.ToLowerInvariant());
-            return Path.Combine(_dataPath, $"{sanitizedName}.json");
-        }
-        
-        private static string SanitizeFileName(string name)
-        {
-            // Nur alphanumerische Zeichen und Unterstriche erlauben
-            var sanitized = Regex.Replace(name, @"[^a-z0-9_]", "_");
-            // Leeren Namen verhindern
-            if (string.IsNullOrEmpty(sanitized)) sanitized = "unnamed";
-            // Maximale Länge begrenzen
-            if (sanitized.Length > 50) sanitized = sanitized[..50];
-            return sanitized;
-        }
-    }
-    ```
-  - [ ] **⚠️ Sicherheitshinweis:** Spielernamen müssen validiert werden, um Directory-Traversal-Angriffe (z.B. `../../../etc/passwd`) zu verhindern!
-- [ ] **JSON-Optionen konfigurieren:**
-  ```csharp
-  private static readonly JsonSerializerOptions _jsonOptions = new()
-  {
-      WriteIndented = true,
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-  };
-  ```
-- [ ] **Dependency Injection einrichten:**
-  - [ ] In `Program.cs`: `services.AddSingleton<ICharacterRepository, FileCharacterRepository>();`
-- [ ] **Unit-Tests erstellen:**
-  - [ ] Test: Save und Load eines Characters
-  - [ ] Test: GetByName für nicht existierenden Character → null
-  - [ ] Test: Exists für existierenden Character → true
-  - [ ] Test: Concurrent Save (Thread-Safety)
-
-**Akzeptanzkriterien:**
-- [ ] Charakterdaten werden als JSON-Files gespeichert
-- [ ] Laden eines gespeicherten Characters funktioniert
-- [ ] Thread-Safety bei gleichzeitigen Zugriffen
-- [ ] Repository ist austauschbar durch Interface
-
-**Ressourcen:**
-- [Repository Pattern](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design) – Design Pattern für Datenzugriff
-- [File.WriteAllTextAsync](https://learn.microsoft.com/en-us/dotnet/api/system.io.file.writealltextasync) – Asynchrone Dateischreibvorgänge
-- [SemaphoreSlim](https://learn.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim) – Thread-Synchronisation
-- [JsonSerializer Options](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/configure-options) – JSON-Formatierung
-
----
-
-#### Issue: Charakterdaten beim Login laden
-
-**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
-
-**Beschreibung:**
-Beim Login-Vorgang prüfen, ob ein Charakter mit dem angegebenen Namen existiert. Falls ja, werden die gespeicherten Daten geladen (Position, Stats). Falls nein, wird ein neuer Charakter erstellt und gespeichert.
-
-**Aufgaben:**
-- [ ] **Login-Handler erweitern:**
-  - [ ] `ICharacterRepository` als Dependency injecten
-  - [ ] Bestehenden Character laden oder neuen erstellen:
-    ```csharp
-    public async Task HandleLoginAsync(ClientConnection connection, LoginRequest request)
-    {
-        var existingCharacter = await _characterRepository.GetByNameAsync(request.UserName);
-        
-        CharacterData character;
-        if (existingCharacter != null)
-        {
-            // Existing character - load saved position
-            character = existingCharacter with { LastLoginAt = DateTime.UtcNow };
-            _logger.LogInformation("Player {Name} loaded at ({X}, {Y})", 
-                character.Name, character.X, character.Y);
-        }
-        else
-        {
-            // New character - create with spawn position
-            var spawnPos = _world.GetSpawnPosition();
-            character = CharacterData.CreateNew(request.UserName, spawnPos.X, spawnPos.Y);
-            _logger.LogInformation("New player {Name} created at spawn", character.Name);
-        }
-        
-        // Create Player entity from CharacterData
-        var player = _world.CreatePlayer(character, connection);
-        
-        // Save updated character (LastLoginAt)
-        await _characterRepository.SaveAsync(character);
-        
-        // Send response
-        var response = new LoginResponse
-        {
-            Success = true,
-            PlayerId = player.Id,
-            SpawnX = character.X,
-            SpawnY = character.Y
-        };
-        await connection.SendAsync(response);
-    }
-    ```
-- [ ] **World.CreatePlayer() erweitern:**
-  - [ ] Überladung die `CharacterData` akzeptiert:
-    ```csharp
-    public Player CreatePlayer(CharacterData data, ClientConnection connection)
-    {
-        var player = new Player
-        {
-            Id = data.Id,
-            Name = data.Name,
-            X = data.X,
-            Y = data.Y,
-            Connection = connection
-        };
-        _players[connection.Id] = player;
-        return player;
-    }
-    ```
-- [ ] **Error-Handling:**
-  - [ ] Try-Catch um Repository-Aufrufe
-  - [ ] Bei Load-Fehler: Warnung loggen, Spawn-Position verwenden
-  - [ ] Bei kritischem Fehler: LoginResponse mit Success=false
-
-**Akzeptanzkriterien:**
-- [ ] Existierender Charakter behält seine letzte Position
-- [ ] Neuer Charakter startet an Spawn-Position
-- [ ] LastLoginAt wird bei jedem Login aktualisiert
-- [ ] Fehler beim Laden crashen den Login nicht
-
-**Ressourcen:**
-- [Null-Conditional Operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/member-access-operators#null-conditional-operators--and-) – Sicherer Null-Check
-- [Exception Handling](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/exception-handling) – Try-Catch Patterns
-- [Logging Best Practices](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging#log-message-template) – Strukturierte Log-Messages
 - [with-Expressions](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/with-expression) – Records modifizieren
+- [Factory Pattern](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/factory) – Factory-Methoden
 
 ---
 
-#### Issue: Charakterdaten beim Logout/Disconnect speichern
+#### Sub-Issue: Serialisierungs-Tests
+
+**Labels:** `type:test`, `area:persistenz`, `priority:p1`
+
+**Beschreibung:**
+Unit-Tests für JSON-Serialisierung erstellen.
+
+**Aufgaben:**
+- [ ] Test-Klasse erstellen: `tests/Mmo.Tests/CharacterDataTests.cs`
+- [ ] Tests implementieren:
+  ```csharp
+  [Fact]
+  public void CharacterData_SerializesCorrectly()
+  {
+      var data = CharacterData.CreateNew("TestPlayer", 100, 200);
+      var json = JsonSerializer.Serialize(data);
+      var deserialized = JsonSerializer.Deserialize<CharacterData>(json);
+      
+      Assert.Equal(data.Id, deserialized.Id);
+      Assert.Equal(data.Name, deserialized.Name);
+  }
+  
+  [Fact]
+  public void CharacterData_DefaultValues_AreApplied()
+  {
+      var data = CharacterData.CreateNew("Test", 0, 0);
+      Assert.Equal(1, data.Level);
+      Assert.Equal(0, data.Experience);
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] JSON-Roundtrip funktioniert
+- [ ] Default-Werte werden korrekt angewendet
+- [ ] Alle Tests sind grün
+
+**Ressourcen:**
+- [xUnit Testing](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test) – Unit-Tests
+- [System.Text.Json](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview) – JSON-Serialisierung
+
+---
+
+### Epik: Persistenzschicht implementieren (File/JSON)
+
+**Labels:** `type:epic`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Repository-Pattern für Charakterpersistenz implementieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ICharacterRepository Interface
+- [ ] Sub-Issue: FileCharacterRepository implementieren
+- [ ] Sub-Issue: Repository-Tests
+
+---
+
+#### Sub-Issue: ICharacterRepository Interface
+
+**Labels:** `type:feature`, `area:persistenz`, `priority:p1`
+
+**Beschreibung:**
+Repository-Interface für Charakterdaten definieren.
+
+**Aufgaben:**
+- [ ] Interface erstellen: `server/Mmo.Server/Persistence/ICharacterRepository.cs`
+  ```csharp
+  public interface ICharacterRepository
+  {
+      Task<CharacterData?> GetByNameAsync(string name);
+      Task<CharacterData?> GetByIdAsync(Guid id);
+      Task<bool> ExistsAsync(string name);
+      Task SaveAsync(CharacterData character);
+      Task DeleteAsync(Guid id);
+      Task<IEnumerable<CharacterData>> GetAllAsync();
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Interface ist definiert
+- [ ] Alle CRUD-Operationen sind abgedeckt
+- [ ] Async-Pattern wird verwendet
+
+**Ressourcen:**
+- [Repository Pattern](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design) – Design Pattern
+- [Async/Await](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/) – Async-Pattern
+
+---
+
+#### Sub-Issue: FileCharacterRepository implementieren
 
 **Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
 
 **Beschreibung:**
-Bei Logout oder unerwartetem Verbindungsabbruch die aktuellen Charakterdaten (Position, Stats) speichern. Auch beim Server-Shutdown sollen alle aktiven Spieler gespeichert werden.
+JSON-File-basiertes Repository implementieren.
 
 **Aufgaben:**
-- [ ] **Disconnect-Handler erweitern:**
-  - [ ] In `NetworkServer.OnClientDisconnected`:
-    ```csharp
-    private async Task OnClientDisconnected(ClientConnection connection)
-    {
-        var player = _world.GetPlayerByConnection(connection);
-        if (player != null)
-        {
-            await SavePlayerAsync(player);
-            _world.RemovePlayerByConnection(connection);
-            _logger.LogInformation("Player {Name} disconnected and saved", player.Name);
-        }
-    }
-    ```
-- [ ] **SavePlayerAsync Methode:**
+- [ ] Klasse erstellen: `server/Mmo.Server/Persistence/FileCharacterRepository.cs`
+- [ ] Thread-Safety mit SemaphoreSlim:
   ```csharp
+  public class FileCharacterRepository : ICharacterRepository
+  {
+      private readonly string _dataPath;
+      private readonly SemaphoreSlim _lock = new(1, 1);
+      
+      public FileCharacterRepository(string dataPath = "data/characters")
+      {
+          _dataPath = dataPath;
+          Directory.CreateDirectory(_dataPath);
+      }
+      
+      public async Task SaveAsync(CharacterData character)
+      {
+          await _lock.WaitAsync();
+          try
+          {
+              var filePath = GetFilePath(character.Name);
+              var json = JsonSerializer.Serialize(character, _jsonOptions);
+              await File.WriteAllTextAsync(filePath, json);
+          }
+          finally { _lock.Release(); }
+      }
+      
+      private string GetFilePath(string name)
+      {
+          var sanitized = SanitizeFileName(name.ToLowerInvariant());
+          return Path.Combine(_dataPath, $"{sanitized}.json");
+      }
+      
+      private static string SanitizeFileName(string name)
+      {
+          return Regex.Replace(name, @"[^a-z0-9_]", "_");
+      }
+  }
+  ```
+- [ ] Alle Interface-Methoden implementieren
+- [ ] ⚠️ Sicherheit: Dateinamen sanitieren!
+
+**Akzeptanzkriterien:**
+- [ ] Speichern und Laden funktioniert
+- [ ] Thread-Safety ist gewährleistet
+- [ ] Dateinamen sind sicher
+
+**Ressourcen:**
+- [File I/O](https://learn.microsoft.com/en-us/dotnet/standard/io/) – Dateioperationen
+- [SemaphoreSlim](https://learn.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim) – Thread-Sync
+
+---
+
+#### Sub-Issue: Repository-Tests
+
+**Labels:** `type:test`, `area:persistenz`, `priority:p1`
+
+**Beschreibung:**
+Unit-Tests für FileCharacterRepository.
+
+**Aufgaben:**
+- [ ] Test-Klasse erstellen
+- [ ] Tests für Save/Load/Delete
+- [ ] Test für Thread-Safety
+- [ ] Test für nicht-existierende Charaktere
+
+**Akzeptanzkriterien:**
+- [ ] Alle CRUD-Operationen getestet
+- [ ] Edge-Cases abgedeckt
+- [ ] Tests sind grün
+
+**Ressourcen:**
+- [xUnit](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test) – Testing
+- [Temporary Files](https://learn.microsoft.com/en-us/dotnet/api/system.io.path.gettemppath) – Temp-Ordner
+
+---
+
+### Epik: Charakterdaten beim Login laden
+
+**Labels:** `type:epic`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Beim Login Charakterdaten aus Persistenz laden.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Login-Handler erweitern
+- [ ] Sub-Issue: Neuen Charakter erstellen
+
+---
+
+#### Sub-Issue: Login-Handler erweitern
+
+**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Login-Handler um Repository-Abfrage erweitern.
+
+**Aufgaben:**
+- [ ] `ICharacterRepository` in Login-Handler injecten
+- [ ] Charakter laden oder erstellen:
+  ```csharp
+  public async Task HandleLoginAsync(ClientConnection connection, LoginRequest request)
+  {
+      var existingCharacter = await _characterRepository.GetByNameAsync(request.UserName);
+      
+      CharacterData character;
+      if (existingCharacter != null)
+      {
+          character = existingCharacter with { LastLoginAt = DateTime.UtcNow };
+          _logger.LogInformation("Player {Name} loaded", character.Name);
+      }
+      else
+      {
+          var spawnPos = _world.GetSpawnPosition();
+          character = CharacterData.CreateNew(request.UserName, spawnPos.X, spawnPos.Y);
+          _logger.LogInformation("New player {Name} created", character.Name);
+      }
+      
+      await _characterRepository.SaveAsync(character);
+      var player = _world.CreatePlayer(character, connection);
+      // Response senden...
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Existierender Charakter wird geladen
+- [ ] Position wird wiederhergestellt
+- [ ] LastLoginAt wird aktualisiert
+
+**Ressourcen:**
+- [Dependency Injection](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection) – DI
+- [Logging](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging) – Logging
+
+---
+
+#### Sub-Issue: Neuen Charakter erstellen
+
+**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Neuen Charakter erstellen falls keiner existiert.
+
+**Aufgaben:**
+- [ ] Spawn-Position berechnen
+- [ ] CharacterData.CreateNew() aufrufen
+- [ ] Charakter speichern
+- [ ] Player-Entity erstellen
+
+**Akzeptanzkriterien:**
+- [ ] Neuer Charakter spawnt an Spawn-Position
+- [ ] Charakter wird sofort gespeichert
+- [ ] Spieler kann sofort spielen
+
+**Ressourcen:**
+- [Factory Methods](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/factory) – Objekt-Erstellung
+
+---
+
+### Epik: Charakterdaten beim Logout speichern
+
+**Labels:** `type:epic`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Bei Disconnect/Logout Charakterdaten speichern.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Disconnect-Handler implementieren
+- [ ] Sub-Issue: Server-Shutdown-Handler
+
+---
+
+#### Sub-Issue: Disconnect-Handler implementieren
+
+**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Bei Client-Disconnect Spielerdaten speichern.
+
+**Aufgaben:**
+- [ ] In `NetworkServer.OnClientDisconnected`:
+  ```csharp
+  private async Task OnClientDisconnected(ClientConnection connection)
+  {
+      var player = _world.GetPlayerByConnection(connection);
+      if (player != null)
+      {
+          await SavePlayerAsync(player);
+          _world.RemovePlayerByConnection(connection);
+      }
+  }
+  
   private async Task SavePlayerAsync(Player player)
   {
       try
       {
-          var existingData = await _characterRepository.GetByIdAsync(player.Id);
-          if (existingData != null)
+          var data = await _characterRepository.GetByIdAsync(player.Id);
+          if (data != null)
           {
-              var updatedData = existingData.WithPosition(player.X, player.Y);
-              await _characterRepository.SaveAsync(updatedData);
+              var updated = data.WithPosition(player.X, player.Y);
+              await _characterRepository.SaveAsync(updated);
           }
       }
       catch (Exception ex)
       {
           _logger.LogError(ex, "Failed to save player {Name}", player.Name);
-          // Don't rethrow - disconnect should complete even if save fails
       }
   }
   ```
-- [ ] **Server-Shutdown-Handler:**
-  - [ ] `IHostApplicationLifetime` für Shutdown-Event nutzen:
-    ```csharp
-    public class GameServer : IHostedService
-    {
-        private readonly IHostApplicationLifetime _appLifetime;
-        
-        public GameServer(IHostApplicationLifetime appLifetime)
-        {
-            _appLifetime = appLifetime;
-            _appLifetime.ApplicationStopping.Register(OnShutdown);
-        }
-        
-        private void OnShutdown()
-        {
-            _logger.LogInformation("Server shutting down, saving all players...");
-            var saveTasks = _world.GetAllPlayers()
-                .Select(p => SavePlayerAsync(p));
-            // HINWEIS: GetAwaiter().GetResult() kann in bestimmten Kontexten
-            // zu Deadlocks führen. Für Console-Apps ist dies akzeptabel,
-            // bei ASP.NET-Hosting besser async Shutdown nutzen.
-            Task.WhenAll(saveTasks).ConfigureAwait(false).GetAwaiter().GetResult();
-            _logger.LogInformation("All players saved");
-        }
-    }
-    ```
-  - [ ] **Alternative (besser):** Async-Shutdown mit `IHostedService.StopAsync()`
-- [ ] **Periodisches Auto-Save (optional):**
-  - [ ] Timer alle 5 Minuten
-  - [ ] Alle aktiven Spieler speichern
-  - [ ] Logging der gespeicherten Anzahl
-- [ ] **Tests:**
-  - [ ] Test: Disconnect speichert Position
-  - [ ] Test: Shutdown speichert alle Spieler
-  - [ ] Test: Save-Fehler unterbricht Disconnect nicht
 
 **Akzeptanzkriterien:**
-- [ ] Position wird bei normalem Logout gespeichert
-- [ ] Position wird bei Verbindungsabbruch gespeichert
-- [ ] Server-Shutdown speichert alle aktiven Spieler
-- [ ] Save-Fehler führen nicht zu Crashes
+- [ ] Position wird bei Disconnect gespeichert
+- [ ] Fehler beim Speichern crashen nicht
+- [ ] Player wird aus World entfernt
 
 **Ressourcen:**
-- [IHostApplicationLifetime](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostapplicationlifetime) – Application Lifecycle Events
-- [Task.WhenAll](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall) – Parallele Task-Ausführung
-- [Background Tasks](https://learn.microsoft.com/en-us/dotnet/core/extensions/timer-service) – Timer für Auto-Save
-- [Graceful Shutdown](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services#consuming-a-scoped-service-in-a-background-task) – Sauberes Herunterfahren
+- [Exception Handling](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/) – Fehlerbehandlung
 
 ---
 
-#### Issue: Fehlerbehandlung für Persistenz
+#### Sub-Issue: Server-Shutdown-Handler
 
-**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p2`
+**Labels:** `type:feature`, `area:persistenz`, `area:server`, `priority:p1`
 
 **Beschreibung:**
-Robuste Fehlerbehandlung für alle Persistenz-Operationen implementieren. Der Server soll bei Datei-/Datenbankfehlern stabil bleiben und Spieler sollen weiterspielen können.
+Bei Server-Shutdown alle Spieler speichern.
 
 **Aufgaben:**
-- [ ] **PersistenceException definieren:**
+- [ ] `IHostApplicationLifetime` nutzen:
   ```csharp
-  public class PersistenceException : Exception
+  _appLifetime.ApplicationStopping.Register(async () =>
   {
-      public PersistenceOperation Operation { get; }
-      public string? CharacterName { get; }
-      
-      public PersistenceException(PersistenceOperation op, string? name, Exception inner)
-          : base($"Persistence error during {op} for {name ?? "unknown"}", inner)
-      {
-          Operation = op;
-          CharacterName = name;
-      }
-  }
-  
-  public enum PersistenceOperation { Load, Save, Delete }
+      _logger.LogInformation("Saving all players...");
+      var saveTasks = _world.GetAllPlayers()
+          .Select(p => SavePlayerAsync(p));
+      await Task.WhenAll(saveTasks);
+  });
   ```
-- [ ] **Retry-Logik im Repository:**
+- [ ] Alternativ: In `StopAsync()` von IHostedService
+
+**Akzeptanzkriterien:**
+- [ ] Alle Spieler werden bei Shutdown gespeichert
+- [ ] Keine Datenverluste bei Ctrl+C
+- [ ] Logging zeigt Fortschritt
+
+**Ressourcen:**
+- [IHostApplicationLifetime](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostapplicationlifetime) – Lifecycle-Events
+- [Graceful Shutdown](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services) – Sauberes Beenden
+
+---
+
+### Epik: Fehlerbehandlung für Persistenz
+
+**Labels:** `type:epic`, `area:persistenz`, `area:server`, `priority:p2`
+
+**Beschreibung:**
+Robuste Fehlerbehandlung für Persistenz-Operationen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Retry-Logik implementieren
+- [ ] Sub-Issue: Korrupte Daten behandeln
+
+---
+
+#### Sub-Issue: Retry-Logik implementieren
+
+**Labels:** `type:feature`, `area:persistenz`, `priority:p2`
+
+**Beschreibung:**
+Retry-Logik für Speichervorgänge implementieren.
+
+**Aufgaben:**
+- [ ] Retry bei IOException:
   ```csharp
   public async Task SaveAsync(CharacterData character)
   {
@@ -1826,248 +1920,289 @@ Robuste Fehlerbehandlung für alle Persistenz-Operationen implementieren. Der Se
               await SaveInternalAsync(character);
               return;
           }
-          catch (IOException ex) when (attempt < maxRetries)
+          catch (IOException) when (attempt < maxRetries)
           {
-              _logger.LogWarning("Save attempt {Attempt} failed, retrying...", attempt);
-              await Task.Delay(100 * attempt); // Exponential backoff
+              await Task.Delay(100 * attempt);
           }
       }
-      throw new PersistenceException(PersistenceOperation.Save, character.Name, lastException);
+      throw new PersistenceException("Save failed after retries");
   }
   ```
-- [ ] **Korrupte Daten erkennen:**
-  ```csharp
-  public async Task<CharacterData?> GetByNameAsync(string name)
-  {
-      try
-      {
-          var json = await File.ReadAllTextAsync(GetFilePath(name));
-          return JsonSerializer.Deserialize<CharacterData>(json, _jsonOptions);
-      }
-      catch (JsonException ex)
-      {
-          _logger.LogError(ex, "Corrupt character file for {Name}, creating backup", name);
-          await CreateBackupAsync(name);
-          return null; // Treat as new character
-      }
-  }
-  ```
-- [ ] **Backup-Mechanismus:**
-  ```csharp
-  private async Task CreateBackupAsync(string name)
-  {
-      var source = GetFilePath(name);
-      var backup = $"{source}.corrupt.{DateTime.UtcNow:yyyyMMddHHmmss}";
-      if (File.Exists(source))
-      {
-          File.Move(source, backup);
-      }
-  }
-  ```
-- [ ] **Graceful Degradation im Login:**
-  - [ ] Bei Load-Fehler: Neuen Character erstellen
-  - [ ] Warnung an Spieler (optional)
-  - [ ] Incident loggen für spätere Analyse
-- [ ] **Monitoring-Events:**
-  - [ ] Counter für erfolgreiche/fehlgeschlagene Saves
-  - [ ] Logging bei kritischen Fehlern
-  - [ ] Optional: Health-Check-Endpoint
 
 **Akzeptanzkriterien:**
-- [ ] Server crashed nicht bei IO-Fehlern
-- [ ] Retry bei temporären Fehlern (z.B. File-Lock)
-- [ ] Korrupte Dateien werden als Backup gesichert
-- [ ] Spieler können weiterspielen auch bei Persistenz-Fehlern
+- [ ] Temporäre Fehler werden wiederholt
+- [ ] Exponential Backoff
+- [ ] Nach Max-Retries: Exception
 
 **Ressourcen:**
-- [Exception Types in .NET](https://learn.microsoft.com/en-us/dotnet/standard/exceptions/) – Custom Exceptions
-- [Polly for Resilience](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/implement-http-call-retries-exponential-backoff-polly) – Retry-Patterns
-- [IOException Handling](https://learn.microsoft.com/en-us/dotnet/api/system.io.ioexception) – Datei-Fehler
-- [Health Checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) – Monitoring
+- [Retry Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/retry) – Retry-Strategien
 
 ---
 
+#### Sub-Issue: Korrupte Daten behandeln
+
+**Labels:** `type:feature`, `area:persistenz`, `priority:p2`
+
+**Beschreibung:**
+Korrupte JSON-Dateien erkennen und behandeln.
+
+**Aufgaben:**
+- [ ] Bei JsonException: Backup erstellen
+  ```csharp
+  catch (JsonException ex)
+  {
+      _logger.LogError(ex, "Corrupt file for {Name}", name);
+      await CreateBackupAsync(name);
+      return null; // Treat as new character
+  }
+  ```
+- [ ] Backup-Dateien: `{name}.json.corrupt.{timestamp}`
+
+**Akzeptanzkriterien:**
+- [ ] Korrupte Dateien werden erkannt
+- [ ] Backup wird erstellt
+- [ ] Spieler kann trotzdem einloggen
+
+**Ressourcen:**
+- [Exception Handling](https://learn.microsoft.com/en-us/dotnet/standard/exceptions/) – Fehlerbehandlung
 ### Phase 4 – Chat-System
 
 ---
 
-#### Issue: Chat-Nachrichtentypen im Shared-Projekt
+### Epik: Chat-Nachrichtentypen im Shared-Projekt
+
+**Labels:** `type:epic`, `area:chat`, `priority:p1`
+
+**Beschreibung:**
+Die Nachrichtentypen für das Chat-System definieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ChatChannel-Enum erstellen
+- [ ] Sub-Issue: Chat-DTOs erstellen
+- [ ] Sub-Issue: MessageType erweitern
+
+---
+
+#### Sub-Issue: ChatChannel-Enum erstellen
 
 **Labels:** `type:feature`, `area:chat`, `priority:p1`
 
 **Beschreibung:**
-Die Nachrichtentypen für das Chat-System im Shared-Projekt definieren. Diese DTOs werden von Server und Client für das Senden und Empfangen von Chat-Nachrichten verwendet.
+Enum für Chat-Kanäle erstellen.
 
 **Aufgaben:**
-- [ ] **ChatChannel-Enum erstellen:**
-  - [ ] Datei: `shared/Mmo.Shared/Enums/ChatChannel.cs`
-    ```csharp
-    namespace Mmo.Shared.Enums;
-    
-    public enum ChatChannel
-    {
-        Global = 0,   // An alle Spieler
-        Zone = 1,     // An Spieler in der gleichen Zone (später)
-        Whisper = 2,  // Privat an einen Spieler (später)
-        System = 3    // Server-Nachrichten (Login, etc.)
-    }
-    ```
-- [ ] **ChatMessageRequest DTO:**
-  - [ ] Datei: `shared/Mmo.Shared/Messages/ChatMessageRequest.cs`
-    ```csharp
-    namespace Mmo.Shared.Messages;
-    
-    public class ChatMessageRequest : INetworkMessage
-    {
-        public MessageType Type => MessageType.ChatMessageRequest;
-        public ChatChannel Channel { get; set; } = ChatChannel.Global;
-        public required string Message { get; set; }
-        public Guid? TargetPlayerId { get; set; } // Für Whisper
-    }
-    ```
-- [ ] **ChatMessageBroadcast DTO:**
-  - [ ] Datei: `shared/Mmo.Shared/Messages/ChatMessageBroadcast.cs`
-    ```csharp
-    namespace Mmo.Shared.Messages;
-    
-    public class ChatMessageBroadcast : INetworkMessage
-    {
-        public MessageType Type => MessageType.ChatMessageBroadcast;
-        public required Guid SenderId { get; set; }
-        public required string SenderName { get; set; }
-        public ChatChannel Channel { get; set; }
-        public required string Message { get; set; }
-        public DateTime Timestamp { get; set; }
-    }
-    ```
-- [ ] **MessageType-Enum erweitern:**
+- [ ] Datei: `shared/Mmo.Shared/Enums/ChatChannel.cs`
   ```csharp
-  public enum MessageType
+  public enum ChatChannel
   {
-      // ... existing types ...
-      ChatMessageRequest = 10,
-      ChatMessageBroadcast = 11
+      Global = 0,   // An alle Spieler
+      Zone = 1,     // An Spieler in der Zone (später)
+      Whisper = 2,  // Privat (später)
+      System = 3    // Server-Nachrichten
   }
   ```
-- [ ] **Validierungskonstanten:**
-  ```csharp
-  public static class ChatConstants
-  {
-      public const int MaxMessageLength = 200;
-      public const int MinMessageLength = 1;
-  }
-  ```
-- [ ] **MessageSerializer erweitern:**
-  - [ ] Neue MessageTypes in Deserialisierung aufnehmen
 
 **Akzeptanzkriterien:**
-- [ ] DTOs sind im Shared-Projekt vorhanden
-- [ ] JSON-Serialisierung funktioniert
-- [ ] MessageType-Enum enthält Chat-Typen
-- [ ] Konstanten für Validierung sind definiert
+- [ ] Enum ist definiert
+- [ ] Werte sind dokumentiert
 
 **Ressourcen:**
-- [Enums in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enumerationen definieren
-- [Required Properties](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/required) – Pflichtfelder
-- [System.Text.Json](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview) – JSON-Serialisierung
-- [INetworkMessage Pattern](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces) – Interface-Implementierung
+- [Enums in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enumerationen
 
 ---
 
-#### Issue: Serverseitiges Chat-Handling implementieren
+#### Sub-Issue: Chat-DTOs erstellen
+
+**Labels:** `type:feature`, `area:chat`, `priority:p1`
+
+**Beschreibung:**
+ChatMessageRequest und ChatMessageBroadcast DTOs erstellen.
+
+**Aufgaben:**
+- [ ] `ChatMessageRequest`:
+  ```csharp
+  public class ChatMessageRequest : INetworkMessage
+  {
+      public MessageType Type => MessageType.ChatMessageRequest;
+      public ChatChannel Channel { get; set; } = ChatChannel.Global;
+      public required string Message { get; set; }
+      public Guid? TargetPlayerId { get; set; }
+  }
+  ```
+- [ ] `ChatMessageBroadcast`:
+  ```csharp
+  public class ChatMessageBroadcast : INetworkMessage
+  {
+      public MessageType Type => MessageType.ChatMessageBroadcast;
+      public required Guid SenderId { get; set; }
+      public required string SenderName { get; set; }
+      public ChatChannel Channel { get; set; }
+      public required string Message { get; set; }
+      public DateTime Timestamp { get; set; }
+  }
+  ```
+- [ ] Konstante für max. Nachrichtenlänge: `ChatConstants.MaxMessageLength = 200`
+
+**Akzeptanzkriterien:**
+- [ ] DTOs sind serialisierbar
+- [ ] Alle Properties sind definiert
+
+**Ressourcen:**
+- [System.Text.Json](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview) – Serialisierung
+
+---
+
+#### Sub-Issue: MessageType erweitern
+
+**Labels:** `type:feature`, `area:chat`, `priority:p1`
+
+**Beschreibung:**
+MessageType-Enum um Chat-Typen erweitern.
+
+**Aufgaben:**
+- [ ] MessageType erweitern:
+  ```csharp
+  public enum MessageType
+  {
+      // ... existing ...
+      ChatMessageRequest = 10,
+      ChatMessageBroadcast = 11,
+      ChatRateLimit = 12
+  }
+  ```
+- [ ] MessageSerializer für neue Typen erweitern
+
+**Akzeptanzkriterien:**
+- [ ] Neue MessageTypes sind definiert
+- [ ] Serialisierung funktioniert
+
+**Ressourcen:**
+- [Enums erweitern](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enum-Werte
+
+---
+
+### Epik: Serverseitiges Chat-Handling
+
+**Labels:** `type:epic`, `area:chat`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Chat-Handling auf dem Server implementieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ChatHandler-Klasse erstellen
+- [ ] Sub-Issue: Validierung und Sanitization
+- [ ] Sub-Issue: Broadcast-Mechanismus
+
+---
+
+#### Sub-Issue: ChatHandler-Klasse erstellen
 
 **Labels:** `type:feature`, `area:chat`, `area:server`, `priority:p1`
 
 **Beschreibung:**
-Das Chat-Handling auf dem Server implementieren, das eingehende Nachrichten validiert, mit Metadaten anreichert und an alle relevanten Clients broadcastet.
+ChatHandler für Nachrichtenverarbeitung erstellen.
 
 **Aufgaben:**
-- [ ] **ChatHandler-Klasse erstellen:**
-  - [ ] Datei: `server/Mmo.Server/Handlers/ChatHandler.cs`
-    ```csharp
-    public class ChatHandler
-    {
-        private readonly World _world;
-        private readonly ILogger<ChatHandler> _logger;
-        
-        public ChatHandler(World world, ILogger<ChatHandler> logger)
-        {
-            _world = world;
-            _logger = logger;
-        }
-        
-        public async Task<ChatMessageBroadcast?> HandleChatAsync(
-            ClientConnection connection, 
-            ChatMessageRequest request)
-        {
-            // Get sender
-            var sender = _world.GetPlayerByConnection(connection);
-            if (sender == null)
-            {
-                _logger.LogWarning("Chat from unknown connection {Id}", connection.Id);
-                return null;
-            }
-            
-            // Validate message
-            if (!ValidateMessage(request.Message, out var error))
-            {
-                _logger.LogDebug("Invalid chat message from {Name}: {Error}", 
-                    sender.Name, error);
-                return null;
-            }
-            
-            // Create broadcast
-            var broadcast = new ChatMessageBroadcast
-            {
-                SenderId = sender.Id,
-                SenderName = sender.Name,
-                Channel = request.Channel,
-                Message = SanitizeMessage(request.Message),
-                Timestamp = DateTime.UtcNow
-            };
-            
-            _logger.LogDebug("[{Channel}] {Name}: {Message}", 
-                request.Channel, sender.Name, request.Message);
-            
-            return broadcast;
-        }
-    }
-    ```
-- [ ] **Validierung implementieren:**
+- [ ] Datei: `server/Mmo.Server/Handlers/ChatHandler.cs`
+  ```csharp
+  public class ChatHandler
+  {
+      private readonly World _world;
+      private readonly ILogger<ChatHandler> _logger;
+      
+      public async Task<ChatMessageBroadcast?> HandleChatAsync(
+          ClientConnection connection, 
+          ChatMessageRequest request)
+      {
+          var sender = _world.GetPlayerByConnection(connection);
+          if (sender == null) return null;
+          
+          if (!ValidateMessage(request.Message, out var error))
+          {
+              _logger.LogDebug("Invalid message: {Error}", error);
+              return null;
+          }
+          
+          return new ChatMessageBroadcast
+          {
+              SenderId = sender.Id,
+              SenderName = sender.Name,
+              Channel = request.Channel,
+              Message = SanitizeMessage(request.Message),
+              Timestamp = DateTime.UtcNow
+          };
+      }
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Handler verarbeitet Chat-Nachrichten
+- [ ] Sender wird validiert
+
+**Ressourcen:**
+- [Handler Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) – Message-Handling
+
+---
+
+#### Sub-Issue: Validierung und Sanitization
+
+**Labels:** `type:feature`, `area:chat`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Nachrichten validieren und sanitizen.
+
+**Aufgaben:**
+- [ ] `ValidateMessage()`:
   ```csharp
   private bool ValidateMessage(string message, out string error)
   {
       error = string.Empty;
-      
       if (string.IsNullOrWhiteSpace(message))
       {
-          error = "Message cannot be empty";
+          error = "Message empty";
           return false;
       }
-      
       if (message.Length > ChatConstants.MaxMessageLength)
       {
-          error = $"Message too long (max {ChatConstants.MaxMessageLength})";
+          error = "Message too long";
           return false;
       }
-      
       return true;
   }
   ```
-- [ ] **Sanitization implementieren:**
+- [ ] `SanitizeMessage()`:
   ```csharp
   private string SanitizeMessage(string message)
   {
-      // Trim whitespace
       message = message.Trim();
-      // Remove control characters
-      message = Regex.Replace(message, @"[\x00-\x1F]", "");
-      // Limit consecutive whitespace
-      message = Regex.Replace(message, @"\s+", " ");
+      message = Regex.Replace(message, @"[\x00-\x1F]", ""); // Control chars
+      message = Regex.Replace(message, @"\s+", " "); // Multi-spaces
       return message;
   }
   ```
-- [ ] **Im MessageRouter registrieren:**
+
+**Akzeptanzkriterien:**
+- [ ] Leere/zu lange Nachrichten abgelehnt
+- [ ] Control-Zeichen entfernt
+
+**Ressourcen:**
+- [Regex in C#](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions) – Text-Manipulation
+
+---
+
+#### Sub-Issue: Broadcast-Mechanismus
+
+**Labels:** `type:feature`, `area:chat`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Nachrichten an alle Spieler broadcasten.
+
+**Aufgaben:**
+- [ ] Im MessageRouter:
   ```csharp
   case MessageType.ChatMessageRequest:
       var broadcast = await _chatHandler.HandleChatAsync(connection, (ChatMessageRequest)message);
@@ -2077,7 +2212,7 @@ Das Chat-Handling auf dem Server implementieren, das eingehende Nachrichten vali
       }
       break;
   ```
-- [ ] **Broadcast-Methode:**
+- [ ] `BroadcastToAllAsync()`:
   ```csharp
   private async Task BroadcastToAllAsync(INetworkMessage message)
   {
@@ -2088,166 +2223,172 @@ Das Chat-Handling auf dem Server implementieren, das eingehende Nachrichten vali
   ```
 
 **Akzeptanzkriterien:**
-- [ ] Chat-Nachrichten werden an alle Spieler gesendet
-- [ ] Absendername wird korrekt angezeigt
-- [ ] Leere/zu lange Nachrichten werden abgelehnt
-- [ ] Nachrichten werden sanitized (keine Control-Chars)
+- [ ] Nachrichten erreichen alle Spieler
+- [ ] Paralleles Senden
 
 **Ressourcen:**
-- [Regex in C#](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions) – Text-Manipulation
-- [Task.WhenAll](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall) – Paralleles Senden
-- [String Sanitization](https://learn.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.replace) – Regex.Replace
-- [Input Validation](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation) – Validierungsmuster
+- [Task.WhenAll](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall) – Parallele Tasks
 
 ---
 
-#### Issue: Einfaches Rate-Limiting für Chat
+### Epik: Rate-Limiting für Chat
 
-**Labels:** `type:feature`, `area:chat`, `area:server`, `priority:p2`
+**Labels:** `type:epic`, `area:chat`, `area:server`, `priority:p2`
 
 **Beschreibung:**
-Ein einfaches Rate-Limiting implementieren, um Chat-Spam zu verhindern. Pro Spieler wird ein Nachrichtenzähler geführt, der nach einem Zeitfenster zurückgesetzt wird.
+Spam-Schutz für Chat implementieren.
 
-**Aufgaben:**
-- [ ] **RateLimiter-Klasse erstellen:**
-  - [ ] Datei: `server/Mmo.Server/Services/ChatRateLimiter.cs`
-    ```csharp
-    public class ChatRateLimiter
-    {
-        private readonly ConcurrentDictionary<Guid, PlayerRateInfo> _playerRates = new();
-        private readonly int _maxMessages;
-        private readonly TimeSpan _timeWindow;
-        
-        public ChatRateLimiter(int maxMessages = 5, int windowSeconds = 10)
-        {
-            _maxMessages = maxMessages;
-            _timeWindow = TimeSpan.FromSeconds(windowSeconds);
-        }
-        
-        public bool TryConsume(Guid playerId, out TimeSpan waitTime)
-        {
-            waitTime = TimeSpan.Zero;
-            var now = DateTime.UtcNow;
-            
-            var info = _playerRates.GetOrAdd(playerId, _ => new PlayerRateInfo());
-            
-            lock (info)
-            {
-                // Reset if window expired
-                if (now - info.WindowStart > _timeWindow)
-                {
-                    info.WindowStart = now;
-                    info.MessageCount = 0;
-                }
-                
-                // Check limit
-                if (info.MessageCount >= _maxMessages)
-                {
-                    waitTime = _timeWindow - (now - info.WindowStart);
-                    return false;
-                }
-                
-                info.MessageCount++;
-                return true;
-            }
-        }
-        
-        private class PlayerRateInfo
-        {
-            public DateTime WindowStart { get; set; } = DateTime.UtcNow;
-            public int MessageCount { get; set; } = 0;
-        }
-    }
-    ```
-- [ ] **RateLimitExceededResponse DTO:**
-  ```csharp
-  public class ChatRateLimitResponse : INetworkMessage
-  {
-      public MessageType Type => MessageType.ChatRateLimit;
-      public TimeSpan WaitTime { get; set; }
-      public string Message => $"Bitte warte {WaitTime.Seconds} Sekunden";
-  }
-  ```
-- [ ] **In ChatHandler integrieren:**
-  ```csharp
-  public async Task<INetworkMessage?> HandleChatAsync(...)
-  {
-      // Rate limit check
-      if (!_rateLimiter.TryConsume(sender.Id, out var waitTime))
-      {
-          _logger.LogDebug("Player {Name} rate limited for {Seconds}s", 
-              sender.Name, waitTime.TotalSeconds);
-          return new ChatRateLimitResponse { WaitTime = waitTime };
-      }
-      
-      // ... rest of handling
-  }
-  ```
-- [ ] **Konfiguration über DI:**
-  ```csharp
-  services.AddSingleton(new ChatRateLimiter(
-      maxMessages: config.Chat.MaxMessagesPerWindow,
-      windowSeconds: config.Chat.WindowSeconds
-  ));
-  ```
-- [ ] **Cleanup-Timer für inaktive Spieler:**
-  - [ ] Alle 5 Minuten: Spieler ohne kürzliche Messages entfernen
-  - [ ] Verhindert Memory-Leak bei vielen Spielern
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
-**Akzeptanzkriterien:**
-- [ ] Max 5 Nachrichten in 10 Sekunden (konfigurierbar)
-- [ ] Bei Überschreitung: Wartezeit-Info an Client
-- [ ] Normale Nutzung wird nicht beeinträchtigt
-- [ ] Rate-Limiter ist thread-safe
-
-**Ressourcen:**
-- [ConcurrentDictionary](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2) – Thread-sichere Dictionary
-- [Rate Limiting in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/http-ratelimiter) – Rate-Limiting-Konzepte
-- [Lock Statement](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/lock) – Thread-Synchronisation
-- [Timer für Cleanup](https://learn.microsoft.com/en-us/dotnet/api/system.threading.timer) – Periodische Aufräumarbeiten
+**Sub-Issues:**
+- [ ] Sub-Issue: ChatRateLimiter-Klasse
+- [ ] Sub-Issue: Integration in ChatHandler
 
 ---
 
-#### Issue: Chat-UI im Godot-Client erstellen
+#### Sub-Issue: ChatRateLimiter-Klasse
+
+**Labels:** `type:feature`, `area:chat`, `priority:p2`
+
+**Beschreibung:**
+Rate-Limiter für Chat-Nachrichten.
+
+**Aufgaben:**
+- [ ] Datei: `server/Mmo.Server/Services/ChatRateLimiter.cs`
+  ```csharp
+  public class ChatRateLimiter
+  {
+      private readonly ConcurrentDictionary<Guid, PlayerRateInfo> _playerRates = new();
+      private readonly int _maxMessages = 5;
+      private readonly TimeSpan _timeWindow = TimeSpan.FromSeconds(10);
+      
+      public bool TryConsume(Guid playerId, out TimeSpan waitTime)
+      {
+          waitTime = TimeSpan.Zero;
+          var info = _playerRates.GetOrAdd(playerId, _ => new PlayerRateInfo());
+          
+          lock (info)
+          {
+              if (DateTime.UtcNow - info.WindowStart > _timeWindow)
+              {
+                  info.WindowStart = DateTime.UtcNow;
+                  info.MessageCount = 0;
+              }
+              
+              if (info.MessageCount >= _maxMessages)
+              {
+                  waitTime = _timeWindow - (DateTime.UtcNow - info.WindowStart);
+                  return false;
+              }
+              
+              info.MessageCount++;
+              return true;
+          }
+      }
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Max 5 Nachrichten pro 10 Sekunden
+- [ ] Thread-safe
+
+**Ressourcen:**
+- [ConcurrentDictionary](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2) – Thread-safe Dictionary
+
+---
+
+#### Sub-Issue: Integration in ChatHandler
+
+**Labels:** `type:feature`, `area:chat`, `priority:p2`
+
+**Beschreibung:**
+Rate-Limiter in ChatHandler integrieren.
+
+**Aufgaben:**
+- [ ] In HandleChatAsync:
+  ```csharp
+  if (!_rateLimiter.TryConsume(sender.Id, out var waitTime))
+  {
+      return new ChatRateLimitResponse { WaitTime = waitTime };
+  }
+  ```
+- [ ] ChatRateLimitResponse DTO erstellen
+
+**Akzeptanzkriterien:**
+- [ ] Spam wird begrenzt
+- [ ] Spieler erhält Feedback
+
+**Ressourcen:**
+- [Rate Limiting](https://learn.microsoft.com/en-us/dotnet/core/extensions/http-ratelimiter) – Rate-Limiting-Konzepte
+
+---
+
+### Epik: Chat-UI im Godot-Client
+
+**Labels:** `type:epic`, `area:chat`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Chat-UI im Client erstellen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ChatPanel-Szene erstellen
+- [ ] Sub-Issue: ChatPanel-Script implementieren
+
+---
+
+#### Sub-Issue: ChatPanel-Szene erstellen
 
 **Labels:** `type:feature`, `area:chat`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Die Chat-UI im Godot-Client implementieren mit Eingabefeld, Nachrichtenanzeige und Auto-Scroll. Das Chat-Panel soll unaufdringlich am unteren Bildschirmrand positioniert sein.
+Chat-Panel UI-Szene erstellen.
 
 **Aufgaben:**
-- [ ] **ChatPanel-Szene erstellen:**
-  - [ ] Datei: `res://scenes/ui/ChatPanel.tscn`
-  - [ ] Struktur:
-    ```
-    ChatPanel (Control)
-    ├── Background (Panel)
-    ├── VBoxContainer
-    │   ├── MessageContainer (ScrollContainer)
-    │   │   └── MessageList (VBoxContainer)
-    │   └── InputContainer (HBoxContainer)
-    │       ├── InputField (LineEdit)
-    │       └── SendButton (Button)
-    ```
-- [ ] **Layout konfigurieren:**
-  - [ ] Panel: Anker unten-links, Größe 400x200 Pixel
-  - [ ] Halbtransparenter Hintergrund (Alpha 0.8)
-  - [ ] Margin: 10px von Rand
-- [ ] **ChatPanel.cs Script:**
+- [ ] Szene: `res://scenes/ui/ChatPanel.tscn`
+  ```
+  ChatPanel (Control)
+  ├── Background (Panel)
+  ├── VBoxContainer
+  │   ├── MessageContainer (ScrollContainer)
+  │   │   └── MessageList (VBoxContainer)
+  │   └── InputContainer (HBoxContainer)
+  │       ├── InputField (LineEdit)
+  │       └── SendButton (Button)
+  ```
+- [ ] Layout: Unten-links, 400x200 Pixel
+- [ ] Halbtransparenter Hintergrund
+
+**Akzeptanzkriterien:**
+- [ ] Panel ist sichtbar
+- [ ] Input-Feld funktioniert
+
+**Ressourcen:**
+- [Control Nodes](https://docs.godotengine.org/en/stable/tutorials/ui/control_node_gallery.html) – UI-Elemente
+
+---
+
+#### Sub-Issue: ChatPanel-Script implementieren
+
+**Labels:** `type:feature`, `area:chat`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+ChatPanel-Script mit Nachrichtenlogik.
+
+**Aufgaben:**
+- [ ] Script: `res://scripts/ui/ChatPanel.cs`
   ```csharp
   public partial class ChatPanel : Control
   {
       [Export] private LineEdit _inputField;
       [Export] private VBoxContainer _messageList;
-      [Export] private ScrollContainer _scrollContainer;
       
       private const int MaxMessages = 50;
       
       public override void _Ready()
       {
           _inputField.TextSubmitted += OnInputSubmitted;
-          _inputField.FocusEntered += OnInputFocused;
-          _inputField.FocusExited += OnInputUnfocused;
       }
       
       private void OnInputSubmitted(string text)
@@ -2264,1156 +2405,814 @@ Die Chat-UI im Godot-Client implementieren mit Eingabefeld, Nachrichtenanzeige u
           var label = new RichTextLabel();
           label.BbcodeEnabled = true;
           label.FitContent = true;
-          label.Text = FormatMessage(senderName, message, channel);
+          label.Text = $"[b]{senderName}:[/b] {message}";
           
           _messageList.AddChild(label);
           
-          // Remove old messages
           while (_messageList.GetChildCount() > MaxMessages)
-          {
               _messageList.GetChild(0).QueueFree();
-          }
-          
-          // Scroll to bottom
-          await ToSignal(GetTree(), "process_frame");
-          _scrollContainer.ScrollVertical = (int)_scrollContainer.GetVScrollBar().MaxValue;
       }
       
-      private string FormatMessage(string sender, string msg, ChatChannel ch)
-      {
-          var color = ch switch
-          {
-              ChatChannel.System => "gray",
-              ChatChannel.Global => "white",
-              _ => "white"
-          };
-          return $"[color={color}][b]{sender}:[/b] {msg}[/color]";
-      }
-      
-      [Signal] public delegate void MessageSubmittedEventHandler(string message);
+      [Signal]
+      public delegate void MessageSubmittedEventHandler(string message);
   }
   ```
-- [ ] **Input-Fokus-Handling:**
-  - [ ] Wenn Chat fokussiert: Bewegungs-Input deaktivieren
-  - [ ] Enter öffnet Chat, Escape schließt
-  ```csharp
-  public override void _Input(InputEvent @event)
-  {
-      if (@event.IsActionPressed("chat_open") && !_inputField.HasFocus())
-      {
-          _inputField.GrabFocus();
-          GetViewport().SetInputAsHandled();
-      }
-      else if (@event.IsActionPressed("ui_cancel") && _inputField.HasFocus())
-      {
-          _inputField.ReleaseFocus();
-      }
-  }
-  ```
-- [ ] **Input-Map konfigurieren:**
-  - [ ] `chat_open`: Enter oder T
-  - [ ] Dokumentieren in project.godot
+- [ ] Auto-Scroll bei neuen Nachrichten
 
 **Akzeptanzkriterien:**
-- [ ] Chat-Panel ist am unteren Bildschirmrand sichtbar
-- [ ] Nachrichten können eingegeben werden
-- [ ] Auto-Scroll bei neuen Nachrichten
-- [ ] Maximale Nachrichtenanzahl wird begrenzt
-- [ ] Enter öffnet Chat-Eingabe
+- [ ] Nachrichten werden angezeigt
+- [ ] Enter sendet Nachricht
+- [ ] Max. Nachrichten begrenzt
 
 **Ressourcen:**
-- [Control Nodes in Godot](https://docs.godotengine.org/en/stable/tutorials/ui/control_node_gallery.html) – UI-Elemente
-- [RichTextLabel](https://docs.godotengine.org/en/stable/classes/class_richtextlabel.html) – BBCode-formatierter Text
-- [ScrollContainer](https://docs.godotengine.org/en/stable/classes/class_scrollcontainer.html) – Scrollbare Container
+- [RichTextLabel](https://docs.godotengine.org/en/stable/classes/class_richtextlabel.html) – Formatierter Text
 - [Signals in C#](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_signals.html) – Custom Signals
 
 ---
 
-#### Issue: Chat-Nachrichten senden und empfangen im Client
+### Epik: Chat-Integration im Client
+
+**Labels:** `type:epic`, `area:chat`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Chat mit NetworkClient verbinden.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ChatManager-Singleton erstellen
+- [ ] Sub-Issue: Nachrichten senden und empfangen
+
+---
+
+#### Sub-Issue: ChatManager-Singleton erstellen
 
 **Labels:** `type:feature`, `area:chat`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Die Integration von Chat-Nachrichten zwischen ChatPanel und NetworkClient implementieren. Ausgehende Nachrichten werden an den Server gesendet, eingehende Broadcasts werden im Chat angezeigt.
+ChatManager für Nachrichtenverwaltung erstellen.
 
 **Aufgaben:**
-- [ ] **ChatManager-Singleton erstellen:**
-  - [ ] Datei: `res://scripts/singletons/ChatManager.cs`
-    ```csharp
-    public partial class ChatManager : Node
-    {
-        public static ChatManager Instance { get; private set; }
-        
-        private ChatPanel _chatPanel;
-        private Guid _localPlayerId;
-        
-        public override void _Ready()
-        {
-            Instance = this;
-            NetworkClient.Instance.MessageReceived += OnMessageReceived;
-        }
-        
-        public void Initialize(ChatPanel chatPanel, Guid localPlayerId)
-        {
-            _chatPanel = chatPanel;
-            _localPlayerId = localPlayerId;
-            _chatPanel.MessageSubmitted += OnMessageSubmitted;
-        }
-        
-        private void OnMessageSubmitted(string message)
-        {
-            var request = new ChatMessageRequest
-            {
-                Channel = ChatChannel.Global,
-                Message = message
-            };
-            NetworkClient.Instance.Send(request);
-        }
-        
-        private void OnMessageReceived(INetworkMessage message)
-        {
-            switch (message)
-            {
-                case ChatMessageBroadcast chat:
-                    HandleChatBroadcast(chat);
-                    break;
-                case ChatRateLimitResponse rateLimit:
-                    HandleRateLimit(rateLimit);
-                    break;
-            }
-        }
-        
-        private void HandleChatBroadcast(ChatMessageBroadcast broadcast)
-        {
-            // Call on main thread
-            CallDeferred(nameof(AddMessageToPanel), 
-                broadcast.SenderName, 
-                broadcast.Message, 
-                (int)broadcast.Channel);
-        }
-        
-        private void AddMessageToPanel(string sender, string msg, int channel)
-        {
-            _chatPanel.AddMessage(sender, msg, (ChatChannel)channel);
-        }
-        
-        private void HandleRateLimit(ChatRateLimitResponse response)
-        {
-            _chatPanel.AddMessage("System", response.Message, ChatChannel.System);
-        }
-    }
-    ```
-- [ ] **System-Nachrichten hinzufügen:**
+- [ ] Datei: `res://scripts/singletons/ChatManager.cs`
   ```csharp
-  public void ShowSystemMessage(string message)
+  public partial class ChatManager : Node
   {
-      _chatPanel.AddMessage("System", message, ChatChannel.System);
-  }
-  
-  // Called from GameManager
-  public void ShowPlayerJoined(string playerName)
-  {
-      ShowSystemMessage($"{playerName} ist beigetreten.");
-  }
-  
-  public void ShowPlayerLeft(string playerName)
-  {
-      ShowSystemMessage($"{playerName} hat das Spiel verlassen.");
+      public static ChatManager Instance { get; private set; }
+      
+      private ChatPanel _chatPanel;
+      
+      public override void _Ready()
+      {
+          Instance = this;
+          NetworkClient.Instance.MessageReceived += OnMessageReceived;
+      }
+      
+      public void Initialize(ChatPanel chatPanel)
+      {
+          _chatPanel = chatPanel;
+          _chatPanel.MessageSubmitted += OnMessageSubmitted;
+      }
+      
+      private void OnMessageSubmitted(string message)
+      {
+          var request = new ChatMessageRequest
+          {
+              Channel = ChatChannel.Global,
+              Message = message
+          };
+          NetworkClient.Instance.Send(request);
+      }
   }
   ```
-- [ ] **Als Autoload registrieren:**
-  - [ ] In project.godot unter Autoload
-  - [ ] Nach NetworkClient, vor GameManager
-- [ ] **In Game-Szene integrieren:**
-  - [ ] ChatPanel zur Game.tscn hinzufügen
-  - [ ] Im GameManager: `ChatManager.Instance.Initialize(chatPanel, playerId)`
-- [ ] **Lokale Echo-Nachricht (optional):**
-  - [ ] Eigene Nachrichten sofort anzeigen (für Responsiveness)
-  - [ ] Server-Broadcast trotzdem verarbeiten (für Konsistenz)
-- [ ] **Thread-Safety:**
-  - [ ] `CallDeferred` für UI-Updates aus Netzwerk-Thread
-  - [ ] Keine Race-Conditions bei schnellen Nachrichten
+- [ ] Als Autoload registrieren
 
 **Akzeptanzkriterien:**
-- [ ] Gesendete Nachrichten erscheinen bei allen Spielern
-- [ ] Eigene Nachrichten werden angezeigt
-- [ ] System-Nachrichten (Join/Leave) erscheinen
-- [ ] Rate-Limit-Warnung wird angezeigt
-- [ ] Keine UI-Freezes bei vielen Nachrichten
+- [ ] ChatManager ist Singleton
+- [ ] Nachrichten werden gesendet
 
 **Ressourcen:**
-- [CallDeferred](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred) – Thread-sichere Aufrufe
-- [Signals zwischen Nodes](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_signals.html) – Event-Kommunikation
-- [Autoload Singletons](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) – Globale Instanzen
-- [Networking in Godot](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html) – Netzwerk-Grundlagen
+- [Autoload](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) – Singletons
 
 ---
 
+#### Sub-Issue: Nachrichten senden und empfangen
+
+**Labels:** `type:feature`, `area:chat`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Eingehende Nachrichten anzeigen.
+
+**Aufgaben:**
+- [ ] Message-Handler:
+  ```csharp
+  private void OnMessageReceived(INetworkMessage message)
+  {
+      switch (message)
+      {
+          case ChatMessageBroadcast chat:
+              CallDeferred(nameof(AddMessageToPanel), 
+                  chat.SenderName, chat.Message, (int)chat.Channel);
+              break;
+          case ChatRateLimitResponse rateLimit:
+              CallDeferred(nameof(ShowRateLimitMessage), rateLimit.WaitTime);
+              break;
+      }
+  }
+  
+  private void AddMessageToPanel(string sender, string msg, int channel)
+  {
+      _chatPanel.AddMessage(sender, msg, (ChatChannel)channel);
+  }
+  ```
+- [ ] System-Nachrichten (Join/Leave) anzeigen
+
+**Akzeptanzkriterien:**
+- [ ] Nachrichten werden angezeigt
+- [ ] Rate-Limit-Warnung erscheint
+- [ ] Thread-safe (CallDeferred)
+
+**Ressourcen:**
+- [CallDeferred](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred) – Thread-sichere Aufrufe
 ### Phase 4 – Erste Gameplay-Aktion
 
 ---
 
-#### Issue: Action-Nachrichtentypen definieren
+### Epik: Action-Nachrichtentypen definieren
+
+**Labels:** `type:epic`, `area:gameplay`, `priority:p1`
+
+**Beschreibung:**
+Die Nachrichtentypen für Gameplay-Aktionen definieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ActionType und EmoteType Enums
+- [ ] Sub-Issue: ActionRequest und ActionEvent DTOs
+
+---
+
+#### Sub-Issue: ActionType und EmoteType Enums
 
 **Labels:** `type:feature`, `area:gameplay`, `priority:p1`
 
 **Beschreibung:**
-Die Nachrichtentypen für Gameplay-Aktionen (Attack/Emote/Interact) im Shared-Projekt definieren. Diese DTOs ermöglichen dem Client, Aktionen an den Server zu senden und Events von anderen Spielern zu empfangen.
+Enums für Action-Typen erstellen.
 
 **Aufgaben:**
-- [ ] **ActionType-Enum erstellen:**
-  - [ ] Datei: `shared/Mmo.Shared/Enums/ActionType.cs`
-    ```csharp
-    namespace Mmo.Shared.Enums;
-    
-    public enum ActionType
-    {
-        None = 0,
-        Attack = 1,
-        Emote = 2,
-        Interact = 3
-    }
-    ```
-- [ ] **EmoteType-Enum erstellen:**
-  - [ ] Datei: `shared/Mmo.Shared/Enums/EmoteType.cs`
-    ```csharp
-    namespace Mmo.Shared.Enums;
-    
-    public enum EmoteType
-    {
-        Wave = 0,
-        Dance = 1,
-        Sit = 2,
-        Laugh = 3,
-        Cry = 4
-    }
-    ```
-- [ ] **ActionRequest DTO:**
-  - [ ] Datei: `shared/Mmo.Shared/Messages/ActionRequest.cs`
-    ```csharp
-    namespace Mmo.Shared.Messages;
-    
-    public class ActionRequest : INetworkMessage
-    {
-        public MessageType Type => MessageType.ActionRequest;
-        public ActionType ActionType { get; set; }
-        public Guid? TargetId { get; set; }          // Für Attack
-        public EmoteType? EmoteType { get; set; }     // Für Emote
-        public float DirectionX { get; set; }         // Für Attack ohne Ziel
-        public float DirectionY { get; set; }
-    }
-    ```
-- [ ] **ActionEvent DTO (Server → Client):**
-  - [ ] Datei: `shared/Mmo.Shared/Messages/ActionEvent.cs`
-    ```csharp
-    namespace Mmo.Shared.Messages;
-    
-    public class ActionEvent : INetworkMessage
-    {
-        public MessageType Type => MessageType.ActionEvent;
-        public required Guid ActorId { get; set; }
-        public ActionType ActionType { get; set; }
-        public Guid? TargetId { get; set; }
-        public EmoteType? EmoteType { get; set; }
-        public ActionResult Result { get; set; }
-        public float ActorX { get; set; }
-        public float ActorY { get; set; }
-    }
-    
-    public enum ActionResult
-    {
-        Success = 0,
-        InvalidTarget = 1,
-        OutOfRange = 2,
-        OnCooldown = 3
-    }
-    ```
-- [ ] **MessageType-Enum erweitern:**
+- [ ] `ActionType`-Enum:
   ```csharp
-  public enum MessageType
+  public enum ActionType { None = 0, Attack = 1, Emote = 2, Interact = 3 }
+  ```
+- [ ] `EmoteType`-Enum:
+  ```csharp
+  public enum EmoteType { Wave = 0, Dance = 1, Sit = 2, Laugh = 3, Cry = 4 }
+  ```
+- [ ] `ActionResult`-Enum:
+  ```csharp
+  public enum ActionResult { Success = 0, InvalidTarget = 1, OutOfRange = 2, OnCooldown = 3 }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Enums sind definiert
+- [ ] Werte sind dokumentiert
+
+**Ressourcen:**
+- [Enums in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enumerationen
+
+---
+
+#### Sub-Issue: ActionRequest und ActionEvent DTOs
+
+**Labels:** `type:feature`, `area:gameplay`, `priority:p1`
+
+**Beschreibung:**
+DTOs für Actions erstellen.
+
+**Aufgaben:**
+- [ ] `ActionRequest`:
+  ```csharp
+  public class ActionRequest : INetworkMessage
   {
-      // ... existing types ...
-      ActionRequest = 20,
-      ActionEvent = 21
+      public MessageType Type => MessageType.ActionRequest;
+      public ActionType ActionType { get; set; }
+      public Guid? TargetId { get; set; }
+      public EmoteType? EmoteType { get; set; }
   }
   ```
-- [ ] **Konstanten für Gameplay:**
+- [ ] `ActionEvent`:
   ```csharp
-  public static class ActionConstants
+  public class ActionEvent : INetworkMessage
   {
-      public const float AttackRange = 100f;
-      public const float AttackCooldownMs = 500f;
-      public const float EmoteDurationMs = 2000f;
+      public MessageType Type => MessageType.ActionEvent;
+      public required Guid ActorId { get; set; }
+      public ActionType ActionType { get; set; }
+      public Guid? TargetId { get; set; }
+      public EmoteType? EmoteType { get; set; }
+      public ActionResult Result { get; set; }
   }
   ```
 
 **Akzeptanzkriterien:**
-- [ ] Alle DTOs und Enums sind definiert
-- [ ] JSON-Serialisierung funktioniert für alle Typen
-- [ ] MessageType-Enum enthält Action-Typen
-- [ ] Konstanten sind dokumentiert
+- [ ] DTOs sind serialisierbar
+- [ ] MessageType erweitert
 
 **Ressourcen:**
-- [Nullable Reference Types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references) – Optional Properties mit `?`
-- [Enums mit Werten](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Explizite Enum-Werte
-- [System.Text.Json Enums](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties#enums-as-strings) – Enum-Serialisierung
-- [Game Design Patterns](https://learn.microsoft.com/en-us/gaming/) – Spielmechanik-Grundlagen
+- [System.Text.Json](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/overview) – Serialisierung
 
 ---
 
-#### Issue: Action-Handler im Server implementieren
+### Epik: Action-Handler im Server
+
+**Labels:** `type:epic`, `area:gameplay`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Server-seitige Verarbeitung von Aktionen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ActionHandler-Klasse erstellen
+- [ ] Sub-Issue: Attack-Handling implementieren
+- [ ] Sub-Issue: Emote-Handling implementieren
+
+---
+
+#### Sub-Issue: ActionHandler-Klasse erstellen
 
 **Labels:** `type:feature`, `area:gameplay`, `area:server`, `priority:p1`
 
 **Beschreibung:**
-Die serverseitige Verarbeitung von Aktionen implementieren. Der Server validiert Aktionen, prüft Cooldowns und broadcastet Events an relevante Clients.
+ActionHandler-Basisklasse erstellen.
 
 **Aufgaben:**
-- [ ] **ActionHandler-Klasse erstellen:**
-  - [ ] Datei: `server/Mmo.Server/Handlers/ActionHandler.cs`
-    ```csharp
-    public class ActionHandler
-    {
-        private readonly World _world;
-        private readonly ILogger<ActionHandler> _logger;
-        private readonly ConcurrentDictionary<Guid, DateTime> _attackCooldowns = new();
-        
-        public ActionHandler(World world, ILogger<ActionHandler> logger)
-        {
-            _world = world;
-            _logger = logger;
-        }
-        
-        public ActionEvent? HandleAction(ClientConnection connection, ActionRequest request)
-        {
-            var actor = _world.GetPlayerByConnection(connection);
-            if (actor == null)
-            {
-                _logger.LogWarning("Action from unknown connection {Id}", connection.Id);
-                return null;
-            }
-            
-            return request.ActionType switch
-            {
-                ActionType.Attack => HandleAttack(actor, request),
-                ActionType.Emote => HandleEmote(actor, request),
-                ActionType.Interact => HandleInteract(actor, request),
-                _ => null
-            };
-        }
-    }
-    ```
-- [ ] **HandleAttack implementieren:**
+- [ ] Datei: `server/Mmo.Server/Handlers/ActionHandler.cs`
+  ```csharp
+  public class ActionHandler
+  {
+      private readonly World _world;
+      private readonly ConcurrentDictionary<Guid, DateTime> _attackCooldowns = new();
+      
+      public ActionEvent? HandleAction(ClientConnection conn, ActionRequest request)
+      {
+          var actor = _world.GetPlayerByConnection(conn);
+          if (actor == null) return null;
+          
+          return request.ActionType switch
+          {
+              ActionType.Attack => HandleAttack(actor, request),
+              ActionType.Emote => HandleEmote(actor, request),
+              _ => null
+          };
+      }
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Handler routet nach ActionType
+- [ ] Actor wird validiert
+
+**Ressourcen:**
+- [Pattern Matching](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/pattern-matching) – Switch-Expressions
+
+---
+
+#### Sub-Issue: Attack-Handling implementieren
+
+**Labels:** `type:feature`, `area:gameplay`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Attack-Logik mit Cooldown und Range-Check.
+
+**Aufgaben:**
+- [ ] `HandleAttack()`:
   ```csharp
   private ActionEvent? HandleAttack(Player actor, ActionRequest request)
   {
       // Cooldown check
       if (_attackCooldowns.TryGetValue(actor.Id, out var lastAttack))
       {
-          var cooldownRemaining = ActionConstants.AttackCooldownMs - 
-              (DateTime.UtcNow - lastAttack).TotalMilliseconds;
-          if (cooldownRemaining > 0)
+          if ((DateTime.UtcNow - lastAttack).TotalMilliseconds < 500)
           {
-              return new ActionEvent
-              {
-                  ActorId = actor.Id,
-                  ActionType = ActionType.Attack,
-                  Result = ActionResult.OnCooldown
-              };
+              return new ActionEvent { ActorId = actor.Id, Result = ActionResult.OnCooldown };
           }
       }
       
-      // Find target
-      Entity? target = null;
+      // Range check if target
       if (request.TargetId.HasValue)
       {
-          target = _world.GetEntityById(request.TargetId.Value);
+          var target = _world.GetEntityById(request.TargetId.Value);
           if (target == null)
-          {
-              return new ActionEvent
-              {
-                  ActorId = actor.Id,
-                  ActionType = ActionType.Attack,
-                  Result = ActionResult.InvalidTarget
-              };
-          }
+              return new ActionEvent { ActorId = actor.Id, Result = ActionResult.InvalidTarget };
           
-          // Range check
-          var distance = Vector2.Distance(
-              new Vector2(actor.X, actor.Y),
-              new Vector2(target.X, target.Y));
-          if (distance > ActionConstants.AttackRange)
-          {
-              return new ActionEvent
-              {
-                  ActorId = actor.Id,
-                  ActionType = ActionType.Attack,
-                  TargetId = target.Id,
-                  Result = ActionResult.OutOfRange
-              };
-          }
+          if (Vector2.Distance(...) > 100f)
+              return new ActionEvent { ActorId = actor.Id, Result = ActionResult.OutOfRange };
       }
       
-      // Update cooldown
       _attackCooldowns[actor.Id] = DateTime.UtcNow;
-      
-      _logger.LogDebug("Player {Name} attacks {Target}", 
-          actor.Name, target?.Id.ToString() ?? "air");
-      
-      return new ActionEvent
-      {
-          ActorId = actor.Id,
-          ActionType = ActionType.Attack,
-          TargetId = target?.Id,
-          Result = ActionResult.Success,
-          ActorX = actor.X,
-          ActorY = actor.Y
-      };
+      return new ActionEvent { ActorId = actor.Id, ActionType = ActionType.Attack, Result = ActionResult.Success };
   }
   ```
-- [ ] **HandleEmote implementieren:**
+
+**Akzeptanzkriterien:**
+- [ ] Cooldown wird geprüft
+- [ ] Range wird geprüft
+- [ ] Erfolg/Fehler wird gesendet
+
+**Ressourcen:**
+- [ConcurrentDictionary](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2) – Cooldowns
+
+---
+
+#### Sub-Issue: Emote-Handling implementieren
+
+**Labels:** `type:feature`, `area:gameplay`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Emote-Verarbeitung ohne Validierung.
+
+**Aufgaben:**
+- [ ] `HandleEmote()`:
   ```csharp
   private ActionEvent HandleEmote(Player actor, ActionRequest request)
   {
-      _logger.LogDebug("Player {Name} uses emote {Emote}", 
-          actor.Name, request.EmoteType);
-      
+      _logger.LogDebug("Player {Name} uses emote {Emote}", actor.Name, request.EmoteType);
       return new ActionEvent
       {
           ActorId = actor.Id,
           ActionType = ActionType.Emote,
           EmoteType = request.EmoteType,
-          Result = ActionResult.Success,
-          ActorX = actor.X,
-          ActorY = actor.Y
+          Result = ActionResult.Success
       };
-  }
-  ```
-- [ ] **Im MessageRouter registrieren:**
-  ```csharp
-  case MessageType.ActionRequest:
-      var actionEvent = _actionHandler.HandleAction(connection, (ActionRequest)message);
-      if (actionEvent != null)
-      {
-          await BroadcastInRangeAsync(actionEvent, actionEvent.ActorX, actionEvent.ActorY);
-      }
-      break;
-  ```
-- [ ] **Range-basierter Broadcast:**
-  ```csharp
-  private async Task BroadcastInRangeAsync(INetworkMessage msg, float x, float y, float range = 500f)
-  {
-      var nearbyPlayers = _world.GetPlayersInRange(x, y, range);
-      var tasks = nearbyPlayers.Select(p => p.Connection.SendAsync(msg));
-      await Task.WhenAll(tasks);
   }
   ```
 
 **Akzeptanzkriterien:**
-- [ ] Attack-Aktionen werden mit Cooldown verarbeitet
-- [ ] Emote-Aktionen werden sofort verarbeitet
-- [ ] Range-Check verhindert Angriffe auf entfernte Ziele
-- [ ] ActionEvents werden an nahe Spieler gebroadcastet
+- [ ] Emote wird gebroadcastet
+- [ ] Kein Cooldown nötig
 
 **Ressourcen:**
-- [ConcurrentDictionary](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2) – Thread-sichere Cooldown-Speicherung
-- [Pattern Matching](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/pattern-matching) – Switch-Expressions
-- [Vector2 Distance](https://learn.microsoft.com/en-us/dotnet/api/system.numerics.vector2.distance) – Distanzberechnung
-- [LINQ Select](https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.select) – Projektion für Broadcasts
+- [Logging](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging) – Debug-Logs
 
 ---
 
-#### Issue: Dummy-Mob für Attack-Ziel erstellen
+### Epik: Dummy-Mob für Attack-Ziel
+
+**Labels:** `type:epic`, `area:gameplay`, `area:server`, `priority:p2`
+
+**Beschreibung:**
+Dummy-Mob als Angriffsziel erstellen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Entity-Basisklasse erstellen
+- [ ] Sub-Issue: Mob-Klasse erstellen
+
+---
+
+#### Sub-Issue: Entity-Basisklasse erstellen
 
 **Labels:** `type:feature`, `area:gameplay`, `area:server`, `priority:p2`
 
 **Beschreibung:**
-Einen einfachen Dummy-Mob auf dem Server erstellen, der als Angriffsziel für Tests dient. Der Mob hat eine Position, kann angegriffen werden und reagiert visuell auf Angriffe.
+Abstrakte Entity-Basisklasse für alle Spielobjekte.
 
 **Aufgaben:**
-- [ ] **Entity-Basisklasse erstellen:**
-  - [ ] Datei: `server/Mmo.Server/Entities/Entity.cs`
-    ```csharp
-    public abstract class Entity
-    {
-        public Guid Id { get; init; } = Guid.NewGuid();
-        public float X { get; set; }
-        public float Y { get; set; }
-        public abstract EntityType EntityType { get; }
-    }
-    
-    public enum EntityType
-    {
-        Player = 0,
-        Mob = 1,
-        Npc = 2,
-        Object = 3
-    }
-    ```
-- [ ] **Mob-Klasse erstellen:**
-  - [ ] Datei: `server/Mmo.Server/Entities/Mob.cs`
-    ```csharp
-    public class Mob : Entity
-    {
-        public override EntityType EntityType => EntityType.Mob;
-        public required string Name { get; init; }
-        public MobType MobType { get; init; }
-        public int Health { get; set; } = 100;
-        public int MaxHealth { get; init; } = 100;
-        public bool IsAlive => Health > 0;
-        public DateTime? DeathTime { get; set; }
-        
-        public void TakeDamage(int damage)
-        {
-            Health = Math.Max(0, Health - damage);
-            if (!IsAlive)
-            {
-                DeathTime = DateTime.UtcNow;
-            }
-        }
-        
-        public void Respawn()
-        {
-            Health = MaxHealth;
-            DeathTime = null;
-        }
-    }
-    
-    public enum MobType
-    {
-        Dummy = 0,
-        Slime = 1,
-        Goblin = 2
-    }
-    ```
-- [ ] **World um Mob-Verwaltung erweitern:**
+- [ ] Datei: `server/Mmo.Server/Entities/Entity.cs`
   ```csharp
-  public class World
+  public abstract class Entity
   {
-      private readonly Dictionary<Guid, Mob> _mobs = new();
-      
-      public void SpawnDummyMob(float x, float y)
-      {
-          var mob = new Mob
-          {
-              Name = "Training Dummy",
-              MobType = MobType.Dummy,
-              X = x,
-              Y = y,
-              MaxHealth = 1000,
-              Health = 1000
-          };
-          _mobs[mob.Id] = mob;
-      }
-      
-      public Entity? GetEntityById(Guid id)
-      {
-          if (_players.Values.FirstOrDefault(p => p.Id == id) is Player player)
-              return player;
-          if (_mobs.TryGetValue(id, out var mob))
-              return mob;
-          return null;
-      }
-      
-      public IEnumerable<Mob> GetAllMobs() => _mobs.Values;
+      public Guid Id { get; init; } = Guid.NewGuid();
+      public float X { get; set; }
+      public float Y { get; set; }
+      public abstract EntityType EntityType { get; }
   }
-  ```
-- [ ] **Mobs im WorldStateUpdate senden:**
-  - [ ] `MobState` DTO erstellen:
-    ```csharp
-    public class MobState
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public MobType MobType { get; set; }
-        public float X { get; set; }
-        public float Y { get; set; }
-        public int Health { get; set; }
-        public int MaxHealth { get; set; }
-    }
-    ```
-  - [ ] In PlayerStateUpdate oder separater WorldStateUpdate
-- [ ] **Dummy-Mob beim Server-Start spawnen:**
-  ```csharp
-  // In GameServer.StartAsync()
-  _world.SpawnDummyMob(SpawnConfig.DefaultX + 100, SpawnConfig.DefaultY);
-  _logger.LogInformation("Spawned training dummy");
-  ```
-- [ ] **Respawn-Logik (optional):**
-  ```csharp
-  public void Update(TimeSpan deltaTime)
-  {
-      foreach (var mob in _mobs.Values.Where(m => !m.IsAlive))
-      {
-          if (DateTime.UtcNow - mob.DeathTime > TimeSpan.FromSeconds(10))
-          {
-              mob.Respawn();
-              _logger.LogDebug("Mob {Name} respawned", mob.Name);
-          }
-      }
-  }
+  
+  public enum EntityType { Player = 0, Mob = 1, Npc = 2 }
   ```
 
 **Akzeptanzkriterien:**
-- [ ] Dummy-Mob existiert in der Welt bei fester Position
-- [ ] Mob erscheint im WorldStateUpdate
-- [ ] Attack auf Mob reduziert Health
-- [ ] Mob respawnt nach 10 Sekunden (optional)
+- [ ] Basisklasse ist abstrakt
+- [ ] Id und Position sind definiert
 
 **Ressourcen:**
-- [Abstract Classes](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/abstract-and-sealed-classes-and-class-members) – Entity-Basisklasse
-- [LINQ FirstOrDefault](https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.firstordefault) – Entity-Suche
-- [Game Entity Patterns](https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/march/c-game-programming-building-a-basic-game-engine) – Spielobjekte
-- [DateTime Operations](https://learn.microsoft.com/en-us/dotnet/api/system.datetime) – Respawn-Timer
+- [Abstract Classes](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/abstract-and-sealed-classes-and-class-members) – Abstrakte Klassen
 
 ---
 
-#### Issue: Action-Input im Client implementieren
+#### Sub-Issue: Mob-Klasse erstellen
+
+**Labels:** `type:feature`, `area:gameplay`, `area:server`, `priority:p2`
+
+**Beschreibung:**
+Mob-Klasse mit Health und Respawn.
+
+**Aufgaben:**
+- [ ] Datei: `server/Mmo.Server/Entities/Mob.cs`
+  ```csharp
+  public class Mob : Entity
+  {
+      public override EntityType EntityType => EntityType.Mob;
+      public required string Name { get; init; }
+      public int Health { get; set; } = 100;
+      public int MaxHealth { get; init; } = 100;
+      public bool IsAlive => Health > 0;
+      
+      public void TakeDamage(int damage)
+      {
+          Health = Math.Max(0, Health - damage);
+      }
+  }
+  ```
+- [ ] In World.SpawnDummyMob() aufrufen
+
+**Akzeptanzkriterien:**
+- [ ] Mob kann Schaden nehmen
+- [ ] Mob ist attackierbar
+
+**Ressourcen:**
+- [Game Entities](https://learn.microsoft.com/en-us/archive/msdn-magazine/2015/march/c-game-programming-building-a-basic-game-engine) – Entity-Design
+
+---
+
+### Epik: Action-Input im Client
+
+**Labels:** `type:epic`, `area:gameplay`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Eingabebehandlung für Aktionen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: InputMap konfigurieren
+- [ ] Sub-Issue: ActionController erstellen
+
+---
+
+#### Sub-Issue: InputMap konfigurieren
 
 **Labels:** `type:feature`, `area:gameplay`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Die Eingabebehandlung für Aktionen im Godot-Client implementieren. Tasten werden auf Aktionen gemappt, Ziele werden ermittelt und ActionRequests an den Server gesendet.
+Tasten für Aktionen definieren.
 
 **Aufgaben:**
-- [ ] **InputMap konfigurieren (empfohlen: über Godot Editor):**
-  - [ ] **Empfohlene Methode:** Im Godot Editor unter `Project → Project Settings → Input Map`:
-    - Action `action_attack` erstellen und Leertaste (Space) zuweisen
-    - Action `action_emote` erstellen und E-Taste zuweisen
-  - [ ] Alternativ in `project.godot` (nur zur Referenz, Editor-Methode bevorzugen):
-    ```
-    [input]
-    action_attack={"deadzone":0.5, "events":[InputEventKey mit keycode=32 (Space)]}
-    action_emote={"deadzone":0.5, "events":[InputEventKey mit keycode=69 (E)]}
-    ```
-  - [ ] `action_attack`: Leertaste (Space)
-  - [ ] `action_emote`: E-Taste
-- [ ] **ActionController-Script erstellen:**
-  - [ ] Datei: `res://scripts/player/ActionController.cs`
-    ```csharp
-    public partial class ActionController : Node
-    {
-        private GameManager _gameManager;
-        private DateTime _lastAttackTime = DateTime.MinValue;
-        private EmoteType _currentEmote = EmoteType.Wave;
-        
-        public override void _Ready()
-        {
-            _gameManager = GetNode<GameManager>("/root/GameManager");
-        }
-        
-        public override void _Process(double delta)
-        {
-            if (Input.IsActionJustPressed("action_attack"))
-            {
-                TryAttack();
-            }
-            
-            if (Input.IsActionJustPressed("action_emote"))
-            {
-                TryEmote();
-            }
-            
-            // Cycle emotes with number keys (optional)
-            for (int i = 1; i <= 5; i++)
-            {
-                if (Input.IsActionJustPressed($"emote_{i}"))
-                {
-                    _currentEmote = (EmoteType)(i - 1);
-                }
-            }
-        }
-        
-        private void TryAttack()
-        {
-            // Client-side cooldown check
-            var timeSinceLastAttack = DateTime.UtcNow - _lastAttackTime;
-            if (timeSinceLastAttack.TotalMilliseconds < ActionConstants.AttackCooldownMs)
-            {
-                return; // Still on cooldown
-            }
-            
-            var target = FindNearestTarget();
-            
-            var request = new ActionRequest
-            {
-                ActionType = ActionType.Attack,
-                TargetId = target?.Id
-            };
-            
-            NetworkClient.Instance.Send(request);
-            _lastAttackTime = DateTime.UtcNow;
-        }
-        
-        private void TryEmote()
-        {
-            var request = new ActionRequest
-            {
-                ActionType = ActionType.Emote,
-                EmoteType = _currentEmote
-            };
-            
-            NetworkClient.Instance.Send(request);
-        }
-    }
-    ```
-- [ ] **Target-Finding implementieren:**
-  ```csharp
-  private Entity? FindNearestTarget()
-  {
-      var localPlayer = _gameManager.LocalPlayer;
-      if (localPlayer == null) return null;
-      
-      var playerPos = localPlayer.GlobalPosition;
-      Entity? nearest = null;
-      float nearestDist = ActionConstants.AttackRange;
-      
-      // Check mobs
-      foreach (var mob in _gameManager.GetVisibleMobs())
-      {
-          var dist = playerPos.DistanceTo(mob.GlobalPosition);
-          if (dist < nearestDist)
-          {
-              nearestDist = dist;
-              nearest = mob.EntityData;
-          }
-      }
-      
-      return nearest;
-  }
-  ```
-- [ ] **Targeting-Indikator (optional):**
-  - [ ] Kreis oder Highlight um das aktuelle Ziel
-  - [ ] Tab-Taste zum Durchschalten von Zielen
-- [ ] **Cooldown-UI-Feedback:**
-  - [ ] Grauer Button/Icon während Cooldown
-  - [ ] Oder: kleine Fortschrittsanzeige
+- [ ] In Godot Editor → Project Settings → Input Map:
+  - [ ] `action_attack`: Space
+  - [ ] `action_emote`: E
 
 **Akzeptanzkriterien:**
-- [ ] Leertaste löst Attack aus
-- [ ] E-Taste löst aktuelles Emote aus
-- [ ] Nächstes Ziel im Range wird automatisch getroffen
-- [ ] Cooldown verhindert Spam
-- [ ] Keine Aktion wenn Chat fokussiert
+- [ ] Tasten sind konfiguriert
+- [ ] Tasten werden erkannt
+
+**Ressourcen:**
+- [InputMap](https://docs.godotengine.org/en/stable/classes/class_inputmap.html) – Tastenbelegung
+
+---
+
+#### Sub-Issue: ActionController erstellen
+
+**Labels:** `type:feature`, `area:gameplay`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Controller für Action-Input.
+
+**Aufgaben:**
+- [ ] Datei: `res://scripts/player/ActionController.cs`
+  ```csharp
+  public partial class ActionController : Node
+  {
+      private DateTime _lastAttackTime = DateTime.MinValue;
+      
+      public override void _Process(double delta)
+      {
+          if (Input.IsActionJustPressed("action_attack"))
+              TryAttack();
+          if (Input.IsActionJustPressed("action_emote"))
+              TryEmote();
+      }
+      
+      private void TryAttack()
+      {
+          if ((DateTime.UtcNow - _lastAttackTime).TotalMilliseconds < 500)
+              return;
+          
+          var request = new ActionRequest { ActionType = ActionType.Attack };
+          NetworkClient.Instance.Send(request);
+          _lastAttackTime = DateTime.UtcNow;
+      }
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Space löst Attack aus
+- [ ] Client-seitiger Cooldown
 
 **Ressourcen:**
 - [Input in Godot](https://docs.godotengine.org/en/stable/tutorials/inputs/input_examples.html) – Input-Handling
-- [InputMap](https://docs.godotengine.org/en/stable/classes/class_inputmap.html) – Tastenbelegung definieren
-- [IsActionJustPressed](https://docs.godotengine.org/en/stable/classes/class_input.html#class-input-method-is-action-just-pressed) – Einmaliger Tastendruck
-- [Vector2.DistanceTo](https://docs.godotengine.org/en/stable/classes/class_vector2.html#class-vector2-method-distance-to) – Distanz berechnen
 
 ---
 
-#### Issue: Action-Visualisierung im Client
+### Epik: Action-Visualisierung
+
+**Labels:** `type:epic`, `area:gameplay`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Visuelle Darstellung von Aktionen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Attack-Effekt erstellen
+- [ ] Sub-Issue: Emote-Popup erstellen
+
+---
+
+#### Sub-Issue: Attack-Effekt erstellen
 
 **Labels:** `type:feature`, `area:gameplay`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Die visuelle Darstellung von Aktionen im Godot-Client implementieren. Spieler sehen Angriffs-Effekte, Emote-Icons und Reaktionen von getroffenen Entities.
+Visueller Effekt für Angriffe.
 
 **Aufgaben:**
-- [ ] **ActionEventHandler im Client:**
-  - [ ] Datei: `res://scripts/managers/ActionVisualizer.cs`
-    ```csharp
-    public partial class ActionVisualizer : Node
-    {
-        [Export] private PackedScene _attackEffectScene;
-        [Export] private PackedScene _emotePopupScene;
-        
-        private GameManager _gameManager;
-        
-        public override void _Ready()
-        {
-            _gameManager = GetNode<GameManager>("/root/GameManager");
-            NetworkClient.Instance.MessageReceived += OnMessageReceived;
-        }
-        
-        private void OnMessageReceived(INetworkMessage message)
-        {
-            if (message is ActionEvent actionEvent)
-            {
-                CallDeferred(nameof(HandleActionEvent), actionEvent);
-            }
-        }
-        
-        private void HandleActionEvent(ActionEvent evt)
-        {
-            switch (evt.ActionType)
-            {
-                case ActionType.Attack:
-                    ShowAttackEffect(evt);
-                    break;
-                case ActionType.Emote:
-                    ShowEmotePopup(evt);
-                    break;
-            }
-        }
-    }
-    ```
-- [ ] **Attack-Effekt erstellen:**
-  - [ ] `AttackEffect.tscn` Szene:
-    ```
-    AttackEffect (Node2D)
-    ├── Sprite2D (Slash-Grafik oder Kreis)
-    ├── AnimationPlayer
-    └── Timer (AutoStart, 0.3s → QueueFree)
-    ```
-  - [ ] Im Script:
-    ```csharp
-    private void ShowAttackEffect(ActionEvent evt)
-    {
-        var actor = _gameManager.GetPlayerNode(evt.ActorId);
-        if (actor == null) return;
-        
-        var effect = _attackEffectScene.Instantiate<Node2D>();
-        actor.AddChild(effect);
-        effect.Position = Vector2.Zero; // Relativ zum Spieler
-        
-        // Animation starten
-        var anim = effect.GetNode<AnimationPlayer>("AnimationPlayer");
-        anim.Play("slash");
-        
-        // Target-Reaktion
-        if (evt.TargetId.HasValue)
-        {
-            var target = _gameManager.GetEntityNode(evt.TargetId.Value);
-            if (target != null)
-            {
-                ShowDamageReaction(target);
-            }
-        }
-    }
-    
-    private void ShowDamageReaction(Node2D target)
-    {
-        // Kurzes Blinken
-        var tween = CreateTween();
-        tween.TweenProperty(target, "modulate", new Color(1, 0.3f, 0.3f), 0.1f);
-        tween.TweenProperty(target, "modulate", Colors.White, 0.1f);
-    }
-    ```
-- [ ] **Emote-Popup erstellen:**
-  - [ ] `EmotePopup.tscn` Szene:
-    ```
-    EmotePopup (Control)
-    ├── Label oder TextureRect (Emote-Icon)
-    └── Timer (2s → QueueFree)
-    ```
-  - [ ] Im Script:
-    ```csharp
-    private void ShowEmotePopup(ActionEvent evt)
-    {
-        var actor = _gameManager.GetPlayerNode(evt.ActorId);
-        if (actor == null) return;
-        
-        var popup = _emotePopupScene.Instantiate<Control>();
-        actor.AddChild(popup);
-        popup.Position = new Vector2(0, -50); // Über dem Spieler
-        
-        var label = popup.GetNode<Label>("Label");
-        label.Text = GetEmoteText(evt.EmoteType ?? EmoteType.Wave);
-        
-        // Aufwärts-Animation
-        var tween = CreateTween();
-        tween.TweenProperty(popup, "position:y", popup.Position.Y - 20, 1.5f);
-        tween.Parallel().TweenProperty(popup, "modulate:a", 0f, 1.5f);
-    }
-    
-    private string GetEmoteText(EmoteType emote) => emote switch
-    {
-        EmoteType.Wave => "👋",
-        EmoteType.Dance => "💃",
-        EmoteType.Sit => "🪑",
-        EmoteType.Laugh => "😂",
-        EmoteType.Cry => "😢",
-        _ => "❓"
-    };
-    ```
-- [ ] **Sound-Effekte (optional):**
-  - [ ] `AudioStreamPlayer2D` für Angriffsgeräusch
-  - [ ] Verschiedene Sounds pro Emote
-- [ ] **Performance-Optimierung:**
-  - [ ] Object-Pooling für häufige Effekte
-  - [ ] Effekte außerhalb des Sichtbereichs ignorieren
+- [ ] Szene: `res://scenes/effects/AttackEffect.tscn`
+  ```
+  AttackEffect (Node2D)
+  ├── Sprite2D (Slash-Grafik)
+  └── Timer (0.3s → QueueFree)
+  ```
+- [ ] Ziel blinkt rot bei Treffer:
+  ```csharp
+  private void ShowDamageReaction(Node2D target)
+  {
+      var tween = CreateTween();
+      tween.TweenProperty(target, "modulate", new Color(1, 0.3f, 0.3f), 0.1f);
+      tween.TweenProperty(target, "modulate", Colors.White, 0.1f);
+  }
+  ```
 
 **Akzeptanzkriterien:**
-- [ ] Attack zeigt visuellen Slash-Effekt am Angreifer
-- [ ] Getroffene Ziele blinken rot
-- [ ] Emotes zeigen Emoji/Text über dem Spieler
-- [ ] Effekte verschwinden nach kurzer Zeit
-- [ ] Keine Performance-Probleme bei vielen gleichzeitigen Aktionen
+- [ ] Effekt ist sichtbar
+- [ ] Ziel blinkt
 
 **Ressourcen:**
-- [AnimationPlayer](https://docs.godotengine.org/en/stable/classes/class_animationplayer.html) – Animationen abspielen
-- [Tween in Godot 4](https://docs.godotengine.org/en/stable/classes/class_tween.html) – Einfache Animationen
-- [Particle Systems](https://docs.godotengine.org/en/stable/tutorials/2d/particle_systems_2d.html) – Partikel-Effekte
-- [Object Pooling Pattern](https://docs.godotengine.org/en/stable/tutorials/best_practices/scenes_versus_scripts.html) – Performance-Optimierung
+- [Tween](https://docs.godotengine.org/en/stable/classes/class_tween.html) – Animationen
 
 ---
 
+#### Sub-Issue: Emote-Popup erstellen
+
+**Labels:** `type:feature`, `area:gameplay`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Popup für Emotes über Spielerkopf.
+
+**Aufgaben:**
+- [ ] Szene: `res://scenes/effects/EmotePopup.tscn`
+- [ ] Emoji-Text anzeigen:
+  ```csharp
+  private string GetEmoteText(EmoteType emote) => emote switch
+  {
+      EmoteType.Wave => "👋",
+      EmoteType.Dance => "💃",
+      EmoteType.Sit => "🪑",
+      _ => "❓"
+  };
+  ```
+- [ ] Nach oben faden und verschwinden
+
+**Akzeptanzkriterien:**
+- [ ] Emoji erscheint über Spieler
+- [ ] Verschwindet nach 2 Sekunden
+
+**Ressourcen:**
+- [Label](https://docs.godotengine.org/en/stable/classes/class_label.html) – Text-Anzeige
 ### Phase 4 – Abschluss & Refactoring
 
 ---
 
-#### Issue: Code-Cleanup und Naming-Konventionen
+### Epik: Code-Cleanup und Naming-Konventionen
+
+**Labels:** `type:epic`, `type:chore`, `priority:p2`
+
+**Beschreibung:**
+Code aufräumen und Konventionen vereinheitlichen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Naming-Konventionen prüfen
+- [ ] Sub-Issue: Code-Formatierung durchführen
+- [ ] Sub-Issue: Unused Code und TODOs bereinigen
+
+---
+
+#### Sub-Issue: Naming-Konventionen prüfen
 
 **Labels:** `type:chore`, `priority:p2`
 
 **Beschreibung:**
-Code aufräumen, einheitliche Naming-Konventionen anwenden und technische Schulden abbauen. Der Code soll den Microsoft C#-Richtlinien entsprechen und wartbar sein.
+Alle Namen auf C#-Konventionen prüfen.
 
 **Aufgaben:**
-- [ ] **Naming-Konventionen prüfen:**
-  - [ ] Klassen: PascalCase (z.B. `GameServer`, `PlayerController`)
-  - [ ] Methoden: PascalCase (z.B. `HandleLogin`, `SendAsync`)
-  - [ ] Private Felder: _camelCase (z.B. `_players`, `_logger`)
-  - [ ] Lokale Variablen: camelCase (z.B. `player`, `message`)
-  - [ ] Konstanten: PascalCase (z.B. `MaxPlayers`, `DefaultPort`)
-  - [ ] Interfaces: IPascalCase (z.B. `INetworkMessage`, `ICharacterRepository`)
-- [ ] **Code-Analyse durchführen:**
-  - [ ] `dotnet format` ausführen für Formatierung
-  - [ ] Warnings aktivieren in `.csproj`:
-    ```xml
-    <PropertyGroup>
-      <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-      <WarningLevel>5</WarningLevel>
-      <Nullable>enable</Nullable>
-    </PropertyGroup>
-    ```
-  - [ ] Alle Compiler-Warnings auflisten und beheben
-- [ ] **Unused Code entfernen:**
-  - [ ] Nicht verwendete `using` Statements
-  - [ ] Auskommentierter Code (nach Git-History prüfen)
-  - [ ] Nicht aufgerufene Methoden
-  - [ ] Leere Catch-Blöcke dokumentieren oder füllen
-- [ ] **TODO-Kommentare auflösen:**
-  - [ ] Alle `// TODO:` suchen
-  - [ ] Entweder implementieren oder als Issue erfassen
-  - [ ] `// HACK:` durch saubere Lösung ersetzen
-- [ ] **Code-Dokumentation:**
-  - [ ] XML-Kommentare für öffentliche APIs
-  - [ ] Kurze Inline-Kommentare für komplexe Logik
-  - [ ] Keine offensichtlichen Kommentare (z.B. "// increment i")
-- [ ] **Datei-Organisation:**
-  - [ ] Eine Klasse pro Datei (Ausnahme: kleine Helper-Klassen)
-  - [ ] Ordnerstruktur entspricht Namespaces
-  - [ ] `global using` für häufig verwendete Namespaces
+- [ ] Konventionen prüfen:
+  - Klassen: PascalCase (`GameServer`)
+  - Methoden: PascalCase (`HandleLogin`)
+  - Private Felder: _camelCase (`_players`)
+  - Lokale Variablen: camelCase (`player`)
+  - Interfaces: IPascalCase (`INetworkMessage`)
+- [ ] Abweichungen korrigieren
 
 **Akzeptanzkriterien:**
-- [ ] `dotnet build` zeigt keine Warnings
-- [ ] Keine TODO/HACK-Kommentare ohne Issue-Referenz
-- [ ] Einheitliche Formatierung im gesamten Projekt
-- [ ] Nullable Reference Types aktiviert und Warnings behoben
+- [ ] Alle Namen folgen Konventionen
+- [ ] Dokumentiert
 
 **Ressourcen:**
-- [C# Coding Conventions](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions) – Offizielle Microsoft-Richtlinien
-- [.NET Naming Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/naming-guidelines) – Namenskonventionen
-- [dotnet format](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format) – Code-Formatierung
-- [Nullable Reference Types](https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references) – Null-Safety
+- [C# Coding Conventions](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions) – Richtlinien
 
 ---
 
-#### Issue: README und Dokumentation aktualisieren
+#### Sub-Issue: Code-Formatierung durchführen
+
+**Labels:** `type:chore`, `priority:p2`
+
+**Beschreibung:**
+`dotnet format` ausführen.
+
+**Aufgaben:**
+- [ ] `dotnet format` ausführen
+- [ ] Warnings aktivieren in .csproj
+- [ ] Compiler-Warnings beheben
+
+**Akzeptanzkriterien:**
+- [ ] Keine Compiler-Warnings
+- [ ] Einheitliche Formatierung
+
+**Ressourcen:**
+- [dotnet format](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format) – Formatierung
+
+---
+
+#### Sub-Issue: Unused Code und TODOs bereinigen
+
+**Labels:** `type:chore`, `priority:p2`
+
+**Beschreibung:**
+Toten Code und TODOs aufräumen.
+
+**Aufgaben:**
+- [ ] Unused usings entfernen
+- [ ] Auskommentierten Code entfernen
+- [ ] Alle `// TODO:` suchen und auflösen
+
+**Akzeptanzkriterien:**
+- [ ] Kein toter Code
+- [ ] Keine offenen TODOs ohne Issue
+
+**Ressourcen:**
+- [Code Cleanup](https://learn.microsoft.com/en-us/visualstudio/ide/reference/remove-unused-usings) – VS Cleanup
+
+---
+
+### Epik: README und Dokumentation
+
+**Labels:** `type:epic`, `type:documentation`, `priority:p1`
+
+**Beschreibung:**
+Dokumentation aktualisieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: README aktualisieren
+- [ ] Sub-Issue: Setup-Anleitung schreiben
+
+---
+
+#### Sub-Issue: README aktualisieren
 
 **Labels:** `type:documentation`, `priority:p1`
 
 **Beschreibung:**
-Die README und grundlegende Dokumentation für Phase 4 aktualisieren, damit neue Entwickler das Projekt verstehen und schnell starten können.
+README mit aktuellem Feature-Stand.
 
 **Aufgaben:**
-- [ ] **README.md aktualisieren:**
-  - [ ] Projektbeschreibung (Was ist 2DMMO?)
-  - [ ] Aktueller Feature-Stand nach Phase 4:
-    ```markdown
-    ## Features
-    - ✅ Multiplayer Login/Logout
-    - ✅ Echtzeit-Bewegungssynchronisation
-    - ✅ Charakter-Persistenz (Name, Position)
-    - ✅ Global-Chat
-    - ✅ Basis-Aktionen (Attack, Emote)
-    ```
-  - [ ] Tech-Stack:
-    ```markdown
-    ## Tech-Stack
-    - **Client:** Godot 4.x mit C#
-    - **Server:** .NET 8 / C# 12
-    - **Protokoll:** TCP mit JSON-Serialisierung
-    - **Persistenz:** File-basiert (JSON)
-    ```
-- [ ] **Setup-Anleitung:**
+- [ ] Feature-Übersicht:
   ```markdown
-  ## Voraussetzungen
-  - [.NET 8 SDK](https://dotnet.microsoft.com/download)
-  - [Godot 4.x mit .NET](https://godotengine.org/download)
-  
-  ## Build & Run
-  
-  ### Server
-  ```bash
-  cd server/Mmo.Server
-  dotnet run
+  ## Features
+  - ✅ Multiplayer Login/Logout
+  - ✅ Echtzeit-Bewegung
+  - ✅ Charakter-Persistenz
+  - ✅ Global-Chat
+  - ✅ Basis-Aktionen
   ```
-  
-  ### Client
-  1. Godot öffnen
-  2. Projekt `client/GodotProject` importieren
-  3. F5 zum Starten
-  ```
-- [ ] **Architektur-Überblick:**
-  ```markdown
-  ## Architektur
-  
-  ```
-  ┌─────────────┐     TCP/JSON     ┌─────────────┐
-  │   Godot     │◄───────────────►│  .NET 8     │
-  │   Client    │                  │   Server    │
-  └─────────────┘                  └──────┬──────┘
-                                          │
-                                   ┌──────▼──────┐
-                                   │   JSON      │
-                                   │   Files     │
-                                   └─────────────┘
-  ```
-  ```
-- [ ] **Ordnerstruktur dokumentieren:**
-  ```markdown
-  ## Projektstruktur
-  ```
-  2DMMO/
-  ├── server/
-  │   └── Mmo.Server/         # .NET Server
-  ├── shared/
-  │   └── Mmo.Shared/         # Gemeinsame DTOs
-  ├── client/
-  │   └── GodotProject/       # Godot Client
-  └── docs/                   # Dokumentation
-  ```
-  ```
-- [ ] **Bekannte Limitierungen:**
-  ```markdown
-  ## Bekannte Limitierungen
-  - Keine Authentifizierung (jeder Name akzeptiert)
-  - Keine Verschlüsselung (Klartext TCP)
-  - File-Persistenz nicht für Produktion geeignet
-  - Keine Zonen/Instanzen (eine Welt für alle)
-  ```
-- [ ] **Nächste Schritte (Roadmap):**
-  ```markdown
-  ## Roadmap (Phase 5+)
-  - [ ] SQLite-Persistenz
-  - [ ] Authentifizierung mit Passwort
-  - [ ] Zonen-System
-  - [ ] Kampfsystem mit Mobs
-  - [ ] Items & Inventar
-  ```
+- [ ] Tech-Stack dokumentieren
+- [ ] Bekannte Limitierungen
 
 **Akzeptanzkriterien:**
-- [ ] README enthält vollständige Setup-Anleitung
-- [ ] Neue Entwickler können in <10 Minuten starten
-- [ ] Aktueller Feature-Stand ist dokumentiert
-- [ ] Bekannte Limitierungen sind transparent
+- [ ] README ist aktuell
+- [ ] Features sind gelistet
 
 **Ressourcen:**
-- [README Best Practices](https://learn.microsoft.com/en-us/azure/devops/repos/git/create-a-readme) – Gute README schreiben
-- [Markdown Syntax](https://learn.microsoft.com/en-us/contribute/markdown-reference) – Markdown-Referenz
-- [ASCII Diagrams](https://docs.microsoft.com/en-us/contribute/code-in-docs) – Architekturdiagramme im Text
-- [GitHub Markdown](https://docs.github.com/en/get-started/writing-on-github) – GitHub-spezifisches Markdown
+- [README Best Practices](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) – README
 
 ---
 
-#### Issue: Manueller Testplan für Phase 4
+#### Sub-Issue: Setup-Anleitung schreiben
+
+**Labels:** `type:documentation`, `priority:p1`
+
+**Beschreibung:**
+Schritt-für-Schritt Setup-Anleitung.
+
+**Aufgaben:**
+- [ ] Voraussetzungen:
+  - .NET 8 SDK
+  - Godot 4.x mit .NET
+- [ ] Build-Anleitung:
+  ```bash
+  # Server
+  cd server/Mmo.Server
+  dotnet run
+  
+  # Client
+  # Godot öffnen → F5
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Neue Entwickler können starten
+- [ ] Anleitung ist getestet
+
+**Ressourcen:**
+- [Markdown](https://learn.microsoft.com/en-us/contribute/markdown-reference) – Formatierung
+
+---
+
+### Epik: Manueller Testplan
+
+**Labels:** `type:epic`, `type:test`, `priority:p1`
+
+**Beschreibung:**
+Testplan für Phase 4 erstellen und durchführen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Testplan erstellen
+- [ ] Sub-Issue: Tests durchführen
+
+---
+
+#### Sub-Issue: Testplan erstellen
 
 **Labels:** `type:test`, `priority:p1`
 
 **Beschreibung:**
-Einen manuellen Testplan erstellen und durchführen, der alle Phase-4-Features systematisch abdeckt. Ergebnisse werden dokumentiert und gefundene Bugs als Issues erfasst.
+Testfälle dokumentieren.
 
 **Aufgaben:**
-- [ ] **Testplan-Dokument erstellen:**
-  - [ ] Datei: `docs/TESTPLAN_PHASE4.md`
-  - [ ] Format pro Testfall:
-    ```markdown
-    ### TC-001: Login mit neuem Charakter
-    **Vorbedingung:** Server läuft, kein Charakter-File existiert
-    **Schritte:**
-    1. Client starten
-    2. Namen "TestPlayer1" eingeben
-    3. Login-Button klicken
-    **Erwartetes Ergebnis:**
-    - Login erfolgreich
-    - Spieler spawnt in Weltmitte
-    - Charakter-File wird erstellt
-    **Tatsächliches Ergebnis:** _[Auszufüllen]_
-    **Status:** ⬜ Bestanden / ⬜ Fehlgeschlagen
-    ```
-- [ ] **Testfälle definieren:**
-  - [ ] **Login/Logout:**
-    - TC-001: Login mit neuem Charakter
-    - TC-002: Login mit existierendem Charakter
-    - TC-003: Logout speichert Position
-    - TC-004: Reconnect nach Disconnect
-  - [ ] **Movement:**
-    - TC-010: Bewegung in alle Richtungen
-    - TC-011: Bewegung an Weltgrenzen
-    - TC-012: Andere Spieler sichtbar
-    - TC-013: Position synchronisiert korrekt
-  - [ ] **Persistenz:**
-    - TC-020: Position nach Neustart erhalten
-    - TC-021: Korruptes File wird behandelt
-    - TC-022: Server-Shutdown speichert alle
-  - [ ] **Chat:**
-    - TC-030: Nachricht senden und empfangen
-    - TC-031: Rate-Limit wird angezeigt
-    - TC-032: System-Nachrichten erscheinen
-  - [ ] **Aktionen:**
-    - TC-040: Attack auf Dummy-Mob
-    - TC-041: Emote wird angezeigt
-    - TC-042: Cooldown funktioniert
-  - [ ] **Mehrere Clients:**
-    - TC-050: 2 Clients gleichzeitig
-    - TC-051: 3+ Clients (Lasttest)
-    - TC-052: Schnelles Ein-/Ausloggen
-- [ ] **Tests durchführen:**
-  - [ ] Jeden Testfall einzeln ausführen
-  - [ ] Ergebnis dokumentieren
-  - [ ] Screenshots bei Fehlern
-- [ ] **Bugs als Issues erfassen:**
-  - [ ] Pro gefundenem Bug ein Issue erstellen
-  - [ ] Label `type:bug` und `priority:*` setzen
-  - [ ] Reproduktionsschritte dokumentieren
-- [ ] **Testergebnis-Zusammenfassung (Vorlage - Zahlen nach Test ausfüllen):**
-  ```markdown
-  ## Zusammenfassung
-  <!-- Die folgenden Zahlen sind Beispiele - bitte mit tatsächlichen Ergebnissen ersetzen -->
-  - **Gesamtzahl Testfälle:** _[z.B. 20]_
-  - **Bestanden:** _[Anzahl]_
-  - **Fehlgeschlagen:** _[Anzahl]_
-  - **Kritische Bugs:** _[Anzahl]_
-  - **Nicht-kritische Bugs:** _[Anzahl]_
-  
-  ### Gefundene Bugs
-  - #_[Issue-Nr]_: _[Beschreibung Bug 1]_
-  - #_[Issue-Nr]_: _[Beschreibung Bug 2]_
-  ```
+- [ ] Datei: `docs/TESTPLAN_PHASE4.md`
+- [ ] Testfälle:
+  - Login mit neuem/existierendem Charakter
+  - Movement-Synchronisation
+  - Chat senden/empfangen
+  - Attack/Emote ausführen
+  - Logout und Reconnect
 
 **Akzeptanzkriterien:**
-- [ ] Testplan-Dokument existiert mit allen Testfällen
-- [ ] Alle Testfälle wurden durchgeführt
-- [ ] Ergebnisse sind dokumentiert
-- [ ] Gefundene Bugs sind als Issues erfasst
-- [ ] Kein kritischer Bug ungelöst
+- [ ] Alle Features abgedeckt
+- [ ] Schritte sind klar
 
 **Ressourcen:**
-- [Test Plan Templates](https://learn.microsoft.com/en-us/azure/devops/test/create-test-cases) – Testplan-Struktur
-- [Exploratory Testing](https://learn.microsoft.com/en-us/azure/devops/test/perform-exploratory-tests) – Exploratives Testen
-- [Bug Report Best Practices](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/manage-bugs) – Bug-Dokumentation
-- [Test Documentation](https://learn.microsoft.com/en-us/azure/devops/test/) – Test-Management
+- [Test Cases](https://learn.microsoft.com/en-us/azure/devops/test/create-test-cases) – Testplan-Struktur
 
 ---
 
+#### Sub-Issue: Tests durchführen
+
+**Labels:** `type:test`, `priority:p1`
+
+**Beschreibung:**
+Tests durchführen und dokumentieren.
+
+**Aufgaben:**
+- [ ] Jeden Testfall durchführen
+- [ ] Ergebnisse dokumentieren
+- [ ] Bugs als Issues erfassen
+
+**Akzeptanzkriterien:**
+- [ ] Alle Tests durchgeführt
+- [ ] Ergebnisse dokumentiert
+- [ ] Bugs erfasst
+
+**Ressourcen:**
+- [Bug Reports](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/manage-bugs) – Bug-Dokumentation
 ## Zusammenfassung
 
-### Übersicht der Sub-Issues (zu erstellen)
+### Übersicht der Sub-Issues für bestehende Issues (#8, #9, #11, #12, #14, #15)
 
 | Original-Issue | Sub-Issues |
 |---------------|------------|
@@ -3424,24 +3223,58 @@ Einen manuellen Testplan erstellen und durchführen, der alle Phase-4-Features s
 | #14 Remote-Player | 14a: GameManager, 14b: PlayerNode-Szene, 14c: Interpolation |
 | #15 Movement-Tests | 15a: Tuning, 15b: Unit-Tests, 15c: Manuelle Tests |
 
-### Übersicht der neuen Issues (zu erstellen)
+**Gesamt: 17 Sub-Issues für 6 bestehende Issues**
 
-| Phase | Kategorie | Anzahl Issues |
-|-------|-----------|---------------|
-| Phase 2 | Feinschliff | 3 |
-| Phase 3 | Welt & Movement | 4 |
-| Phase 4 | Persistenz | 5 |
-| Phase 4 | Chat-System | 5 |
-| Phase 4 | Gameplay-Action | 5 |
-| Phase 4 | Abschluss | 3 |
-| **Gesamt** | | **25 neue Issues** |
+### Übersicht der neuen Epik-Issues und Sub-Issues
+
+| Phase | Epik-Issue | Anzahl Sub-Issues |
+|-------|-----------|-------------------|
+| Phase 2 | Verbindungsaufbau-Flow | 3 |
+| Phase 2 | Shared DTOs | 3 |
+| Phase 2 | Logging | 3 |
+| Phase 3 | 2D-Tilemap | 3 |
+| Phase 3 | Spawn-Logik | 3 |
+| Phase 3 | Koordinaten-Mapping | 2 |
+| Phase 3 | Weltgrenzen | 2 |
+| Phase 4 | Datenmodell Persistenz | 3 |
+| Phase 4 | Persistenzschicht | 3 |
+| Phase 4 | Login laden | 2 |
+| Phase 4 | Logout speichern | 2 |
+| Phase 4 | Fehlerbehandlung Persistenz | 2 |
+| Phase 4 | Chat-Nachrichtentypen | 3 |
+| Phase 4 | Chat-Handling Server | 3 |
+| Phase 4 | Rate-Limiting | 2 |
+| Phase 4 | Chat-UI | 2 |
+| Phase 4 | Chat-Integration | 2 |
+| Phase 4 | Action-Nachrichtentypen | 2 |
+| Phase 4 | Action-Handler | 3 |
+| Phase 4 | Dummy-Mob | 2 |
+| Phase 4 | Action-Input | 2 |
+| Phase 4 | Action-Visualisierung | 2 |
+| Phase 4 | Code-Cleanup | 3 |
+| Phase 4 | README/Doku | 2 |
+| Phase 4 | Testplan | 2 |
+| **Gesamt** | **25 Epik-Issues** | **~61 Sub-Issues** |
+
+---
+
+## Statistik
+
+| Kategorie | Anzahl |
+|-----------|--------|
+| Bestehende Issues analysiert | 15 |
+| Epik-Issues für bestehende Issues | 6 |
+| Sub-Issues für bestehende Issues | 17 |
+| Neue Epik-Issues | 25 |
+| Neue Sub-Issues | ~61 |
+| **Gesamt Issues nach Umsetzung** | **~93** |
 
 ---
 
 ## Nächste Schritte
 
-1. Sub-Issues für die 6 identifizierten großen Issues erstellen
-2. Original-Issues mit Verweisen auf Sub-Issues aktualisieren
-3. 25 neue Issues für Phase 2-4 erstellen
-4. Issues mit passenden Labels versehen
-5. Issues in sinnvoller Reihenfolge priorisieren
+1. ✅ Sub-Issues für die 6 bestehenden großen Issues definiert
+2. ✅ 25 neue Epik-Issues mit ~61 Sub-Issues definiert
+3. Original-Issues (#8, #9, #11, #12, #14, #15) mit Verweisen auf Sub-Issues aktualisieren (siehe `docs/ISSUE_UPDATES.md`)
+4. Issues in GitHub erstellen mit passenden Labels
+5. Issues in sinnvoller Reihenfolge priorisieren (siehe `docs/ISSUE_HIERARCHY.md`)
