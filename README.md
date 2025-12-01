@@ -1,6 +1,6 @@
 # 2DMMO
 
-Ein einfaches 2D-Multiplayer-Online-Spiel, entwickelt mit Godot 4 (C#) als Client und .NET 9 als Server.
+Ein einfaches 2D-Multiplayer-Online-Spiel, entwickelt mit Godot 4 (C#) als Client und .NET 10 als Server.
 
 ## 🎯 Projektziel
 
@@ -14,9 +14,9 @@ Erstellung eines funktionsfähigen Online-Multiplayer-Prototyps mit:
 
 | Komponente | Technologie |
 |-----------|-------------|
-| **Server** | .NET 9, C# |
-| **Client** | Godot 4.3, C#, .NET 9 |
-| **Shared Code** | .NET 9 Class Library |
+| **Server** | .NET 10, C# 14 |
+| **Client** | Godot 4.3, C# 14, .NET 10 |
+| **Shared Code** | .NET 10 Class Library |
 | **Kommunikation** | TCP/WebSocket (geplant) |
 | **Persistenz** | JSON/SQLite (geplant) |
 | **Cloud** | Azure (optional, geplant) |
@@ -50,7 +50,7 @@ Erstellung eines funktionsfähigen Online-Multiplayer-Prototyps mit:
 
 ### Voraussetzungen
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Godot 4.3 .NET Edition](https://godotengine.org/download)
 
 ### Server starten
