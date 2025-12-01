@@ -540,10 +540,22 @@ Strukturiertes Logging für alle Netzwerk-Operationen einführen. Auf dem Server
 - [ ] **Server-Logging einrichten:**
   - [ ] NuGet-Paket `Microsoft.Extensions.Logging` hinzufügen
   - [ ] `ILogger<T>` in `NetworkServer`, `ClientConnection`, `MessageRouter` injecten
-  - [ ] Log-Konfiguration in `Program.cs`:
+  - [ ] Log-Konfiguration in `Program.cs` (über `appsettings.json` konfigurierbar):
     ```csharp
     builder.Logging.AddConsole();
-    builder.Logging.SetMinimumLevel(LogLevel.Debug);
+    // Log-Level über appsettings.json oder Umgebungsvariable konfigurieren
+    // builder.Logging.SetMinimumLevel(LogLevel.Debug); // Nur für Development!
+    ```
+  - [ ] `appsettings.json` für Log-Level:
+    ```json
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Mmo.Server": "Debug"
+        }
+      }
+    }
     ```
 - [ ] **Log-Statements im Server hinzufügen:**
   - [ ] `NetworkServer`: `LogInformation("Server started on port {Port}", port)`
@@ -944,9 +956,25 @@ Eine einfache Persistenzschicht implementieren mit austauschbarem Repository-Pat
         }
         
         private string GetFilePath(string name) 
-            => Path.Combine(_dataPath, $"{name.ToLowerInvariant()}.json");
+        {
+            // WICHTIG: Spielernamen sanitieren um Directory Traversal zu verhindern!
+            var sanitizedName = SanitizeFileName(name.ToLowerInvariant());
+            return Path.Combine(_dataPath, $"{sanitizedName}.json");
+        }
+        
+        private static string SanitizeFileName(string name)
+        {
+            // Nur alphanumerische Zeichen und Unterstriche erlauben
+            var sanitized = Regex.Replace(name, @"[^a-z0-9_]", "_");
+            // Leeren Namen verhindern
+            if (string.IsNullOrEmpty(sanitized)) sanitized = "unnamed";
+            // Maximale Länge begrenzen
+            if (sanitized.Length > 50) sanitized = sanitized[..50];
+            return sanitized;
+        }
     }
     ```
+  - [ ] **⚠️ Sicherheitshinweis:** Spielernamen müssen validiert werden, um Directory-Traversal-Angriffe (z.B. `../../../etc/passwd`) zu verhindern!
 - [ ] **JSON-Optionen konfigurieren:**
   ```csharp
   private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -1122,11 +1150,15 @@ Bei Logout oder unerwartetem Verbindungsabbruch die aktuellen Charakterdaten (Po
             _logger.LogInformation("Server shutting down, saving all players...");
             var saveTasks = _world.GetAllPlayers()
                 .Select(p => SavePlayerAsync(p));
-            Task.WhenAll(saveTasks).GetAwaiter().GetResult();
+            // HINWEIS: GetAwaiter().GetResult() kann in bestimmten Kontexten
+            // zu Deadlocks führen. Für Console-Apps ist dies akzeptabel,
+            // bei ASP.NET-Hosting besser async Shutdown nutzen.
+            Task.WhenAll(saveTasks).ConfigureAwait(false).GetAwaiter().GetResult();
             _logger.LogInformation("All players saved");
         }
     }
     ```
+  - [ ] **Alternative (besser):** Async-Shutdown mit `IHostedService.StopAsync()`
 - [ ] **Periodisches Auto-Save (optional):**
   - [ ] Timer alle 5 Minuten
   - [ ] Alle aktiven Spieler speichern
@@ -2237,18 +2269,15 @@ Einen einfachen Dummy-Mob auf dem Server erstellen, der als Angriffsziel für Te
 Die Eingabebehandlung für Aktionen im Godot-Client implementieren. Tasten werden auf Aktionen gemappt, Ziele werden ermittelt und ActionRequests an den Server gesendet.
 
 **Aufgaben:**
-- [ ] **InputMap konfigurieren:**
-  - [ ] In project.godot:
+- [ ] **InputMap konfigurieren (empfohlen: über Godot Editor):**
+  - [ ] **Empfohlene Methode:** Im Godot Editor unter `Project → Project Settings → Input Map`:
+    - Action `action_attack` erstellen und Leertaste (Space) zuweisen
+    - Action `action_emote` erstellen und E-Taste zuweisen
+  - [ ] Alternativ in `project.godot` (nur zur Referenz, Editor-Methode bevorzugen):
     ```
     [input]
-    action_attack={
-        "deadzone": 0.5,
-        "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":0,"unicode":32)]
-    }
-    action_emote={
-        "deadzone": 0.5,
-        "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":69,"physical_keycode":0,"unicode":101)]
-    }
+    action_attack={"deadzone":0.5, "events":[InputEventKey mit keycode=32 (Space)]}
+    action_emote={"deadzone":0.5, "events":[InputEventKey mit keycode=69 (E)]}
     ```
   - [ ] `action_attack`: Leertaste (Space)
   - [ ] `action_emote`: E-Taste
@@ -2745,18 +2774,19 @@ Einen manuellen Testplan erstellen und durchführen, der alle Phase-4-Features s
   - [ ] Pro gefundenem Bug ein Issue erstellen
   - [ ] Label `type:bug` und `priority:*` setzen
   - [ ] Reproduktionsschritte dokumentieren
-- [ ] **Testergebnis-Zusammenfassung:**
+- [ ] **Testergebnis-Zusammenfassung (Vorlage - Zahlen nach Test ausfüllen):**
   ```markdown
   ## Zusammenfassung
-  - **Gesamtzahl Testfälle:** 20
-  - **Bestanden:** 18
-  - **Fehlgeschlagen:** 2
-  - **Kritische Bugs:** 0
-  - **Nicht-kritische Bugs:** 2
+  <!-- Die folgenden Zahlen sind Beispiele - bitte mit tatsächlichen Ergebnissen ersetzen -->
+  - **Gesamtzahl Testfälle:** _[z.B. 20]_
+  - **Bestanden:** _[Anzahl]_
+  - **Fehlgeschlagen:** _[Anzahl]_
+  - **Kritische Bugs:** _[Anzahl]_
+  - **Nicht-kritische Bugs:** _[Anzahl]_
   
   ### Gefundene Bugs
-  - #XX: Beschreibung Bug 1
-  - #XX: Beschreibung Bug 2
+  - #_[Issue-Nr]_: _[Beschreibung Bug 1]_
+  - #_[Issue-Nr]_: _[Beschreibung Bug 2]_
   ```
 
 **Akzeptanzkriterien:**
