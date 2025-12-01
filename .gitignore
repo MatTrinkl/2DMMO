@@ -1,4 +1,59 @@
+# =============================================================================
+# .NET / C# Ignores
+# =============================================================================
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.rsuser
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.opencover.xml
+TestResults/
+StrykerOutput/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# =============================================================================
 # Godot 4+ specific ignores
+# =============================================================================
 .godot/
 .nomedia
 
@@ -14,3 +69,27 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# =============================================================================
+# OS specific ignores
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# =============================================================================
+# IDE and Editor ignores
+# =============================================================================
+*.swp
+*.swo
+*.sublime-workspace

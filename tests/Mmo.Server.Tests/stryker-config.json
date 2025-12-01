@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-net/master/src/Stryker.Core/Stryker.Core/stryker-config.schema.json",
+  "stryker-config": {
+    "project-info": {
+      "name": "2DMMO",
+      "module": "Mmo.Server.Tests"
+    },
+    "reporters": [
+      "progress",
+      "html"
+    ],
+    "log-level": "info",
+    "mutation-level": "Standard",
+    "break-at": 60,
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    }
+  }
+}
