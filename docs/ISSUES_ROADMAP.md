@@ -444,150 +444,476 @@ Manuelle Testfälle dokumentieren und durchführen.
 
 ## Teil 2: Neue Issues für fehlende Funktionalität
 
+> **Hinweis:** Alle Issues in diesem Teil sind als **Epik-Issues** strukturiert und in Sub-Issues unterteilt.
+
 ### Phase 2 – Feinschliff
 
 ---
 
-#### Issue: Verbindungsaufbau-Flow mit Retry und Fehlerbehandlung
+### Epik: Verbindungsaufbau-Flow mit Retry und Fehlerbehandlung
+
+**Labels:** `type:epic`, `area:client`, `area:network`, `priority:p1`
+
+**Beschreibung:**
+Den Verbindungsaufbau im `NetworkClient` robuster gestalten mit automatischem Retry-Mechanismus, konfigurierbarem Timeout und Benutzer-Feedback bei Fehlern.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: ConnectionConfig und ConnectionState implementieren
+- [ ] Sub-Issue: Retry-Logik im NetworkClient
+- [ ] Sub-Issue: UI-Feedback für Verbindungsstatus
+
+---
+
+#### Sub-Issue: ConnectionConfig und ConnectionState implementieren
 
 **Labels:** `type:feature`, `area:client`, `area:network`, `priority:p1`
 
 **Beschreibung:**
-Den Verbindungsaufbau im `NetworkClient` robuster gestalten mit automatischem Retry-Mechanismus, konfigurierbarem Timeout und Benutzer-Feedback bei Fehlern. Der Client soll bei temporären Netzwerkproblemen nicht sofort aufgeben, sondern mehrere Verbindungsversuche unternehmen.
+Konfigurationsklasse und State-Enum für den Verbindungsaufbau erstellen.
 
 **Aufgaben:**
-- [ ] `ConnectionConfig`-Klasse erstellen mit Properties:
-  - [ ] `int TimeoutMs = 5000` – Timeout für einzelnen Verbindungsversuch
-  - [ ] `int MaxRetries = 3` – Maximale Anzahl Wiederholungen
-  - [ ] `int RetryDelayMs = 1000` – Wartezeit zwischen Versuchen
-- [ ] `ConnectionState`-Enum definieren: `Disconnected`, `Connecting`, `Connected`, `Reconnecting`, `Failed`
+- [ ] `ConnectionConfig`-Klasse erstellen:
+  - [ ] Datei: `res://scripts/network/ConnectionConfig.cs`
+  - [ ] Property `int TimeoutMs = 5000`
+  - [ ] Property `int MaxRetries = 3`
+  - [ ] Property `int RetryDelayMs = 1000`
+  - [ ] Dokumentation der Properties mit XML-Kommentaren
+- [ ] `ConnectionState`-Enum definieren:
+  - [ ] Datei: `shared/Mmo.Shared/Enums/ConnectionState.cs`
+  - [ ] Werte: `Disconnected = 0`, `Connecting = 1`, `Connected = 2`, `Reconnecting = 3`, `Failed = 4`
+- [ ] Signal `ConnectionStateChanged` im NetworkClient definieren:
+  ```csharp
+  [Signal]
+  public delegate void ConnectionStateChangedEventHandler(int state);
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] ConnectionConfig-Klasse existiert mit allen Properties
+- [ ] ConnectionState-Enum ist im Shared-Projekt
+- [ ] Signal ist definiert und dokumentiert
+
+**Ressourcen:**
+- [Godot Signals in C#](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_signals.html) – Custom Signals definieren
+- [Enums in C#](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enum-Definition
+
+---
+
+#### Sub-Issue: Retry-Logik im NetworkClient
+
+**Labels:** `type:feature`, `area:client`, `area:network`, `priority:p1`
+
+**Beschreibung:**
+Die Retry-Logik im NetworkClient implementieren mit Timeout und exponential Backoff.
+
+**Aufgaben:**
 - [ ] `NetworkClient.ConnectAsync()` erweitern:
-  - [ ] `CancellationTokenSource` für Timeout erstellen
-  - [ ] Retry-Loop mit exponential Backoff implementieren
-  - [ ] State-Änderungen über Signal/Event kommunizieren
-- [ ] Signal `ConnectionStateChanged(ConnectionState state)` im NetworkClient
-- [ ] Im `LoginPanel`:
-  - [ ] Auf `ConnectionStateChanged` reagieren
-  - [ ] Loading-Spinner oder Progress-Bar während `Connecting`
-  - [ ] Button deaktivieren während Verbindungsaufbau
-- [ ] Fehlermeldungen differenziert anzeigen:
-  - [ ] "Verbindung fehlgeschlagen – Server nicht erreichbar"
-  - [ ] "Zeitüberschreitung – bitte erneut versuchen"
-  - [ ] "Maximale Versuche erreicht"
+  ```csharp
+  public async Task<bool> ConnectAsync(string host, int port)
+  {
+      for (int attempt = 1; attempt <= _config.MaxRetries; attempt++)
+      {
+          EmitSignal(SignalName.ConnectionStateChanged, (int)ConnectionState.Connecting);
+          
+          using var cts = new CancellationTokenSource(_config.TimeoutMs);
+          try
+          {
+              await _tcpClient.ConnectAsync(host, port, cts.Token);
+              EmitSignal(SignalName.ConnectionStateChanged, (int)ConnectionState.Connected);
+              return true;
+          }
+          catch (OperationCanceledException)
+          {
+              _logger.Warning($"Connection attempt {attempt} timed out");
+          }
+          catch (Exception ex)
+          {
+              _logger.Error($"Connection attempt {attempt} failed: {ex.Message}");
+          }
+          
+          if (attempt < _config.MaxRetries)
+          {
+              EmitSignal(SignalName.ConnectionStateChanged, (int)ConnectionState.Reconnecting);
+              await Task.Delay(_config.RetryDelayMs * attempt); // Exponential backoff
+          }
+      }
+      
+      EmitSignal(SignalName.ConnectionStateChanged, (int)ConnectionState.Failed);
+      return false;
+  }
+  ```
+- [ ] CancellationToken korrekt disposen
+- [ ] State-Änderungen über Signal kommunizieren
+- [ ] Exponential Backoff implementieren (Delay × Versuchsnummer)
 
 **Akzeptanzkriterien:**
 - [ ] Bei nicht erreichbarem Server: 3 Versuche mit je 5s Timeout
-- [ ] UI zeigt aktuellen Status (Connecting, Retry 1/3, Failed)
-- [ ] Nach `MaxRetries` wird `ConnectionState.Failed` gesetzt
-- [ ] Benutzer kann nach Fehlschlag erneut auf Login klicken
-- [ ] Keine Memory-Leaks bei Timeout (CancellationToken korrekt disposed)
+- [ ] State-Signal wird bei jeder Änderung gefeuert
+- [ ] Nach MaxRetries wird `ConnectionState.Failed` gesetzt
+- [ ] Keine Memory-Leaks (CancellationTokenSource disposed)
 
 **Ressourcen:**
-- [CancellationTokenSource](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtokensource) – Timeout-Implementierung mit CancellationToken
-- [Async/Await Best Practices](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/async-scenarios) – Asynchrone Patterns in C#
-- [Godot Signals in C#](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_signals.html) – Events zwischen Nodes kommunizieren
-- [Task.Delay für Retry](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.delay) – Verzögerung zwischen Retry-Versuchen
+- [CancellationTokenSource](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtokensource) – Timeout-Implementierung
+- [Task.Delay](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.delay) – Verzögerung für Backoff
 
 ---
 
-#### Issue: Konsistente Verwendung der Shared DTOs im Client
+#### Sub-Issue: UI-Feedback für Verbindungsstatus
 
-**Labels:** `type:chore`, `area:server`, `area:client`, `priority:p1`
+**Labels:** `type:feature`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Sicherstellen, dass der Godot-Client exakt dieselben DTO-Klassen aus `Mmo.Shared` verwendet wie der Server. Dies verhindert Serialisierungsfehler und doppelte Code-Pflege. Das Shared-Projekt muss als Projektlink in die Godot-Solution eingebunden werden.
+Das LoginPanel mit visuellem Feedback für den Verbindungsstatus erweitern.
+
+**Aufgaben:**
+- [ ] Im `LoginPanel` auf `ConnectionStateChanged` reagieren:
+  ```csharp
+  public override void _Ready()
+  {
+      NetworkClient.Instance.ConnectionStateChanged += OnConnectionStateChanged;
+  }
+  
+  private void OnConnectionStateChanged(int state)
+  {
+      var connectionState = (ConnectionState)state;
+      CallDeferred(nameof(UpdateUI), connectionState);
+  }
+  
+  private void UpdateUI(ConnectionState state)
+  {
+      switch (state)
+      {
+          case ConnectionState.Connecting:
+              _statusLabel.Text = "Verbinde...";
+              _loginButton.Disabled = true;
+              _spinner.Visible = true;
+              break;
+          case ConnectionState.Reconnecting:
+              _statusLabel.Text = "Neuer Versuch...";
+              break;
+          case ConnectionState.Failed:
+              _statusLabel.Text = "Verbindung fehlgeschlagen";
+              _loginButton.Disabled = false;
+              _spinner.Visible = false;
+              break;
+          case ConnectionState.Connected:
+              _statusLabel.Text = "Verbunden!";
+              _spinner.Visible = false;
+              break;
+      }
+  }
+  ```
+- [ ] Loading-Spinner zur LoginPanel-Szene hinzufügen
+- [ ] StatusLabel für Fehlermeldungen hinzufügen
+- [ ] Button deaktivieren während Verbindungsaufbau
+- [ ] Differenzierte Fehlermeldungen anzeigen
+
+**Akzeptanzkriterien:**
+- [ ] UI zeigt aktuellen Status (Connecting, Retry, Failed)
+- [ ] Spinner dreht während Verbindungsaufbau
+- [ ] Button ist während Verbindung deaktiviert
+- [ ] Nach Fehler kann erneut geklickt werden
+
+**Ressourcen:**
+- [Godot Control Nodes](https://docs.godotengine.org/en/stable/tutorials/ui/control_node_gallery.html) – UI-Elemente
+- [CallDeferred](https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred) – Thread-sichere UI-Updates
+
+---
+
+### Epik: Konsistente Verwendung der Shared DTOs im Client
+
+**Labels:** `type:epic`, `area:server`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Sicherstellen, dass der Godot-Client exakt dieselben DTO-Klassen aus `Mmo.Shared` verwendet wie der Server.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Projektverweise konfigurieren
+- [ ] Sub-Issue: Duplizierte Klassen entfernen
+- [ ] Sub-Issue: Shared-Projekt dokumentieren
+
+---
+
+#### Sub-Issue: Projektverweise konfigurieren
+
+**Labels:** `type:chore`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Das Godot-Projekt so konfigurieren, dass es das Shared-Projekt referenziert.
 
 **Aufgaben:**
 - [ ] Godot-Projekt `.csproj` erweitern:
-  - [ ] `<ProjectReference Include="../../shared/Mmo.Shared/Mmo.Shared.csproj" />` hinzufügen
-  - [ ] Sicherstellen, dass Godot das referenzierte Projekt findet
-- [ ] Namespace-Struktur vereinheitlichen:
-  - [ ] Shared: `Mmo.Shared.Messages` für alle DTOs
-  - [ ] Shared: `Mmo.Shared.Enums` für MessageType, ConnectionState etc.
-- [ ] Prüfen ob duplizierte Klassen im Client existieren und entfernen:
-  - [ ] Suche nach lokalen `LoginRequest`, `LoginResponse` etc.
-  - [ ] Ersetzen durch `using Mmo.Shared.Messages;`
-- [ ] Build-Reihenfolge sicherstellen:
-  - [ ] `Mmo.Shared` muss vor Client gebaut werden
-  - [ ] `dotnet build` auf Solution-Ebene testen
-- [ ] Dokumentation erstellen:
-  - [ ] `shared/README.md` mit Liste aller DTOs
-  - [ ] Kurzbeschreibung pro DTO (Zweck, Properties)
+  - [ ] Datei: `client/GodotProject/GodotProject.csproj`
+  - [ ] Hinzufügen:
+    ```xml
+    <ItemGroup>
+      <ProjectReference Include="../../shared/Mmo.Shared/Mmo.Shared.csproj" />
+    </ItemGroup>
+    ```
+- [ ] Build-Reihenfolge prüfen:
+  - [ ] `dotnet build Mmo.sln` auf Solution-Ebene testen
+  - [ ] Sicherstellen, dass `Mmo.Shared` vor Client gebaut wird
+- [ ] Godot-Editor neu starten und Build testen
 
 **Akzeptanzkriterien:**
-- [ ] `dotnet build Mmo.sln` baut Server und Shared fehlerfrei
-- [ ] Godot-Projekt baut fehlerfrei mit Shared-Referenz
-- [ ] Keine duplizierten DTO-Klassen im Client-Ordner
-- [ ] Client verwendet exakt dieselben Typen wie Server
-- [ ] Änderungen an DTOs werden in beiden Projekten wirksam
+- [ ] `dotnet build Mmo.sln` baut alle Projekte fehlerfrei
+- [ ] Godot-Projekt findet die Shared-Klassen
+- [ ] Intellisense funktioniert für Shared-Typen
 
 **Ressourcen:**
 - [Projektverweise in .NET](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-add-reference) – `dotnet add reference` Befehl
-- [Godot C# Projekte](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_basics.html#c-project) – C#-Projektstruktur in Godot
-- [Multi-Projekt-Solutions](https://learn.microsoft.com/en-us/dotnet/core/tutorials/library-with-visual-studio-code) – Mehrere Projekte in einer Solution
-- [Shared Code Best Practices](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/cross-platform-targeting) – Plattformübergreifender Code
+- [Godot C# Projekte](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_basics.html#c-project) – C#-Projektstruktur
 
 ---
 
-#### Issue: Grundlegendes Logging im Network-Code
+#### Sub-Issue: Duplizierte Klassen entfernen
+
+**Labels:** `type:chore`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Alle duplizierten DTO-Klassen im Client entfernen und durch Shared-Referenzen ersetzen.
+
+**Aufgaben:**
+- [ ] Suche nach lokalen DTO-Klassen im Client:
+  ```bash
+  find client/ -name "*.cs" -exec grep -l "LoginRequest\|LoginResponse\|MessageType" {} \;
+  ```
+- [ ] Für jede gefundene Datei:
+  - [ ] Lokale Klasse entfernen
+  - [ ] `using Mmo.Shared.Messages;` hinzufügen
+  - [ ] `using Mmo.Shared.Enums;` hinzufügen
+- [ ] Kompilieren und Fehler beheben:
+  - [ ] Property-Namen anpassen falls nötig
+  - [ ] Namespace-Konflikte auflösen
+- [ ] Namespace-Struktur vereinheitlichen:
+  - [ ] Messages: `Mmo.Shared.Messages`
+  - [ ] Enums: `Mmo.Shared.Enums`
+  - [ ] Models: `Mmo.Shared.Models`
+
+**Akzeptanzkriterien:**
+- [ ] Keine duplizierten DTO-Klassen im Client-Ordner
+- [ ] Alle Referenzen zeigen auf Shared-Projekt
+- [ ] Client kompiliert ohne Fehler
+
+**Ressourcen:**
+- [Using Directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive) – Namespace-Imports
+- [Namespace Best Practices](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/namespace-names) – Namenskonventionen
+
+---
+
+#### Sub-Issue: Shared-Projekt dokumentieren
+
+**Labels:** `type:documentation`, `priority:p2`
+
+**Beschreibung:**
+Dokumentation für das Shared-Projekt erstellen mit Liste aller DTOs.
+
+**Aufgaben:**
+- [ ] `shared/README.md` erstellen:
+  ```markdown
+  # Mmo.Shared
+  
+  Gemeinsame Typen für Client und Server.
+  
+  ## Messages
+  - `LoginRequest` – Login-Anfrage mit Spielername
+  - `LoginResponse` – Antwort mit PlayerId und Spawn-Position
+  - `MoveRequest` – Bewegungsrichtung
+  - `PlayerStateUpdate` – Spielerpositionen (Broadcast)
+  - ...
+  
+  ## Enums
+  - `MessageType` – Typ der Netzwerknachricht
+  - `ConnectionState` – Verbindungsstatus
+  - ...
+  ```
+- [ ] XML-Kommentare für alle öffentlichen Klassen
+- [ ] Kurzbeschreibung pro DTO (Zweck, Properties)
+
+**Akzeptanzkriterien:**
+- [ ] README.md existiert mit vollständiger DTO-Liste
+- [ ] Alle öffentlichen Klassen haben XML-Kommentare
+- [ ] Dokumentation ist aktuell
+
+**Ressourcen:**
+- [XML Documentation Comments](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/) – C# Dokumentation
+- [README Best Practices](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) – README schreiben
+
+---
+
+### Epik: Grundlegendes Logging im Network-Code
+
+**Labels:** `type:epic`, `area:server`, `area:client`, `priority:p2`
+
+**Beschreibung:**
+Strukturiertes Logging für alle Netzwerk-Operationen einführen. Auf dem Server wird `Microsoft.Extensions.Logging` verwendet, im Godot-Client ein Wrapper um `GD.Print`.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: Server-Logging einrichten
+- [ ] Sub-Issue: Client-Logger-Klasse erstellen
+- [ ] Sub-Issue: Log-Statements hinzufügen
+
+---
+
+#### Sub-Issue: Server-Logging einrichten
+
+**Labels:** `type:feature`, `area:server`, `priority:p2`
+
+**Beschreibung:**
+Microsoft.Extensions.Logging im Server einrichten mit konfigurierbarem Log-Level.
+
+**Aufgaben:**
+- [ ] NuGet-Paket hinzufügen:
+  ```bash
+  cd server/Mmo.Server
+  dotnet add package Microsoft.Extensions.Logging
+  dotnet add package Microsoft.Extensions.Logging.Console
+  ```
+- [ ] `ILogger<T>` in Klassen injecten:
+  - [ ] `NetworkServer` erhält `ILogger<NetworkServer>`
+  - [ ] `ClientConnection` erhält `ILogger<ClientConnection>`
+  - [ ] `MessageRouter` erhält `ILogger<MessageRouter>`
+- [ ] Log-Konfiguration in `Program.cs`:
+  ```csharp
+  var builder = Host.CreateApplicationBuilder(args);
+  builder.Logging.AddConsole();
+  // Log-Level wird aus appsettings.json gelesen
+  ```
+- [ ] `appsettings.json` erstellen:
+  ```json
+  {
+    "Logging": {
+      "LogLevel": {
+        "Default": "Information",
+        "Mmo.Server": "Debug"
+      }
+    }
+  }
+  ```
+- [ ] `appsettings.Development.json` für Debug:
+  ```json
+  {
+    "Logging": {
+      "LogLevel": {
+        "Default": "Debug"
+      }
+    }
+  }
+  ```
+
+**Akzeptanzkriterien:**
+- [ ] Logging-Pakete sind installiert
+- [ ] Logger wird in alle relevanten Klassen injected
+- [ ] Log-Level ist über appsettings.json konfigurierbar
+
+**Ressourcen:**
+- [Logging in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging) – Framework-Übersicht
+- [Dependency Injection](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection) – DI für Logger
+
+---
+
+#### Sub-Issue: Client-Logger-Klasse erstellen
+
+**Labels:** `type:feature`, `area:client`, `priority:p2`
+
+**Beschreibung:**
+Eine Logger-Singleton-Klasse für den Godot-Client erstellen.
+
+**Aufgaben:**
+- [ ] `Logger`-Klasse erstellen:
+  - [ ] Datei: `res://scripts/singletons/Logger.cs`
+  ```csharp
+  public partial class Logger : Node
+  {
+      public static Logger Instance { get; private set; }
+      
+      public enum LogLevel { Debug, Info, Warning, Error }
+      
+      public LogLevel MinLevel { get; set; } = LogLevel.Info;
+      
+      public override void _Ready()
+      {
+          Instance = this;
+      }
+      
+      public void Debug(string message) => Log(LogLevel.Debug, message);
+      public void Info(string message) => Log(LogLevel.Info, message);
+      public void Warning(string message) => Log(LogLevel.Warning, message);
+      public void Error(string message) => Log(LogLevel.Error, message);
+      
+      public void Log(LogLevel level, string message)
+      {
+          if (level < MinLevel) return;
+          
+          var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+          var formatted = $"[{level}] {timestamp}: {message}";
+          
+          if (level == LogLevel.Error)
+              GD.PrintErr(formatted);
+          else
+              GD.Print(formatted);
+      }
+  }
+  ```
+- [ ] Als Autoload registrieren in `project.godot`
+- [ ] MinLevel über Projekteinstellung konfigurierbar machen
+
+**Akzeptanzkriterien:**
+- [ ] Logger-Singleton existiert und ist als Autoload registriert
+- [ ] Alle Log-Levels funktionieren
+- [ ] Formatierung enthält Timestamp und Level
+
+**Ressourcen:**
+- [Godot Singletons](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) – Autoload-Pattern
+- [GD.Print](https://docs.godotengine.org/en/stable/classes/class_@globalscope.html#class-globalscope-method-print) – Konsolen-Ausgabe
+
+---
+
+#### Sub-Issue: Log-Statements hinzufügen
 
 **Labels:** `type:feature`, `area:server`, `area:client`, `priority:p2`
 
 **Beschreibung:**
-Strukturiertes Logging für alle Netzwerk-Operationen einführen. Auf dem Server wird `Microsoft.Extensions.Logging` verwendet, im Godot-Client ein Wrapper um `GD.Print` mit Log-Levels. Alle wichtigen Events (Verbindungen, Nachrichten, Fehler) werden geloggt.
+Log-Statements in Server und Client hinzufügen.
 
 **Aufgaben:**
-- [ ] **Server-Logging einrichten:**
-  - [ ] NuGet-Paket `Microsoft.Extensions.Logging` hinzufügen
-  - [ ] `ILogger<T>` in `NetworkServer`, `ClientConnection`, `MessageRouter` injecten
-  - [ ] Log-Konfiguration in `Program.cs` (über `appsettings.json` konfigurierbar):
+- [ ] **Server-Logs:**
+  - [ ] `NetworkServer`:
     ```csharp
-    builder.Logging.AddConsole();
-    // Log-Level über appsettings.json oder Umgebungsvariable konfigurieren
-    // builder.Logging.SetMinimumLevel(LogLevel.Debug); // Nur für Development!
+    _logger.LogInformation("Server started on port {Port}", port);
+    _logger.LogInformation("Server stopped");
     ```
-  - [ ] `appsettings.json` für Log-Level:
-    ```json
-    {
-      "Logging": {
-        "LogLevel": {
-          "Default": "Information",
-          "Mmo.Server": "Debug"
-        }
-      }
-    }
+  - [ ] `ClientConnection`:
+    ```csharp
+    _logger.LogDebug("Client {Id} connected from {Endpoint}", Id, RemoteEndpoint);
+    _logger.LogWarning("Client {Id} disconnected unexpectedly", Id);
     ```
-- [ ] **Log-Statements im Server hinzufügen:**
-  - [ ] `NetworkServer`: `LogInformation("Server started on port {Port}", port)`
-  - [ ] `ClientConnection`: `LogDebug("Client {Id} connected from {Endpoint}")`
-  - [ ] `ClientConnection`: `LogWarning("Client {Id} disconnected unexpectedly")`
-  - [ ] `MessageRouter`: `LogDebug("Routing {MessageType} from {ClientId}")`
-  - [ ] Fehler: `LogError(ex, "Error processing message from {ClientId}")`
-- [ ] **Client-Logging einrichten:**
-  - [ ] `Logger`-Singleton-Klasse erstellen
-  - [ ] Enum `LogLevel`: `Debug`, `Info`, `Warning`, `Error`
-  - [ ] Methoden: `Log(LogLevel, string)`, `Debug(string)`, `Info(string)`, `Error(string)`
-  - [ ] Intern: `GD.Print($"[{level}] {timestamp}: {message}")`
-- [ ] **Log-Statements im Client hinzufügen:**
-  - [ ] `NetworkClient`: Connection-Events loggen
-  - [ ] Message-Empfang und -Versand loggen
-  - [ ] Fehler und Timeouts loggen
-- [ ] **Log-Level konfigurierbar machen:**
-  - [ ] Server: über `appsettings.json` oder Umgebungsvariable
-  - [ ] Client: über Projekteinstellung oder Konstante
+  - [ ] `MessageRouter`:
+    ```csharp
+    _logger.LogDebug("Routing {MessageType} from {ClientId}", msg.Type, clientId);
+    _logger.LogError(ex, "Error processing message from {ClientId}", clientId);
+    ```
+- [ ] **Client-Logs:**
+  - [ ] `NetworkClient`:
+    ```csharp
+    Logger.Instance.Info($"Connecting to {host}:{port}");
+    Logger.Instance.Debug($"Sending {message.Type}");
+    Logger.Instance.Error($"Connection failed: {ex.Message}");
+    ```
 
 **Akzeptanzkriterien:**
 - [ ] Server-Start zeigt Info-Log mit Port
-- [ ] Client-Verbindung erzeugt Log auf Server und Client
-- [ ] Message-Routing ist im Debug-Log nachvollziehbar
-- [ ] Fehler werden mit Stack-Trace geloggt
-- [ ] Log-Level kann ohne Neukompilierung geändert werden
+- [ ] Client-Verbindung erzeugt Logs auf beiden Seiten
+- [ ] Fehler werden mit Details geloggt
 
 **Ressourcen:**
-- [Logging in .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging) – Offizielles Logging-Framework
-- [ILogger Interface](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.ilogger) – API-Dokumentation
-- [Structured Logging](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-message-template) – Message-Templates mit Platzhaltern
-- [Godot GD.Print](https://docs.godotengine.org/en/stable/classes/class_@globalscope.html#class-globalscope-method-print) – Konsolen-Ausgabe in Godot
+- [Structured Logging](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-message-template) – Message-Templates
+- [Logging Best Practices](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging#log-level) – Log-Level-Richtlinien
 
 ---
 
@@ -595,148 +921,429 @@ Strukturiertes Logging für alle Netzwerk-Operationen einführen. Auf dem Server
 
 ---
 
-#### Issue: 2D-Tilemap für Prototyp-Welt erstellen
+### Epik: 2D-Tilemap für Prototyp-Welt erstellen
+
+**Labels:** `type:epic`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Eine einfache 2D-Tilemap in Godot erstellen als visuelle Grundlage für die Spielwelt.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: TileSet erstellen
+- [ ] Sub-Issue: TileMap-Node einrichten
+- [ ] Sub-Issue: Test-Map gestalten
+
+---
+
+#### Sub-Issue: TileSet erstellen
 
 **Labels:** `type:feature`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Eine einfache 2D-Tilemap in Godot erstellen als visuelle Grundlage für die Spielwelt. Die Map dient als Prototyp-Umgebung für Bewegungstests und zeigt klare Grenzen, in denen sich Spieler bewegen können.
+Ein einfaches TileSet mit Platzhalter-Tiles für den Prototyp erstellen.
 
 **Aufgaben:**
-- [ ] **TileSet erstellen:**
-  - [ ] Neues TileSet-Resource erstellen: `res://assets/tilesets/prototype_tileset.tres`
-  - [ ] Platzhalter-Tiles (16x16 oder 32x32 Pixel):
-    - [ ] Gras-Tile (grün) für begehbaren Bereich
-    - [ ] Wasser-Tile (blau) für Rand/Grenze
-    - [ ] Stein-Tile (grau) für optionale Hindernisse
-  - [ ] Tiles können einfache farbige Rechtecke sein (kein Art-Asset nötig)
-- [ ] **TileMap-Node einrichten:**
-  - [ ] `TileMap`-Node zur `Game.tscn` Szene hinzufügen
-  - [ ] TileSet zuweisen
-  - [ ] Cell-Size auf Tile-Größe setzen (z.B. 32x32)
-  - [ ] Z-Index unter Spieler-Sprites setzen
-- [ ] **Test-Map gestalten:**
-  - [ ] Größe: 50x50 Tiles (1600x1600 Pixel bei 32px)
-  - [ ] Äußeren Rand mit Wasser-Tiles füllen (2 Tiles breit)
-  - [ ] Inneren Bereich mit Gras-Tiles füllen
-  - [ ] Spawn-Bereich in der Mitte markieren (optional anderes Tile)
-- [ ] **Kamera-Begrenzung:**
-  - [ ] `Camera2D` Limits auf Map-Größe setzen
-  - [ ] `limit_left`, `limit_top`, `limit_right`, `limit_bottom` konfigurieren
-- [ ] **Koordinatensystem dokumentieren:**
-  - [ ] Map-Ursprung (0,0) = linke obere Ecke
-  - [ ] Spielbarer Bereich: (64, 64) bis (1536, 1536)
+- [ ] TileSet-Resource erstellen:
+  - [ ] Datei: `res://assets/tilesets/prototype_tileset.tres`
+- [ ] Platzhalter-Tiles erstellen (32x32 Pixel):
+  - [ ] `grass.png` – Grünes Rechteck für begehbaren Bereich
+  - [ ] `water.png` – Blaues Rechteck für Rand/Grenze
+  - [ ] `stone.png` – Graues Rechteck für Hindernisse
+  - [ ] Dateien in: `res://assets/tiles/`
+- [ ] Tiles im TileSet-Editor einrichten:
+  - [ ] Tiles importieren
+  - [ ] Collision-Shapes für Wasser/Stein (optional)
+  - [ ] Navigation-Tiles für Gras (optional)
 
 **Akzeptanzkriterien:**
-- [ ] TileMap ist im Editor sichtbar und bearbeitbar
-- [ ] Im Spiel ist der Boden als Raster erkennbar
-- [ ] Spieler-Sprite bewegt sich über die Tiles
-- [ ] Kamera zeigt nur den Map-Bereich
+- [ ] TileSet-Resource existiert
+- [ ] Mindestens 3 verschiedene Tile-Typen
+- [ ] Tiles sind im Editor verwendbar
 
 **Ressourcen:**
-- [Using TileMaps in Godot 4](https://docs.godotengine.org/en/stable/tutorials/2d/using_tilemaps.html) – Schritt-für-Schritt TileMap-Tutorial
-- [TileSet Class](https://docs.godotengine.org/en/stable/classes/class_tileset.html) – TileSet-Konfiguration
-- [Camera2D Limits](https://docs.godotengine.org/en/stable/classes/class_camera2d.html#class-camera2d-property-limit-bottom) – Kamera begrenzen
-- [2D Coordinate System](https://docs.godotengine.org/en/stable/tutorials/2d/2d_movement.html) – Koordinatensystem in Godot
+- [TileSet in Godot 4](https://docs.godotengine.org/en/stable/classes/class_tileset.html) – TileSet-Dokumentation
+- [Creating Tiles](https://docs.godotengine.org/en/stable/tutorials/2d/using_tilemaps.html#creating-a-tileset) – Tiles erstellen
 
 ---
 
-#### Issue: Serverseitige Startposition und Spawn-Logik
+#### Sub-Issue: TileMap-Node einrichten
+
+**Labels:** `type:feature`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+TileMap-Node zur Spielszene hinzufügen und konfigurieren.
+
+**Aufgaben:**
+- [ ] `TileMap`-Node zur `Game.tscn` hinzufügen:
+  - [ ] Als erstes Child unter Root (unterhalb der Spieler)
+  - [ ] Name: `WorldMap`
+- [ ] TileSet zuweisen
+- [ ] Cell-Size konfigurieren (32x32)
+- [ ] Z-Index unter Spieler-Sprites setzen (-1)
+- [ ] Kamera-Limits basierend auf Map-Größe setzen
+
+**Akzeptanzkriterien:**
+- [ ] TileMap-Node existiert in der Szene
+- [ ] TileSet ist zugewiesen
+- [ ] Z-Ordering ist korrekt (Map hinter Spielern)
+
+**Ressourcen:**
+- [Using TileMaps](https://docs.godotengine.org/en/stable/tutorials/2d/using_tilemaps.html) – TileMap-Tutorial
+- [Z-Index](https://docs.godotengine.org/en/stable/classes/class_canvasitem.html#class-canvasitem-property-z-index) – Rendering-Reihenfolge
+
+---
+
+#### Sub-Issue: Test-Map gestalten
+
+**Labels:** `type:feature`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Eine kleine Test-Map mit dem TileMap-Editor erstellen.
+
+**Aufgaben:**
+- [ ] Map-Größe definieren: 50x50 Tiles (1600x1600 Pixel)
+- [ ] Äußeren Rand mit Wasser-Tiles füllen (2 Tiles breit)
+- [ ] Inneren Bereich mit Gras-Tiles füllen
+- [ ] Spawn-Bereich in der Mitte markieren (optional: anderes Tile)
+- [ ] Kamera-Limits setzen:
+  ```csharp
+  camera.LimitLeft = 0;
+  camera.LimitTop = 0;
+  camera.LimitRight = 1600;
+  camera.LimitBottom = 1600;
+  ```
+- [ ] Dokumentieren: Map-Ursprung (0,0) = linke obere Ecke
+
+**Akzeptanzkriterien:**
+- [ ] Map ist 50x50 Tiles groß
+- [ ] Rand ist klar erkennbar
+- [ ] Spieler spawnt im begehbaren Bereich
+
+**Ressourcen:**
+- [TileMap Editor](https://docs.godotengine.org/en/stable/tutorials/2d/using_tilemaps.html#painting-with-the-tilemap-editor) – Map zeichnen
+- [Camera2D Limits](https://docs.godotengine.org/en/stable/classes/class_camera2d.html#class-camera2d-property-limit-bottom) – Kamera begrenzen
+
+---
+
+### Epik: Serverseitige Startposition und Spawn-Logik
+
+**Labels:** `type:epic`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Die Startposition für neue Spieler serverseitig definieren und Spawn-Logik implementieren.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: SpawnConfig-Klasse erstellen
+- [ ] Sub-Issue: Spawn-Position-Berechnung implementieren
+- [ ] Sub-Issue: LoginResponse erweitern
+
+---
+
+#### Sub-Issue: SpawnConfig-Klasse erstellen
 
 **Labels:** `type:feature`, `area:server`, `priority:p1`
 
 **Beschreibung:**
-Die Startposition für neue Spieler serverseitig definieren und Spawn-Logik implementieren. Neue Spieler sollen in der Weltmitte spawnen, mit leichter Variation um Überlappungen zu vermeiden. Die Spawn-Position wird beim Login an den Client übermittelt.
+Konfigurationsklasse für Spawn-Parameter erstellen.
 
 **Aufgaben:**
-- [ ] **Spawn-Konfiguration erstellen:**
-  - [ ] `SpawnConfig`-Klasse oder Konstanten in `World`:
-    ```csharp
-    public static class SpawnConfig
-    {
-        public const float DefaultX = 800f;
-        public const float DefaultY = 800f;
-        public const float SpawnRadius = 50f;
-    }
-    ```
-- [ ] **Spawn-Position-Berechnung:**
-  - [ ] `World.GetSpawnPosition()` Methode:
-    ```csharp
-    public Vector2 GetSpawnPosition()
-    {
-        var random = new Random();
-        var offsetX = (float)(random.NextDouble() * SpawnRadius * 2 - SpawnRadius);
-        var offsetY = (float)(random.NextDouble() * SpawnRadius * 2 - SpawnRadius);
-        return new Vector2(DefaultX + offsetX, DefaultY + offsetY);
-    }
-    ```
-  - [ ] Prüfung ob Position frei ist (keine Kollision mit anderen Spielern)
-  - [ ] Falls belegt: neue Position berechnen (max 5 Versuche)
-- [ ] **Integration in Login-Flow:**
-  - [ ] `World.CreatePlayer()` verwendet `GetSpawnPosition()`
-  - [ ] Position wird im `Player`-Objekt gesetzt
-  - [ ] `LoginResponse` erweitern um `SpawnX`, `SpawnY`:
-    ```csharp
-    public class LoginResponse : INetworkMessage
-    {
-        public bool Success { get; set; }
-        public Guid PlayerId { get; set; }
-        public float SpawnX { get; set; }
-        public float SpawnY { get; set; }
-        public string? ErrorMessage { get; set; }
-    }
-    ```
-- [ ] **Spawn-Position an Client senden:**
-  - [ ] Im Login-Handler: Position aus Player-Objekt lesen
-  - [ ] In LoginResponse eintragen
-  - [ ] Client positioniert lokalen Spieler an dieser Position
+- [ ] `SpawnConfig`-Klasse erstellen:
+  - [ ] Datei: `server/Mmo.Server/Config/SpawnConfig.cs`
+  ```csharp
+  public static class SpawnConfig
+  {
+      public const float DefaultX = 800f;
+      public const float DefaultY = 800f;
+      public const float SpawnRadius = 50f;
+      public const int MaxSpawnAttempts = 5;
+      public const float MinPlayerDistance = 30f;
+  }
+  ```
+- [ ] Dokumentation der Konstanten mit XML-Kommentaren
 
 **Akzeptanzkriterien:**
-- [ ] Neue Spieler spawnen in der Weltmitte (±50 Pixel Variation)
-- [ ] Zwei gleichzeitig einloggende Spieler haben unterschiedliche Positionen
-- [ ] Client erhält Spawn-Position über LoginResponse
-- [ ] Spieler-Sprite erscheint an korrekter Position
+- [ ] SpawnConfig-Klasse existiert
+- [ ] Alle Konstanten sind dokumentiert
+- [ ] Werte sind sinnvoll für 1600x1600 Map
 
 **Ressourcen:**
-- [System.Random](https://learn.microsoft.com/en-us/dotnet/api/system.random) – Zufallszahlen für Spawn-Variation
-- [System.Numerics.Vector2](https://learn.microsoft.com/en-us/dotnet/api/system.numerics.vector2) – 2D-Vektoren in .NET
-- [Collision Detection Patterns](https://learn.microsoft.com/en-us/archive/msdn-magazine/2014/march/windows-phone-building-a-2d-physics-game-engine) – Kollisionsprüfung
-- [DTOs erweitern](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to) – JSON-Serialisierung neuer Properties
+- [Static Classes](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members) – Konstanten-Container
+- [XML Documentation](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/) – Dokumentation
 
 ---
 
-#### Issue: Mapping von Server-Positionen auf Godot-Koordinaten
+#### Sub-Issue: Spawn-Position-Berechnung implementieren
+
+**Labels:** `type:feature`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Methode zum Berechnen einer freien Spawn-Position implementieren.
+
+**Aufgaben:**
+- [ ] `World.GetSpawnPosition()` Methode:
+  ```csharp
+  public Vector2 GetSpawnPosition()
+  {
+      var random = new Random();
+      
+      for (int attempt = 0; attempt < SpawnConfig.MaxSpawnAttempts; attempt++)
+      {
+          var offsetX = (float)(random.NextDouble() * SpawnConfig.SpawnRadius * 2 - SpawnConfig.SpawnRadius);
+          var offsetY = (float)(random.NextDouble() * SpawnConfig.SpawnRadius * 2 - SpawnConfig.SpawnRadius);
+          var position = new Vector2(SpawnConfig.DefaultX + offsetX, SpawnConfig.DefaultY + offsetY);
+          
+          if (IsPositionFree(position))
+              return position;
+      }
+      
+      // Fallback: Default-Position
+      return new Vector2(SpawnConfig.DefaultX, SpawnConfig.DefaultY);
+  }
+  
+  private bool IsPositionFree(Vector2 position)
+  {
+      foreach (var player in _players.Values)
+      {
+          var distance = Vector2.Distance(position, new Vector2(player.X, player.Y));
+          if (distance < SpawnConfig.MinPlayerDistance)
+              return false;
+      }
+      return true;
+  }
+  ```
+- [ ] Unit-Test für Spawn-Position
+
+**Akzeptanzkriterien:**
+- [ ] Spawn-Position ist innerhalb des SpawnRadius
+- [ ] Kollisionsprüfung verhindert Überlappung
+- [ ] Fallback auf Default-Position funktioniert
+
+**Ressourcen:**
+- [System.Random](https://learn.microsoft.com/en-us/dotnet/api/system.random) – Zufallszahlen
+- [Vector2.Distance](https://learn.microsoft.com/en-us/dotnet/api/system.numerics.vector2.distance) – Distanzberechnung
+
+---
+
+#### Sub-Issue: LoginResponse erweitern
+
+**Labels:** `type:feature`, `area:server`, `area:network`, `priority:p1`
+
+**Beschreibung:**
+LoginResponse DTO um Spawn-Position erweitern.
+
+**Aufgaben:**
+- [ ] `LoginResponse` erweitern:
+  ```csharp
+  public class LoginResponse : INetworkMessage
+  {
+      public MessageType Type => MessageType.LoginResponse;
+      public bool Success { get; set; }
+      public Guid PlayerId { get; set; }
+      public float SpawnX { get; set; }
+      public float SpawnY { get; set; }
+      public string? ErrorMessage { get; set; }
+  }
+  ```
+- [ ] Login-Handler anpassen:
+  ```csharp
+  var spawnPos = _world.GetSpawnPosition();
+  var player = _world.CreatePlayer(request.UserName, connection, spawnPos);
+  
+  var response = new LoginResponse
+  {
+      Success = true,
+      PlayerId = player.Id,
+      SpawnX = player.X,
+      SpawnY = player.Y
+  };
+  ```
+- [ ] Client: Spawn-Position aus Response lesen und Spieler positionieren
+
+**Akzeptanzkriterien:**
+- [ ] LoginResponse enthält SpawnX/SpawnY
+- [ ] Client positioniert Spieler korrekt
+- [ ] Serialisierung funktioniert
+
+**Ressourcen:**
+- [DTOs erweitern](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/how-to) – JSON-Serialisierung
+- [DTO Best Practices](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice) – DTO-Design
+
+---
+
+### Epik: Mapping von Server-Positionen auf Godot-Koordinaten
+
+**Labels:** `type:epic`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+Die Server-Koordinaten auf Godot-Weltkoordinaten mappen.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: CoordinateMapper-Singleton erstellen
+- [ ] Sub-Issue: Koordinaten-Umrechnung integrieren
+
+---
+
+#### Sub-Issue: CoordinateMapper-Singleton erstellen
 
 **Labels:** `type:feature`, `area:client`, `priority:p1`
 
 **Beschreibung:**
-Die Server-Koordinaten (Float-Werte in logischen Einheiten) auf Godot-Weltkoordinaten (Pixel) mappen. Ein einheitliches Koordinatensystem ermöglicht konsistente Darstellung auf verschiedenen Auflösungen.
+Singleton-Klasse für Koordinatenumrechnung erstellen.
 
 **Aufgaben:**
-- [ ] **CoordinateMapper-Singleton erstellen:**
-  - [ ] Neues Script `CoordinateMapper.cs` als Autoload
-  - [ ] Konfigurierbare Skalierung:
-    ```csharp
-    public partial class CoordinateMapper : Node
-    {
-        public const float PixelsPerUnit = 1.0f; // 1 Server-Einheit = 1 Pixel
-        
-        public Vector2 ServerToWorld(float serverX, float serverY)
-        {
-            return new Vector2(serverX * PixelsPerUnit, serverY * PixelsPerUnit);
-        }
-        
-        public (float x, float y) WorldToServer(Vector2 worldPos)
-        {
-            return (worldPos.X / PixelsPerUnit, worldPos.Y / PixelsPerUnit);
-        }
-    }
-    ```
-- [ ] **In project.godot als Autoload registrieren:**
-  - [ ] Pfad: `res://scripts/singletons/CoordinateMapper.cs`
-  - [ ] Name: `CoordinateMapper`
-- [ ] **PlayerNode-Positionierung anpassen:**
-  - [ ] In `UpdatePosition(float x, float y)`:
+- [ ] `CoordinateMapper`-Klasse erstellen:
+  - [ ] Datei: `res://scripts/singletons/CoordinateMapper.cs`
+  ```csharp
+  public partial class CoordinateMapper : Node
+  {
+      public static CoordinateMapper Instance { get; private set; }
+      
+      public const float PixelsPerUnit = 1.0f; // 1:1 Mapping
+      
+      public override void _Ready()
+      {
+          Instance = this;
+      }
+      
+      public Vector2 ServerToWorld(float serverX, float serverY)
+      {
+          return new Vector2(serverX * PixelsPerUnit, serverY * PixelsPerUnit);
+      }
+      
+      public (float x, float y) WorldToServer(Vector2 worldPos)
+      {
+          return (worldPos.X / PixelsPerUnit, worldPos.Y / PixelsPerUnit);
+      }
+  }
+  ```
+- [ ] Als Autoload in project.godot registrieren
+
+**Akzeptanzkriterien:**
+- [ ] CoordinateMapper ist als Autoload verfügbar
+- [ ] 1:1 Mapping funktioniert korrekt
+- [ ] Umrechnung in beide Richtungen
+
+**Ressourcen:**
+- [Godot Singletons](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) – Autoload-Pattern
+- [Vector2 in Godot](https://docs.godotengine.org/en/stable/classes/class_vector2.html) – 2D-Vektoren
+
+---
+
+#### Sub-Issue: Koordinaten-Umrechnung integrieren
+
+**Labels:** `type:feature`, `area:client`, `priority:p1`
+
+**Beschreibung:**
+CoordinateMapper in PlayerNode und GameManager integrieren.
+
+**Aufgaben:**
+- [ ] In `PlayerNode.UpdatePosition()`:
+  ```csharp
+  public void UpdatePosition(float serverX, float serverY)
+  {
+      var worldPos = CoordinateMapper.Instance.ServerToWorld(serverX, serverY);
+      Position = worldPos;
+  }
+  ```
+- [ ] In `LocalPlayerController` (falls Input-Position gesendet wird):
+  ```csharp
+  var serverPos = CoordinateMapper.Instance.WorldToServer(Position);
+  // Request senden mit serverPos
+  ```
+- [ ] Kamera-Setup:
+  - [ ] Camera2D als Child des lokalen Spielers
+  - [ ] Position Smoothing aktivieren
+
+**Akzeptanzkriterien:**
+- [ ] Spielerpositionen werden korrekt dargestellt
+- [ ] Bewegungsrichtungen stimmen
+- [ ] Kamera folgt dem Spieler
+
+**Ressourcen:**
+- [Camera2D](https://docs.godotengine.org/en/stable/classes/class_camera2d.html) – Kamera-Dokumentation
+- [Node2D Position](https://docs.godotengine.org/en/stable/classes/class_node2d.html#class-node2d-property-position) – Positionierung
+
+---
+
+### Epik: Weltgrenzen im Server implementieren
+
+**Labels:** `type:epic`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Weltgrenzen auf dem Server implementieren, damit Spieler nicht außerhalb laufen können.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] Sub-Issue: WorldBounds-Konfiguration erstellen
+- [ ] Sub-Issue: Position-Clamping implementieren
+
+---
+
+#### Sub-Issue: WorldBounds-Konfiguration erstellen
+
+**Labels:** `type:feature`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Konfigurationsklasse für Weltgrenzen erstellen.
+
+**Aufgaben:**
+- [ ] `WorldBounds`-Klasse erstellen:
+  - [ ] Datei: `server/Mmo.Server/Config/WorldBounds.cs`
+  ```csharp
+  public static class WorldBounds
+  {
+      public const float MinX = 64f;   // 2 Tiles Rand
+      public const float MinY = 64f;
+      public const float MaxX = 1536f; // 50 Tiles - 2 Tiles Rand
+      public const float MaxY = 1536f;
+  }
+  ```
+- [ ] Werte entsprechend der TileMap-Größe
+
+**Akzeptanzkriterien:**
+- [ ] WorldBounds-Klasse existiert
+- [ ] Werte passen zur Map-Größe
+
+**Ressourcen:**
+- [Static Classes](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members) – Konstanten
+
+---
+
+#### Sub-Issue: Position-Clamping implementieren
+
+**Labels:** `type:feature`, `area:server`, `priority:p1`
+
+**Beschreibung:**
+Position-Clamping im Player und Movement-Handler implementieren.
+
+**Aufgaben:**
+- [ ] `Player.ClampPosition()` Methode:
+  ```csharp
+  public void ClampPosition()
+  {
+      X = Math.Clamp(X, WorldBounds.MinX, WorldBounds.MaxX);
+      Y = Math.Clamp(Y, WorldBounds.MinY, WorldBounds.MaxY);
+  }
+  ```
+- [ ] Aufruf in `Player.Update()` nach Positionsänderung
+- [ ] Aufruf im Movement-Handler nach Bewegung
+- [ ] Unit-Tests für Boundary-Fälle
+
+**Akzeptanzkriterien:**
+- [ ] Spieler können nicht außerhalb der Grenzen
+- [ ] Bewegung entlang der Grenzen funktioniert
+- [ ] Keine Teleportation oder Stuck-Zustände
+
+**Ressourcen:**
+- [Math.Clamp](https://learn.microsoft.com/en-us/dotnet/api/system.math.clamp) – Werte begrenzen
+- [Unit Testing](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test) – Boundary-Tests
     ```csharp
     var worldPos = CoordinateMapper.Instance.ServerToWorld(x, y);
     Position = worldPos;
