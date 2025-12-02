@@ -13,6 +13,79 @@ Copilot soll den Code gegen unsere Projekt-Dokumentation prüfen und Abweichunge
 
 ---
 
+## 🔗 Pull Request & Issue Linking
+
+### Issue-Referenz Prüfung
+
+Bei JEDEM Pull Request Review:
+
+1. **Prüfe ob Issues verlinkt sind:**
+   - Suche nach `Closes #`, `Fixes #`, `Resolves #` in PR-Beschreibung
+   - Suche nach Issue-Referenzen in Commit Messages
+   - Wenn KEINE Issue-Referenz gefunden:
+   
+   > ❓ **Fehlende Issue-Referenz**
+   > 
+   > Dieser PR referenziert kein Issue. Bitte gib an, welche Issues dieser PR schließt:
+   > - Füge `Closes #XX` zur PR-Beschreibung hinzu
+   > - Oder erkläre, warum kein Issue existiert
+   > 
+   > **Offene Issues die relevant sein könnten:**
+   > _(Liste hier passende offene Issues basierend auf dem PR-Inhalt)_
+
+2. **Prüfe Issue-Vollständigkeit:**
+   - Hole das verlinkte Issue
+   - Prüfe ALLE Aufgaben (Checkboxen `- [ ]`) im Issue
+   - Prüfe ALLE Akzeptanzkriterien im Issue
+   - Vergleiche mit dem Code im PR
+
+3. **Bei fehlenden Implementierungen:**
+
+   > ⚠️ **Unvollständige Implementierung**
+   > 
+   > Das Issue #XX hat folgende Aufgaben/Akzeptanzkriterien die im PR nicht implementiert sind:
+   > 
+   > **Fehlende Aufgaben:**
+   > - [ ] Aufgabe 1 aus dem Issue
+   > - [ ] Aufgabe 2 aus dem Issue
+   > 
+   > **Fehlende Akzeptanzkriterien:**
+   > - [ ] Kriterium 1
+   > - [ ] Kriterium 2
+   > 
+   > **Optionen:**
+   > 1. Implementiere die fehlenden Punkte in diesem PR
+   > 2. Erstelle Follow-up Issues für die offenen Punkte
+   > 3. Erkläre warum diese Punkte nicht mehr relevant sind
+
+### Issue-Checkliste für Reviews
+
+Bei jedem PR mit verlinktem Issue:
+
+- [ ] PR-Beschreibung enthält `Closes #XX` oder ähnlich?
+- [ ] Alle `- [ ]` Aufgaben im Issue sind im Code umgesetzt?
+- [ ] Alle Akzeptanzkriterien im Issue sind erfüllt?
+- [ ] Tests für die Akzeptanzkriterien vorhanden?
+- [ ] Dokumentation aktualisiert (falls im Issue erwähnt)?
+
+### Automatische Issue-Suche
+
+Wenn ein PR kein Issue referenziert, suche nach passenden Issues basierend auf:
+- Dateinamen im PR (z.B. `NetworkManager.cs` → Issues mit "NetworkManager")
+- Ordnerstruktur (z.B. `server/` → Issues mit Label `area:server`)
+- Commit Messages (Keywords)
+- PR-Titel
+
+Schlage dann passende Issues vor:
+
+> 💡 **Mögliche zugehörige Issues:**
+> - #42 - NetworkManager Autoload (Godot Singleton)
+> - #38 - TCP Server mit TcpListener
+> 
+> Bitte verlinke das passende Issue mit `Closes #XX` in der PR-Beschreibung.
+
+---
+
 ## 🏗️ Architektur-Konformität
 
 ### Server-Client-Trennung
