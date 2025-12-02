@@ -1,0 +1,143 @@
+# ============================================================================
+# Secure Auto-Merge für Dependabot PRs
+# ============================================================================
+# Merged automatisch NUR sichere Updates von vertrauenswürdigen Quellen
+# 
+# Sicherheitsfeatures:
+# - Nur Dependabot PRs (kein anderer Bot/User)
+# - Nur bekannte, vertrauenswürdige Pakete
+# - Nur Patch-Updates (keine Breaking Changes)
+# - Nur wenn CI grün ist
+# - Major Updates werden NIE auto-merged
+# ============================================================================
+
+name: Dependabot Secure Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-and-merge:
+    runs-on: ubuntu-latest
+    # NUR für Dependabot PRs
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+      # ========================================
+      # 1. Dependabot Metadata abrufen
+      # ========================================
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # ========================================
+      # 2. Sicherheitsprüfungen loggen
+      # ========================================
+      - name: Log update details
+        run: |
+          echo "📦 Package: ${{ steps.metadata.outputs.dependency-names }}"
+          echo "📊 Update type: ${{ steps.metadata.outputs.update-type }}"
+          echo "🏷️ Ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}"
+          echo "⬆️ New version: ${{ steps.metadata.outputs.new-version }}"
+          echo "⬇️ Previous version: ${{ steps.metadata.outputs.previous-version }}"
+
+      # ========================================
+      # 3. Vertrauenswürdige NuGet Pakete - PATCH
+      # ========================================
+      - name: Auto-merge trusted NuGet patch updates
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'nuget' &&
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' &&
+          (
+            startsWith(steps.metadata.outputs.dependency-names, 'Microsoft.') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'System.') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'xunit') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'Moq') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'FluentAssertions') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'coverlet') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'Serilog') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'MessagePack')
+          )
+        run: |
+          echo "✅ Trusted NuGet patch update - enabling auto-merge"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # 4. Vertrauenswürdige NuGet Pakete - MINOR (nur Test-Dependencies)
+      # ========================================
+      - name: Auto-merge test dependency minor updates
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'nuget' &&
+          steps.metadata.outputs.update-type == 'version-update:semver-minor' &&
+          (
+            startsWith(steps.metadata.outputs.dependency-names, 'xunit') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'Moq') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'FluentAssertions') ||
+            startsWith(steps.metadata.outputs.dependency-names, 'coverlet')
+          )
+        run: |
+          echo "✅ Test dependency minor update - enabling auto-merge"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # 5. GitHub Actions - alle Patch/Minor Updates
+      # ========================================
+      - name: Auto-merge GitHub Actions updates
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'github-actions' &&
+          (
+            steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+            steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          )
+        run: |
+          echo "✅ GitHub Actions update - enabling auto-merge"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # 6. Major Updates - NIE auto-mergen, Label hinzufügen
+      # ========================================
+      - name: Label major updates for manual review
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          echo "⚠️ Major update detected - requires manual review"
+          gh pr edit "$PR_URL" --add-label "needs-review,breaking-change"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # 7. Unbekannte Pakete - Label für Review
+      # ========================================
+      - name: Label unknown packages for review
+        if: |
+          steps.metadata.outputs.package-ecosystem == 'nuget' &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'Microsoft.') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'System.') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'xunit') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'Moq') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'FluentAssertions') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'coverlet') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'Serilog') &&
+          !startsWith(steps.metadata.outputs.dependency-names, 'MessagePack')
+        run: |
+          echo "⚠️ Unknown package source - requires manual review"
+          gh pr edit "$PR_URL" --add-label "needs-review,unknown-source"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
