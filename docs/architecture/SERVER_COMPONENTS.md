@@ -2,7 +2,9 @@
 
 ## 2DMMO – Server Architektur
 
-**Letzte Aktualisierung:** 2025-12-02
+**Version:** 1.1.0  
+**Letzte Aktualisierung:** 2025-12-02  
+**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
 
 ---
 
@@ -105,6 +107,15 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 | Zone Server | Zone Server | Redis Pub/Sub | Cross-Zone Events |
 | Zone Server | PostgreSQL | SQL | Persistenz |
 | Alle | Redis | Redis Protocol | Session, Cache |
+
+---
+
+## Verwandte Dokumentation
+
+- [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Connection Flow
+- [Game Loop](GAME_LOOP.md) - Server Tick Timing
+- [Redis-Strategie](REDIS.md) - Session und Cache
+- [Azure Deployment](AZURE_DEPLOYMENT.md) - Container Apps Deployment
 
 ---
 
