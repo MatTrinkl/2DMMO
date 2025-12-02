@@ -1,5 +1,7 @@
 # 🎮 2DMMO
 
+![CI](https://github.com/MatTrinkl/2DMMO/actions/workflows/ci.yml/badge.svg)
+
 Ein 2D Top-Down MMO in einer High-Fantasy-Welt, entwickelt mit Godot 4 (C#) als Client und .NET 10 als Server.
 
 > *Inspiriert von Klassikern wie World of Warcraft und Guild Wars – im charmanten Pixel-Art-Stil.*
