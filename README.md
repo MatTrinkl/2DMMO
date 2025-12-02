@@ -19,20 +19,23 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 |----------|--------------|
 | [Game Design Document](docs/GAME_DESIGN_DOCUMENT.md) | Gameplay, Rassen, Klassen, Systeme |
 | [Architektur](docs/ARCHITECTURE.md) | Technische Architektur, Netzwerk, Datenbank |
+| [Technical Design](docs/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen |
 | [Prototyp-Scope](docs/PROTOTYPE_SCOPE.md) | Was der Prototyp können muss |
+| [Assets](docs/ASSETS.md) | Asset-Quellen und Spezifikationen |
 
 ## 🛠️ Tech-Stack
 
-| Komponente | Technologie | Version |
-|-----------|-------------|---------|
-| **Client** | Godot Engine (.NET Edition) | 4.3 |
-| **Server** | .NET | 10 |
-| **Sprache** | C# | 14 |
-| **Transport** | TCP + TLS | - |
-| **Serialisierung** | MessagePack | Latest |
-| **Cache** | Redis | 7+ |
-| **Datenbank** | PostgreSQL | 16+ |
-| **Cloud** | Microsoft Azure | Germany West Central |
+| Komponente | Technologie | Version | Links |
+|-----------|-------------|---------|-------|
+| **Client** | Godot Engine (.NET Edition) | 4.3 | [Docs](https://docs.godotengine.org/) |
+| **Server** | .NET | 10 | [Docs](https://learn.microsoft.com/en-us/dotnet/) |
+| **Sprache** | C# | 14 | [Docs](https://learn.microsoft.com/en-us/dotnet/csharp/) |
+| **Transport** | TCP + TLS | - | - |
+| **Serialisierung** | MessagePack | Latest | [GitHub](https://github.com/MessagePack-CSharp/MessagePack-CSharp) |
+| **Cache** | Redis | 7+ | [Docs](https://redis.io/docs/) |
+| **Datenbank** | PostgreSQL | 16+ | [Docs](https://www.postgresql.org/docs/) |
+| **Cloud** | Microsoft Azure | - | [Docs](https://learn.microsoft.com/en-us/azure/) |
+| **Logging** | Grafana Cloud | - | [Docs](https://grafana.com/docs/grafana-cloud/) |
 
 ## 📁 Projektstruktur
 
@@ -64,12 +67,15 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 │       ├── Messages/           # Network Messages (MessagePack)
 │       ├── Enums/              # Shared Enums
 │       └── Constants/          # Shared Constants
-├── tests/                      # Unit Tests
+├── tests/                      # Unit & Integration Tests
+│   ├── Mmo.Shared.Tests/
 │   └── Mmo.Server.Tests/
 ├── docs/                       # Dokumentation
 │   ├── GAME_DESIGN_DOCUMENT.md
 │   ├── ARCHITECTURE.md
-│   └── PROTOTYPE_SCOPE.md
+│   ├── TECHNICAL_DESIGN.md
+│   ├── PROTOTYPE_SCOPE.md
+│   └── ASSETS.md
 ├── Mmo.sln                     # .NET Solution
 └── .github/workflows/          # CI/CD Pipelines
 ```
@@ -143,7 +149,7 @@ dotnet build -warnaserror
 **Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen
 
 - [x] Projekt-Struktur aufsetzen
-- [x] Dokumentation (GDD, Architektur)
+- [x] Dokumentation (GDD, Architektur, Technical Design)
 - [ ] TCP Server mit MessagePack
 - [ ] Client-Server Verbindung
 - [ ] Spieler-Bewegung synchronisieren
@@ -156,8 +162,36 @@ Siehe [PROTOTYPE_SCOPE.md](docs/PROTOTYPE_SCOPE.md) für Details.
 
 GitHub Actions Pipeline:
 - ✅ Build-Verifikation
-- ✅ Unit Tests
+- ✅ Unit Tests (parallel)
+- ✅ Integration Tests (parallel)
 - ✅ Code-Formatierung
+
+## 🔗 Nützliche Links
+
+### Entwicklung
+- [.NET Dokumentation](https://learn.microsoft.com/en-us/dotnet/)
+- [Godot 4 Dokumentation](https://docs.godotengine.org/en/stable/)
+- [Godot C# Dokumentation](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html)
+- [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
+
+### Networking
+- [Gabriel Gambetta - Client-Server Game Architecture](https://www.gabrielgambetta.com/client-server-game-architecture.html)
+- [Valve Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
+- [Glenn Fiedler - Networked Physics](https://gafferongames.com/post/networked_physics_2004/)
+
+### Testing
+- [xUnit](https://xunit.net/)
+- [GdUnit4 (Godot Testing)](https://mikeschulze.github.io/gdUnit4/)
+- [Stryker.NET (Mutation Testing)](https://stryker-mutator.io/docs/stryker-net/introduction/)
+
+### Monitoring
+- [Grafana Cloud](https://grafana.com/products/cloud/)
+- [Serilog](https://serilog.net/)
+
+### Assets
+- [Kenney.nl](https://kenney.nl/assets)
+- [OpenGameArt](https://opengameart.org/)
+- [itch.io Free Assets](https://itch.io/game-assets/free)
 
 ## 📋 Issue-Tracking
 
