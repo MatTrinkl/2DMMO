@@ -1,55 +1,77 @@
-# 2DMMO
+# 🎮 2DMMO
 
-Ein einfaches 2D-Multiplayer-Online-Spiel, entwickelt mit Godot 4 (C#) als Client und .NET 10 als Server.
+Ein 2D Top-Down MMO in einer High-Fantasy-Welt, entwickelt mit Godot 4 (C#) als Client und .NET 10 als Server.
+
+> *Inspiriert von Klassikern wie World of Warcraft und Guild Wars – im charmanten Pixel-Art-Stil.*
 
 ## 🎯 Projektziel
 
-Erstellung eines funktionsfähigen Online-Multiplayer-Prototyps mit:
-- Echtzeit-Spielerbewegung
-- Mehrspieler-Synchronisation
-- Persistenz (geplant)
-- Chat-System (geplant)
+Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
+- Echtzeit-Spielerbewegung & Synchronisation
+- Klassisches MMO-Gameplay (Tank/Healer/DPS)
+- Vielfältige Rassen und Klassen
+- Persistente Spielwelt
+- Zone-basiertes Sharding für unbegrenzte Spielerzahlen
+
+## 📚 Dokumentation
+
+| Dokument | Beschreibung |
+|----------|--------------|
+| [Game Design Document](docs/GAME_DESIGN_DOCUMENT.md) | Gameplay, Rassen, Klassen, Systeme |
+| [Architektur](docs/ARCHITECTURE.md) | Technische Architektur, Netzwerk, Datenbank |
+| [Prototyp-Scope](docs/PROTOTYPE_SCOPE.md) | Was der Prototyp können muss |
 
 ## 🛠️ Tech-Stack
 
-| Komponente | Technologie |
-|-----------|-------------|
-| **Server** | .NET 10, C# 14 |
-| **Client** | Godot 4.3, C# 14, .NET 10 |
-| **Shared Code** | .NET 10 Class Library |
-| **Kommunikation** | TCP/WebSocket (geplant) |
-| **Persistenz** | JSON/SQLite (geplant) |
-| **Cloud** | Azure (optional, geplant) |
+| Komponente | Technologie | Version |
+|-----------|-------------|---------|
+| **Client** | Godot Engine (.NET Edition) | 4.3 |
+| **Server** | .NET | 10 |
+| **Sprache** | C# | 14 |
+| **Transport** | TCP + TLS | - |
+| **Serialisierung** | MessagePack | Latest |
+| **Cache** | Redis | 7+ |
+| **Datenbank** | PostgreSQL | 16+ |
+| **Cloud** | Microsoft Azure | Germany West Central |
 
 ## 📁 Projektstruktur
 
 ```
 2DMMO/
-├── client/                    # Godot Client
+├── client/                     # Godot Client
 │   └── GodotProject/
-│       ├── project.godot      # Godot Projektdatei
+│       ├── project.godot       # Godot Projektdatei
 │       ├── GodotProject.csproj
-│       ├── assets/            # Game Assets
-│       │   ├── sprites/       # 2D Sprites und Texturen
-│       │   ├── audio/         # Sound-Effekte und Musik
-│       │   ├── fonts/         # Schriftarten
-│       │   ├── ui/            # UI-Elemente
-│       │   └── shaders/       # Shader-Dateien
-│       ├── scenes/            # Godot Szenen (.tscn)
-│       └── scripts/           # C# Scripts
-├── server/                    # .NET Server
+│       ├── assets/             # Game Assets
+│       │   ├── sprites/        # 2D Sprites (64x64 Pixel Art)
+│       │   ├── audio/          # Sound-Effekte und Musik
+│       │   ├── fonts/          # Schriftarten
+│       │   ├── ui/             # UI-Elemente
+│       │   └── shaders/        # Shader-Dateien
+│       ├── scenes/             # Godot Szenen (.tscn)
+│       └── scripts/            # C# Scripts
+│           └── Networking/     # Client-side Networking
+├── server/                     # .NET Server
 │   └── Mmo.Server/
 │       ├── Mmo.Server.csproj
-│       └── Program.cs
-├── shared/                    # Shared Code Library
+│       ├── Program.cs
+│       ├── Networking/         # TCP Server, Connection Handling
+│       ├── GameLoop/           # 30Hz Game Loop
+│       └── Zones/              # Zone Management
+├── shared/                     # Shared Code Library
 │   └── Mmo.Shared/
 │       ├── Mmo.Shared.csproj
-│       └── SharedConstants.cs
-├── tests/                     # Unit Tests
+│       ├── Messages/           # Network Messages (MessagePack)
+│       ├── Enums/              # Shared Enums
+│       └── Constants/          # Shared Constants
+├── tests/                      # Unit Tests
 │   └── Mmo.Server.Tests/
-├── docs/                      # Dokumentation
-├── Mmo.sln                    # .NET Solution
-└── .github/workflows/         # CI/CD Pipelines
+├── docs/                       # Dokumentation
+│   ├── GAME_DESIGN_DOCUMENT.md
+│   ├── ARCHITECTURE.md
+│   └── PROTOTYPE_SCOPE.md
+├── Mmo.sln                     # .NET Solution
+└── .github/workflows/          # CI/CD Pipelines
 ```
 
 ## 🚀 Schnellstart
@@ -58,6 +80,8 @@ Erstellung eines funktionsfähigen Online-Multiplayer-Prototyps mit:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Godot 4.3 .NET Edition](https://godotengine.org/download)
+- (Optional) [Redis](https://redis.io/) für Caching
+- (Optional) [PostgreSQL](https://www.postgresql.org/) für Persistenz
 
 ### Server starten
 
@@ -69,10 +93,7 @@ cd 2DMMO
 # Abhängigkeiten wiederherstellen
 dotnet restore
 
-# Server bauen
-dotnet build
-
-# Server starten
+# Server bauen und starten
 dotnet run --project server/Mmo.Server
 ```
 
@@ -80,7 +101,8 @@ dotnet run --project server/Mmo.Server
 
 1. Godot 4.3 (.NET Edition) öffnen
 2. Projekt importieren: `client/GodotProject/project.godot`
-3. F5 drücken oder Play-Button klicken
+3. Build: `Projekt > Build` (oder Ctrl+Shift+B)
+4. Play: F5 oder Play-Button
 
 ### Tests ausführen
 
@@ -97,7 +119,7 @@ dotnet test --verbosity normal
 ### Build
 
 ```bash
-# Komplettes Projekt bauen
+# Debug-Build
 dotnet build Mmo.sln
 
 # Release-Build
@@ -110,60 +132,36 @@ dotnet build Mmo.sln -c Release
 # Code formatieren
 dotnet format
 
-# Code-Analyse durchführen
+# Code-Analyse
 dotnet build -warnaserror
 ```
 
-### Mutation Tests
+## 🎮 Aktueller Status
 
-```bash
-# Stryker.NET installieren (einmalig)
-dotnet tool install -g dotnet-stryker
+### Phase 1: Prototyp (Aktuell)
 
-# Mutation Tests ausführen
-cd tests/Mmo.Server.Tests
-dotnet stryker
-```
+**Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen
+
+- [x] Projekt-Struktur aufsetzen
+- [x] Dokumentation (GDD, Architektur)
+- [ ] TCP Server mit MessagePack
+- [ ] Client-Server Verbindung
+- [ ] Spieler-Bewegung synchronisieren
+- [ ] Einfache Tilemap-Welt
+- [ ] Basis-Chat
+
+Siehe [PROTOTYPE_SCOPE.md](docs/PROTOTYPE_SCOPE.md) für Details.
 
 ## 🧪 CI/CD
 
-Die GitHub Actions Pipeline führt automatisch aus:
-
+GitHub Actions Pipeline:
 - ✅ Build-Verifikation
 - ✅ Unit Tests
 - ✅ Code-Formatierung
-- ✅ Mutation Tests (Stryker.NET)
-
-### Server-Mocking für Tests
-
-Für Unit- und Integrationstests kann der Server gemockt werden:
-
-```csharp
-// Beispiel mit Moq
-var mockServer = new Mock<IGameServer>();
-mockServer.Setup(s => s.ProcessMessage(It.IsAny<INetworkMessage>()))
-          .Returns(new SuccessResponse());
-
-// Oder mit einem Test-Double
-var testServer = new InMemoryGameServer();
-```
-
-**Geplante Test-Infrastruktur:**
-- `IGameServer` Interface für Dependency Injection
-- `InMemoryGameServer` für schnelle Unit-Tests ohne Netzwerk
-- Integration Tests mit echtem TCP/WebSocket (optional)
 
 ## 📋 Issue-Tracking
 
-Siehe [Issues](https://github.com/MatTrinkl/2DMMO/issues) für aktuelle Aufgaben und die Projekt-Roadmap.
-
-## 🤝 Mitwirken
-
-1. Fork erstellen
-2. Feature-Branch erstellen (`git checkout -b feature/AmazingFeature`)
-3. Änderungen committen (`git commit -m 'Add some AmazingFeature'`)
-4. Branch pushen (`git push origin feature/AmazingFeature`)
-5. Pull Request erstellen
+Siehe [Issues](https://github.com/MatTrinkl/2DMMO/issues) für aktuelle Aufgaben.
 
 ## 📄 Lizenz
 
@@ -172,3 +170,7 @@ Dieses Projekt ist privat und nicht für die öffentliche Nutzung freigegeben.
 ## 📞 Kontakt
 
 - GitHub: [@MatTrinkl](https://github.com/MatTrinkl)
+
+---
+
+*Entwickelt mit ❤️ und viel Kaffee*
