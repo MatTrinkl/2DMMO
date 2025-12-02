@@ -1,3 +1,4 @@
+using Mmo.Shared;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Messages;
 using Mmo.Shared.Serialization;
@@ -18,7 +19,7 @@ public class MessageSerializerTests
         var bytes = MessageSerializer.Serialize(message);
 
         Assert.NotNull(bytes);
-        Assert.True(bytes.Length >= 5); // At least header size
+        Assert.True(bytes.Length >= SharedConstants.MessageHeaderSize);
         Assert.Equal((byte)MessageType.LoginRequest, bytes[0]);
     }
 
@@ -28,8 +29,8 @@ public class MessageSerializerTests
         var original = new LoginRequest { Username = "TestUser" };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<LoginRequest>(payload);
 
@@ -49,8 +50,8 @@ public class MessageSerializerTests
         };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<LoginResponse>(payload);
 
@@ -72,8 +73,8 @@ public class MessageSerializerTests
         };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<PlayerJoined>(payload);
 
@@ -89,8 +90,8 @@ public class MessageSerializerTests
         var original = new LoginRequest { Username = "TypeTest" };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize(MessageType.LoginRequest, payload);
 
@@ -121,8 +122,8 @@ public class MessageSerializerTests
         };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<PositionUpdate>(payload);
 
@@ -148,8 +149,8 @@ public class MessageSerializerTests
         };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<WorldState>(payload);
 
@@ -173,8 +174,8 @@ public class MessageSerializerTests
         };
 
         var bytes = MessageSerializer.Serialize(original);
-        var payload = new byte[bytes.Length - 5];
-        Array.Copy(bytes, 5, payload, 0, payload.Length);
+        var payload = new byte[bytes.Length - SharedConstants.MessageHeaderSize];
+        Array.Copy(bytes, SharedConstants.MessageHeaderSize, payload, 0, payload.Length);
 
         var deserialized = MessageSerializer.Deserialize<ChatMessage>(payload);
 

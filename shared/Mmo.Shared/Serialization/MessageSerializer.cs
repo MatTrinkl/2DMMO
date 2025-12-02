@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Messages;
@@ -16,7 +17,7 @@ public static class MessageSerializer
         var result = new byte[1 + 4 + payload.Length];
 
         result[0] = (byte)message.Type;
-        BitConverter.GetBytes(payload.Length).CopyTo(result, 1);
+        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(1, 4), payload.Length);
         payload.CopyTo(result, 5);
 
         return result;
