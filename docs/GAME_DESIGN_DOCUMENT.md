@@ -2,23 +2,23 @@
 
 ## 2DMMO – High Fantasy MMO
 
-**Version:** 0.2.0  
-**Letzte Aktualisierung:** 2025-12-01  
+**Version:** 0.3.0  
+**Letzte Aktualisierung:** 2025-12-02  
 **Status:** In Entwicklung
 
 ---
 
 ## 📋 Inhaltsverzeichnis
 
-1. [Vision & Überblick](#1-vision--überblick)
-2. [Technische Architektur](#2-technische-architektur)
-3. [Gameplay-Systeme](#3-gameplay-systeme)
-4. [Rassen & Klassen](#4-rassen--klassen)
-5. [Welt-Design](#5-welt-design)
-6. [Progression](#6-progression)
-7. [Datenbank-Schema](#7-datenbank-schema)
-8. [Art Direction & UI](#8-art-direction--ui)
-9. [Meilensteine](#9-meilensteine)
+1. [Vision & Überblick](#1-vision--überblick)  
+2. [Technische Architektur](#2-technische-architektur)  
+3. [Gameplay-Systeme](#3-gameplay-systeme)  
+4. [Rassen & Klassen](#4-rassen--klassen)  
+5. [Welt-Design](#5-welt-design)  
+6. [Progression](#6-progression)  
+7. [Datenbank-Schema](#7-datenbank-schema)  
+8. [Art Direction & UI](#8-art-direction--ui)  
+9. [Meilensteine](#9-meilensteine)  
 10. [Offene Fragen](#10-offene-fragen)
 
 ---
@@ -42,19 +42,21 @@
 
 ### 1.3 Zielgruppe
 
-- Fans klassischer MMORPGs
-- Spieler, die nostalgischen 2D-Grafikstil schätzen
+- Fans klassischer MMORPGs  
+- Spieler, die nostalgischen 2D-Grafikstil schätzen  
 - Casual bis Mid-Core Spieler
 
 ### 1.4 Unique Selling Points (USPs)
 
-1. **Vielfalt der Völker** – Weit mehr als nur Menschen und klassische Fantasy-Rassen
-2. **2D-Charme** – Hochauflösende Pixel Art (64x64) mit modernem Gameplay
+1. **Vielfalt der Völker** – Weit mehr als nur Menschen und klassische Fantasy-Rassen  
+2. **2D-Charme** – Hochauflösende Pixel Art (64x64) mit modernem Gameplay  
 3. **Skalierbarkeit** – Von Anfang an auf große Spielerzahlen ausgelegt
 
 ---
 
 ## 2. Technische Architektur
+
+> **Hinweis:** Detaillierte technische Dokumentation siehe [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ### 2.1 Tech-Stack
 
@@ -64,9 +66,11 @@
 | **Client-Sprache** | C# | 14 |
 | **Game Server** | .NET | 10 |
 | **Shared Library** | .NET Class Library | 10 |
+| **Transport** | TCP + TLS | - |
+| **Serialisierung** | MessagePack | Latest |
 | **Datenbank** | PostgreSQL | 16+ |
-| **Cloud-Hosting** | Microsoft Azure | - |
-| **Netzwerk-Protokoll** | TCP/WebSocket | - |
+| **Cache** | Redis | 7+ |
+| **Cloud-Hosting** | Microsoft Azure | Germany West Central |
 
 ### 2.2 Architektur-Übersicht
 
@@ -81,8 +85,8 @@
 │         └────────────────┼────────────────┘                      │
 │                          │                                       │
 │                 ┌────────┴────────┐                              │
-│                 │  Load Balancer  │                              │
-│                 │  (Zone Router)  │                              │
+│                 │     Redis       │                              │
+│                 │  (Cache/PubSub) │                              │
 │                 └────────┬────────┘                              │
 │                          │                                       │
 │                 ┌────────┴────────┐                              │
@@ -116,6 +120,8 @@
 │  → Shards werden dynamisch erstellt bei hoher Last      │
 │  → Spieler können zwischen Shards wechseln              │
 │  → Gilden/Gruppen werden bevorzugt auf gleichem Shard   │
+│                                                          │
+│  Prototyp: Sharding-ready, aber nur 1 Shard aktiv       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -514,12 +520,12 @@ CREATE TABLE guild_members (
 
 ### 8.2 Audio-Konzept
 
-> **Status:** Später zu definieren
+> **Status:** 🚧 WIP – Wird später definiert
 
 **Richtlinien:**
 - Stil muss zur Pixel Art passen
-- Kann orchestral mit leichten Retro-Elementen sein
-- Oder vollständig Chiptune/Synth (je nach Vision)
+- Optionen: Orchestral mit Retro-Elementen ODER Chiptune/Synth
+- Für Prototyp: Placeholder-Sounds
 
 ### 8.3 UI-Design
 
@@ -543,13 +549,19 @@ CREATE TABLE guild_members (
 ## 9. Meilensteine
 
 ### Phase 1: Prototyp (Aktuell)
-> **Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen
+> **Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen  
+> **Umgebung:** Lokal (kein Cloud-Deployment)
 
 - [x] Projekt-Struktur aufsetzen
 - [x] Client-Server-Grundkommunikation
 - [ ] Spieler-Bewegung synchronisieren
 - [ ] Einfache Tilemap-Welt
 - [ ] Basis-Chat
+
+**Prototyp-Spezifika:**
+- Authentication: Nur Username (kein echtes Login)
+- Sharding: Code ist ready, aber nur 1 Shard aktiv
+- Deployment: Nur lokal
 
 ### Phase 2: Core Gameplay
 > **Ziel:** Spielbarer Gameplay-Loop
@@ -561,6 +573,7 @@ CREATE TABLE guild_members (
 - [ ] Persistenz (Postgres)
 - [ ] Tod/Respawn-System
 - [ ] PvP-Flagging
+- [ ] Authentication (Email + OAuth)
 
 ### Phase 3: Content
 > **Ziel:** Spielbare Demo mit 1-10 Leveln
@@ -573,9 +586,9 @@ CREATE TABLE guild_members (
 ### Phase 4: Polish & Scale
 > **Ziel:** Beta-Release
 
-- [ ] Zone-Sharding
+- [ ] Zone-Sharding aktivieren
 - [ ] Load Balancing
-- [ ] Azure-Deployment
+- [ ] Azure-Deployment (Region: Germany West Central / Frankfurt)
 - [ ] Performance-Optimierung
 
 ---
@@ -590,13 +603,18 @@ CREATE TABLE guild_members (
 - [ ] Soll es Fraktionen geben? → Abhängig von Lore
 
 ### Technisch
-- [ ] WebSocket oder reines TCP für die Kommunikation?
-- [ ] Wie oft werden Positionen synchronisiert? (Tick-Rate?)
-- [ ] Caching-Strategie für häufige DB-Zugriffe? (Redis?)
+- [x] ~~WebSocket oder reines TCP für die Kommunikation?~~ → TCP + TLS
+- [x] ~~Wie oft werden Positionen synchronisiert? (Tick-Rate?)~~ → 30 Hz
+- [x] ~~Caching-Strategie für häufige DB-Zugriffe?~~ → Redis
+- [x] ~~Serialisierung?~~ → MessagePack
+- [x] ~~Authentication für Prototyp?~~ → Nur Username
+- [x] ~~Authentication für Release?~~ → Email + OAuth
+- [x] ~~Sharding für Prototyp?~~ → Code ready, 1 Shard aktiv
+- [x] ~~Azure Region?~~ → Germany West Central (Frankfurt)
 
 ### Design
 - [x] ~~Grafik-Stil?~~ → Hochauflösende Pixel Art (64x64)
-- [ ] Audio-Konzept? → Passend zu Pixel Art (Details offen)
+- [ ] Audio-Konzept? → 🚧 WIP (passend zu Pixel Art)
 - [x] ~~UI-Design-Richtlinien?~~ → Modern Pixel Art UI
 
 ---
@@ -607,6 +625,7 @@ CREATE TABLE guild_members (
 |---------|-------|------------|
 | 0.1.0 | 2025-12-01 | Erstes GDD erstellt (Prototyp-Fokus) |
 | 0.2.0 | 2025-12-01 | PvP-Flagging, Respawn-System, Art Direction hinzugefügt |
+| 0.3.0 | 2025-12-02 | Technische Entscheidungen finalisiert (TCP, MessagePack, Redis, Auth, Sharding) |
 
 ---
 
