@@ -64,11 +64,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Ignoriere bestimmte Updates
-    ignore:
-      # Keine Preview/RC Versionen
-      - dependency-name: "*"
-        update-types: ["version-update:semver-prerelease"]
 
   # ============================================================================
   # GitHub Actions
