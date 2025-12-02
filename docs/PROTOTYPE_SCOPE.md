@@ -2,7 +2,7 @@
 
 ## 2DMMO – Phase 1: Prototyp
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Letzte Aktualisierung:** 2025-12-02  
 **Status:** In Entwicklung
 
@@ -38,6 +38,10 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 - [ ] Verbindungs-Management (Connect/Disconnect)
 - [ ] Logging (Console-Output reicht)
 
+**Relevante Docs:**
+- [.NET TCP Server](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/socket-services)
+- [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
+
 ### 2. Client-Grundgerüst
 
 - [ ] TCP Client verbindet sich zum Server
@@ -45,6 +49,10 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 - [ ] Godot-Szene lädt und zeigt Spielwelt
 - [ ] Input-Handling (WASD oder Pfeiltasten)
 - [ ] Verbindungsstatus-Anzeige (Connected/Disconnected)
+
+**Relevante Docs:**
+- [Godot StreamPeerTCP](https://docs.godotengine.org/en/stable/classes/class_streampeertcp.html)
+- [Godot Input Handling](https://docs.godotengine.org/en/stable/tutorials/inputs/index.html)
 
 ### 3. Shared Library
 
@@ -72,12 +80,20 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 - [ ] Client zeigt andere Spieler an korrekter Position
 - [ ] Client-Prediction für flüssige Bewegung (optional aber empfohlen)
 
+**Relevante Docs:**
+- [Gabriel Gambetta - Client-Side Prediction](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
+- [Valve Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
+
 ### 6. Spielwelt (Minimal)
 
 - [ ] Einfache Tilemap (Gras, vielleicht Wasser/Hindernisse)
 - [ ] Feste Größe (z.B. 50x50 Tiles)
 - [ ] Keine Zonen, keine Übergänge
 - [ ] Spieler-Sprite (Placeholder OK)
+
+**Relevante Docs:**
+- [Godot TileMap](https://docs.godotengine.org/en/stable/classes/class_tilemap.html)
+- [Godot 2D Tutorial](https://docs.godotengine.org/en/stable/getting_started/first_2d_game/index.html)
 
 ### 7. Chat (Basis)
 
@@ -108,6 +124,7 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 - ❌ Zone-Sharding (Code kann vorbereitet sein, aber nicht aktiv)
 - ❌ Load Balancing
 - ❌ Rate Limiting
+- ❌ Grafana Cloud Integration (vorbereitet, aber nicht aktiv)
 
 ### Assets
 - ❌ Finale Grafiken
@@ -129,8 +146,9 @@ Für den Prototyp verwenden wir einfache Placeholder:
 
 **Mögliche Asset-Quellen:**
 - [OpenGameArt.org](https://opengameart.org/)
-- [Kenney.nl](https://kenney.nl/assets)
+- [Kenney.nl](https://kenney.nl/assets) ⭐ Empfohlen (CC0)
 - [itch.io Free Assets](https://itch.io/game-assets/free)
+- [Ninja Adventure Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) - Komplett-Paket
 
 ---
 
@@ -242,6 +260,28 @@ Ein Feature ist **fertig**, wenn:
 - [ ] Keine offensichtlichen Bugs
 - [ ] Funktioniert mit 2 Clients gleichzeitig
 - [ ] Code ist im `main` Branch
+
+---
+
+## 🔗 Nützliche Links
+
+### Dokumentation
+- [.NET Docs](https://learn.microsoft.com/en-us/dotnet/)
+- [Godot 4 Docs](https://docs.godotengine.org/en/stable/)
+- [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
+
+### Netzwerk
+- [Gabriel Gambetta - Fast-Paced Multiplayer](https://www.gabrielgambetta.com/client-server-game-architecture.html)
+- [Valve Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
+
+### Testing
+- [xUnit](https://xunit.net/)
+- [GdUnit4](https://mikeschulze.github.io/gdUnit4/)
+
+### Assets
+- [Kenney.nl](https://kenney.nl/assets)
+- [OpenGameArt](https://opengameart.org/)
+- [itch.io Free](https://itch.io/game-assets/free)
 
 ---
 
