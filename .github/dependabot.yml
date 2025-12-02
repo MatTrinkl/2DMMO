@@ -1,0 +1,97 @@
+# ============================================================================
+# Dependabot Configuration für 2DMMO
+# ============================================================================
+# Automatische Dependency-Updates für .NET und GitHub Actions
+# Docs: https://docs.github.com/en/code-security/dependabot
+# ============================================================================
+
+version: 2
+
+registries:
+  nuget-org:
+    type: nuget-feed
+    url: https://api.nuget.org/v3/index.json
+
+updates:
+  # ============================================================================
+  # .NET / NuGet Dependencies
+  # ============================================================================
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Vienna"
+    # Maximal 5 PRs gleichzeitig offen
+    open-pull-requests-limit: 5
+    # Commit Message Format
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Labels für einfaches Filtern
+    labels:
+      - "dependencies"
+      - "automated"
+    # Gruppiere Minor/Patch Updates zusammen
+    groups:
+      # Alle Microsoft/dotnet Pakete zusammen
+      dotnet-core:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
+        update-types:
+          - "minor"
+          - "patch"
+      # MessagePack separat (wichtig für Kompatibilität)
+      messagepack:
+        patterns:
+          - "MessagePack*"
+      # Testing-Pakete zusammen
+      testing:
+        patterns:
+          - "xunit*"
+          - "Moq*"
+          - "FluentAssertions*"
+          - "coverlet*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Logging-Pakete zusammen
+      logging:
+        patterns:
+          - "Serilog*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignoriere bestimmte Updates
+    ignore:
+      # Keine Preview/RC Versionen
+      - dependency-name: "*"
+        update-types: ["version-update:semver-prerelease"]
+
+  # ============================================================================
+  # GitHub Actions
+  # ============================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Vienna"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    groups:
+      # Alle Actions zusammen updaten
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
