@@ -92,6 +92,112 @@ jobs:
           name: integration-test-results
           path: tests/Mmo.Server.Tests/TestResults/
 
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore Mmo.sln
+
+      # Tests mit Coverage ausführen
+      - name: Run all tests with coverage
+        run: |
+          dotnet test Mmo.sln \
+            --no-restore \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      # ReportGenerator installieren und Report erstellen
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: |
+          reportgenerator \
+            -reports:./coverage/**/coverage.cobertura.xml \
+            -targetdir:./coverage-report \
+            -reporttypes:"Html;Cobertura;MarkdownSummaryGithub;Badges"
+
+      # Coverage Summary als PR Comment
+      - name: Code Coverage Summary
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: './coverage/**/coverage.cobertura.xml'
+          badge: true
+          format: markdown
+          output: both
+          thresholds: '50 70'
+          fail_below_min: false
+
+      # PR Comment mit Coverage
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      # Coverage Report als Artifact hochladen
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage-report/
+          retention-days: 14
+
+      # Coverage Badge für README
+      - name: Upload Coverage Badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: ./coverage-report/badge_combined.svg
+
+      # Threshold Check - Warnung bei niedrigem Coverage
+      - name: Check Coverage Threshold
+        run: |
+          echo "## Coverage Threshold Check" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse line coverage from cobertura report
+          COVERAGE_FILE=$(find ./coverage -name "coverage.cobertura.xml" | head -1)
+          if [ -f "$COVERAGE_FILE" ]; then
+            LINE_RATE=$(grep -oP 'line-rate="\K[^"]+' "$COVERAGE_FILE" | head -1)
+            COVERAGE_PERCENT=$(echo "$LINE_RATE * 100" | bc -l | xargs printf "%.1f")
+            
+            echo "📊 Line Coverage: ${COVERAGE_PERCENT}%" >> $GITHUB_STEP_SUMMARY
+            
+            # Thresholds
+            MIN_COVERAGE=50
+            TARGET_COVERAGE=70
+            
+            if (( $(echo "$LINE_RATE < 0.${MIN_COVERAGE}" | bc -l) )); then
+              echo "❌ Coverage ist unter ${MIN_COVERAGE}% - Build sollte fehlschlagen!" >> $GITHUB_STEP_SUMMARY
+              echo "::error::Line Coverage ${COVERAGE_PERCENT}% ist unter dem Minimum von ${MIN_COVERAGE}%"
+              # Für Prototyp nur Warnung, später: exit 1
+            elif (( $(echo "$LINE_RATE < 0.${TARGET_COVERAGE}" | bc -l) )); then
+              echo "⚠️ Coverage ist unter ${TARGET_COVERAGE}% - Bitte mehr Tests schreiben!" >> $GITHUB_STEP_SUMMARY
+              echo "::warning::Line Coverage ${COVERAGE_PERCENT}% ist unter dem Ziel von ${TARGET_COVERAGE}%"
+            else
+              echo "✅ Coverage ist über ${TARGET_COVERAGE}% - Sehr gut!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ Keine Coverage-Datei gefunden" >> $GITHUB_STEP_SUMMARY
+          fi
+
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
