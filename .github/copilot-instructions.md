@@ -120,8 +120,65 @@ Schlage dann passende Issues vor:
 ### DTOs (Data Transfer Objects)
 - [ ] `[MessagePackObject]` Attribut vorhanden?
 - [ ] Alle Properties haben `[Key(n)]` Attribute mit aufsteigenden Indizes?
-- [ ] `[IgnoreMember]` für nicht-serialisierte Properties (z.B. `Type`)?
+- [ ] **WICHTIG:** `MessageType Type` Property hat `[Key(0)]` (NICHT IgnoreMember!)
 - [ ] DTOs sind in der Shared Library?
+- [ ] DTOs implementieren `INetworkMessage` Interface?
+
+### MessagePackObject Validierung (KRITISCH)
+
+Bei JEDER Klasse mit `[MessagePackObject]` Attribut prüfen:
+
+1. **MessageType Property MUSS vorhanden sein:**
+   ```csharp
+   [Key(0)]
+   public MessageType Type => MessageType.XXX;
+   ```
+
+2. **Type MUSS Key(0) sein:**
+   - ❌ FALSCH: `[IgnoreMember]` auf Type
+   - ❌ FALSCH: Type ohne `[Key(0)]`
+   - ❌ FALSCH: Type ist nicht Key(0) sondern Key(1) oder höher
+   - ✅ RICHTIG: `[Key(0)] public MessageType Type => MessageType.XXX;`
+
+3. **Alle anderen Properties mit aufsteigenden Keys:**
+   ```csharp
+   [Key(1)] public string Username { get; set; }
+   [Key(2)] public int PlayerId { get; set; }
+   // usw.
+   ```
+
+4. **Warum nicht auf Interface/Basisklasse?**
+   - MessagePack ignoriert `[Key]` Attribute auf Interfaces
+   - Auch bei Vererbung muss `[Key(0)]` in jeder konkreten Klasse stehen
+   - Das Interface `INetworkMessage` dient nur der Typsicherheit, nicht der Serialisierung
+
+5. **Fehlermeldung bei Verstoß:**
+
+   > ⚠️ **MessagePack Konvention verletzt**
+   > 
+   > Die Klasse `{ClassName}` hat `[MessagePackObject]` aber:
+   > - ❌ Kein `MessageType Type` Property gefunden
+   > - ODER: ❌ `Type` hat `[IgnoreMember]` statt `[Key(0)]`
+   > - ODER: ❌ `Type` ist nicht `[Key(0)]`
+   > 
+   > **Korrektur:**
+   > ```csharp
+   > [MessagePackObject]
+   > public class {ClassName} : INetworkMessage
+   > {
+   >     [Key(0)]
+   >     public MessageType Type => MessageType.{TypeName};
+   >     
+   >     [Key(1)]
+   >     public string Property1 { get; set; }
+   >     // ...
+   > }
+   > ```
+
+6. **Enum braucht KEIN MessagePackObject:**
+   - `enum MessageType : byte` wird automatisch als byte serialisiert
+   - ❌ FALSCH: `[MessagePackObject]` auf enum
+   - ✅ RICHTIG: Nur `public enum MessageType : byte { ... }`
 
 ### Serialization
 - [ ] MessagePack für alle Netzwerk-Nachrichten verwendet?
