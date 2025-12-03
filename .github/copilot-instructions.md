@@ -180,6 +180,71 @@ Bei JEDER Klasse mit `[MessagePackObject]` Attribut prüfen:
    - ❌ FALSCH: `[MessagePackObject]` auf enum
    - ✅ RICHTIG: Nur `public enum MessageType : byte { ... }`
 
+### MessagePack Vererbung
+
+Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
+
+1. **Elternklasse analysieren:**
+   - Hat `[MessagePackObject]`?
+   - Welcher ist der höchste Key? (z.B. `[Key(3)]` → höchster = 3)
+
+2. **Kindklasse prüfen:**
+   - [ ] Hat auch `[MessagePackObject]`?
+   - [ ] Erster Key startet bei **höchster Eltern-Key + 1**?
+   - [ ] Keine Key-Kollisionen mit Elternklasse?
+
+3. **Beispiel - RICHTIG:**
+   ```csharp
+   [MessagePackObject]
+   public class EntityData  // Eltern
+   {
+       [Key(0)] public int Id { get; set; }
+       [Key(1)] public float X { get; set; }
+       [Key(2)] public float Y { get; set; }
+       [Key(3)] public EntityType Type { get; set; }
+       // Höchster Key: 3
+   }
+
+   [MessagePackObject]
+   public class PlayerData : EntityData  // Kind
+   {
+       // ✅ Startet bei Key(4) = höchster Eltern-Key (3) + 1
+       [Key(4)] public string Username { get; set; }
+       [Key(5)] public float VelocityX { get; set; }
+       [Key(6)] public float VelocityY { get; set; }
+   }
+   ```
+
+4. **Beispiel - FALSCH:**
+   ```csharp
+   [MessagePackObject]
+   public class PlayerData : EntityData
+   {
+       // ❌ FALSCH - Key(0) kollidiert mit EntityData.Id!
+       [Key(0)] public string Username { get; set; }
+   }
+   ```
+
+5. **Fehlermeldung bei Verstoß:**
+
+   > ⚠️ **MessagePack Vererbung - Key-Kollision**
+   > 
+   > Die Klasse `{ClassName}` erbt von `{BaseClassName}`:
+   > - `{BaseClassName}` verwendet Keys 0 bis {höchsterKey}
+   > - `{ClassName}` muss bei Key({höchsterKey + 1}) starten
+   > - Gefunden: Key({tatsächlicherErsterKey}) ❌
+   > 
+   > **Korrektur:** Ersten Key auf `[Key({höchsterKey + 1})]` ändern.
+
+6. **Mehrstufige Vererbung:**
+   ```
+   EntityData:     [Key(0-3)]
+        ↓
+   PlayerData:     [Key(4-6)]  ← startet bei 4
+        ↓
+   AdminPlayer:    [Key(7-8)]  ← startet bei 7
+   ```
+
 ### Serialization
 - [ ] MessagePack für alle Netzwerk-Nachrichten verwendet?
 - [ ] Keine JSON/XML für Game-Traffic
