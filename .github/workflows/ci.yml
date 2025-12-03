@@ -229,6 +229,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     permissions:
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -245,17 +246,134 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Mmo.sln
 
-      - name: Run mutation tests
-        working-directory: tests/Mmo.Server.Tests
-        run: dotnet stryker --reporter "html" --reporter "progress" --break-at 60
+      # Run Stryker for Shared Tests
+      - name: Run mutation tests (Shared)
+        working-directory: tests/Mmo.Shared.Tests
+        run: dotnet stryker
         continue-on-error: true
 
-      - name: Upload Stryker report
+      # Run Stryker for Server Tests
+      - name: Run mutation tests (Server)
+        working-directory: tests/Mmo.Server.Tests
+        run: dotnet stryker
+        continue-on-error: true
+
+      # Parse results and create summary
+      - name: Generate Mutation Test Summary
+        id: mutation-summary
+        run: |
+          echo "## 🧬 Mutation Testing Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Project | Mutation Score | Killed | Survived | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------------|--------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Initialize totals
+          TOTAL_KILLED=0
+          TOTAL_SURVIVED=0
+          TOTAL_SCORE=0
+          PROJECT_COUNT=0
+          
+          # Parse Shared Tests results
+          SHARED_JSON=$(find tests/Mmo.Shared.Tests/StrykerOutput -name "mutation-report.json" 2>/dev/null | head -1)
+          if [ -f "$SHARED_JSON" ]; then
+            SHARED_SCORE=$(jq '.files | to_entries | map(.value.mutants | length as $total | map(select(.status == "Killed")) | length as $killed | if $total > 0 then ($killed / $total * 100) else 0 end) | add / length' "$SHARED_JSON" 2>/dev/null || echo "0")
+            SHARED_KILLED=$(jq '[.files[].mutants[] | select(.status == "Killed")] | length' "$SHARED_JSON" 2>/dev/null || echo "0")
+            SHARED_SURVIVED=$(jq '[.files[].mutants[] | select(.status == "Survived")] | length' "$SHARED_JSON" 2>/dev/null || echo "0")
+            SHARED_SCORE_INT=${SHARED_SCORE%.*}
+            
+            if [ "$SHARED_SCORE_INT" -ge 80 ]; then
+              SHARED_STATUS="✅"
+            elif [ "$SHARED_SCORE_INT" -ge 60 ]; then
+              SHARED_STATUS="⚠️"
+            else
+              SHARED_STATUS="❌"
+            fi
+            
+            echo "| Mmo.Shared | ${SHARED_SCORE_INT}% | $SHARED_KILLED | $SHARED_SURVIVED | $SHARED_STATUS |" >> $GITHUB_STEP_SUMMARY
+            TOTAL_KILLED=$((TOTAL_KILLED + SHARED_KILLED))
+            TOTAL_SURVIVED=$((TOTAL_SURVIVED + SHARED_SURVIVED))
+            PROJECT_COUNT=$((PROJECT_COUNT + 1))
+          fi
+          
+          # Parse Server Tests results
+          SERVER_JSON=$(find tests/Mmo.Server.Tests/StrykerOutput -name "mutation-report.json" 2>/dev/null | head -1)
+          if [ -f "$SERVER_JSON" ]; then
+            SERVER_SCORE=$(jq '.files | to_entries | map(.value.mutants | length as $total | map(select(.status == "Killed")) | length as $killed | if $total > 0 then ($killed / $total * 100) else 0 end) | add / length' "$SERVER_JSON" 2>/dev/null || echo "0")
+            SERVER_KILLED=$(jq '[.files[].mutants[] | select(.status == "Killed")] | length' "$SERVER_JSON" 2>/dev/null || echo "0")
+            SERVER_SURVIVED=$(jq '[.files[].mutants[] | select(.status == "Survived")] | length' "$SERVER_JSON" 2>/dev/null || echo "0")
+            SERVER_SCORE_INT=${SERVER_SCORE%.*}
+            
+            if [ "$SERVER_SCORE_INT" -ge 80 ]; then
+              SERVER_STATUS="✅"
+            elif [ "$SERVER_SCORE_INT" -ge 60 ]; then
+              SERVER_STATUS="⚠️"
+            else
+              SERVER_STATUS="❌"
+            fi
+            
+            echo "| Mmo.Server | ${SERVER_SCORE_INT}% | $SERVER_KILLED | $SERVER_SURVIVED | $SERVER_STATUS |" >> $GITHUB_STEP_SUMMARY
+            TOTAL_KILLED=$((TOTAL_KILLED + SERVER_KILLED))
+            TOTAL_SURVIVED=$((TOTAL_SURVIVED + SERVER_SURVIVED))
+            PROJECT_COUNT=$((PROJECT_COUNT + 1))
+          fi
+          
+          # Calculate total
+          if [ $PROJECT_COUNT -gt 0 ] && [ $((TOTAL_KILLED + TOTAL_SURVIVED)) -gt 0 ]; then
+            TOTAL_SCORE=$((TOTAL_KILLED * 100 / (TOTAL_KILLED + TOTAL_SURVIVED)))
+            if [ "$TOTAL_SCORE" -ge 80 ]; then
+              TOTAL_STATUS="✅"
+            elif [ "$TOTAL_SCORE" -ge 60 ]; then
+              TOTAL_STATUS="⚠️"
+            else
+              TOTAL_STATUS="❌"
+            fi
+            echo "| **Total** | **${TOTAL_SCORE}%** | **$TOTAL_KILLED** | **$TOTAL_SURVIVED** | **$TOTAL_STATUS** |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Thresholds" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ High: ≥80%" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️ Low: ≥60%" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ Below: <60%" >> $GITHUB_STEP_SUMMARY
+          
+          # Save for PR comment
+          echo "total_score=$TOTAL_SCORE" >> $GITHUB_OUTPUT
+          echo "total_killed=$TOTAL_KILLED" >> $GITHUB_OUTPUT
+          echo "total_survived=$TOTAL_SURVIVED" >> $GITHUB_OUTPUT
+
+      # Create PR Comment
+      - name: Create Mutation Score PR Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: mutation-tests
+          message: |
+            ## 🧬 Mutation Testing Results
+            
+            | Metric | Value |
+            |--------|-------|
+            | **Mutation Score** | ${{ steps.mutation-summary.outputs.total_score }}% |
+            | **Mutants Killed** | ${{ steps.mutation-summary.outputs.total_killed }} |
+            | **Mutants Survived** | ${{ steps.mutation-summary.outputs.total_survived }} |
+            
+            > 💡 Mutation testing checks if your tests can detect code changes.
+            > A higher score means better test quality.
+            
+            <details>
+            <summary>📊 View detailed HTML reports</summary>
+            
+            Download the `stryker-report` artifact for detailed HTML reports.
+            </details>
+
+      # Upload all reports
+      - name: Upload Stryker reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: stryker-report
-          path: tests/Mmo.Server.Tests/StrykerOutput/
+          path: |
+            tests/Mmo.Shared.Tests/StrykerOutput/
+            tests/Mmo.Server.Tests/StrykerOutput/
           retention-days: 14
 
   security-scan:
