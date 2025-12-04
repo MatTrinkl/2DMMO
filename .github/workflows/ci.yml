@@ -235,21 +235,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Install both .NET 9.0 (for Stryker) and .NET 10.0 (for project)
-      - name: Setup .NET 9.0 and 10.0
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            9.0.x
-            ${{ env.DOTNET_VERSION }}
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # Install Stryker with .NET 9.0 SDK (better compatibility)
-      - name: Install Stryker.NET
-        run: |
-          # Use .NET 9.0 to install Stryker for better compatibility
-          dotnet tool install -g dotnet-stryker
-        env:
-          DOTNET_ROLL_FORWARD: LatestMajor
+      # Install Stryker.NET beta version for .NET 10.0 support
+      - name: Install Stryker.NET (Beta)
+        run: dotnet tool install -g dotnet-stryker --prerelease
 
       - name: Restore dependencies
         run: dotnet restore Mmo.sln
