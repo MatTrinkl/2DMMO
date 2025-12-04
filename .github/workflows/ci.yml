@@ -244,8 +244,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Install Stryker from local tool manifest (tracked by Dependabot)
       - name: Install Stryker.NET
-        run: dotnet tool install -g dotnet-stryker
+        run: dotnet tool restore
 
       - name: Restore dependencies
         run: dotnet restore Mmo.sln
@@ -253,13 +254,13 @@ jobs:
       # Run Stryker for Shared Tests
       - name: Run mutation tests (Shared)
         working-directory: tests/Mmo.Shared.Tests
-        run: dotnet stryker
+        run: dotnet tool run dotnet-stryker
         continue-on-error: true
 
       # Run Stryker for Server Tests
       - name: Run mutation tests (Server)
         working-directory: tests/Mmo.Server.Tests
-        run: dotnet stryker
+        run: dotnet tool run dotnet-stryker
         continue-on-error: true
 
       # Parse results and create summary
