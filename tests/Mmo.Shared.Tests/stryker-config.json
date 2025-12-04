@@ -12,6 +12,7 @@
     ],
     "verbosity": "info",
     "mutation-level": "Standard",
+    "target-framework": "net10.0",
     "thresholds": {
       "high": 80,
       "low": 60,
