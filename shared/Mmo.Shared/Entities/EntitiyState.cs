@@ -40,5 +40,5 @@ public abstract class EntityState
     ///     The current positon of this entity in its current zone.
     /// </summary>
     [Key(1)]
-    public Position Position { get; set; }
+    public Position Position { get; set; } = new(0,0);
 }

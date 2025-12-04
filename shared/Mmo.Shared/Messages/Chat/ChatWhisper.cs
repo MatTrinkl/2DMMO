@@ -38,7 +38,7 @@ public class ChatWhisper : INetworkMessage
     ///     The context of this message.
     /// </summary>
     [Key(2)]
-    public string Message { get; set; }
+    public string Message { get; set; } = "";
 
     /// <summary>
     ///     Recipient of the message.

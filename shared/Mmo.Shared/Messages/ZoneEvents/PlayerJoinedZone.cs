@@ -32,7 +32,7 @@ public class PlayerJoinedZone : INetworkMessage
     ///     Player who joined the zone.
     /// </summary>
     [Key(1)]
-    public PlayerState Player { get; set; }
+    public PlayerState Player { get; set; } = new();
 
     /// <summary>
     ///     The Message Type of this Message.

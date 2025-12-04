@@ -39,7 +39,7 @@ public class ChatBroadcast : INetworkMessage
     ///     The context of this brodcast.
     /// </summary>
     [Key(2)]
-    public string Message { get; set; }
+    public string Message { get; set; } = "";
 
     /// <summary>
     ///     The Message Type of this Message.

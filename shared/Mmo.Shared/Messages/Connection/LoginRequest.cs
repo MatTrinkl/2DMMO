@@ -33,13 +33,13 @@ public class LoginRequest : INetworkMessage
     ///     Username of the Player
     /// </summary>
     [Key(1)]
-    public string Username { get; set; }
+    public string Username { get; set; } = "";
 
     /// <summary>
     ///     Password of the player (later hashed).
     /// </summary>
     [Key(2)]
-    public string Password { get; set; }
+    public string Password { get; set; } = "";
 
     /// <summary>
     ///     The Message Type of this Message.

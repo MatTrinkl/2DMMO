@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MessagePack;
 using Mmo.Shared;
 using Mmo.Shared.Entities;
@@ -59,7 +60,7 @@ public class MessageSerializerTests
     {
         var playerId = Guid.NewGuid();
         var original = new PlayerJoinedZone
-            (new PlayerState(playerId, "Player1", 100f, 200f));
+            (new PlayerState(playerId, username:"Player1", 100f, 200f));
 
 
         byte[] bytes = MessageSerializer.Serialize(original);
@@ -105,8 +106,12 @@ public class MessageSerializerTests
 
         var deserialized = (PositionUpdate)MessageSerializer.Deserialize(bytes);
 
+        Debug.Assert(original.EntityOldPosition != null, "original.EntityOldPosition != null");
+        Debug.Assert(deserialized.EntityOldPosition != null, "deserialized.EntityOldPosition != null");
         Assert.Equal(original.EntityOldPosition.EntityId, deserialized.EntityOldPosition.EntityId);
         Assert.Equal(original.EntityOldPosition.Position.X, deserialized.EntityOldPosition.Position.X);
+        Debug.Assert(original.NewPosition != null, "original.NewPosition != null");
+        Debug.Assert(deserialized.NewPosition != null, "deserialized.NewPosition != null");
         Assert.Equal(original.NewPosition.Y, deserialized.NewPosition.Y);
         Assert.Equal(original.Timestamp, deserialized.Timestamp);
     }

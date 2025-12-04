@@ -42,7 +42,7 @@ public class ChatMessage : INetworkMessage
     ///     The context of this message.
     /// </summary>
     [Key(2)]
-    public string Message { get; set; }
+    public string Message { get; set; } = "";
 
     /// <summary>
     ///     The Message Type of this Message.

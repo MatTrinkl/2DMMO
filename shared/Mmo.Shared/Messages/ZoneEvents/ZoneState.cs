@@ -42,7 +42,7 @@ public class ZoneState : ITimestampedMessage
     ///     List of all Entities in this zone.
     /// </summary>
     [Key(3)]
-    public List<EntityState> Entities { get; set; }
+    public List<EntityState> Entities { get; set; } = new();
 
     /// <summary>
     ///     The Message Type of this Message.

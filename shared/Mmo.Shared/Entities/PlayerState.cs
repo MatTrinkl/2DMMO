@@ -49,7 +49,7 @@ public class PlayerState : EntityState
     ///     The username of the player.
     /// </summary>
     [Key(3)]
-    public string Username { get; set; }
+    public string Username { get; set; } = "";
 
     /// <summary>
     ///     Calls the EntityId.
