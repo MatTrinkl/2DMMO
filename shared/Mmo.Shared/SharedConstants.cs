@@ -35,7 +35,7 @@ public static class SharedConstants
     /// <summary>
     /// The message header size (1 byte type + 4 bytes length).
     /// </summary>
-    public const int MessageHeaderSize = 5; // 1 byte type + 4 bytes length
+    public const int MessageHeaderSize = 4; // 1 byte type + 4 bytes length
 
     /// <summary>
     /// The maximum message size (64 KB).

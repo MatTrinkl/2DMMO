@@ -1,24 +1,40 @@
 namespace Mmo.Shared.Enums;
 
+/// <summary>
+/// This enum represents the Type which message is currently send between client and server.
+/// </summary>
 public enum MessageType : byte
 {
-    // Connection
+    // Connection 1-9
     LoginRequest = 1,
     LoginResponse = 2,
-    Disconnect = 3,
+    LogoutRequest = 3,
+    Heartbeat = 4,
+    Disconnect = 5,
 
-    // Player Events
-    PlayerJoined = 10,
-    PlayerLeft = 11,
+    // Zone Events 10-19
+    JoinZone = 10,
+    LeaveZone = 11,
+    ZoneState = 12,
+    PlayerJoinedZone = 13,
+    PlayerLeftZone = 14,
 
-    // Movement
+    // Movement Events 20-29
     PositionUpdate = 20,
-    WorldState = 21,
+    PositionBroadcast = 21,
 
-    // Chat
-    ChatMessage = 30,
+    //Combat Events (extend later) 30-49
+    ActionRequest = 30,
+    ActionResult = 31,
+    DamageEvent = 32,
+    DeathEvent = 33,
 
-    // System
+    // Chat 50-51
+    ChatMessage = 50,
+    ChatBroadcast = 51,
+    ChatWhisper = 52,
+
+    // Ping 100-109
     Ping = 100,
     Pong = 101
 }
