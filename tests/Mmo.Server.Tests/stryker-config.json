@@ -10,7 +10,7 @@
       "html",
       "json"
     ],
-    "log-level": "info",
+    "verbosity": "info",
     "mutation-level": "Standard",
     "thresholds": {
       "high": 80,
