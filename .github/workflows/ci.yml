@@ -235,28 +235,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      # Install both .NET 9.0 (for Stryker) and .NET 10.0 (for project)
+      - name: Setup .NET 9.0 and 10.0
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: |
+            9.0.x
+            ${{ env.DOTNET_VERSION }}
 
+      # Install Stryker with .NET 9.0 SDK (better compatibility)
       - name: Install Stryker.NET
-        run: dotnet tool install -g dotnet-stryker
+        run: |
+          # Use .NET 9.0 to install Stryker for better compatibility
+          dotnet tool install -g dotnet-stryker
+        env:
+          DOTNET_ROLL_FORWARD: LatestMajor
 
       - name: Restore dependencies
         run: dotnet restore Mmo.sln
 
       # Run Stryker for Shared Tests
-      # Note: Stryker.NET may have limited support for .NET 10.0
       - name: Run mutation tests (Shared)
         working-directory: tests/Mmo.Shared.Tests
-        run: dotnet stryker --verbosity debug || echo "Stryker failed - may be due to .NET 10.0 compatibility"
+        run: dotnet stryker
         continue-on-error: true
 
       # Run Stryker for Server Tests
       - name: Run mutation tests (Server)
         working-directory: tests/Mmo.Server.Tests
-        run: dotnet stryker --verbosity debug || echo "Stryker failed - may be due to .NET 10.0 compatibility"
+        run: dotnet stryker
         continue-on-error: true
 
       # Parse results and create summary
