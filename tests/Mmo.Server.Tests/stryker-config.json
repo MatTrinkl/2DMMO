@@ -5,6 +5,7 @@
       "name": "2DMMO",
       "module": "Mmo.Server.Tests"
     },
+    "project": "../../server/Mmo.Server/Mmo.Server.csproj",
     "reporters": [
       "progress",
       "html",
