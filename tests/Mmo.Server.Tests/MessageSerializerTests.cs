@@ -2,19 +2,17 @@ using MessagePack;
 using Mmo.Shared;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
-using Mmo.Shared.Messages;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
 using Mmo.Shared.Messages.ZoneEvents;
 using Mmo.Shared.Records;
 using Mmo.Shared.Serialization;
-using Xunit;
 
 namespace Mmo.Server.Tests;
 
 /// <summary>
-/// Tests for the MessageSerializer class.
+///     Tests for the MessageSerializer class.
 /// </summary>
 public class MessageSerializerTests
 {
@@ -23,7 +21,7 @@ public class MessageSerializerTests
     {
         var message = new LoginRequest("TestUser", "TestPassword");
 
-        var bytes = MessageSerializer.Serialize(message);
+        byte[] bytes = MessageSerializer.Serialize(message);
 
         Assert.NotNull(bytes);
         Assert.True(bytes.Length >= SharedConstants.MessageHeaderSize);
@@ -35,7 +33,7 @@ public class MessageSerializerTests
     {
         var original = new LoginRequest("TestUser", "TestPassword");
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginRequest)MessageSerializer.Deserialize(bytes);
 
         Assert.Equal(original.Username, deserialized.Username);
@@ -48,7 +46,7 @@ public class MessageSerializerTests
         var playerId = Guid.NewGuid();
         var original = new LoginResponse(true, playerId, null);
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginResponse)MessageSerializer.Deserialize(bytes);
 
         Assert.Equal(original.Success, deserialized.Success);
@@ -64,7 +62,7 @@ public class MessageSerializerTests
             (new PlayerState(playerId, "Player1", 100f, 200f));
 
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (PlayerJoinedZone)MessageSerializer.Deserialize(bytes);
 
         Assert.Equal(original.Player.PlayerId, deserialized.Player.PlayerId);
@@ -78,17 +76,17 @@ public class MessageSerializerTests
     {
         var original = new LoginRequest("TestUser", "TestPassword");
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginRequest)MessageSerializer.Deserialize(bytes);
 
         Assert.IsType<LoginRequest>(deserialized);
-        Assert.Equal("TestUser", ((LoginRequest)deserialized).Username);
+        Assert.Equal("TestUser", deserialized.Username);
     }
 
     [Fact]
     public void Deserialize_ByType_ThrowsForUnknownType()
     {
-        var payload = new byte[10];
+        byte[] payload = new byte[10];
 
         Assert.Throws<MessagePackSerializationException>(() =>
             MessageSerializer.Deserialize(payload));
@@ -98,12 +96,12 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_PositionUpdate_RoundTrip()
     {
         var playerId = Guid.NewGuid();
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var original = new PositionUpdate(timestamp, new PlayerState(playerId,"Player1", new Position(100f, 200f)),
+        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var original = new PositionUpdate(timestamp, new PlayerState(playerId, "Player1", new Position(100f, 200f)),
             new Position(123.456f, 789.012f));
         ;
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
 
         var deserialized = (PositionUpdate)MessageSerializer.Deserialize(bytes);
 
@@ -122,7 +120,7 @@ public class MessageSerializerTests
         var original = new ZoneState(12345, zoneId,
             [new PlayerState(player1Id, "Player1", 0, 0), new PlayerState(player2Id, "Player2", 0, 0)]);
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
 
         var deserialized = (ZoneState)MessageSerializer.Deserialize(bytes);
 
@@ -137,11 +135,11 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_ChatMessage_RoundTrip()
     {
         var senderId = Guid.NewGuid();
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var original = new ChatMessage(senderId, "Hello, World!");
 
 
-        var bytes = MessageSerializer.Serialize(original);
+        byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (ChatMessage)MessageSerializer.Deserialize(bytes);
 
         Assert.Equal(original.EntityId, deserialized.EntityId);

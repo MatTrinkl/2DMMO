@@ -1,9 +1,7 @@
-using Xunit;
-
 namespace Mmo.Server.Tests.Networking;
 
 /// <summary>
-/// Tests for the networking implementation.
+///     Tests for the networking implementation.
 /// </summary>
 public class NetworkingTests
 {

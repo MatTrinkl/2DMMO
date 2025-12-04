@@ -1,9 +1,7 @@
-using Xunit;
-
 namespace Mmo.Server.Tests.State;
 
 /// <summary>
-/// Tests for the game state management.
+///     Tests for the game state management.
 /// </summary>
 public class StateTests
 {

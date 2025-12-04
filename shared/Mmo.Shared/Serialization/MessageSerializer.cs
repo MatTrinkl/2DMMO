@@ -1,9 +1,7 @@
-using System.Net.NetworkInformation;
 using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Exceptions;
 using Mmo.Shared.Helper;
-using Mmo.Shared.Messages;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Combat;
 using Mmo.Shared.Messages.Connection;
@@ -15,26 +13,23 @@ using Ping = Mmo.Shared.Messages.Ping;
 namespace Mmo.Shared.Serialization;
 
 /// <summary>
-/// This class Serializes and deserializes a massage based on its <see cref="MessageType"/>.
+///     This class Serializes and deserializes a massage based on its <see cref="MessageType" />.
 /// </summary>
 public static class MessageSerializer
 {
     /// <summary>
-    /// Serializes a message to bytes with type prefix
-    /// {MessageTye} needs to be Key(0).
+    ///     Serializes a message to bytes with type prefix
+    ///     {MessageTye} needs to be Key(0).
     /// </summary>
-    public static byte[] Serialize<T>(T message) where T : INetworkMessage
-    {
-        return MessagePackSerializer.Serialize(message);
-    }
+    public static byte[] Serialize<T>(T message) where T : INetworkMessage => MessagePackSerializer.Serialize(message);
 
     /// <summary>
-    /// Deserializes a message based on its type
+    ///     Deserializes a message based on its type
     /// </summary>
     public static INetworkMessage Deserialize(ReadOnlyMemory<byte> data)
     {
         // 1. Erst nur den Type lesen (schnell)
-        var header = MessagePackSerializer.Deserialize<MessageHeader>(data);
+        MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
         // 2.  Dann vollständig deserialisieren
         return header.Type switch

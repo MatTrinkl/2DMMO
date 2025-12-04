@@ -6,13 +6,13 @@ using Mmo.Shared.Messages.Interfaces;
 namespace Mmo.Shared.Messages.ZoneEvents;
 
 /// <summary>
-/// This class is send to all clients to inform them that a player has joined a zone. Todo: ZoneId
+///     This class is send to all clients to inform them that a player has joined a zone. Todo: ZoneId
 /// </summary>
 [MessagePackObject]
 public class PlayerJoinedZone : INetworkMessage
 {
     /// <summary>
-    /// The constructor used bei <see cref="MessagePackSerializer"/>.
+    ///     The constructor used bei <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public PlayerJoinedZone()
@@ -20,22 +20,23 @@ public class PlayerJoinedZone : INetworkMessage
     }
 
     /// <summary>
-    /// Creates a new Player Join Zone Message.
+    ///     Creates a new Player Join Zone Message.
     /// </summary>
     /// <param name="player">The player who joins the zone.</param>
     public PlayerJoinedZone(PlayerState player)
     {
         Player = player;
     }
-    /// <summary>
-    /// The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.PlayerJoinedZone;
 
     /// <summary>
-    /// Player who joined the zone.
+    ///     Player who joined the zone.
     /// </summary>
     [Key(1)]
     public PlayerState Player { get; set; }
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.PlayerJoinedZone;
 }

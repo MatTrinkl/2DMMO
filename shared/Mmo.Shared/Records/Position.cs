@@ -3,7 +3,7 @@ using MessagePack;
 namespace Mmo.Shared.Records;
 
 /// <summary>
-/// Represents a Position on the map.
+///     Represents a Position on the map.
 /// </summary>
 /// <param name="X">The horizontal coordinate X.</param>
 /// <param name="Y">The vertical coordinate Y.</param>

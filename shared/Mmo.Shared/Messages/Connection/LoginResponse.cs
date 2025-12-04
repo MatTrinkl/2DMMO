@@ -5,13 +5,13 @@ using Mmo.Shared.Messages.Interfaces;
 namespace Mmo.Shared.Messages.Connection;
 
 /// <summary>
-/// This class is a response to a login request.
+///     This class is a response to a login request.
 /// </summary>
 [MessagePackObject]
 public class LoginResponse : INetworkMessage
 {
     /// <summary>
-    /// The constructor used bei <see cref="MessagePackSerializer"/>.
+    ///     The constructor used bei <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public LoginResponse()
@@ -19,7 +19,7 @@ public class LoginResponse : INetworkMessage
     }
 
     /// <summary>
-    /// Creates a new Login Response Message.
+    ///     Creates a new Login Response Message.
     /// </summary>
     /// <param name="success">True if the login was successful.</param>
     /// <param name="playerId">The Player who logs in.</param>
@@ -32,25 +32,26 @@ public class LoginResponse : INetworkMessage
     }
 
     /// <summary>
-    /// The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.LoginResponse;
-
-    /// <summary>
-    /// True if the login attempted was successful.
+    ///     True if the login attempted was successful.
     /// </summary>
     [Key(1)]
     public bool Success { get; set; }
 
     /// <summary>
-    /// The Player who try to connect. (and gives him his Guid for this session).
+    ///     The Player who try to connect. (and gives him his Guid for this session).
     /// </summary>
     [Key(2)]
     public Guid PlayerId { get; set; }
 
     /// <summary>
-    /// The errormessage if <see cref="Success"/> is false and the attempted was not successful.
+    ///     The errormessage if <see cref="Success" /> is false and the attempted was not successful.
     /// </summary>
-    [Key(3)] public string? ErrorMessage { get; set; }
+    [Key(3)]
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.LoginResponse;
 }

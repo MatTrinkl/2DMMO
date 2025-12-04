@@ -1,18 +1,17 @@
 using MessagePack;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Messages.Interfaces;
 
 namespace Mmo.Shared.Messages.ZoneEvents;
 
 /// <summary>
-/// This class is sent when a player requests to leave a zone. TODO: ZoneId.
+///     This class is sent when a player requests to leave a zone. TODO: ZoneId.
 /// </summary>
 [MessagePackObject]
-public class LeaveZone:INetworkMessage
+public class LeaveZone : INetworkMessage
 {
     /// <summary>
-    /// The constructor used bei <see cref="MessagePackSerializer"/>.
+    ///     The constructor used bei <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public LeaveZone()
@@ -20,22 +19,23 @@ public class LeaveZone:INetworkMessage
     }
 
     /// <summary>
-    /// Creates a new Leave Zone Message.
+    ///     Creates a new Leave Zone Message.
     /// </summary>
     /// <param name="playerId">The player who wants to leave the zone.</param>
     public LeaveZone(Guid playerId)
     {
         PlayerId = playerId;
     }
+
     /// <summary>
-    /// The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.LeaveZone;
-    /// <summary>
-    /// Player who requests to leave.
+    ///     Player who requests to leave.
     /// </summary>
     [Key(1)]
     public Guid PlayerId { get; set; }
 
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.LeaveZone;
 }

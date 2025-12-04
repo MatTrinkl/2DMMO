@@ -1,7 +1,7 @@
 namespace Mmo.Shared.Enums;
 
 /// <summary>
-/// This enum represents the Type which message is currently send between client and server.
+///     This enum represents the Type which message is currently send between client and server.
 /// </summary>
 public enum MessageType : byte
 {

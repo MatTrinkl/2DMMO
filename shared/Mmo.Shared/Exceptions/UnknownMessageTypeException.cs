@@ -1,17 +1,16 @@
 using Mmo.Shared.Enums;
-using Mmo.Shared.Messages;
 using Mmo.Shared.Messages.Interfaces;
 
 namespace Mmo.Shared.Exceptions;
 
 /// <summary>
-/// This Exception needs to be thrown when there is an unknown <see cref="MessageType"/> while
-/// DeSerialize a <see cref="INetworkMessage"/>.
+///     This Exception needs to be thrown when there is an unknown <see cref="MessageType" /> while
+///     DeSerialize a <see cref="INetworkMessage" />.
 /// </summary>
 public class UnknownMessageTypeException(MessageType type) : Exception($"Unknown message type: {type} ({(byte)type})")
 {
     /// <summary>
-    /// The unknown MessageType.
+    ///     The unknown MessageType.
     /// </summary>
     public MessageType Type { get; } = type;
 }

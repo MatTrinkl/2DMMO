@@ -5,38 +5,45 @@ using Mmo.Shared.Messages.Interfaces;
 namespace Mmo.Shared.Messages.Connection;
 
 /// <summary>
-/// This class indicates a heartbeat of a client.
+///     This class indicates a heartbeat of a client.
 /// </summary>
 [MessagePackObject]
 public class Heartbeat : ITimestampedMessage
 {
     /// <summary>
-    /// The constructor used bei <see cref="MessagePackSerializer"/>.
+    ///     The constructor used bei <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public Heartbeat()
     {
     }
+
     /// <summary>
-    /// Creates a new Heartbeat Message.
+    ///     Creates a new Heartbeat Message.
     /// </summary>
     /// <param name="timestamp">The timestamp when this Heartbeat happened.</param>
     /// <param name="playerId">The Player who gives the heartbeat.</param>
-    public Heartbeat(long timestamp,Guid playerId)
+    public Heartbeat(long timestamp, Guid playerId)
     {
         Timestamp = timestamp;
         PlayerId = playerId;
     }
+
     /// <summary>
-    /// The Message Type of this Message.
+    ///     The Player who gives the heartbeat.
     /// </summary>
-    [Key(0)] public MessageType Type => MessageType.Heartbeat;
+    [Key(2)]
+    public Guid PlayerId { get; set; }
+
     /// <summary>
-    /// The timestamp of the message.
+    ///     The Message Type of this Message.
     /// </summary>
-    [Key(1)] public long Timestamp { get; set; }
+    [Key(0)]
+    public MessageType Type => MessageType.Heartbeat;
+
     /// <summary>
-    /// The Player who gives the heartbeat.
+    ///     The timestamp of the message.
     /// </summary>
-    [Key(2)] public Guid PlayerId { get; set; }
+    [Key(1)]
+    public long Timestamp { get; set; }
 }

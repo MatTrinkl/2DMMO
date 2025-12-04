@@ -4,25 +4,13 @@ using Mmo.Shared.Records;
 namespace Mmo.Shared.Entities;
 
 /// <summary>
-/// This class represents the player data in the world.
+///     This class represents the player data in the world.
 /// </summary>
 [MessagePackObject]
-public class PlayerState:EntityState
+public class PlayerState : EntityState
 {
     /// <summary>
-    /// The username of the player.
-    /// </summary>
-    [Key(3)]
-    public string Username { get; set; }
-
-    /// <summary>
-    /// Calls the EntityId.
-    /// </summary>
-    [IgnoreMember]
-    public Guid PlayerId => base.EntityId;
-
-    /// <summary>
-    /// The constructor used bei <see cref="MessagePackSerializer"/>.
+    ///     The constructor used bei <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public PlayerState()
@@ -31,7 +19,7 @@ public class PlayerState:EntityState
 
 
     /// <summary>
-    /// Creates a new PlayerState object.
+    ///     Creates a new PlayerState object.
     /// </summary>
     /// <param name="playerId">ID of the Player (Entity).</param>
     /// <param name="username">Username of the Player.</param>
@@ -45,7 +33,7 @@ public class PlayerState:EntityState
     }
 
     /// <summary>
-    /// Creates a new PlayerState object.
+    ///     Creates a new PlayerState object.
     /// </summary>
     /// <param name="playerId">ID of the Player (Entity).</param>
     /// <param name="username">Username of the Player.</param>
@@ -56,4 +44,16 @@ public class PlayerState:EntityState
         Username = username;
         Position = position;
     }
+
+    /// <summary>
+    ///     The username of the player.
+    /// </summary>
+    [Key(3)]
+    public string Username { get; set; }
+
+    /// <summary>
+    ///     Calls the EntityId.
+    /// </summary>
+    [IgnoreMember]
+    public Guid PlayerId => EntityId;
 }
