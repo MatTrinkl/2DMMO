@@ -1,11 +1,9 @@
 using FluentAssertions;
-using Mmo.Shared;
-using Xunit;
 
 namespace Mmo.Shared.Tests.Messages;
 
 /// <summary>
-/// Tests for the Message DTOs and SharedConstants.
+///     Tests for the Message DTOs and SharedConstants.
 /// </summary>
 public class MessageTests
 {

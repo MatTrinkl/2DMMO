@@ -1,51 +1,64 @@
-using System.Buffers.Binary;
 using MessagePack;
 using Mmo.Shared.Enums;
-using Mmo.Shared.Messages;
+using Mmo.Shared.Exceptions;
+using Mmo.Shared.Helper;
+using Mmo.Shared.Messages.Chat;
+using Mmo.Shared.Messages.Combat;
+using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messages.Interfaces;
+using Mmo.Shared.Messages.Movement;
+using Mmo.Shared.Messages.ZoneEvents;
+using Ping = Mmo.Shared.Messages.Ping;
 
 namespace Mmo.Shared.Serialization;
 
+/// <summary>
+///     This class Serializes and deserializes a message based on its <see cref="MessageType" />.
+/// </summary>
 public static class MessageSerializer
 {
     /// <summary>
-    /// Serializes a message to bytes with type prefix
-    /// Format: [1 byte Type][4 bytes Length][N bytes Payload]
+    ///     Serializes a message to bytes with type prefix
+    ///     {MessageTye} needs to be Key(0).
     /// </summary>
-    public static byte[] Serialize<T>(T message) where T : INetworkMessage
-    {
-        var payload = MessagePackSerializer.Serialize(message);
-        var result = new byte[1 + 4 + payload.Length];
-
-        result[0] = (byte)message.Type;
-        BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(1, 4), payload.Length);
-        payload.CopyTo(result, 5);
-
-        return result;
-    }
+    public static byte[] Serialize<T>(T message) where T : INetworkMessage => MessagePackSerializer.Serialize(message);
 
     /// <summary>
-    /// Deserializes a message from bytes (without type prefix)
+    ///     Deserializes a message based on its type
     /// </summary>
-    public static T Deserialize<T>(byte[] data) where T : INetworkMessage
+    public static INetworkMessage Deserialize(ReadOnlyMemory<byte> data)
     {
-        return MessagePackSerializer.Deserialize<T>(data);
-    }
+        MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
-    /// <summary>
-    /// Deserializes a message based on its type
-    /// </summary>
-    public static INetworkMessage Deserialize(MessageType type, byte[] payload)
-    {
-        return type switch
+        return header.Type switch
         {
-            MessageType.LoginRequest => MessagePackSerializer.Deserialize<LoginRequest>(payload),
-            MessageType.LoginResponse => MessagePackSerializer.Deserialize<LoginResponse>(payload),
-            MessageType.PlayerJoined => MessagePackSerializer.Deserialize<PlayerJoined>(payload),
-            MessageType.PlayerLeft => MessagePackSerializer.Deserialize<PlayerLeft>(payload),
-            MessageType.PositionUpdate => MessagePackSerializer.Deserialize<PositionUpdate>(payload),
-            MessageType.WorldState => MessagePackSerializer.Deserialize<WorldState>(payload),
-            MessageType.ChatMessage => MessagePackSerializer.Deserialize<ChatMessage>(payload),
-            _ => throw new ArgumentException($"Unknown message type: {type}")
+            MessageType.LoginRequest => MessagePackSerializer.Deserialize<LoginRequest>(data),
+            MessageType.LoginResponse => MessagePackSerializer.Deserialize<LoginResponse>(data),
+            MessageType.LogoutRequest => MessagePackSerializer.Deserialize<LogoutRequest>(data),
+            MessageType.Heartbeat => MessagePackSerializer.Deserialize<Heartbeat>(data),
+            MessageType.Disconnect => MessagePackSerializer.Deserialize<Disconnect>(data),
+
+            MessageType.JoinZone => MessagePackSerializer.Deserialize<JoinZone>(data),
+            MessageType.LeaveZone => MessagePackSerializer.Deserialize<LeaveZone>(data),
+            MessageType.ZoneState => MessagePackSerializer.Deserialize<ZoneState>(data),
+            MessageType.PlayerJoinedZone => MessagePackSerializer.Deserialize<PlayerJoinedZone>(data),
+            MessageType.PlayerLeftZone => MessagePackSerializer.Deserialize<PlayerLeftZone>(data),
+
+            MessageType.PositionUpdate => MessagePackSerializer.Deserialize<PositionUpdate>(data),
+            MessageType.PositionBroadcast => MessagePackSerializer.Deserialize<PositionBroadcast>(data),
+
+            MessageType.ActionRequest => MessagePackSerializer.Deserialize<ActionRequest>(data),
+            MessageType.ActionResult => MessagePackSerializer.Deserialize<ActionResult>(data),
+            MessageType.DamageEvent => MessagePackSerializer.Deserialize<DamageEvent>(data),
+            MessageType.DeathEvent => MessagePackSerializer.Deserialize<DeathEvent>(data),
+
+            MessageType.ChatMessage => MessagePackSerializer.Deserialize<ChatMessage>(data),
+            MessageType.ChatBroadcast => MessagePackSerializer.Deserialize<ChatBroadcast>(data),
+            MessageType.ChatWhisper => MessagePackSerializer.Deserialize<ChatWhisper>(data),
+
+            MessageType.Ping => MessagePackSerializer.Deserialize<Ping.Ping>(data),
+            MessageType.Pong => MessagePackSerializer.Deserialize<Ping.Pong>(data),
+            _ => throw new UnknownMessageTypeException(header.Type)
         };
     }
 }

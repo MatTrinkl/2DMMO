@@ -1,10 +1,8 @@
-using Xunit;
-
 namespace Mmo.Shared.Tests.Serialization;
 
 /// <summary>
-/// Tests for the MessageSerializer class.
-/// These tests will be fully implemented once the MessageSerializer is available.
+///     Tests for the MessageSerializer class.
+///     These tests will be fully implemented once the MessageSerializer is available.
 /// </summary>
 public class MessageSerializerTests
 {
