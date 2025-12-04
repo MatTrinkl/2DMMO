@@ -31,12 +31,6 @@ public static class SharedConstants
     /// </summary>
     public const int TickIntervalMs = 1000 / TickRate; // ~33ms
 
-    // Protocol
-    /// <summary>
-    ///     The message header size (1 byte type + 4 bytes length).
-    /// </summary>
-    public const int MessageHeaderSize = 4; // 1 byte type + 4 bytes length
-
     /// <summary>
     ///     The maximum message size (64 KB).
     /// </summary>

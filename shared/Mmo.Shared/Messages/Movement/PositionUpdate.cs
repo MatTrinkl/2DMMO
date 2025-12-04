@@ -37,13 +37,13 @@ public class PositionUpdate : ITimestampedMessage
     ///     Entity to updates the position.
     /// </summary>
     [Key(2)]
-    public EntityState? EntityOldPosition { get; set; } = null;
+    public EntityState? EntityOldPosition { get; set; }
 
     /// <summary>
     ///     New Position of the entity.
     /// </summary>
     [Key(3)]
-    public Position? NewPosition { get; set; } = null;
+    public Position? NewPosition { get; set; }
 
     /// <summary>
     ///     The Message Type of this Message.

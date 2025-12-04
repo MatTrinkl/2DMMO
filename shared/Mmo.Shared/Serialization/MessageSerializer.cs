@@ -13,7 +13,7 @@ using Ping = Mmo.Shared.Messages.Ping;
 namespace Mmo.Shared.Serialization;
 
 /// <summary>
-///     This class Serializes and deserializes a massage based on its <see cref="MessageType" />.
+///     This class Serializes and deserializes a message based on its <see cref="MessageType" />.
 /// </summary>
 public static class MessageSerializer
 {
@@ -28,10 +28,8 @@ public static class MessageSerializer
     /// </summary>
     public static INetworkMessage Deserialize(ReadOnlyMemory<byte> data)
     {
-        // 1. Erst nur den Type lesen (schnell)
         MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
-        // 2.  Dann vollständig deserialisieren
         return header.Type switch
         {
             MessageType.LoginRequest => MessagePackSerializer.Deserialize<LoginRequest>(data),

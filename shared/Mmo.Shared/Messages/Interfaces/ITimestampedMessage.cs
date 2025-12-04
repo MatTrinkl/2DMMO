@@ -1,7 +1,7 @@
 namespace Mmo.Shared.Messages.Interfaces;
 
 /// <summary>
-///     This interface is an extention for the <see cref="INetworkMessage" /> when there needs to be a timestamp in the
+///     This interface is an extension for the <see cref="INetworkMessage" /> when there needs to be a timestamp in the
 ///     message.
 /// </summary>
 public interface ITimestampedMessage : INetworkMessage

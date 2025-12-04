@@ -37,8 +37,8 @@ public abstract class EntityState
     public Guid EntityId { get; set; }
 
     /// <summary>
-    ///     The current positon of this entity in its current zone.
+    ///     The current position of this entity in its current zone..
     /// </summary>
     [Key(1)]
-    public Position Position { get; set; } = new(0,0);
+    public Position Position { get; set; } = new(0, 0);
 }

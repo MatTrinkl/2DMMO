@@ -42,7 +42,7 @@ public class PositionBroadcast : ITimestampedMessage
     ///     The new position of the entity.
     /// </summary>
     [Key(3)]
-    public Position? NewPosition { get; set; } = null;
+    public Position? NewPosition { get; set; }
 
     /// <summary>
     ///     The Message Type of this Message.

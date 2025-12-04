@@ -6,7 +6,7 @@ using Mmo.Shared.Messages.Interfaces;
 namespace Mmo.Shared.Messages.ZoneEvents;
 
 /// <summary>
-///     This class is send to all clients to inform them that a player has leaved a zone. Todo: ZoneId
+///     This class is send to all clients to inform them that a player has left a zone. Todo: ZoneId
 /// </summary>
 [MessagePackObject]
 public class PlayerLeftZone : INetworkMessage
@@ -29,7 +29,7 @@ public class PlayerLeftZone : INetworkMessage
     }
 
     /// <summary>
-    ///     Player who leaved the zone.
+    ///     Player who left the zone.
     /// </summary>
     [Key(1)]
     public PlayerState Player { get; set; } = new();

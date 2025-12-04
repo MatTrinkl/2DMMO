@@ -29,7 +29,7 @@ public class ChatWhisper : INetworkMessage
     }
 
     /// <summary>
-    ///     The Entity hos sending a whisper message.
+    ///     The Entity who is sending the whisper message.
     /// </summary>
     [Key(1)]
     public Guid EntityId { get; set; }

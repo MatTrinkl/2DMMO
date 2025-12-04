@@ -30,13 +30,13 @@ public class ChatBroadcast : INetworkMessage
     }
 
     /// <summary>
-    ///     The Entity hos sending the original message which gets broadcasted with the context in <see cref="Message" />.
+    ///     The Entity who is sending the original message which gets broadcasted with the context in <see cref="Message" />.
     /// </summary>
     [Key(1)]
     public Guid EntityId { get; set; }
 
     /// <summary>
-    ///     The context of this brodcast.
+    ///     The context of this broadcast.
     /// </summary>
     [Key(2)]
     public string Message { get; set; } = "";

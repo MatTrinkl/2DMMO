@@ -30,10 +30,7 @@ public class ChatMessage : INetworkMessage
     }
 
     /// <summary>
-    ///     The
-    /// </summary>
-    /// <summary>
-    ///     The Entity hos sending the  message to the server with the context in <see cref="Message" />.
+    ///     The Entity who is sending the message to the server with the context in <see cref="Message" />.
     /// </summary>
     [Key(1)]
     public Guid EntityId { get; set; }
