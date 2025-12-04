@@ -3,9 +3,9 @@
   "stryker-config": {
     "project-info": {
       "name": "2DMMO",
-      "module": "Mmo.Server.Tests"
+      "module": "Mmo.Shared.Tests"
     },
-    "project": "../../server/Mmo.Server/Mmo.Server.csproj",
+    "project": "../../shared/Mmo.Shared/Mmo.Shared.csproj",
     "reporters": [
       "progress",
       "html",
