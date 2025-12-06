@@ -2,6 +2,8 @@
 
 Dieses Dokument zeigt die Beziehungen zwischen den Issues und die empfohlene Bearbeitungsreihenfolge.
 
+> **📌 Hinweis:** Siehe auch [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für die Integration des Zone-Konzepts in die Server-Architektur. Die Issues #7, #74, #75 und #76 wurden entsprechend aktualisiert.
+
 ---
 
 ## Issue-Hierarchie
@@ -36,9 +38,29 @@ Dieses Dokument zeigt die Beziehungen zwischen den Issues und die empfohlene Bea
  ├── Abhängig von: #2
  └── Erstellt: GameServer, Tick-Loop
 
-#7 World- und Player-Domänenklassen erstellen
+#7 World, Player und IEntity Interface implementieren [EPIK]
  ├── Abhängig von: #6
- └── Erstellt: World, Player
+ ├── 📌 Zone-Konzept: World wird zu ZoneManager erweitert
+ ├── Sub-Issue 7a: Zone-Klasse implementieren
+ ├── Sub-Issue 7b: ZoneManager implementieren
+ ├── Sub-Issue 7c: Zone-Konfiguration laden
+ ├── Sub-Issue 7d: Player Zone-Zugehörigkeit
+ └── Erstellt: Zone, ZoneManager, Player
+
+#74 WorldState Broadcast an alle Clients (30 Hz)
+ ├── Abhängig von: #7, #13
+ ├── 📌 Zone-Konzept: WorldState wird zu ZoneState
+ └── Erstellt: ZoneState, Zone-spezifischer Broadcast
+
+#75 Spawn-System mit Startposition
+ ├── Abhängig von: #7
+ ├── 📌 Zone-Konzept: SpawnPoints sind Zone-spezifisch
+ └── Erstellt: SpawnPoint, SpawnManager
+
+#76 Weltgrenzen und Position-Clamping
+ ├── Abhängig von: #7, #12
+ ├── 📌 Zone-Konzept: WorldBounds wird zu ZoneBounds
+ └── Erstellt: ZoneBounds, Zone-Clamping
 
 #8 NetworkServer und ClientConnection-Skelett [EPIK]
  ├── Abhängig von: #5, #6
