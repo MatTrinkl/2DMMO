@@ -4,6 +4,8 @@ Diese Dokumentation enthält:
 1. **Sub-Issues** für existierende Issues, die aufgeteilt werden sollten
 2. **Neue Issues** für fehlende Funktionalität bis Ende Phase 4
 
+> **📌 Zone-Konzept:** Die Issues #7, #74, #75 und #76 wurden aktualisiert, um das Zone-Konzept aus der Architektur zu integrieren. Details siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md).
+
 ---
 
 ## Teil 1: Sub-Issues für existierende Issues
@@ -3210,12 +3212,33 @@ Tests durchführen und dokumentieren.
 
 **Ressourcen:**
 - [Bug Reports](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/manage-bugs) – Bug-Dokumentation
+
+---
+
+## Zone-Konzept Integration
+
+> **📌 Hinweis:** Die Issues #7, #74, #75 und #76 wurden aktualisiert, um das Zone-Konzept aus der Architektur zu integrieren. Details siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md).
+
+### Übersicht der Zone-bezogenen Sub-Issues
+
+| Original-Issue | Zone-Konzept Updates | Sub-Issues |
+|---------------|---------------------|------------|
+| #7 World/Player | World → ZoneManager | 7a: Zone-Klasse, 7b: ZoneManager, 7c: Zone-Config, 7d: Player Zone-Zugehörigkeit |
+| #74 WorldState Broadcast | WorldState → ZoneState | Zone-spezifischer Broadcast |
+| #75 Spawn-System | Globale → Zone-spezifische SpawnPoints | SpawnPoint mit ZoneId |
+| #76 Weltgrenzen | WorldBounds → ZoneBounds | Zone-spezifisches Clamping |
+
+**Gesamt: 4 Epik-Issues mit ~6 Sub-Issues für Zone-Konzept**
+
+---
+
 ## Zusammenfassung
 
-### Übersicht der Sub-Issues für bestehende Issues (#8, #9, #11, #12, #14, #15)
+### Übersicht der Sub-Issues für bestehende Issues (#7, #8, #9, #11, #12, #14, #15)
 
 | Original-Issue | Sub-Issues |
 |---------------|------------|
+| #7 World/Player | 7a: Zone-Klasse, 7b: ZoneManager, 7c: Zone-Config, 7d: Player Zone-Zugehörigkeit |
 | #8 NetworkServer | 8a: TCP-Listener, 8b: ClientConnection, 8c: Message-Loop & Events |
 | #9 MessageRouter | 9a: Router-Basisklasse, 9b: Login-Handler |
 | #11 Login-UI | 11a: UI erstellen, 11b: Netzwerk-Integration, 11c: Response-Handling |
@@ -3223,7 +3246,7 @@ Tests durchführen und dokumentieren.
 | #14 Remote-Player | 14a: GameManager, 14b: PlayerNode-Szene, 14c: Interpolation |
 | #15 Movement-Tests | 15a: Tuning, 15b: Unit-Tests, 15c: Manuelle Tests |
 
-**Gesamt: 17 Sub-Issues für 6 bestehende Issues**
+**Gesamt: 21 Sub-Issues für 7 bestehende Issues**
 
 ### Übersicht der neuen Epik-Issues und Sub-Issues
 
@@ -3263,18 +3286,20 @@ Tests durchführen und dokumentieren.
 | Kategorie | Anzahl |
 |-----------|--------|
 | Bestehende Issues analysiert | 15 |
-| Epik-Issues für bestehende Issues | 6 |
-| Sub-Issues für bestehende Issues | 17 |
+| Epik-Issues für bestehende Issues | 7 (inkl. #7 Zone-Konzept) |
+| Sub-Issues für bestehende Issues | 21 |
 | Neue Epik-Issues | 25 |
 | Neue Sub-Issues | ~61 |
-| **Gesamt Issues nach Umsetzung** | **~93** |
+| Zone-Konzept Updates | 4 Issues aktualisiert |
+| **Gesamt Issues nach Umsetzung** | **~97** |
 
 ---
 
 ## Nächste Schritte
 
-1. ✅ Sub-Issues für die 6 bestehenden großen Issues definiert
+1. ✅ Sub-Issues für die 7 bestehenden großen Issues definiert (inkl. #7)
 2. ✅ 25 neue Epik-Issues mit ~61 Sub-Issues definiert
-3. Original-Issues (#8, #9, #11, #12, #14, #15) mit Verweisen auf Sub-Issues aktualisieren (siehe `docs/ISSUE_UPDATES.md`)
-4. Issues in GitHub erstellen mit passenden Labels
-5. Issues in sinnvoller Reihenfolge priorisieren (siehe `docs/ISSUE_HIERARCHY.md`)
+3. ✅ Zone-Konzept in Issues #7, #74, #75, #76 integriert (siehe `docs/ZONE_CONCEPT_UPDATES.md`)
+4. Original-Issues mit Verweisen auf Sub-Issues aktualisieren (siehe `docs/ISSUE_UPDATES.md`)
+5. Issues in GitHub erstellen mit passenden Labels
+6. Issues in sinnvoller Reihenfolge priorisieren (siehe `docs/ISSUE_HIERARCHY.md`)

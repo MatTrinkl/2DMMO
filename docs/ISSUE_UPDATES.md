@@ -2,6 +2,228 @@
 
 Dieses Dokument zeigt, wie die bestehenden "großen" Issues aktualisiert werden sollten, um auf ihre Sub-Issues zu verweisen.
 
+> **📌 Hinweis:** Siehe auch [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für die Integration des Zone-Konzepts in die Server-Architektur.
+
+---
+
+## Issue #7: World, Player und IEntity Interface implementieren
+
+**Empfohlene Aktualisierung des Issue-Bodies:**
+
+```markdown
+Basisklassen für die serverseitige Spiellogik mit Entity-System.
+
+> **📌 Zone-Konzept Update:** Die `World`-Klasse wird zu einem `ZoneManager` erweitert.
+> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+
+> **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
+
+**Sub-Issues:**
+- [ ] #XX Zone-Klasse implementieren
+- [ ] #XX ZoneManager implementieren (ersetzt/erweitert World)
+- [ ] #XX Zone-Konfiguration laden
+- [ ] #XX Player Zone-Zugehörigkeit
+
+**Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
+
+---
+
+<details>
+<summary>Ursprüngliche Aufgaben (zur Referenz)</summary>
+
+**Aufgaben:**
+- [ ] `Dictionary<int, IEntity> _entities`
+- [ ] `Dictionary<Guid, Player> _playersBySession`
+- [ ] `Player CreatePlayer(string name, ClientConnection connection)`
+- [ ] `void RemovePlayer(Guid sessionId)`
+- [ ] `void Update(float deltaTime)`
+- [ ] `IEnumerable<Player> GetAllPlayers()`
+
+</details>
+
+**Aktualisierte Aufgaben (Zone-Konzept):**
+
+### Zone Klasse
+- [ ] `Zone` Klasse mit ZoneId, ZoneName, Bounds, Entities erstellen
+- [ ] `Zone.Update(float deltaTime)` - Updated alle Entities in der Zone
+- [ ] `Zone.AddEntity(IEntity entity)` - Fügt Entity zur Zone hinzu
+- [ ] `Zone.RemoveEntity(int entityId)` - Entfernt Entity aus der Zone
+- [ ] `Zone.GetPlayers()` - Gibt alle Spieler der Zone zurück
+
+### ZoneManager Klasse (ersetzt/erweitert World)
+- [ ] `ZoneManager` Klasse mit Dictionary<string, Zone>
+- [ ] `ZoneManager.GetZone(string zoneId)` - Holt Zone nach ID
+- [ ] `ZoneManager.GetDefaultZone()` - Gibt Startzone zurück
+- [ ] `ZoneManager.Update(float deltaTime)` - Updated alle Zonen
+- [ ] Zone-Transfer-Methode vorbereiten (Stub)
+
+### IEntity mit Zone-Zugehörigkeit
+- [ ] `IEntity` bekommt `string ZoneId` Property
+- [ ] `Player` Klasse mit Zone-Zugehörigkeit aktualisieren
+
+**Akzeptanzkriterien:**
+- [ ] Spieler können erstellt und entfernt werden
+- [ ] Spieler sind einer Zone zugeordnet
+- [ ] `ZoneManager.Update()` wird pro Tick aufgerufen
+- [ ] Alle Entities implementieren IEntity mit ZoneId
+
+## Ressourcen
+- [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md) - Detaillierte Beschreibung
+- [Interfaces in C#](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces)
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Zone Server Layer
+```
+
+---
+
+## Issue #74: WorldState Broadcast an alle Clients (30 Hz)
+
+**Empfohlene Aktualisierung des Issue-Bodies:**
+
+```markdown
+Server broadcastet jeden Tick den aktuellen ZoneState an alle Clients in der Zone.
+
+> **📌 Zone-Konzept Update:** WorldState wird zu ZoneState.
+> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+
+**ZoneState DTO (ersetzt WorldState):**
+```csharp
+[MessagePackObject]
+public class ZoneState : INetworkMessage
+{
+    [Key(0)]
+    public MessageType Type => MessageType.ZoneState;
+    
+    [Key(1)]
+    public string ZoneId { get; set; }  // NEU
+    
+    [Key(2)]
+    public PlayerPositionData[] Players { get; set; }
+    
+    [Key(3)]
+    public long ServerTick { get; set; }
+    
+    [Key(4)]
+    public long ServerTimestamp { get; set; }
+}
+```
+
+**Aktualisierte Aufgaben:**
+- [ ] `ZoneState` DTO mit `ZoneId` Property erstellen
+- [ ] ZoneState am Ende jedes Ticks zusammenstellen
+- [ ] Nur Spieler der gleichen Zone in Players Array
+- [ ] An alle verbundenen Clients **der Zone** senden
+- [ ] Disconnecting Clients überspringen
+
+**Akzeptanzkriterien:**
+- [ ] ZoneId wird im State mitgeschickt
+- [ ] Clients erhalten 30x pro Sekunde Updates ihrer Zone
+- [ ] Spieler sehen nur andere Spieler in ihrer Zone
+- [ ] Neue Spieler sind sofort sichtbar (in ihrer Zone)
+
+## Ressourcen
+- [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md) - ZoneState Details
+- [Snapshot Interpolation](https://gafferongames.com/post/snapshot_interpolation/)
+```
+
+---
+
+## Issue #75: Spawn-System mit Startposition
+
+**Empfohlene Aktualisierung des Issue-Bodies:**
+
+```markdown
+Startposition für neue Spieler in einer Zone definieren.
+
+> **📌 Zone-Konzept Update:** SpawnPoints sind Zone-spezifisch.
+> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+
+**SpawnPoint Klasse (Zone-spezifisch):**
+```csharp
+public class SpawnPoint
+{
+    public string ZoneId { get; }
+    public float X { get; }
+    public float Y { get; }
+    public float Radius { get; }  // Streuung
+    public bool IsDefault { get; }  // Standard-Spawn für neue Spieler
+}
+```
+
+**SpawnManager:**
+```csharp
+public class SpawnManager
+{
+    public Vector2 GetSpawnPosition(string zoneId);
+    public SpawnPoint GetDefaultSpawn();  // Für neue Spieler (Startzone)
+}
+```
+
+**Aktualisierte Aufgaben:**
+- [ ] `SpawnPoint` Klasse mit ZoneId erstellen
+- [ ] `SpawnManager` Klasse erstellen
+- [ ] `GetSpawnPosition(string zoneId)` - Position mit Streuung in Zone
+- [ ] `GetDefaultSpawn()` - Standard-Spawn für neue Spieler (Startzone)
+- [ ] Bei LoginRequest → Spawn-Position in Startzone berechnen
+- [ ] In LoginResponse mit ZoneId mitschicken
+- [ ] Collision-Check (nicht in Wand spawnen)
+
+**Akzeptanzkriterien:**
+- [ ] Neue Spieler spawnen in der Startzone
+- [ ] Jede Zone hat eigene SpawnPoints
+- [ ] Keine Spieler in Wänden
+
+## Ressourcen
+- [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md) - SpawnPoint Details
+- [Random in Circle](https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly)
+```
+
+---
+
+## Issue #76: Weltgrenzen und Position-Clamping
+
+**Empfohlene Aktualisierung des Issue-Bodies:**
+
+```markdown
+Spieler können nicht außerhalb ihrer Zone laufen.
+
+> **📌 Zone-Konzept Update:** WorldBounds wird zu ZoneBounds.
+> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+
+**ZoneBounds Klasse (ersetzt WorldBounds):**
+```csharp
+public class ZoneBounds
+{
+    public string ZoneId { get; }
+    public float MinX { get; }
+    public float MaxX { get; }
+    public float MinY { get; }
+    public float MaxY { get; }
+    
+    public bool Contains(float x, float y);
+    public Vector2 Clamp(Vector2 position);
+    public bool IsNearEdge(float x, float y, float threshold);  // Für Zone-Übergang
+}
+```
+
+**Aktualisierte Aufgaben:**
+- [ ] `ZoneBounds` Klasse mit ZoneId erstellen
+- [ ] `Contains(float x, float y)` - Prüft ob Position in Zone
+- [ ] `Clamp(Vector2 position)` - Begrenzt Position auf Zone
+- [ ] `IsNearEdge(...)` - Für spätere Zone-Übergänge vorbereiten
+- [ ] Jede Zone hat eigene ZoneBounds
+- [ ] MovementValidator prüft Zone-spezifische Bounds
+- [ ] Bei Überschreitung: Position auf Zone-Grenze clampen
+
+**Akzeptanzkriterien:**
+- [ ] Spieler stoppt am Zone-Rand
+- [ ] Jede Zone hat unabhängige Grenzen
+- [ ] Kein Teleport außerhalb der Zone möglich
+
+## Ressourcen
+- [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md) - ZoneBounds Details
+- [Math.Clamp](https://learn.microsoft.com/en-us/dotnet/api/system.math.clamp)
+```
+
 ---
 
 ## Issue #8: NetworkServer und ClientConnection-Skelett
