@@ -395,7 +395,7 @@ Zone-Definitionen beschreiben alle statischen Entities einer Zone (Türen, Porta
 | Bereich | Verwendung |
 |---------|------------|
 | 1 - 999 | Player (auto-increment) |
-| 1000 - 1999 | Statische Entities (Türen, Portale, Kisten, Signs) |
+| 1000 - 1999 | Statische Entities (Türen, Portale, Kisten, Schilder) |
 | 2000 - 2999 | Dynamische Mobs |
 | 3000+ | Reserviert für zukünftige Erweiterungen |
 
@@ -447,7 +447,7 @@ ZoneDefinition
       "x": 512,
       "y": 768,
       "properties": {
-        "targetZone": "hauptstadt",
+        "targetZone": "Hauptstadt",
         "targetSpawn": "from-startzone",
         "requiredKey": null
       }
