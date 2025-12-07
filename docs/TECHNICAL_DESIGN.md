@@ -514,6 +514,8 @@ foreach (var entity in definition.StaticEntities)
 }
 ```
 
+> **Hinweis:** In der Implementierung sollte Error-Handling für fehlende Dateien und ungültiges JSON hinzugefügt werden.
+
 ---
 
 ## Netzwerk-Flow
