@@ -16,12 +16,13 @@
 4. [Thread-Modell](#thread-modell)
 5. [Collision & Prediction](#collision--prediction)
 6. [Entity-System](#entity-system)
-7. [Netzwerk-Flow](#netzwerk-flow)
-8. [Logging & Monitoring](#logging--monitoring)
-9. [Testing-Strategie](#testing-strategie)
-10. [Zukünftige Themen](#zukünftige-themen)
-11. [Nützliche Links](#nützliche-links)
-12. [Entscheidungslog](#entscheidungslog)
+7. [Zone-Definition & Statische Entities](#zone-definition--statische-entities)
+8. [Netzwerk-Flow](#netzwerk-flow)
+9. [Logging & Monitoring](#logging--monitoring)
+10. [Testing-Strategie](#testing-strategie)
+11. [Zukünftige Themen](#zukünftige-themen)
+12. [Nützliche Links](#nützliche-links)
+13. [Entscheidungslog](#entscheidungslog)
 
 ---
 
@@ -372,6 +373,145 @@ client/GodotProject/scenes/entities/
 ├── Door.tscn            # Tür
 ├── Sign.tscn            # Schild
 └── NpcVendor.tscn       # Händler NPC
+```
+
+---
+
+## Zone-Definition & Statische Entities
+
+Zone-Definitionen beschreiben alle statischen Entities einer Zone (Türen, Portale, Kisten, Schilder, NPCs, Spawnpoints). Diese werden als **JSON-Dateien** gespeichert und von Server UND Client über die `Mmo.Shared` Library geladen.
+
+### Datenformat-Entscheidungen
+
+| Aspekt | Entscheidung | Begründung |
+|--------|--------------|------------|
+| **Format** | JSON | Menschenlesbar, versionierbar in Git |
+| **Speicherort** | `/data/zones/*.zone.json` | Zentral, von Server + Client nutzbar |
+| **Shared DTOs** | `Mmo.Shared.Zones` Namespace | Keine Duplikation |
+| **Loader** | `ZoneDefinitionLoader` (Shared) | Einheitliche Ladelogik |
+
+### Entity-ID Bereiche
+
+| Bereich | Verwendung |
+|---------|------------|
+| 1 - 999 | Player (auto-increment) |
+| 1000 - 1999 | Statische Entities (Türen, Portale, Kisten, Signs) |
+| 2000 - 2999 | Dynamische Mobs |
+| 3000+ | Reserviert für zukünftige Erweiterungen |
+
+### Zone-Definition Struktur
+
+```
+ZoneDefinition
+├── ZoneId (string)
+├── ZoneName (string)
+├── Bounds
+│   ├── MinX, MaxX, MinY, MaxY
+├── SpawnPoints[]
+│   ├── Id (string)
+│   ├── X, Y (float)
+│   ├── Type (SpawnPointType)
+│   └── IsDefault (bool)
+├── StaticEntities[]
+│   ├── Id (int)
+│   ├── Type (EntityType)
+│   ├── X, Y (float)
+│   └── Properties (Dictionary<string, object>)
+```
+
+### Beispiel Zone-Definition (JSON)
+
+```json
+{
+  "zoneId": "startzone",
+  "zoneName": "Startzone",
+  "bounds": {
+    "minX": 0,
+    "maxX": 2048,
+    "minY": 0,
+    "maxY": 2048
+  },
+  "spawnPoints": [
+    {
+      "id": "default-spawn",
+      "x": 1024,
+      "y": 1024,
+      "type": "PlayerSpawn",
+      "isDefault": true
+    }
+  ],
+  "staticEntities": [
+    {
+      "id": 1000,
+      "type": "Door",
+      "x": 512,
+      "y": 768,
+      "properties": {
+        "targetZone": "hauptstadt",
+        "targetSpawn": "from-startzone",
+        "requiredKey": null
+      }
+    },
+    {
+      "id": 1001,
+      "type": "Sign",
+      "x": 1024,
+      "y": 900,
+      "properties": {
+        "text": "Willkommen in der Startzone!"
+      }
+    }
+  ]
+}
+```
+
+### Loader-Implementierung
+
+```csharp
+// shared/Mmo.Shared/Zones/ZoneDefinitionLoader.cs
+
+public class ZoneDefinitionLoader
+{
+    public static ZoneDefinition LoadFromFile(string filePath)
+    {
+        string json = File.ReadAllText(filePath);
+        return JsonSerializer.Deserialize<ZoneDefinition>(json);
+    }
+    
+    public static Dictionary<string, ZoneDefinition> LoadAllZones(string zonesDirectory)
+    {
+        var zones = new Dictionary<string, ZoneDefinition>();
+        foreach (var file in Directory.GetFiles(zonesDirectory, "*.zone.json"))
+        {
+            var zone = LoadFromFile(file);
+            zones[zone.ZoneId] = zone;
+        }
+        return zones;
+    }
+}
+```
+
+### Verwendung auf Server und Client
+
+**Server (Mmo.Server):**
+```csharp
+// Beim Start: Zonen laden
+var zones = ZoneDefinitionLoader.LoadAllZones("data/zones");
+foreach (var (zoneId, definition) in zones)
+{
+    var zone = new Zone(definition);
+    zoneManager.AddZone(zone);
+}
+```
+
+**Client (Godot):**
+```csharp
+// Beim Zone-Wechsel: Statische Entities spawnen
+var definition = ZoneDefinitionLoader.LoadFromFile("res://data/zones/startzone.zone.json");
+foreach (var entity in definition.StaticEntities)
+{
+    SpawnStaticEntity(entity);
+}
 ```
 
 ---
