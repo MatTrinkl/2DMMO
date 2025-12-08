@@ -1,7 +1,8 @@
 namespace Mmo.Shared.Interfaces;
 
 /// <summary>
-/// This interface is used for logging metrics. Can be implemented with normal console logging or later used with Grafana.
+///     This interface is used for logging metrics. Can be implemented with normal console logging or later used with
+///     Grafana.
 /// </summary>
 public interface ILog
 {

@@ -3,22 +3,19 @@ using Mmo.Server;
 using Mmo.Server.GameLoop;
 using Mmo.Shared.Interfaces;
 
-class Program
+internal class Program
 {
-    static async Task Main(string[] args)
+    private static async Task Main(string[] args)
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
-                .AddSimpleConsole(options =>
-                {
-                    options.TimestampFormat = "[HH:mm:ss] ";
-                })
+                .AddSimpleConsole(options => { options.TimestampFormat = "[HH:mm:ss] "; })
                 .SetMinimumLevel(LogLevel.Information);
         });
 
         // Kategorie kannst du frei wählen – GameServer sieht nur ILog
-        var coreLogger = loggerFactory.CreateLogger("GameServer");
+        ILogger coreLogger = loggerFactory.CreateLogger("GameServer");
         ILog log = new LoggerAdapter(coreLogger);
 
         var server = new GameServer(log);

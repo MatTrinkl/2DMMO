@@ -1,4 +1,3 @@
-using Mmo.Server.GameLoop;
 using Mmo.Server.Tests.GameServer;
 using Mmo.Shared;
 using Mmo.Shared.Interfaces;
@@ -8,7 +7,6 @@ namespace Mmo.Server.Tests;
 
 public class GameServerTests
 {
-
     [Fact]
     public void HappyGameServerTest()
     {
@@ -32,12 +30,13 @@ public class GameServerTests
 
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var clt = new CancellationTokenSource();
-        var task=gameServer.StartServerAsync(clt.Token);
-        Task.Delay(110).Wait();
+        Task task = gameServer.StartServerAsync(clt.Token);
+        await Task.Delay(110);
         clt.Cancel();
 
-        Task.Delay(100).Wait();
+        await Task.Delay(100);
         await task;
+        clt.CancelAfter(TimeSpan.FromSeconds(2));
 
         loggerMock.Verify(l => l.Info(
                 "GameServer starting with {TickRate} Hz...",
@@ -49,21 +48,23 @@ public class GameServerTests
                 4L),
             Times.Once);
     }
+
     [Fact]
     public async Task GameServerWarningWhenATickIsToLong()
     {
         var logMock = new Mock<ILog>();
 
         // Create a Tick which is longer then the 33.3ms
-        var slowWork = SharedConstants.TickDuration + TimeSpan.FromMilliseconds(10);
+        TimeSpan slowWork = SharedConstants.TickDuration + TimeSpan.FromMilliseconds(10);
 
         var server = new SlowGameServer(logMock.Object, slowWork);
 
         using var cts = new CancellationTokenSource();
-        var task=server.StartServerAsync(cts.Token);
-        Task.Delay(100).Wait();
+        Task task = server.StartServerAsync(cts.Token);
+        await Task.Delay(100);
         cts.Cancel();
         await task;
+        cts.CancelAfter(TimeSpan.FromSeconds(2));
 
         // Assert: Warning is logged min. 1 time.
         logMock.Verify(l => l.Warn(

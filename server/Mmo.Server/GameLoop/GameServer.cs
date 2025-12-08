@@ -5,27 +5,17 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.GameLoop;
 
 /// <summary>
-/// This class is the core server structure. All communication will be done with an instance of this class.
+///     This class is the core server structure. All communication will be done with an instance of this class.
 /// </summary>
 public class GameServer
 {
     /// <summary>
-    /// Reference of logging-tool.
+    ///     Reference of logging-tool.
     /// </summary>
     private readonly ILog _log;
 
     /// <summary>
-    /// true if the server is running.
-    /// </summary>
-    public bool IsRunning { get; private set; }
-
-    /// <summary>
-    /// The current tick of the server.
-    /// </summary>
-    public long CurrentTick { get; private set; }
-
-    /// <summary>
-    /// Creates a new GameServer object.
+    ///     Creates a new GameServer object.
     /// </summary>
     /// <param name="log">The logging interface.</param>
     public GameServer(ILog log)
@@ -36,10 +26,20 @@ public class GameServer
     }
 
     /// <summary>
-    /// Starts the server and keep its loop until the cancellation is requested.
-    /// Then the final tick will run and then server shuts down.
+    ///     true if the server is running.
     /// </summary>
-    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested"/>.</param>
+    public bool IsRunning { get; private set; }
+
+    /// <summary>
+    ///     The current tick of the server.
+    /// </summary>
+    public long CurrentTick { get; private set; }
+
+    /// <summary>
+    ///     Starts the server and keep its loop until the cancellation is requested.
+    ///     Then the final tick will run and then server shuts down.
+    /// </summary>
+    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested" />.</param>
     public async Task StartServerAsync(CancellationToken cancellationToken)
     {
         _log.Info("GameServer starting with {TickRate} Hz...", SharedConstants.TickRate);
@@ -48,7 +48,7 @@ public class GameServer
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var tickStart = stopwatch.Elapsed;
+            TimeSpan tickStart = stopwatch.Elapsed;
             CurrentTick++;
 
             // 1️⃣ INPUT PHASE (~5ms)
@@ -60,9 +60,9 @@ public class GameServer
             // 3️⃣ OUTPUT PHASE (~10ms)
             await OutputPhaseAsync(cancellationToken);
 
-            var elapsed = stopwatch.Elapsed - tickStart;
-            var elapsedMs = elapsed.TotalMilliseconds;
-            var budgetMs = SharedConstants.TickDuration.TotalMilliseconds;
+            TimeSpan elapsed = stopwatch.Elapsed - tickStart;
+            double elapsedMs = elapsed.TotalMilliseconds;
+            double budgetMs = SharedConstants.TickDuration.TotalMilliseconds;
 
             // Tick-Overrun Logging (WARNING Level)
             if (elapsed > SharedConstants.TickDuration)
@@ -77,7 +77,7 @@ public class GameServer
                 continue;
             }
 
-            var remaining = SharedConstants.TickDuration - elapsed;
+            TimeSpan remaining = SharedConstants.TickDuration - elapsed;
 
             try
             {
@@ -96,9 +96,9 @@ public class GameServer
 
 
     /// <summary>
-    /// This is a placeholder.
+    ///     This is a placeholder.
     /// </summary>
-    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested"/>.</param>
+    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested" />.</param>
     /// <returns>Return a reference to the task</returns>
     protected virtual Task InputPhaseAsync(CancellationToken cancellationToken)
     {
@@ -107,9 +107,9 @@ public class GameServer
     }
 
     /// <summary>
-    /// This is a placeholder.
+    ///     This is a placeholder.
     /// </summary>
-    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested"/>.</param>
+    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested" />.</param>
     /// <returns>Return a reference to the task</returns>
     protected virtual Task UpdatePhaseAsync(CancellationToken cancellationToken)
     {
@@ -118,9 +118,9 @@ public class GameServer
     }
 
     /// <summary>
-    /// This is a placeholder.
+    ///     This is a placeholder.
     /// </summary>
-    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested"/>.</param>
+    /// <param name="cancellationToken">The token contains the <see cref="CancellationToken.IsCancellationRequested" />.</param>
     /// <returns>Return a reference to the task</returns>
     protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
     {
