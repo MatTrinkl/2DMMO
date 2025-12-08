@@ -81,7 +81,7 @@ public class GameServer
 
             try
             {
-                // 4️⃣ WAIT – until the rest time of the 33.3ms is passed
+                // 4️⃣ WAIT – until the rest time of the 40ms is passed
                 await Task.Delay(remaining, cancellationToken);
             }
             catch (TaskCanceledException)

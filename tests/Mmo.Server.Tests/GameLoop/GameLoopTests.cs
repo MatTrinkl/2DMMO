@@ -6,7 +6,7 @@ namespace Mmo.Server.Tests.GameLoop;
 public class GameLoopTests
 {
     [Fact(Skip = "Not implemented yet")]
-    public void GameLoop_ShouldRunAt30Hz()
+    public void GameLoop_ShouldRunAt25Hz()
     {
         // This test will be implemented when the GameLoop is available
     }

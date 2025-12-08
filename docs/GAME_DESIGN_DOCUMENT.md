@@ -604,7 +604,7 @@ CREATE TABLE guild_members (
 
 ### Technisch
 - [x] ~~WebSocket oder reines TCP für die Kommunikation?~~ → TCP + TLS
-- [x] ~~Wie oft werden Positionen synchronisiert? (Tick-Rate?)~~ → 30 Hz
+- [x] ~~Wie oft werden Positionen synchronisiert? (Tick-Rate?)~~ → 25 Hz
 - [x] ~~Caching-Strategie für häufige DB-Zugriffe?~~ → Redis
 - [x] ~~Serialisierung?~~ → MessagePack
 - [x] ~~Authentication für Prototyp?~~ → Nur Username

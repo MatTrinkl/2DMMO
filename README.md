@@ -61,7 +61,7 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 │       ├── Mmo.Server.csproj
 │       ├── Program.cs
 │       ├── Networking/         # TCP Server, Connection Handling
-│       ├── GameLoop/           # 30Hz Game Loop
+│       ├── GameLoop/           # 25Hz Game Loop
 │       └── Zones/              # Zone Management
 ├── shared/                     # Shared Code Library
 │   └── Mmo.Shared/

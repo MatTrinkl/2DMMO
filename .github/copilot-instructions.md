@@ -255,14 +255,14 @@ Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
 ## 🔄 Game Loop & Timing
 
 ### Tick-Rate
-- [ ] Server Tick-Rate ist 30 Hz (33.33ms pro Tick)
+- [ ] Server Tick-Rate ist 25 Hz (40ms pro Tick)
 - [ ] Keine Annahmen über höhere/niedrigere Tick-Rate
 - [ ] `TICK_RATE` Konstante aus Shared Library verwendet?
 
 ### Tick-Phasen
 - [ ] Korrekte Reihenfolge: Input → Update → Output → Wait
 - [ ] Keine I/O-Blocking-Operationen im Tick
-- [ ] Tick-Overrun wird geloggt (> 33ms)
+- [ ] Tick-Overrun wird geloggt (> 40ms)
 
 ### Timing
 - [ ] Fixed Timestep verwendet (nicht variable)
@@ -402,7 +402,7 @@ Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
 
 ### Game Loop
 - [ ] Keine Allokationen im Game Loop (Object Pooling)
-- [ ] Tick-Budget von 33ms beachten
+- [ ] Tick-Budget von 40ms beachten
 - [ ] Keine Blocking-I/O im Tick
 
 ### Async/Await

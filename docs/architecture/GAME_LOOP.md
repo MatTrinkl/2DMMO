@@ -14,12 +14,12 @@ Diese Dokumentation beschreibt das Game Loop Design für den 2DMMO Server, inklu
 
 ---
 
-## Server Game Loop (30 Hz)
+## Server Game Loop (25 Hz)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  SERVER GAME LOOP                        │
-│                   (33.33ms pro Tick)                    │
+│                   (40ms pro Tick)                    │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │                    TICK START                       │ │
@@ -73,8 +73,8 @@ Diese Dokumentation beschreibt das Game Loop Design für den 2DMMO Server, inklu
 ```csharp
 public class GameLoop
 {
-    private const int TICK_RATE = 30;  // Hz
-    private const double TICK_INTERVAL_MS = 1000.0 / TICK_RATE;  // 33.33ms
+    private const int TICK_RATE = 25;  // Hz
+    private const double TICK_INTERVAL_MS = 1000.0 / TICK_RATE;  // 40ms
     
     private readonly Stopwatch _tickTimer = new();
     private long _currentTick = 0;

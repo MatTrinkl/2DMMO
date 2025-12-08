@@ -32,7 +32,7 @@ public class GameServerTests
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var cts = new CancellationTokenSource();
         Task task = gameServer.StartServerAsync(cts.Token);
-        await Task.Delay(110);
+        await Task.Delay(200); // Allow for at least 4 ticks at 25 Hz (4 * 40ms = 160ms + overhead)
         cts.Cancel();
 
         await Task.Delay(100);
@@ -41,7 +41,7 @@ public class GameServerTests
 
         loggerMock.Verify(l => l.Info(
                 "GameServer starting with {TickRate} Hz...",
-                30),
+                25),
             Times.Once);
 
         loggerMock.Verify(l => l.Info(
@@ -59,7 +59,7 @@ public class GameServerTests
     {
         var logMock = new Mock<ILog>();
 
-        // Create a Tick which is longer than the 33.3ms
+        // Create a Tick which is longer than the 40ms
         TimeSpan slowWork = SharedConstants.TickDuration + TimeSpan.FromMilliseconds(10);
 
         var server = new SlowGameServer(logMock.Object, slowWork);

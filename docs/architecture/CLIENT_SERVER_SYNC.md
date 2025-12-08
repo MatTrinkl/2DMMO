@@ -20,7 +20,7 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 ┌─────────────────────────────────────────────────────────┐
 │              CLIENT-SIDE PREDICTION                      │
 │                                                          │
-│  Problem: Server ist 30 Hz, Client ist 60 FPS           │
+│  Problem: Server ist 25 Hz, Client ist 60 FPS           │
 │  Lösung:  Client sagt vorher, Server korrigiert         │
 │                                                          │
 │  ┌─────────────────────────────────────────────────┐    │
@@ -78,13 +78,13 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 ┌─────────────────────────────────────────────────────────┐
 │             ENTITY INTERPOLATION                         │
 │                                                          │
-│  Problem: Andere Spieler kommen nur mit 30 Hz an        │
+│  Problem: Andere Spieler kommen nur mit 25 Hz an        │
 │  Lösung:  Zwischen zwei bekannten Positionen            │
 │           interpolieren                                  │
 │                                                          │
 │  Server-Updates:                                        │
 │                                                          │
-│  T=0ms      T=33ms     T=66ms     T=100ms               │
+│  T=0ms      T=40ms     T=80ms     T=120ms               │
 │    ●──────────●──────────●──────────●                   │
 │  (10,10)   (10,15)   (10,20)   (10,25)                 │
 │                                                          │
@@ -93,8 +93,8 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 │  Render-Zeit   Interpolierte Position                   │
 │  ──────────────────────────────────────                 │
 │  T=100ms       (10,10)  ← Zeigt T=0 Daten              │
-│  T=116ms       (10,12.5) ← Interpoliert                │
-│  T=133ms       (10,15)  ← Zeigt T=33 Daten             │
+│  T=120ms       (10,12.5) ← Interpoliert                │
+│  T=140ms       (10,15)  ← Zeigt T=40 Daten             │
 │  T=150ms       (10,17.5) ← Interpoliert                │
 │                                                          │
 │  Buffer sorgt für smooth movement trotz Jitter!         │
@@ -109,7 +109,7 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 |---------|-----------|-------|
 | **Client-Side Prediction** | Eigener Spieler | Sofortige Reaktion auf Input |
 | **Server Reconciliation** | Eigener Spieler | Korrektur bei Abweichungen |
-| **Entity Interpolation** | Andere Spieler | Smooth Movement bei 30 Hz |
+| **Entity Interpolation** | Andere Spieler | Smooth Movement bei 25 Hz |
 | **Input Buffering** | Server | Deterministische Verarbeitung |
 
 ---

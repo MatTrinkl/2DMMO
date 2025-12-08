@@ -51,7 +51,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 
 | Aspekt | Entscheidung |
 |--------|--------------|
-| **Tick-Rate** | 30 Hz (33.33ms pro Tick) |
+| **Tick-Rate** | 25 Hz (40ms pro Tick) |
 | **Timing-Strategie** | Fixed Timestep |
 | **Phasen pro Tick** | Input → Update → Output → Wait |
 
@@ -59,7 +59,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     SERVER GAME LOOP (30 Hz)                    │
+│                     SERVER GAME LOOP (25 Hz)                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐        │
@@ -74,7 +74,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 │   │ lesen     │      │ Update    │      │ an alle   │          │
 │   └───────────┘      └───────────┘      └───────────┘          │
 │                                                                 │
-│   ◄──────────────── ~33.33ms pro Tick ─────────────────►       │
+│   ◄──────────────── ~40ms pro Tick ─────────────────►       │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -90,7 +90,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    EIN TICK (33.33ms)                            │
+│                    EIN TICK (40ms)                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  1️⃣ INPUT PHASE (~5ms)                                          │
@@ -110,7 +110,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 │     • An alle Clients senden                                     │
 │                                                                  │
 │  4️⃣ WAIT                                                        │
-│     • Restliche Zeit bis 33.33ms warten                          │
+│     • Restliche Zeit bis 40ms warten                          │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -219,7 +219,7 @@ Layer 4: UI (CanvasLayer)          → HUD, Chat
 │  │   ────────────   │     │   ────────────   │                  │
 │  │   • Start        │     │   • Eigener      │                  │
 │  │   • TcpListener  │     │     Thread       │                  │
-│  │   • AcceptAsync  │     │   • 30 Hz Timer  │                  │
+│  │   • AcceptAsync  │     │   • 25 Hz Timer  │                  │
 │  └────────┬─────────┘     │   • Tick()       │                  │
 │           │               └──────────────────┘                  │
 │           │                        ▲                            │
@@ -530,7 +530,7 @@ foreach (var entity in definition.StaticEntities)
 │  1️⃣ CONNECT       → TCP Connect + TLS Handshake                 │
 │  2️⃣ LOGIN         → LoginRequest/Response                       │
 │  3️⃣ INITIAL STATE → WorldState mit allen Spielern/Entities     │
-│  4️⃣ GAME LOOP     → PositionUpdates, WorldState (30 Hz)        │
+│  4️⃣ GAME LOOP     → PositionUpdates, WorldState (25 Hz)        │
 │  5️⃣ DISCONNECT    → Cleanup, PlayerLeft broadcast              │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -637,7 +637,7 @@ DISCONNECTED ──Connect()──▶ CONNECTING
 
 **Server WARNING:**
 - Spieler Timeout
-- Tick dauerte > 33ms
+- Tick dauerte > 40ms
 - Ungültige Nachricht
 
 **Server ERROR:**
@@ -649,7 +649,7 @@ DISCONNECTED ──Connect()──▶ CONNECTING
 | Kategorie | Metrik | Beschreibung |
 |-----------|--------|--------------|
 | **Performance** | tick_duration_ms | Tick-Dauer |
-| **Performance** | tick_overrun_count | Ticks > 33ms |
+| **Performance** | tick_overrun_count | Ticks > 40ms |
 | **Connections** | players_online | Aktuelle Spieler |
 | **Connections** | logins_per_minute | Login-Rate |
 | **Network** | messages_per_second | Nachrichten/s |
@@ -817,7 +817,7 @@ Integration geplant:
 
 | Entscheidung | Wert | Begründung |
 |--------------|------|------------|
-| Tick-Rate | 30 Hz | Balance zwischen Responsiveness und Performance |
+| Tick-Rate | 25 Hz | Balance zwischen Responsiveness und Performance |
 | Timing | Fixed Timestep | Konsistente Spiellogik, reproduzierbar |
 | WorldState (jetzt) | Jeden Tick komplett | Einfacher für Prototyp |
 | WorldState (später) | Delta + Full-Sync | Bandbreiten-Optimierung |
