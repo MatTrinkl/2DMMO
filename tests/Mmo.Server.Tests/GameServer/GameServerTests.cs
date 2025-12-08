@@ -26,17 +26,18 @@ public class GameServerTests
     }
 
     [Fact]
-    public void HappyGameServerReadLogTest()
+    public async Task HappyGameServerReadLogTest()
     {
         var loggerMock = new Mock<ILog>();
 
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var clt = new CancellationTokenSource();
-        gameServer.StartServerAsync(clt.Token);
+        var task=gameServer.StartServerAsync(clt.Token);
         Task.Delay(110).Wait();
         clt.Cancel();
 
         Task.Delay(100).Wait();
+        await task;
 
         loggerMock.Verify(l => l.Info(
                 "GameServer starting with {TickRate} Hz...",
@@ -59,9 +60,10 @@ public class GameServerTests
         var server = new SlowGameServer(logMock.Object, slowWork);
 
         using var cts = new CancellationTokenSource();
-        server.StartServerAsync(cts.Token);
+        var task=server.StartServerAsync(cts.Token);
         Task.Delay(100).Wait();
         cts.Cancel();
+        await task;
 
         // Assert: Warning is logged min. 1 time.
         logMock.Verify(l => l.Warn(
