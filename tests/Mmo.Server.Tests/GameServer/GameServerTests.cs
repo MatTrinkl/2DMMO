@@ -8,16 +8,17 @@ namespace Mmo.Server.Tests;
 public class GameServerTests
 {
     [Fact]
-    public void HappyGameServerTest()
+    public async Task HappyGameServerTest()
     {
         var loggerMock = new Mock<ILog>();
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var clt = new CancellationTokenSource();
-        gameServer.StartServerAsync(clt.Token);
-        Task.Delay(100).Wait();
+        Task task = gameServer.StartServerAsync(clt.Token);
+        await Task.Delay(100);
         clt.Cancel();
         long currenTick = gameServer.CurrentTick;
-        Task.Delay(100).Wait();
+        await Task.Delay(100);
+        await task;
         Assert.False(gameServer.IsRunning);
         Assert.True(gameServer.CurrentTick > 0);
         Assert.Equal(currenTick, gameServer.CurrentTick);
