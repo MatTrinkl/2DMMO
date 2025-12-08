@@ -13,7 +13,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     ///     Writes a debug log to the logger.
     /// </summary>
     /// <param name="messageTemplate">
-    ///     The template message. Can contain multiple {} which will be replaced which objects from
+    ///     The template message. Can contain multiple {} which will be replaced with objects from
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>
@@ -24,7 +24,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     ///     Writes a info log to the logger.
     /// </summary>
     /// <param name="messageTemplate">
-    ///     The template message. Can contain multiple {} which will be replaced which objects from
+    ///     The template message. Can contain multiple {} which will be replaced with objects from
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>
@@ -35,7 +35,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     ///     Writes a warn log to the logger.
     /// </summary>
     /// <param name="messageTemplate">
-    ///     The template message. Can contain multiple {} which will be replaced which objects from
+    ///     The template message. Can contain multiple {} which will be replaced with objects from
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>
@@ -46,7 +46,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     ///     Writes a error log to the logger.
     /// </summary>
     /// <param name="messageTemplate">
-    ///     The template message. Can contain multiple {} which will be replaced which objects from
+    ///     The template message. Can contain multiple {} which will be replaced with objects from
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>
@@ -58,7 +58,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     /// </summary>
     /// <param name="exception">The exception which triggered the error.</param>
     /// <param name="messageTemplate">
-    ///     The template message. Can contain multiple {} which will be replaced which objects from
+    ///     The template message. Can contain multiple {} which will be replaced with objects from
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>

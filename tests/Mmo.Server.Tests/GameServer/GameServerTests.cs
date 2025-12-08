@@ -25,7 +25,7 @@ public class GameServerTests
     }
 
     [Fact]
-    public async Task HappyGameServerReadLogTest()
+    public async Task GameServerLogsStartupAndShutdownMessages()
     {
         var loggerMock = new Mock<ILog>();
 
