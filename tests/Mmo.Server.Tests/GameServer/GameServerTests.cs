@@ -32,7 +32,7 @@ public class GameServerTests
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var cts = new CancellationTokenSource();
         Task task = gameServer.StartServerAsync(cts.Token);
-        await Task.Delay(150); // Increased to allow for at least 3 ticks at 25 Hz (3 * 40ms = 120ms + overhead)
+        await Task.Delay(200); // Allow for at least 4 ticks at 25 Hz (4 * 40ms = 160ms + overhead)
         cts.Cancel();
 
         await Task.Delay(100);
@@ -48,7 +48,7 @@ public class GameServerTests
                 "GameServer stopped after {Ticks} ticks.",
                 It.Is<object[]>(args =>
                     args.Length == 1 &&
-                    Convert.ToInt64(args[0]) >= 3 // Changed to >= to be more flexible
+                    Convert.ToInt64(args[0]) > 3
                 )),
             Times.Once);
         cts.Dispose();
