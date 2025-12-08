@@ -34,7 +34,7 @@ class Program
 
         try
         {
-            await server.RunAsync(cts.Token);
+            await server.StartServerAsync(cts.Token);
         }
         catch (Exception ex)
         {
