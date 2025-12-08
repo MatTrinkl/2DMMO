@@ -149,14 +149,25 @@ jobs:
       - name: Add Coverage Report Link
         if: github.event_name == 'pull_request'
         run: |
-          echo "" >> code-coverage-results.md
-          echo "---" >> code-coverage-results.md
-          echo "" >> code-coverage-results.md
-          echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
-          echo "" >> code-coverage-results.md
-          echo "[📥 Coverage Report herunterladen (HTML)](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-coverage-results.md
-          echo "" >> code-coverage-results.md
-          echo "Klicke auf den Link und scrolle zu \"Artifacts\" → \"coverage-report\" für den vollständigen HTML-Report." >> code-coverage-results.md
+          if [ -f code-coverage-results.md ]; then
+            echo "" >> code-coverage-results.md
+            echo "---" >> code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "[📥 Coverage Report herunterladen (HTML)](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "Klicke auf den Link und scrolle zu \"Artifacts\" → \"coverage-report\" für den vollständigen HTML-Report." >> code-coverage-results.md
+          else
+            echo "⚠️ code-coverage-results.md not found, creating new file"
+            echo "📊 **Code Coverage Report**" > code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "[📥 Coverage Report herunterladen (HTML)](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-coverage-results.md
+            echo "" >> code-coverage-results.md
+            echo "Klicke auf den Link und scrolle zu \"Artifacts\" → \"coverage-report\" für den vollständigen HTML-Report." >> code-coverage-results.md
+          fi
       
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
