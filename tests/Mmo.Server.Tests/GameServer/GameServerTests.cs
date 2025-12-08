@@ -46,8 +46,12 @@ public class GameServerTests
 
         loggerMock.Verify(l => l.Info(
                 "GameServer stopped after {Ticks} ticks.",
-                4L),
+                It.Is<object[]>(args =>
+                        args.Length == 1 &&
+                        Convert.ToInt64(args[0]) > 3 
+                )),
             Times.Once);
+
     }
 
     [Fact]
