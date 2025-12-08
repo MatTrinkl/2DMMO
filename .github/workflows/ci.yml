@@ -145,28 +145,35 @@ jobs:
           thresholds: '50 70'
           fail_below_min: false
 
+      # Coverage Report als Artifact hochladen
+      - name: Upload Coverage Report
+        id: upload-coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage-report/
+          retention-days: 14
+
       # PR Comment mit Coverage
       - name: Add Coverage Report Link
         if: github.event_name == 'pull_request'
         run: |
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload-coverage.outputs.artifact-id }}"
+          
           if [ -f code-coverage-results.md ]; then
             echo "" >> code-coverage-results.md
             echo "---" >> code-coverage-results.md
             echo "" >> code-coverage-results.md
             echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
             echo "" >> code-coverage-results.md
-            echo "[📥 Coverage Report herunterladen (HTML)](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "Klicke auf den Link und scrolle zu \"Artifacts\" → \"coverage-report\" für den vollständigen HTML-Report." >> code-coverage-results.md
+            echo "Artifact download URL: ${ARTIFACT_URL}" >> code-coverage-results.md
           else
             echo "⚠️ code-coverage-results.md not found, creating new file"
             echo "📊 **Code Coverage Report**" > code-coverage-results.md
             echo "" >> code-coverage-results.md
             echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
             echo "" >> code-coverage-results.md
-            echo "[📥 Coverage Report herunterladen (HTML)](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "Klicke auf den Link und scrolle zu \"Artifacts\" → \"coverage-report\" für den vollständigen HTML-Report." >> code-coverage-results.md
+            echo "Artifact download URL: ${ARTIFACT_URL}" >> code-coverage-results.md
           fi
       
       - name: Add Coverage PR Comment
@@ -175,14 +182,6 @@ jobs:
         with:
           recreate: true
           path: code-coverage-results.md
-
-      # Coverage Report als Artifact hochladen
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: ./coverage-report/
-          retention-days: 14
 
       # Coverage Badge für README
       - name: Upload Coverage Badge
