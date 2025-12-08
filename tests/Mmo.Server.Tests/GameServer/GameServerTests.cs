@@ -69,7 +69,7 @@ public class GameServerTests
         await Task.Delay(100);
         cts.Cancel();
         await task;
-        cts.CancelAfter(TimeSpan.FromSeconds(2));
+        cts.CancelAfter(TimeSpan.FromSeconds(5));
 
         // Assert: Warning is logged min. 1 time.
         logMock.Verify(l => l.Warn(
@@ -87,6 +87,5 @@ public class GameServerTests
                         SharedConstants.TickDuration.TotalMilliseconds) < 0.01
                 )),
             Times.AtLeastOnce);
-        cts.Dispose();
     }
 }

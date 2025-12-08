@@ -16,6 +16,5 @@ internal sealed class SlowGameServer : Server.GameLoop.GameServer
     protected override async Task InputPhaseAsync(CancellationToken cancellationToken) =>
         await Task.Delay(_tickWorkDuration);
 
-    protected override Task UpdatePhaseAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     protected override Task OutputPhaseAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
