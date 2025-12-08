@@ -9,7 +9,7 @@ using Mmo.Shared.Messages.ZoneEvents;
 using Mmo.Shared.Records;
 using Mmo.Shared.Serialization;
 
-namespace Mmo.Server.Tests;
+namespace Mmo.Server.Tests.Networking;
 
 /// <summary>
 ///     Tests for the MessageSerializer class.

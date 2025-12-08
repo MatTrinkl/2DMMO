@@ -1,6 +1,6 @@
 using Mmo.Shared.Enums;
 
-namespace Mmo.Shared.Messages.Interfaces;
+namespace Mmo.Shared.Interfaces;
 
 /// <summary>
 ///     This Interface guarantees the use of the Message Type for serialization and deserialization.

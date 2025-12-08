@@ -1,9 +1,39 @@
-using Mmo.Shared;
+using Microsoft.Extensions.Logging;
+using Mmo.Server;
+using Mmo.Server.GameLoop;
+using Mmo.Shared.Interfaces;
 
-Console.WriteLine($"Starting {SharedConstants.GameName} Server...");
-Console.WriteLine($"Protocol Version: {SharedConstants.ProtocolVersion}");
-Console.WriteLine($"Default Port: {SharedConstants.DefaultPort}");
-Console.WriteLine("Server started successfully! Press Ctrl+C to stop.");
+internal class Program
+{
+    private static async Task Main(string[] args)
+    {
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .AddSimpleConsole(options => { options.TimestampFormat = "[HH:mm:ss] "; })
+                .SetMinimumLevel(LogLevel.Information);
+        });
+        ILogger coreLogger = loggerFactory.CreateLogger("GameServer");
+        ILog log = new LoggerAdapter(coreLogger);
 
-// TODO: Implement actual server logic in future issues
-await Task.Delay(Timeout.Infinite);
+        var server = new GameServer(log);
+
+        using var cts = new CancellationTokenSource();
+
+        Console.CancelKeyPress += (sender, eventArgs) =>
+        {
+            eventArgs.Cancel = true;
+            log.Info("Ctrl+C received. Shutting down game server...");
+            cts.Cancel();
+        };
+
+        try
+        {
+            await server.StartServerAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, "Unhandled exception in GameServer.");
+        }
+    }
+}
