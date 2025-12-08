@@ -154,34 +154,19 @@ jobs:
           path: ./coverage-report/
           retention-days: 14
 
-      # PR Comment mit Coverage
-      - name: Add Coverage Report Link
-        if: github.event_name == 'pull_request'
-        run: |
-          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload-coverage.outputs.artifact-id }}"
-          
-          if [ -f code-coverage-results.md ]; then
-            echo "" >> code-coverage-results.md
-            echo "---" >> code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "Artifact download URL: ${ARTIFACT_URL}" >> code-coverage-results.md
-          else
-            echo "⚠️ code-coverage-results.md not found, creating new file"
-            echo "📊 **Code Coverage Report**" > code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "📊 **Vollständiger Coverage Report**" >> code-coverage-results.md
-            echo "" >> code-coverage-results.md
-            echo "Artifact download URL: ${ARTIFACT_URL}" >> code-coverage-results.md
-          fi
-      
+      # PR Comment mit Coverage und Artifact Link
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request'
         with:
           recreate: true
           path: code-coverage-results.md
+          append: true
+          message: |
+            
+            ---
+            
+            Artifact download URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload-coverage.outputs.artifact-id }}
 
       # Coverage Badge für README
       - name: Upload Coverage Badge
