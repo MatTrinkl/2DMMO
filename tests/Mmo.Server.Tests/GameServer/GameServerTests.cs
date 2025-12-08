@@ -1,9 +1,8 @@
-using Mmo.Server.Tests.GameServer;
 using Mmo.Shared;
 using Mmo.Shared.Interfaces;
 using Moq;
 
-namespace Mmo.Server.Tests;
+namespace Mmo.Server.Tests.GameServer;
 
 public class GameServerTests
 {
@@ -12,16 +11,17 @@ public class GameServerTests
     {
         var loggerMock = new Mock<ILog>();
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
-        var clt = new CancellationTokenSource();
-        Task task = gameServer.StartServerAsync(clt.Token);
+        var cts = new CancellationTokenSource();
+        Task task = gameServer.StartServerAsync(cts.Token);
         await Task.Delay(100);
-        clt.Cancel();
-        long currenTick = gameServer.CurrentTick;
+        cts.Cancel();
+        long currentTick = gameServer.CurrentTick;
         await Task.Delay(100);
         await task;
         Assert.False(gameServer.IsRunning);
         Assert.True(gameServer.CurrentTick > 0);
-        Assert.Equal(currenTick, gameServer.CurrentTick);
+        Assert.Equal(currentTick, gameServer.CurrentTick);
+        cts.Dispose();
     }
 
     [Fact]
@@ -30,14 +30,14 @@ public class GameServerTests
         var loggerMock = new Mock<ILog>();
 
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
-        var clt = new CancellationTokenSource();
-        Task task = gameServer.StartServerAsync(clt.Token);
+        var cts = new CancellationTokenSource();
+        Task task = gameServer.StartServerAsync(cts.Token);
         await Task.Delay(110);
-        clt.Cancel();
+        cts.Cancel();
 
         await Task.Delay(100);
         await task;
-        clt.CancelAfter(TimeSpan.FromSeconds(2));
+        cts.CancelAfter(TimeSpan.FromSeconds(2));
 
         loggerMock.Verify(l => l.Info(
                 "GameServer starting with {TickRate} Hz...",
@@ -47,19 +47,19 @@ public class GameServerTests
         loggerMock.Verify(l => l.Info(
                 "GameServer stopped after {Ticks} ticks.",
                 It.Is<object[]>(args =>
-                        args.Length == 1 &&
-                        Convert.ToInt64(args[0]) > 3 
+                    args.Length == 1 &&
+                    Convert.ToInt64(args[0]) > 3
                 )),
             Times.Once);
-
+        cts.Dispose();
     }
 
     [Fact]
-    public async Task GameServerWarningWhenATickIsToLong()
+    public async Task GameServer_LogsWarning_WhenTickExceedsBudget()
     {
         var logMock = new Mock<ILog>();
 
-        // Create a Tick which is longer then the 33.3ms
+        // Create a Tick which is longer than the 33.3ms
         TimeSpan slowWork = SharedConstants.TickDuration + TimeSpan.FromMilliseconds(10);
 
         var server = new SlowGameServer(logMock.Object, slowWork);
@@ -76,7 +76,7 @@ public class GameServerTests
                 "Tick {Tick} overrun: {ElapsedMs:F2} ms (budget: {BudgetMs:F2} ms)",
                 It.Is<object[]>(args =>
                     args.Length == 3
-                    // Currentick
+                    // CurrentTick
                     && Convert.ToInt64(args[0]) >= 1
                     // ElapsedMs > Budget
                     && Convert.ToDouble(args[1]) >
@@ -87,5 +87,6 @@ public class GameServerTests
                         SharedConstants.TickDuration.TotalMilliseconds) < 0.01
                 )),
             Times.AtLeastOnce);
+        cts.Dispose();
     }
 }

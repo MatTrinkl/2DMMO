@@ -22,7 +22,7 @@ public class GameServer
     {
         _log = log;
         CurrentTick = 0;
-        IsRunning = true;
+        IsRunning = false;
     }
 
     /// <summary>
@@ -43,13 +43,13 @@ public class GameServer
     public async Task StartServerAsync(CancellationToken cancellationToken)
     {
         _log.Info("GameServer starting with {TickRate} Hz...", SharedConstants.TickRate);
-
+        IsRunning = true;
         var stopwatch = Stopwatch.StartNew();
 
         while (!cancellationToken.IsCancellationRequested)
         {
             TimeSpan tickStart = stopwatch.Elapsed;
-            CurrentTick++;
+
 
             // 1️⃣ INPUT PHASE (~5ms)
             await InputPhaseAsync(cancellationToken);
@@ -114,6 +114,7 @@ public class GameServer
     protected virtual Task UpdatePhaseAsync(CancellationToken cancellationToken)
     {
         // TODO: Positionen validieren, Kollisionen prüfen, GameState aktualisieren
+        CurrentTick++;
         return Task.CompletedTask;
     }
 

@@ -13,8 +13,6 @@ internal class Program
                 .AddSimpleConsole(options => { options.TimestampFormat = "[HH:mm:ss] "; })
                 .SetMinimumLevel(LogLevel.Information);
         });
-
-        // Kategorie kannst du frei wählen – GameServer sieht nur ILog
         ILogger coreLogger = loggerFactory.CreateLogger("GameServer");
         ILog log = new LoggerAdapter(coreLogger);
 
