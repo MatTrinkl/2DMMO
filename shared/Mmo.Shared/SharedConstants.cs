@@ -24,7 +24,7 @@ public static class SharedConstants
     /// <summary>
     ///     The server tick rate in Hz.
     /// </summary>
-    public const int TickRate = 30; // Hz
+    public const int TickRate = 25; // Hz
 
     /// <summary>
     ///     The maximum message size (64 KB).
@@ -48,7 +48,7 @@ public static class SharedConstants
     public const float PlayerSpeed = 200f; // pixels per second
 
     /// <summary>
-    ///     The tick interval in milliseconds (33.3ms).
+    ///     The tick interval in milliseconds (40ms).
     /// </summary>
     public static readonly TimeSpan TickDuration =
         TimeSpan.FromSeconds(1.0 / TickRate);

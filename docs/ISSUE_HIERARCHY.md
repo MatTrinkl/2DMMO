@@ -47,7 +47,7 @@ Dieses Dokument zeigt die Beziehungen zwischen den Issues und die empfohlene Bea
  ├── Sub-Issue 7d: Player Zone-Zugehörigkeit
  └── Erstellt: Zone, ZoneManager, Player
 
-#74 WorldState Broadcast an alle Clients (30 Hz)
+#74 WorldState Broadcast an alle Clients (25 Hz)
  ├── Abhängig von: #7, #13
  ├── 📌 Zone-Konzept: WorldState wird zu ZoneState
  └── Erstellt: ZoneState, Zone-spezifischer Broadcast

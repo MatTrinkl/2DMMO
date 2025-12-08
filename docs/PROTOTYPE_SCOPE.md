@@ -34,7 +34,7 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 
 - [ ] TCP Server startet und akzeptiert Verbindungen
 - [ ] MessagePack Serialisierung funktioniert
-- [ ] Game Loop läuft mit 30 Hz (Tick-Rate)
+- [ ] Game Loop läuft mit 25 Hz (Tick-Rate)
 - [ ] Verbindungs-Management (Connect/Disconnect)
 - [ ] Logging (Console-Output reicht)
 
@@ -161,7 +161,7 @@ Für den Prototyp verwenden wir einfache Placeholder:
 | **Protokoll** | TCP |
 | **Port** | 7777 |
 | **Serialisierung** | MessagePack |
-| **Tick-Rate** | 30 Hz |
+| **Tick-Rate** | 25 Hz |
 | **Max Spieler (Test)** | 2-10 |
 
 ### Message Frame Format
@@ -195,7 +195,7 @@ Für den Prototyp verwenden wir einfache Placeholder:
 │  4. Gameplay Loop                                      │
 │     └─► Client: Input → PositionUpdate an Server       │
 │     └─► Server: Validiert, updated State               │
-│     └─► Server: WorldState an alle Clients (30 Hz)     │
+│     └─► Server: WorldState an alle Clients (25 Hz)     │
 │     └─► Client: Rendert alle Spieler                   │
 │                                                         │
 │  5. Chat                                               │

@@ -55,7 +55,7 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 │                     ZONE SERVER                          │
 │                                                          │
 │  Aufgaben:                                              │
-│  ├─ Game Loop (30 Hz)                                  │
+│  ├─ Game Loop (25 Hz)                                  │
 │  ├─ Spieler-Bewegung validieren                        │
 │  ├─ Kampf-Logik                                        │
 │  ├─ NPC/Monster AI                                     │
@@ -74,7 +74,7 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 |-------------|------|
 | **Stateful** | Ja (Zone-State im Memory) |
 | **Skalierung** | Vertikal + Sharding |
-| **Tick-Rate** | 30 Hz |
+| **Tick-Rate** | 25 Hz |
 | **Sync** | Redis für Cross-Zone |
 
 ---

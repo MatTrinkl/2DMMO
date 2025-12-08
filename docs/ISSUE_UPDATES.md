@@ -75,7 +75,7 @@ Basisklassen für die serverseitige Spiellogik mit Entity-System.
 
 ---
 
-## Issue #74: WorldState Broadcast an alle Clients (30 Hz)
+## Issue #74: WorldState Broadcast an alle Clients (25 Hz)
 
 **Empfohlene Aktualisierung des Issue-Bodies:**
 
