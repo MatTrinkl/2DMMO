@@ -370,6 +370,7 @@ public static class MessageSerializer
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - Entity Identity, AccountId, CharacterId, ZoneId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden
 - [Sicherheit](SECURITY.md) - Input Validation
