@@ -127,6 +127,7 @@ player:{playerId}
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - AccountId, CharacterId, ZoneId für Redis Keys
 - [Server-Komponenten](SERVER_COMPONENTS.md) - Redis-Integration
 - [Game Loop](GAME_LOOP.md) - Persistence Phase
 - [Datenbank-Strategie](DATABASE.md) - Write-Through Details

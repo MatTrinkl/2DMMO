@@ -2,8 +2,8 @@
 
 ## 2DMMO – Technische Architektur
 
-**Version:** 1.1.0  
-**Letzte Aktualisierung:** 2025-12-02  
+**Version:** 1.2.0  
+**Letzte Aktualisierung:** 2025-12-09  
 **Status:** Finalisiert für Prototyp-Phase
 
 ---
@@ -21,11 +21,12 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 3 | [Message-Spezifikation](architecture/MESSAGES.md) | Message Types, DTOs, Serialization |
 | 4 | [Game Loop Design](architecture/GAME_LOOP.md) | Server Game Loop, Tick Timing |
 | 5 | [Client-Server Sync](architecture/CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 6 | [Redis-Strategie](architecture/REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 7 | [Datenbank-Strategie](architecture/DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 8 | [Sicherheit](architecture/SECURITY.md) | Security Layers, Input Validation |
-| 9 | [Azure Deployment](architecture/AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 10 | [Skalierung](architecture/SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 6 | [ID-System](architecture/ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
+| 7 | [Redis-Strategie](architecture/REDIS.md) | Key Schema, Caching, Pub/Sub |
+| 8 | [Datenbank-Strategie](architecture/DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
+| 9 | [Sicherheit](architecture/SECURITY.md) | Security Layers, Input Validation |
+| 10 | [Azure Deployment](architecture/AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 11 | [Skalierung](architecture/SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
 
 ---
 
@@ -120,7 +121,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| 1.2.0 | 2025-12-06 | Hinzugefügt: Zone-Konzept Updates Dokumentation |
+| 1.2.0 | 2025-12-09 | Hinzugefügt: ID-System Dokumentation |
 | 1.1.0 | 2025-12-02 | Refactoring: Aufteilung in Unterseiten |
 | 1.0.0 | 2025-12-02 | Initiale Architektur-Dokumentation |
 

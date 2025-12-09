@@ -104,6 +104,7 @@ Bei Disconnect eines Spielers:
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - AccountId, CharacterId (persistente IDs)
 - [Redis-Strategie](REDIS.md) - Cache Layer
 - [Game Loop](GAME_LOOP.md) - Persistence Phase
 - [Sicherheit](SECURITY.md) - Datenbank-Security

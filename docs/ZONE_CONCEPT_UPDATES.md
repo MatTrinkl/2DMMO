@@ -1,5 +1,7 @@
 # Zone-Konzept in Issues integrieren
 
+> **Hinweis:** Dieses Dokument beschreibt das Zone-Konzept aus einer älteren Phase. Für die aktuelle ID-System-Architektur siehe [ID-System Dokumentation](architecture/ID_SYSTEM.md), die `ushort ZoneId` (statt `string`) und das vollständige EntityIdentity-System verwendet.
+
 ## Hintergrund
 
 Die `ARCHITECTURE.md` dokumentiert eine **Zone-basierte Server-Architektur** mit:

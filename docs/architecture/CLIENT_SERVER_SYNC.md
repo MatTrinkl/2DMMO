@@ -116,6 +116,7 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - EntityId für Player Identification
 - [Game Loop](GAME_LOOP.md) - Server Tick Timing
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Message Timing
 - [Messages](MESSAGES.md) - PositionUpdate Format

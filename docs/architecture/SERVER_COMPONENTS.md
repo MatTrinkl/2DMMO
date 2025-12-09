@@ -112,6 +112,7 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - Entity Identity, ZoneId, ShardId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Connection Flow
 - [Game Loop](GAME_LOOP.md) - Server Tick Timing
 - [Redis-Strategie](REDIS.md) - Session und Cache

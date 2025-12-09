@@ -109,6 +109,7 @@ Diese Dokumentation beschreibt die Skalierungsstrategie für das 2DMMO, einschli
 
 ## Verwandte Dokumentation
 
+- [ID-System](ID_SYSTEM.md) - EntityIdentity, ShardId, Zone-Sharding IDs
 - [Server-Komponenten](SERVER_COMPONENTS.md) - Zone Server Details
 - [Azure Deployment](AZURE_DEPLOYMENT.md) - Container Apps Scaling
 - [Redis-Strategie](REDIS.md) - Cross-Shard Communication
