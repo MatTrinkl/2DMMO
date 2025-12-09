@@ -49,7 +49,7 @@ Diese Dokumentation ist modular aufgebaut und in thematische Bereiche unterteilt
 | Dokument | Beschreibung |
 |----------|--------------|
 | [Issue-Hierarchie](04-project-management/ISSUE_HIERARCHY.md) | Issue-Beziehungen und Bearbeitungsreihenfolge |
-| [Issue-Aktualisierungs-Leitfaden](04-project-management/ISSUE_UPDATES_GUIDE.md) | Updates für Epik-Issues und Zone-Konzept Integration |
+| [Issue-Aktualisierungs-Leitfaden](04-project-management/ISSUE_UPDATES_GUIDE.md) | Prozess-Guide für Issue-Updates (Templates, Best Practices) |
 | [Sub-Issues](04-project-management/SUB_ISSUES.md) | Detaillierte Sub-Issue-Vorschläge für große Issues |
 | [Feature-Roadmap](04-project-management/FEATURE_ROADMAP.md) | Neue Features bis Ende Phase 4 |
 

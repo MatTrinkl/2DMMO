@@ -1,51 +1,68 @@
 # Issue-Aktualisierungs-Leitfaden
 
-**Version:** 2.0.0  
+**Version:** 3.0.0  
 **Letzte Aktualisierung:** 2025-12-09  
-**Status:** Konsolidiert
+**Status:** Prozess-Guide
 
 ---
 
 ## 📋 Übersicht
 
-Dieses Dokument zeigt, wie bestehende Issues aktualisiert werden sollten, um:
-1. Auf Sub-Issues zu verweisen (bei großen Epik-Issues)
-2. Das Zone-Konzept zu integrieren (Architektur-Update)
+Dieser Leitfaden beschreibt **wie** Issues aktualisiert werden sollten, wenn:
+1. Ein großes Issue in Sub-Issues aufgeteilt wird (Epik-Issues)
+2. Architektur-Änderungen existierende Issues betreffen
+3. Issues auf neue Konzepte migriert werden müssen
 
-> **📌 Hinweis:** Für die aktuelle ID-System-Architektur siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md), die `ushort ZoneId` und das vollständige EntityIdentity-System verwendet.
-
----
-
-## 🏗️ Zone-Konzept Hintergrund
-
-Die Architektur dokumentiert eine **Zone-basierte Server-Architektur** mit:
-- Zone Server Layer (Startzone, Hauptstadt, Wald, etc.)
-- Shards pro Zone für Skalierung
-- Redis für Cross-Zone Events und Zone-Registry
-- Gateway Layer für Connection Management
-
-Die aktuellen Issues beschrieben ursprünglich eine **monolithische World-Klasse** ohne Zone-Konzept. Dieses Dokument beschreibt die notwendigen Anpassungen.
+> **📌 Hinweis:** Für spezifische Architektur-Details siehe [02-architecture/](../02-architecture/).
 
 ---
 
-## Issue #7: World, Player und IEntity Interface implementieren
+## 🎯 Wann Issues aktualisieren?
 
-**Status:** Epik-Issue → Zone-Konzept integriert
+### 1. Epik-Issues aufteilen
+Ein Issue ist zu groß, wenn:
+- Mehr als 10 Aufgaben enthalten sind
+- Mehrere Wochen Arbeit erforderlich sind
+- Verschiedene Komponenten/Bereiche betroffen sind
+- Mehrere Entwickler parallel arbeiten könnten
 
-### Empfohlene Aktualisierung des Issue-Bodies:
+**Aktion:** Issue in Sub-Issues aufteilen
+
+### 2. Architektur-Änderungen
+Wenn Architektur-Dokumente aktualisiert werden:
+- Prüfen welche Issues betroffen sind
+- Issue-Beschreibungen aktualisieren
+- Neue Anforderungen ergänzen
+- Obsolete Aufgaben entfernen oder als "veraltet" markieren
+
+**Aktion:** Issue-Body aktualisieren mit Verweis auf neue Architektur
+
+### 3. Konzept-Migration
+Wenn grundlegende Konzepte sich ändern (z.B. World → Zone-basiert):
+- Alle betroffenen Issues identifizieren
+- Aufgaben an neue Konzepte anpassen
+- DTOs/Klassen entsprechend umbenennen
+- Akzeptanzkriterien aktualisieren
+
+**Aktion:** Systematische Updates mit Hinweis auf Migration
+
+---
+
+## 📝 Wie Issues aktualisieren
+
+### Template für Epik-Issue mit Sub-Issues
 
 ```markdown
-Basisklassen für die serverseitige Spiellogik mit Entity-System.
+[Original Issue Titel]
 
-> **📌 Zone-Konzept Update:** Die `World`-Klasse wird zu einem `ZoneManager` erweitert.
+[Kurze Beschreibung des Gesamtziels]
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
 **Sub-Issues:**
-- [ ] #XX Zone-Klasse implementieren
-- [ ] #XX ZoneManager implementieren (ersetzt/erweitert World)
-- [ ] #XX Zone-Konfiguration laden
-- [ ] #XX Player Zone-Zugehörigkeit
+- [ ] #XXX [Sub-Issue Titel 1]
+- [ ] #XXX [Sub-Issue Titel 2]
+- [ ] #XXX [Sub-Issue Titel 3]
 
 **Dieses Issue kann geschlossen werden, wenn alle Sub-Issues erledigt sind.**
 
@@ -54,334 +71,190 @@ Basisklassen für die serverseitige Spiellogik mit Entity-System.
 <details>
 <summary>Ursprüngliche Aufgaben (zur Referenz)</summary>
 
-**Aufgaben:**
-- [ ] `Dictionary<int, IEntity> _entities`
-- [ ] `Dictionary<Guid, Player> _playersBySession`
-- [ ] `Player CreatePlayer(string name, ClientConnection connection)`
-- [ ] `void RemovePlayer(Guid sessionId)`
-- [ ] `void Update(float deltaTime)`
-- [ ] `IEnumerable<Player> GetAllPlayers()`
+[Original Aufgabenliste]
+
+</details>
+
+---
+
+**Verwandte Dokumentation:**
+- [Link zu Architektur-Doku]
+- [Link zu Technical Design]
+```
+
+### Template für Architektur-Update
+
+```markdown
+[Original Issue Titel]
+
+> **📌 Architektur-Update:** [Kurze Beschreibung der Änderung]
+> Siehe [Link zur Architektur-Doku] für Details.
+
+**Aktualisierte Anforderungen:**
+- [ ] [Neue/geänderte Aufgabe 1]
+- [ ] [Neue/geänderte Aufgabe 2]
+
+**Akzeptanzkriterien:**
+- [ ] [Kriterium basierend auf neuer Architektur]
+- [ ] [Alle bestehenden Tests funktionieren weiterhin]
+
+---
+
+<details>
+<summary>Ursprüngliche Aufgaben (zur Referenz)</summary>
+
+[Original Aufgabenliste]
 
 </details>
 ```
 
-### Neue Zone-basierte Struktur
-
-```csharp
-public class Zone
-{
-    public ushort ZoneId { get; }
-    public string ZoneName { get; }
-    public ZoneBounds Bounds { get; }
-    public Dictionary<int, IEntity> Entities { get; }
-    public List<SpawnPoint> SpawnPoints { get; }
-    
-    public void Update(float deltaTime);
-    public void AddEntity(IEntity entity);
-    public void RemoveEntity(int entityId);
-    public IEnumerable<Player> GetPlayers();
-}
-
-public class ZoneManager  // ersetzt/erweitert World
-{
-    private readonly Dictionary<ushort, Zone> _zones;
-    
-    public Zone GetZone(ushort zoneId);
-    public Zone GetZoneForPosition(float x, float y);
-    public void TransferEntity(IEntity entity, ushort fromZoneId, ushort toZoneId);
-    public void Update(float deltaTime);  // updated alle Zones
-}
-```
-
-### Aktualisiertes IEntity Interface
-
-```csharp
-public interface IEntity
-{
-    int Id { get; }
-    EntityType Type { get; }
-    float X { get; set; }
-    float Y { get; set; }
-    ushort ZoneId { get; set; }  // NEU: Zone-Zugehörigkeit
-}
-```
-
-### Aktualisierte Aufgaben für Issue #7
-
-**Zone Klasse:**
-- [ ] `Zone` Klasse mit ZoneId, ZoneName, Bounds, Entities erstellen
-- [ ] `Zone.Update(float deltaTime)` - Updated alle Entities in der Zone
-- [ ] `Zone.AddEntity(IEntity entity)` - Fügt Entity zur Zone hinzu
-- [ ] `Zone.RemoveEntity(int entityId)` - Entfernt Entity aus der Zone
-- [ ] `Zone.GetPlayers()` - Gibt alle Spieler der Zone zurück
-
-**ZoneManager Klasse (ersetzt monolithische World):**
-- [ ] `ZoneManager` Klasse mit Dictionary<ushort, Zone> erstellen
-- [ ] `ZoneManager.GetZone(ushort zoneId)` - Holt Zone nach ID
-- [ ] `ZoneManager.GetZoneForPosition(float x, float y)` - Findet Zone für Position
-- [ ] `ZoneManager.TransferEntity(...)` - Transferiert Entity zwischen Zonen
-- [ ] `ZoneManager.Update(float deltaTime)` - Updated alle Zonen
-
-**IEntity mit Zone-Zugehörigkeit:**
-- [ ] `IEntity` bekommt `ushort ZoneId` Property
-- [ ] `Player` Klasse mit Zone-Zugehörigkeit aktualisieren
-
-**Akzeptanzkriterien:**
-- [ ] Mehrere Zonen können parallel existieren
-- [ ] Entities sind einer Zone zugeordnet
-- [ ] Zone-Transfer ist vorbereitet (nicht implementiert)
-- [ ] Alle bestehenden Tests funktionieren weiterhin
-
----
-
-## Issue #74: WorldState Broadcast an alle Clients
-
-**Status:** Aktualisiert für Zone-Konzept
-
-### Aktualisierung erforderlich
-
-Der WorldState muss Zone-spezifisch werden → **ZoneState**
-
-### Neues DTO
-
-```csharp
-[MessagePackObject]
-public class ZoneState : INetworkMessage
-{
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneState;
-    
-    [Key(1)]
-    public ushort ZoneId { get; set; }
-    
-    [Key(2)]
-    public long Tick { get; set; }
-    
-    [Key(3)]
-    public List<EntityData> Entities { get; set; }
-}
-```
-
-### Empfohlene Aktualisierung:
+### Template für Sub-Issue
 
 ```markdown
-Zone-spezifischer State-Broadcast an alle Clients in der Zone (25 Hz).
+[Sub-Issue Titel]
 
-> **📌 Zone-Konzept:** Statt globalem WorldState wird pro Zone ein ZoneState gebroadcastet.
+**Teil von:** #XXX (Eltern-Issue)
+
+**Beschreibung:**
+[1-2 Sätze was dieses Sub-Issue macht]
 
 **Aufgaben:**
-- [ ] `ZoneState` DTO erstellen (MessagePack)
-- [ ] Zone.BroadcastState() Methode implementieren
-- [ ] Nur an Clients in der gleichen Zone senden
-- [ ] Tick-Counter pro Zone
+- [ ] [Konkrete Aufgabe 1]
+- [ ] [Konkrete Aufgabe 2]
+- [ ] [Konkrete Aufgabe 3]
 
 **Akzeptanzkriterien:**
-- [ ] Clients erhalten nur State ihrer Zone
-- [ ] Broadcast erfolgt mit 25 Hz
-- [ ] State enthält ZoneId und Tick
+- [ ] [Messbares Kriterium 1]
+- [ ] [Messbares Kriterium 2]
+
+**Verwandte Dokumentation:**
+- [Link zu relevanter Doku]
+
+**Labels:** `type:feature`, `area:[component]`, `priority:pX`
 ```
 
 ---
 
-## Issue #75: Client erhält WorldState und rendert andere Spieler
+## 🔄 Prozess für große Updates
 
-**Status:** Aktualisiert für Zone-Konzept
+### Schritt 1: Analyse
+1. Lies die Architektur-Änderung durch
+2. Identifiziere betroffene Issues (nutze Labels, Suche)
+3. Erstelle Liste der Updates
 
-### Empfohlene Aktualisierung:
+### Schritt 2: Planung
+1. Entscheide: Sub-Issue-Aufteilung nötig?
+2. Priorisiere Issues nach Abhängigkeiten
+3. Erstelle Update-Plan (welches Issue zuerst)
 
-```markdown
-Client empfängt ZoneState und rendert andere Spieler in der Zone.
+### Schritt 3: Updates durchführen
+1. Füge Hinweis am Anfang des Issue-Body hinzu
+2. Nutze `<details>` für alte Aufgaben (Referenz)
+3. Ergänze Links zur aktualisierten Dokumentation
+4. Markiere obsolete Aufgaben als durchgestrichen ~~wie hier~~
 
-> **📌 Zone-Konzept:** Client erhält ZoneState statt WorldState.
-
-**Aufgaben:**
-- [ ] ZoneState Message Handler im Client
-- [ ] Nur Entities der eigenen Zone rendern
-- [ ] Zone-Transfer: Altes State cleanup + Neues State laden
-
-**Akzeptanzkriterien:**
-- [ ] Client zeigt nur Spieler in gleicher Zone
-- [ ] Bei Zone-Wechsel: Alte Entities werden entfernt
-- [ ] Neue Zone lädt korrekt
-```
-
----
-
-## Issue #76: Client sendet eigene Bewegung, Server validiert
-
-**Status:** Zone-aware
-
-### Empfohlene Aktualisierung:
-
-```markdown
-Client sendet PositionUpdate, Server validiert Zone-spezifisch.
-
-> **📌 Zone-Konzept:** Validation berücksichtigt Zone-Grenzen.
-
-**Aufgaben:**
-- [ ] PositionUpdate enthält ZoneId (implizit aus Session)
-- [ ] Server validiert gegen Zone-Bounds
-- [ ] Zone-Transfer bei Grenzüberschreitung erkennen
-- [ ] CollisionData der Zone verwenden
-
-**Akzeptanzkriterien:**
-- [ ] Bewegung wird gegen Zone-Bounds validiert
-- [ ] Zone-Transfer wird erkannt (für später)
-- [ ] Kollision mit Zone-Hindernissen prüfen
-```
+### Schritt 4: Kommunikation
+1. Kommentiere im Issue über die Änderung
+2. Verlinke relevante PRs oder Docs
+3. Erwähne betroffene Entwickler (@mentions)
+4. Update Issue-Hierarchie-Dokument wenn nötig
 
 ---
 
-## Issue #8: NetworkServer und ClientConnection-Skelett
+## 🏗️ Best Practices
 
-**Status:** Kann in Sub-Issues aufgeteilt werden
+### ✅ DO
 
-### Empfohlene Sub-Issues:
+- **Bewahre Original-Aufgaben** in `<details>` Tags für Referenz
+- **Verwende klare Hinweise** mit 📌 für Updates
+- **Verlinke Dokumentation** statt Details zu duplizieren
+- **Nutze Labels** konsistent (type:, area:, priority:)
+- **Schließe Epik-Issues** erst wenn alle Sub-Issues erledigt
+- **Update Dependencies** in Issue-Hierarchie-Dokument
 
-#### Sub-Issue 8a: NetworkServer TCP-Listener implementieren
-```markdown
-TCP-Listener des NetworkServers implementieren.
+### ❌ DON'T
 
-**Aufgaben:**
-- [ ] NetworkServer-Klasse anlegen
-- [ ] RunAsync(CancellationToken) Methode
-- [ ] TcpListener starten
-- [ ] Accept-Loop implementieren
-- [ ] Logging bei Start, Stop, Fehlern
-
-**Akzeptanzkriterien:**
-- [ ] Server startet auf konfiguriertem Port
-- [ ] Sauberes Shutdown mit CancellationToken
-- [ ] Fehler werden geloggt
-```
-
-#### Sub-Issue 8b: ClientConnection-Klasse implementieren
-```markdown
-ClientConnection-Klasse für einzelne Verbindung.
-
-**Aufgaben:**
-- [ ] ClientConnection-Klasse erstellen
-- [ ] SendAsync(byte[] data) Methode
-- [ ] ReceiveLoop mit NetworkStream
-- [ ] Disconnect-Handling
-
-**Akzeptanzkriterien:**
-- [ ] Kann Nachrichten senden/empfangen
-- [ ] Disconnect wird erkannt
-- [ ] Ressourcen werden aufgeräumt
-```
-
-#### Sub-Issue 8c: ClientConnection-Manager
-```markdown
-Verwaltung aller aktiven Verbindungen.
-
-**Aufgaben:**
-- [ ] ConnectionManager-Klasse
-- [ ] Add/Remove Connections
-- [ ] Broadcast-Methode
-- [ ] Cleanup bei Disconnect
-
-**Akzeptanzkriterien:**
-- [ ] Alle Connections werden verwaltet
-- [ ] Broadcast an alle/gefilterte Clients
-- [ ] Memory Leaks vermieden
-```
+- ~~Original-Aufgaben löschen~~ → In `<details>` verschieben
+- ~~Code-Details ins Issue kopieren~~ → Auf Doku verlinken
+- ~~Issue ohne Sub-Issues schließen~~ → Warten bis alle done
+- ~~Kommentare nutzen für permanente Updates~~ → Issue-Body editieren
+- ~~Zu viele Sub-Issues erstellen~~ → Max 5-7 pro Epik
 
 ---
 
-## Issue #9: Message Framing implementieren
+## 📊 Beispiel-Workflow: Zone-Konzept Integration
 
-**Status:** Klein genug, keine Aufteilung nötig
+### Situation
+Architektur wurde von monolithischer `World`-Klasse auf Zone-basiertes System umgestellt.
 
-Bleibt als einzelnes Issue.
+### Betroffene Issues identifiziert
+- #7: World/Player/Entity Implementation
+- #74: WorldState Broadcast
+- #75: Client WorldState Rendering
+- #76: Movement Validation
 
----
+### Update-Prozess
 
-## Issue #10: Login-Flow implementieren
+1. **Issue #7 aufteilen** in Sub-Issues:
+   - Zone-Klasse implementieren
+   - ZoneManager implementieren
+   - Zone-Konfiguration laden
+   - Player Zone-Zugehörigkeit
 
-**Status:** Kann in Sub-Issues aufgeteilt werden
+2. **Issues #74, #75, #76 aktualisieren**:
+   - Hinweis hinzufügen: WorldState → ZoneState
+   - Aufgaben anpassen (Zone-spezifisch)
+   - Link zu ID-System-Doku (für ZoneId Details)
 
-### Empfohlene Sub-Issues:
-
-#### Sub-Issue 10a: LoginRequest/Response Messages
-```markdown
-DTOs für Login-Flow definieren.
-
-**Aufgaben:**
-- [ ] LoginRequest DTO (Username)
-- [ ] LoginResponse DTO (Success, PlayerId, Token)
-- [ ] MessageType Enum erweitern
-
-**Akzeptanzkriterien:**
-- [ ] Messages sind MessagePack-serialisierbar
-- [ ] Alle nötigen Felder vorhanden
-```
-
-#### Sub-Issue 10b: Server Login-Handler
-```markdown
-Login-Verarbeitung auf dem Server.
-
-**Aufgaben:**
-- [ ] HandleLogin() Methode
-- [ ] Session erstellen
-- [ ] Player-Instanz erstellen
-- [ ] LoginResponse senden
-
-**Akzeptanzkriterien:**
-- [ ] Validierung (Username nicht leer)
-- [ ] Session-Token generieren
-- [ ] Player wird erstellt
-```
-
-#### Sub-Issue 10c: Client Login-UI
-```markdown
-Login-Screen im Godot Client.
-
-**Aufgaben:**
-- [ ] Login-Scene erstellen
-- [ ] Username-Eingabe
-- [ ] Login-Button
-- [ ] LoginRequest senden
-
-**Akzeptanzkriterien:**
-- [ ] UI ist bedienbar
-- [ ] Sendet LoginRequest
-- [ ] Wechselt zu Game-Scene bei Erfolg
-```
-
----
-
-## 📊 Zusammenfassung der Änderungen
-
-### Zone-Konzept Updates
-- **Issue #7**: World → ZoneManager + Zone-Klasse
-- **Issue #74**: WorldState → ZoneState
-- **Issue #75**: Client rendert Zone-spezifisch
-- **Issue #76**: Zone-aware Validation
-
-### Sub-Issue Aufspaltungen
-- **Issue #8**: → 8a (Listener), 8b (Connection), 8c (Manager)
-- **Issue #10**: → 10a (DTOs), 10b (Server), 10c (Client)
+3. **Dokumentation**:
+   - Update ISSUE_HIERARCHY.md
+   - Vermerke in diesem Guide (Beispiel-Sektion)
 
 ---
 
 ## 🔗 Verwandte Dokumentation
 
-- [ID-System](../02-architecture/ID_SYSTEM.md) - EntityIdentity, ZoneId Ranges
-- [Architektur-Übersicht](../02-architecture/README.md) - Zone Server Layer
-- [Server-Komponenten](../02-architecture/SERVER_COMPONENTS.md) - Zone Server Details
-- [Redis-Strategie](../02-architecture/REDIS.md) - Zone-Registry
-- [Issue-Hierarchie](ISSUE_HIERARCHY.md) - Issue-Beziehungen
-- [Issues Roadmap](ISSUES_ROADMAP.md) - Feature-Roadmap
+### Architektur
+- [ID-System](../02-architecture/ID_SYSTEM.md) - Entity Identity, ZoneId Ranges
+- [Architektur-Übersicht](../02-architecture/README.md) - System-Design
+- [Server-Komponenten](../02-architecture/SERVER_COMPONENTS.md) - Komponenten-Details
+
+### Projekt-Management
+- [Issue-Hierarchie](ISSUE_HIERARCHY.md) - Issue-Beziehungen und Abhängigkeiten
+- [Sub-Issues](SUB_ISSUES.md) - Konkrete Sub-Issue-Vorschläge
+- [Feature-Roadmap](FEATURE_ROADMAP.md) - Geplante Features
 
 ---
 
-## 📝 Verwendung
+## 📝 Verwendung dieses Guides
 
-1. **Für bestehende Issues**: Nutze die "Empfohlene Aktualisierung" Abschnitte
-2. **Für neue Sub-Issues**: Nutze die vorbereiteten Templates
-3. **Zone-Konzept**: Berücksichtige `ushort ZoneId` statt `string`
-4. **Referenziere dieses Dokument** in Issue-Updates
+1. **Bei Issue-Erstellung**: Nutze Templates für konsistente Struktur
+2. **Bei Architektur-Änderung**: Folge dem Update-Prozess
+3. **Bei Unsicherheit**: Referenziere Best Practices
+4. **Für Reviews**: Prüfe ob Updates diesem Guide folgen
+
+---
+
+## 🆘 Häufige Fragen
+
+**Q: Wann Sub-Issues vs. einfach Aufgaben im Issue?**  
+A: Sub-Issues wenn >5 Aufgaben ODER verschiedene Entwickler ODER verschiedene Komponenten.
+
+**Q: Alte Aufgaben löschen oder behalten?**  
+A: In `<details>` verschieben für Kontext, aber nicht löschen.
+
+**Q: Wie mit veralteten Issues umgehen?**  
+A: Label `status:outdated` + Kommentar warum + Link zu Ersatz-Issue.
+
+**Q: Issue-Beschreibung vs. Kommentar für Updates?**  
+A: Issue-Body für permanente Updates, Kommentare für Diskussion/Kontext.
+
+---
+
+**Version History:**
+- v3.0.0 (2025-12-09): Umstrukturiert als Prozess-Guide, spezifische Details entfernt
+- v2.0.0 (2025-12-09): Konsolidiert aus ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
+- v1.0.0: Original ISSUE_UPDATES.md
 
 ---
 

@@ -21,13 +21,13 @@ Zeigt die Beziehungen zwischen Issues und die empfohlene Bearbeitungsreihenfolge
 ### [Issue-Aktualisierungs-Leitfaden](ISSUE_UPDATES_GUIDE.md)
 **Konsolidiert:** ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
 
-Beschreibt wie bestehende Issues aktualisiert werden:
-- Aktualisierungen für Epik-Issues (Sub-Issues)
-- Integration des Zone-Konzepts in bestehende Issues
-- Zone-Struktur (ZoneManager, Zone-Klasse)
-- Templates für Issue-Updates
+Prozess-Guide für Issue-Updates:
+- Wann Issues aktualisiert werden müssen
+- Templates für Epik-Issues und Sub-Issues
+- Best Practices für Issue-Verwaltung
+- Beispiel-Workflow für Architektur-Änderungen
 
-**Zielgruppe**: Projektmanagement, Entwickler (Server)
+**Zielgruppe**: Projektmanagement, alle Entwickler
 
 ---
 
