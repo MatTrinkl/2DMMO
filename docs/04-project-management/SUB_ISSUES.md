@@ -20,7 +20,7 @@ Diese Dokumentation enthält:
 1. **Sub-Issues** für existierende Issues, die aufgeteilt werden sollten
 2. **Neue Issues** für fehlende Funktionalität bis Ende Phase 4
 
-> **📌 Zone-Konzept:** Die Issues #7, #74, #75 und #76 wurden aktualisiert, um das Zone-Konzept aus der Architektur zu integrieren. Details siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md).
+> **📌 Zone-Konzept:** Die Issues #7, #74, #75 und #76 wurden aktualisiert, um das Zone-Konzept aus der Architektur zu integrieren. Details siehe [ISSUE_UPDATES_GUIDE.md](ISSUE_UPDATES_GUIDE.md).
 
 ---
 
