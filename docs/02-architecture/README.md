@@ -102,10 +102,10 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 ## 🔗 Nützliche Links
 
 ### Dokumentation
-- [Game Design Document](GAME_DESIGN_DOCUMENT.md)
-- [Technical Design](TECHNICAL_DESIGN.md)
-- [Prototype Scope](PROTOTYPE_SCOPE.md)
-- [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md) - Integration des Zone-Konzepts in Issues
+- [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md)
+- [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md)
+- [Prototype Scope](../01-overview/PROTOTYPE_SCOPE.md)
+- [Zone-Konzept Updates](../04-project-management/ZONE_CONCEPT_UPDATES.md) - Integration des Zone-Konzepts in Issues
 
 ### Externe Ressourcen
 - [.NET Documentation](https://learn.microsoft.com/en-us/dotnet/)

@@ -1,6 +1,6 @@
 # Zone-Konzept in Issues integrieren
 
-> **Hinweis:** Dieses Dokument beschreibt das Zone-Konzept aus einer älteren Phase. Für die aktuelle ID-System-Architektur siehe [ID-System Dokumentation](architecture/ID_SYSTEM.md), die `ushort ZoneId` (statt `string`) und das vollständige EntityIdentity-System verwendet.
+> **Hinweis:** Dieses Dokument beschreibt das Zone-Konzept aus einer älteren Phase. Für die aktuelle ID-System-Architektur siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md), die `ushort ZoneId` (statt `string`) und das vollständige EntityIdentity-System verwendet.
 
 ## Hintergrund
 
@@ -469,9 +469,9 @@ Während der Migration:
 ## Ressourcen
 
 ### Architektur-Dokumentation
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Zone Server Layer
-- [SERVER_COMPONENTS.md](architecture/SERVER_COMPONENTS.md) - Zone Server Details
-- [REDIS.md](architecture/REDIS.md) - Zone-Registry
+- [ARCHITECTURE.md](../02-architecture/README.md) - Zone Server Layer
+- [SERVER_COMPONENTS.md](../02-architecture/SERVER_COMPONENTS.md) - Zone Server Details
+- [REDIS.md](../02-architecture/REDIS.md) - Zone-Registry
 
 ### Externe Ressourcen
 - [Zone-Based MMO Architecture](https://www.gamedeveloper.com/programming/zone-based-world-management-in-mmos)
