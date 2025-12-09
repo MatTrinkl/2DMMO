@@ -2,8 +2,8 @@
 
 ## 2DMMO – Technisches Design
 
-**Version:** 1.1.0  
-**Letzte Aktualisierung:** 2025-12-02  
+**Version:** 1.2.0  
+**Letzte Aktualisierung:** 2025-12-09  
 **Status:** Prototyp-Phase
 
 ---
@@ -155,35 +155,259 @@ Layer 4: UI (CanvasLayer)          → HUD, Chat
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ASYNC SERVER MODELL                           │
+│                    SERVER THREAD-MODELL                          │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────────┐     ┌──────────────────┐                  │
 │  │   Main Thread    │     │   Game Loop      │                  │
 │  │   ────────────   │     │   ────────────   │                  │
-│  │   • Start        │     │   • Eigener      │                  │
-│  │   • TcpListener  │     │     Thread       │                  │
-│  │   • AcceptAsync  │     │   • 25 Hz Timer  │                  │
-│  └────────┬─────────┘     │   • Tick()       │                  │
-│           │               └──────────────────┘                  │
-│           │                        ▲                            │
-│           ▼                        │                            │
-│  ┌──────────────────┐              │                            │
-│  │  Connection 1    │──────────────┤                            │
-│  │  (async Task)    │   Message    │                            │
-│  ├──────────────────┤   Queue      │                            │
-│  │  Connection 2    │──────────────┤                            │
-│  │  (async Task)    │  (Thread-    │                            │
-│  ├──────────────────┤   safe)      │                            │
-│  │  Connection N    │──────────────┘                            │
-│  │  (async Task)    │                                           │
-│  └──────────────────┘                                           │
+│  │   • Program      │     │   • GameServer   │                  │
+│  │   • Start        │────▶│   • Eigener      │                  │
+│  │                  │     │     Thread       │                  │
+│  └──────────────────┘     │   • 25 Hz Timer  │                  │
+│                           │   • Tick()       │                  │
+│                           └────────┬─────────┘                  │
+│                                    │                            │
+│                           ┌────────┴─────────┐                  │
+│                           │  Message Queues  │                  │
+│                           ├──────────────────┤                  │
+│                           │ _incomingMessages│                  │
+│                           │ _pendingBroadcasts│                 │
+│                           └────────┬─────────┘                  │
+│                                    │                            │
+│                                    ▼                            │
+│  ┌──────────────────────────────────────────────┐              │
+│  │          NetworkServer (geplant)             │              │
+│  │  ┌──────────────────────────────────────┐   │              │
+│  │  │       TcpListener Thread             │   │              │
+│  │  │  • AcceptAsync()                     │   │              │
+│  │  │  • Neue Connections erstellen        │   │              │
+│  │  └──────────────────────────────────────┘   │              │
+│  │                    │                         │              │
+│  │          ┌─────────┴─────────┐               │              │
+│  │          │                   │               │              │
+│  │  ┌───────▼─────────┐  ┌──────▼────────┐     │              │
+│  │  │  ClientConn 1   │  │ ClientConn 2  │ ... │              │
+│  │  │  (async Task)   │  │ (async Task)  │     │              │
+│  │  ├─────────────────┤  ├───────────────┤     │              │
+│  │  │ • ReadAsync()   │  │ • ReadAsync() │     │              │
+│  │  │ • WriteAsync()  │  │ • WriteAsync()│     │              │
+│  │  │ • SendQueue     │  │ • SendQueue   │     │              │
+│  │  └─────────────────┘  └───────────────┘     │              │
+│  └──────────────────────────────────────────────┘              │
 │                                                                  │
 │  💡 Connections auf ThreadPool (wenige Threads)                 │
 │  💡 Game Loop auf dediziertem Thread                            │
-│  💡 ConcurrentQueue verbindet beide                             │
+│  💡 ConcurrentQueues für Thread-sichere Kommunikation           │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+### Event-Flow zwischen Komponenten
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      EVENT-FLOW DIAGRAMM                         │
+│                                                                  │
+│  Client 1        ClientConnection      NetworkServer  GameServer│
+│    │                    │                    │            │      │
+│    │──── Packet ───────▶│                    │            │      │
+│    │                    │── Deserialize ────▶│            │      │
+│    │                    │                    │            │      │
+│    │                    │   ┌────────────────┴──────┐     │      │
+│    │                    │   │ IncomingMessages      │     │      │
+│    │                    │   │ ConcurrentQueue       │     │      │
+│    │                    │   └────────────────┬──────┘     │      │
+│    │                    │                    │            │      │
+│    │                    │                    │◄─ Dequeue ─│      │
+│    │                    │                    │   (Input   │      │
+│    │                    │                    │    Phase)  │      │
+│    │                    │                    │            │      │
+│    │                    │                    │            │──┐   │
+│    │                    │                    │            │  │   │
+│    │                    │                    │            │ ◀┘   │
+│    │                    │                    │            │ Update│
+│    │                    │                    │            │ Phase│
+│    │                    │                    │            │      │
+│    │                    │                    │            │──┐   │
+│    │                    │                    │            │  │   │
+│    │                    │   ┌────────────────┴──────┐    │ ◀┘   │
+│    │                    │   │ PendingBroadcasts     │◄───│ Output│
+│    │                    │   │ ConcurrentQueue       │    │ Phase│
+│    │                    │   └────────────────┬──────┘    │      │
+│    │                    │                    │            │      │
+│    │                    │◄─── Dequeue ───────│            │      │
+│    │                    │     (Network       │            │      │
+│    │                    │      Thread)       │            │      │
+│    │◄─── Packet ────────│                    │            │      │
+│    │                    │                    │            │      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Klassen-Übersicht
+
+| Klasse | Status | Thread | Verantwortung |
+|--------|--------|--------|---------------|
+| **GameServer** | ✅ Implementiert | Dedizierter Thread | Game Loop (25 Hz), Input/Update/Output Phasen |
+| **NetworkServer** | 🔄 Geplant | ThreadPool (TcpListener) | TCP-Listener, Connection-Management, Events |
+| **ClientConnection** | 🔄 Geplant | ThreadPool (pro Client) | Read/Write Loop, SendQueue, Deserialisierung |
+| **ZoneManager** | ✅ Implementiert | Game Loop Thread | Zone-State, Entity-Management |
+| **MessageSerializer** | ✅ Implementiert | Beide | MessagePack Serialization/Deserialization |
+
+### NetworkEvents (Geplant)
+
+Die Kommunikation zwischen NetworkServer und GameServer erfolgt über Events:
+
+#### Event-Definitionen
+
+```csharp
+// NetworkServer definiert diese Events
+public class NetworkServer
+{
+    public event EventHandler<ClientConnectedEventArgs>? ClientConnected;
+    public event EventHandler<ClientDisconnectedEventArgs>? ClientDisconnected;
+    public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
+    public event EventHandler<NetworkErrorEventArgs>? NetworkError;
+}
+```
+
+#### EventArgs-Klassen
+
+**ClientConnectedEventArgs:**
+```csharp
+public class ClientConnectedEventArgs : EventArgs
+{
+    public Guid ConnectionId { get; set; }
+    public string RemoteEndpoint { get; set; }
+    public DateTime ConnectedAt { get; set; }
+}
+```
+
+**ClientDisconnectedEventArgs:**
+```csharp
+public class ClientDisconnectedEventArgs : EventArgs
+{
+    public Guid ConnectionId { get; set; }
+    public Guid? PlayerId { get; set; }  // null wenn noch nicht eingeloggt
+    public DisconnectReason Reason { get; set; }
+    public DateTime DisconnectedAt { get; set; }
+}
+```
+
+**MessageReceivedEventArgs:**
+```csharp
+public class MessageReceivedEventArgs : EventArgs
+{
+    public Guid ConnectionId { get; set; }
+    public INetworkMessage Message { get; set; }
+    public long Timestamp { get; set; }
+}
+```
+
+**NetworkErrorEventArgs:**
+```csharp
+public class NetworkErrorEventArgs : EventArgs
+{
+    public Guid ConnectionId { get; set; }
+    public Exception Exception { get; set; }
+    public ErrorSeverity Severity { get; set; }
+}
+
+public enum ErrorSeverity : byte
+{
+    Warning = 1,   // Kann ignoriert werden
+    Error = 2,     // Sollte geloggt werden
+    Critical = 3   // Führt zu Disconnect
+}
+```
+
+#### DisconnectReason Enum
+
+```csharp
+/// <summary>
+/// Grund für einen Client-Disconnect
+/// </summary>
+public enum DisconnectReason : byte
+{
+    // Client-Initiated (1-9)
+    ClientDisconnect = 1,      // Client hat normal getrennt
+    ClientTimeout = 2,          // Client antwortet nicht mehr (Heartbeat Timeout)
+    
+    // Server-Initiated (10-19)
+    ServerShutdown = 10,        // Server fährt herunter
+    Kicked = 11,                // Von Admin gekickt
+    Banned = 12,                // Gebannt
+    
+    // Error Cases (20-29)
+    ProtocolError = 20,         // Ungültige Message
+    AuthenticationFailed = 21,  // Login fehlgeschlagen
+    DuplicateConnection = 22,   // Spieler bereits verbunden
+    
+    // Network Issues (30-39)
+    ConnectionLost = 30,        // TCP-Verbindung verloren
+    ReadError = 31,             // Fehler beim Lesen
+    WriteError = 32,            // Fehler beim Schreiben
+}
+```
+
+#### Event-Handler Beispiele
+
+**GameServer Event-Handling:**
+
+```csharp
+public class GameServer
+{
+    public GameServer(NetworkServer networkServer)
+    {
+        // Events abonnieren
+        networkServer.ClientConnected += OnClientConnected;
+        networkServer.ClientDisconnected += OnClientDisconnected;
+        networkServer.MessageReceived += OnMessageReceived;
+        networkServer.NetworkError += OnNetworkError;
+    }
+    
+    private void OnClientConnected(object? sender, ClientConnectedEventArgs e)
+    {
+        _log.Info("Client connected: {ConnectionId} from {Endpoint}",
+            e.ConnectionId, e.RemoteEndpoint);
+    }
+    
+    private void OnClientDisconnected(object? sender, ClientDisconnectedEventArgs e)
+    {
+        _log.Info("Client disconnected: {ConnectionId}, Reason: {Reason}",
+            e.ConnectionId, e.Reason);
+            
+        // In Queue für nächsten Tick
+        _incomingMessages.Enqueue(new IncomingMessage
+        {
+            ConnectionId = e.ConnectionId,
+            Message = new Disconnect(e.PlayerId ?? Guid.Empty),
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        });
+    }
+    
+    private void OnMessageReceived(object? sender, MessageReceivedEventArgs e)
+    {
+        // In Queue für nächsten Tick
+        _incomingMessages.Enqueue(new IncomingMessage
+        {
+            ConnectionId = e.ConnectionId,
+            Message = e.Message,
+            Timestamp = e.Timestamp
+        });
+    }
+    
+    private void OnNetworkError(object? sender, NetworkErrorEventArgs e)
+    {
+        _log.Error(e.Exception, "Network error for {ConnectionId}: {Severity}",
+            e.ConnectionId, e.Severity);
+            
+        if (e.Severity == ErrorSeverity.Critical)
+        {
+            // Connection wird automatisch getrennt
+        }
+    }
+}
 ```
 
 ---
