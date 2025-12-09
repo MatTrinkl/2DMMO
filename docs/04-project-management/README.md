@@ -18,42 +18,49 @@ Zeigt die Beziehungen zwischen Issues und die empfohlene Bearbeitungsreihenfolge
 
 ---
 
-### [Issues Roadmap](ISSUES_ROADMAP.md)
-Detaillierte Roadmap für Sub-Issues und neue Features:
-- Sub-Issues für existierende große Issues
-- Neue Issues für fehlende Funktionalität bis Phase 4
-- Labels und Priorisierung
-- Akzeptanzkriterien
+### [Issue-Aktualisierungs-Leitfaden](ISSUE_UPDATES_GUIDE.md)
+**Konsolidiert:** ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
+
+Beschreibt wie bestehende Issues aktualisiert werden:
+- Aktualisierungen für Epik-Issues (Sub-Issues)
+- Integration des Zone-Konzepts in bestehende Issues
+- Zone-Struktur (ZoneManager, Zone-Klasse)
+- Templates für Issue-Updates
+
+**Zielgruppe**: Projektmanagement, Entwickler (Server)
+
+---
+
+### [Sub-Issues](SUB_ISSUES.md)
+**Aufgeteilt aus:** ISSUES_ROADMAP.md (Teil 1)
+
+Detaillierte Sub-Issue-Vorschläge für bestehende große Issues:
+- Issue #8: NetworkServer → 3 Sub-Issues
+- Issue #10: Login-Flow → 3 Sub-Issues
+- Issue #11: MessagePack → 3 Sub-Issues
+- Weitere Aufspaltungen für bessere Handhabung
 
 **Zielgruppe**: Entwickler, Projektmanagement
 
 ---
 
-### [Issue-Updates](ISSUE_UPDATES.md)
-Beschreibt wie bestehende Issues aktualisiert werden sollten:
-- Aktualisierungen für Epik-Issues
-- Integration von Sub-Issues
-- Referenzen zu Zone-Konzept
+### [Feature-Roadmap](FEATURE_ROADMAP.md)
+**Aufgeteilt aus:** ISSUES_ROADMAP.md (Teil 2)
 
-**Zielgruppe**: Projektmanagement
+Neue Feature-Issues für Funktionalität bis Ende Phase 4:
+- Phase 2: Verbindungsaufbau, Disconnect-Handling
+- Phase 3: Movement, Collision, Chat
+- Phase 4: Zone-Transfer, NPCs, Performance
+- Alle als Epik-Issues strukturiert
 
----
-
-### [Zone-Konzept Updates](ZONE_CONCEPT_UPDATES.md)
-Integration des Zone-Konzepts in die Server-Architektur:
-- Aktualisierungen für Issue #7 (World → ZoneManager)
-- Aktualisierungen für Issue #74, #75, #76
-- Zone-Struktur und API
-- Migration von World zu ZoneManager
-
-**Zielgruppe**: Entwickler (Server), Projektmanagement
+**Zielgruppe**: Projektmanagement, Product Owner
 
 ---
 
 ## 🔗 Verwandte Dokumentation
 
-- **Architektur (Zone-System)**: Siehe [02-architecture/ID_SYSTEM.md](../02-architecture/ID_SYSTEM.md)
-- **Prototyp-Scope**: Siehe [01-overview/PROTOTYPE_SCOPE.md](../01-overview/PROTOTYPE_SCOPE.md)
+- **Architektur (Zone-System)**: Siehe [ID-System](../02-architecture/ID_SYSTEM.md)
+- **Prototyp-Scope**: Siehe [Prototype Scope](../01-overview/PROTOTYPE_SCOPE.md)
 
 ---
 
@@ -62,16 +69,26 @@ Integration des Zone-Konzepts in die Server-Architektur:
 ```
 1. Neue Features identifizieren
    ↓
-2. Issue erstellen (siehe ISSUES_ROADMAP.md)
+2. Issue erstellen (siehe FEATURE_ROADMAP.md)
    ↓
 3. Hierarchie prüfen (siehe ISSUE_HIERARCHY.md)
    ↓
-4. Große Issues in Sub-Issues aufteilen
+4. Große Issues in Sub-Issues aufteilen (siehe SUB_ISSUES.md)
    ↓
-5. Issues bearbeiten (nach Priorisierung)
+5. Bei Architektur-Änderungen: ISSUE_UPDATES_GUIDE.md nutzen
    ↓
-6. Bei Architektur-Änderungen: ISSUE_UPDATES.md aktualisieren
+6. Issues bearbeiten (nach Priorisierung)
 ```
+
+---
+
+## 📝 Änderungslog
+
+### Version 2.0.0 (2025-12-09)
+- ✅ **Konsolidiert**: ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md → ISSUE_UPDATES_GUIDE.md
+- ✅ **Aufgeteilt**: ISSUES_ROADMAP.md → SUB_ISSUES.md + FEATURE_ROADMAP.md
+- ✨ Verbesserte Struktur für bessere Navigierbarkeit
+- 📖 Klarere Kategorisierung der Dokumente
 
 ---
 

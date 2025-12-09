@@ -47,73 +47,17 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 
 ## Server Game Loop
 
-### Tick-Rate & Timing
+> **📌 Siehe:** [Game Loop Design](../02-architecture/GAME_LOOP.md) für vollständige Details zum Server Game Loop, Tick Timing und Phasen.
 
-| Aspekt | Entscheidung |
-|--------|--------------|
+### Kurz-Zusammenfassung
+
+| Aspekt | Wert |
+|--------|------|
 | **Tick-Rate** | 25 Hz (40ms pro Tick) |
-| **Timing-Strategie** | Fixed Timestep |
-| **Phasen pro Tick** | Input → Update → Output → Wait |
+| **Timing** | Fixed Timestep |
+| **Phasen** | Input → Validation → Simulation → Broadcast → Persistence |
 
-### Game Loop Architektur
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SERVER GAME LOOP (25 Hz)                    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐        │
-│   │   INPUT     │───▶│   UPDATE    │───▶│   OUTPUT    │        │
-│   │   PHASE     │    │   PHASE     │    │   PHASE     │        │
-│   └─────────────┘    └─────────────┘    └─────────────┘        │
-│         │                  │                  │                 │
-│         ▼                  ▼                  ▼                 │
-│   ┌───────────┐      ┌───────────┐      ┌───────────┐          │
-│   │ Message   │      │ Validate  │      │ Broadcast │          │
-│   │ Queue     │      │ Movement  │      │ WorldState│          │
-│   │ lesen     │      │ Update    │      │ an alle   │          │
-│   └───────────┘      └───────────┘      └───────────┘          │
-│                                                                 │
-│   ◄──────────────── ~40ms pro Tick ─────────────────►       │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### WorldState Broadcast
-
-| Phase | Strategie |
-|-------|-----------|
-| **Prototyp (jetzt)** | Jeden Tick kompletten WorldState senden |
-| **Optimierung (später)** | Delta-Updates + Full-Sync alle 30-60 Ticks |
-
-### Tick-Ablauf im Detail
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    EIN TICK (40ms)                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1️⃣ INPUT PHASE (~5ms)                                          │
-│     • MessageQueue auslesen                                      │
-│     • LoginRequest → HandleLogin()                               │
-│     • PositionUpdate → HandleMovement()                          │
-│     • ChatMessage → HandleChat()                                 │
-│                                                                  │
-│  2️⃣ UPDATE PHASE (~5ms)                                         │
-│     • Positionen validieren                                      │
-│     • Kollisionen prüfen                                         │
-│     • GameState aktualisieren                                    │
-│     • CurrentTick++                                              │
-│                                                                  │
-│  3️⃣ OUTPUT PHASE (~10ms)                                        │
-│     • WorldState zusammenstellen                                 │
-│     • An alle Clients senden                                     │
-│                                                                  │
-│  4️⃣ WAIT                                                        │
-│     • Restliche Zeit bis 40ms warten                          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+Die vollständige Dokumentation des Game Loop Designs, inklusive Code-Beispiele, Timing-Details und Best Practices, finden Sie in der [Game Loop Dokumentation](../02-architecture/GAME_LOOP.md).
 
 ---
 
