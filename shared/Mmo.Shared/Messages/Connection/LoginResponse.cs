@@ -23,11 +23,13 @@ public class LoginResponse : INetworkMessage
     /// </summary>
     /// <param name="success">True if the login was successful.</param>
     /// <param name="playerId">The Player who logs in.</param>
+    /// <param name="zoneId">The id of the zone where the player logs in.</param>
     /// <param name="errorMessage">The Error Message when the attempted was not successful.</param>
-    public LoginResponse(bool success, Guid playerId, string? errorMessage)
+    public LoginResponse(bool success, Guid playerId, ushort zoneId, string? errorMessage)
     {
         Success = success;
         PlayerId = playerId;
+        ZoneId = zoneId;
         ErrorMessage = errorMessage;
     }
 
@@ -44,10 +46,17 @@ public class LoginResponse : INetworkMessage
     public Guid PlayerId { get; set; }
 
     /// <summary>
-    ///     The errormessage if <see cref="Success" /> is false and the attempted was not successful.
+    ///     The id of the zone where the player logs in.
     /// </summary>
     [Key(3)]
+    public ushort ZoneId { get; set; }
+
+    /// <summary>
+    ///     The errormessage if <see cref="Success" /> is false and the attempted was not successful.
+    /// </summary>
+    [Key(4)]
     public string? ErrorMessage { get; set; }
+
 
     /// <summary>
     ///     The Message Type of this Message.

@@ -12,6 +12,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mmo.Server", "server\Mmo.Server\Mmo.Server.csproj", "{1EF11140-97D9-4D8A-9029-20E01D5DB25F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+	ProjectSection(SolutionItems) = preProject
+		.run-coverage = .run-coverage
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mmo.Server.Tests", "tests\Mmo.Server.Tests\Mmo.Server.Tests.csproj", "{6F7226CF-5C29-47C8-8553-9821BD1CFEA4}"
 EndProject

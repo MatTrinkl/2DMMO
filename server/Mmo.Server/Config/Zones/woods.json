@@ -1,0 +1,25 @@
+{
+  "zoneId": 3,
+  "zoneName": "Woods",
+  "bounds": {
+    "minX": 0,
+    "maxX": 3000,
+    "minY": 0,
+    "maxY": 2000
+  },
+  "spawnPoints": [
+    {
+      "x": 150,
+      "y": 1000,
+      "radius": 60,
+      "isDefault": true
+    },
+    {
+      "x": 2850,
+      "y": 1000,
+      "radius": 60,
+      "isDefault": false
+    }
+  ],
+  "isDefault": false
+}

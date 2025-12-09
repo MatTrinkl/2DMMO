@@ -44,7 +44,7 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_LoginResponse_RoundTrip()
     {
         var playerId = Guid.NewGuid();
-        var original = new LoginResponse(true, playerId, null);
+        var original = new LoginResponse(true, playerId, 0, null);
 
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginResponse)MessageSerializer.Deserialize(bytes);
@@ -57,16 +57,16 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_Deserialize_PlayerJoined_RoundTrip()
     {
-        var playerId = Guid.NewGuid();
+        var playerId = new EntityIdentity(0, 0, 0, 0);
         var original = new PlayerJoinedZone
-            (new PlayerState(playerId, "Player1", 100f, 200f));
+            (new PlayerEntity(playerId, "Player1", 100f, 200f));
 
 
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (PlayerJoinedZone)MessageSerializer.Deserialize(bytes);
 
-        Assert.Equal(original.Player.PlayerId, deserialized.Player.PlayerId);
-        Assert.Equal(original.Player.Username, deserialized.Player.Username);
+        Assert.Equal(original.Player.EntityId, deserialized.Player.EntityId);
+        Assert.Equal(original.Player.DisplayName, deserialized.Player.DisplayName);
         Assert.Equal(original.Player.Position.X, deserialized.Player.Position.X);
         Assert.Equal(original.Player.Position.Y, deserialized.Player.Position.Y);
     }
@@ -95,9 +95,9 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_Deserialize_PositionUpdate_RoundTrip()
     {
-        var playerId = Guid.NewGuid();
+        var playerId = new EntityIdentity(0, 0, 0, 0);
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var original = new PositionUpdate(timestamp, new PlayerState(playerId, "Player1", new Position(100f, 200f)),
+        var original = new PositionUpdate(timestamp, new PlayerEntity(playerId, "Player1", new Position(100f, 200f)),
             new Position(123.456f, 789.012f));
 
         byte[] bytes = MessageSerializer.Serialize(original);
@@ -117,11 +117,11 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_Deserialize_WorldState_RoundTrip()
     {
-        var player1Id = Guid.NewGuid();
-        var player2Id = Guid.NewGuid();
+        var player1Id = new EntityIdentity(0, 0, 0, 0);
+        var player2Id = new EntityIdentity(1, 0, 0, 1);
         var zoneId = Guid.NewGuid();
         var original = new ZoneState(12345, zoneId,
-            [new PlayerState(player1Id, "Player1", 0, 0), new PlayerState(player2Id, "Player2", 0, 0)]);
+            [new PlayerEntity(player1Id, "Player1", 0, 0), new PlayerEntity(player2Id, "Player2", 0, 0)]);
 
         byte[] bytes = MessageSerializer.Serialize(original);
 
@@ -131,7 +131,7 @@ public class MessageSerializerTests
         Assert.Equal(2, deserialized.Entities.Count);
         Assert.Equal(player1Id, deserialized.Entities[0].EntityId);
         Assert.Equal("Player1",
-            ((PlayerState)deserialized.Entities[0]).Username);
+            ((PlayerEntity)deserialized.Entities[0]).DisplayName);
     }
 
     [Fact]

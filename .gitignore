@@ -93,3 +93,8 @@ Desktop.ini
 *.swp
 *.swo
 *.sublime-workspace
+
+
+# Coverage
+coverage-report/
+**/TestResults/
