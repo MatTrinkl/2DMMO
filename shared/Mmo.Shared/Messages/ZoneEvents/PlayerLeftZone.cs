@@ -23,7 +23,7 @@ public class PlayerLeftZone : INetworkMessage
     ///     Creates a new Player Left Zone Message.
     /// </summary>
     /// <param name="player">The player who left the zone.</param>
-    public PlayerLeftZone(PlayerState player)
+    public PlayerLeftZone(PlayerEntity player)
     {
         Player = player;
     }
@@ -32,7 +32,7 @@ public class PlayerLeftZone : INetworkMessage
     ///     Player who left the zone.
     /// </summary>
     [Key(1)]
-    public PlayerState Player { get; set; } = new();
+    public PlayerEntity Player { get; set; } = new();
 
     /// <summary>
     ///     The Message Type of this Message.

@@ -26,7 +26,7 @@ public class PositionUpdate : ITimestampedMessage
     /// <param name="timestamp">The timestamp when this position update happened.</param>
     /// <param name="entityOldPosition">The Entity which changed the position.</param>
     /// <param name="newPosition">The new Position of the Entity.</param>
-    public PositionUpdate(long timestamp, EntityState entityOldPosition, Position newPosition)
+    public PositionUpdate(long timestamp, Entity entityOldPosition, Position newPosition)
     {
         Timestamp = timestamp;
         EntityOldPosition = entityOldPosition;
@@ -37,7 +37,7 @@ public class PositionUpdate : ITimestampedMessage
     ///     Entity to updates the position.
     /// </summary>
     [Key(2)]
-    public EntityState? EntityOldPosition { get; set; }
+    public Entity? EntityOldPosition { get; set; }
 
     /// <summary>
     ///     New Position of the entity.

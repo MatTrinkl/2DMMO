@@ -1,0 +1,25 @@
+{
+  "zoneId": 1,
+  "zoneName": "Startzone",
+  "bounds": {
+    "minX": 0,
+    "maxX": 1600,
+    "minY": 0,
+    "maxY": 1600
+  },
+  "spawnPoints": [
+    {
+      "x": 800,
+      "y": 800,
+      "radius": 50,
+      "isDefault": true
+    },
+    {
+      "x": 200,
+      "y": 200,
+      "radius": 30,
+      "isDefault": false
+    }
+  ],
+  "isDefault": true
+}

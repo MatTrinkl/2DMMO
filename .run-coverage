@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Alte Reports löschen
+rm -rf tests/**/TestResults
+rm -rf coverage-report
+
+# Alle Tests mit Coverage ausführen
+dotnet test tests/Mmo.Server.Tests --collect:"XPlat Code Coverage"
+dotnet test tests/Mmo.Shared.Tests --collect:"XPlat Code Coverage"
+
+# Später:  Godot Tests
+# dotnet test tests/Mmo.Client.Tests --collect:"XPlat Code Coverage"
+
+# Alle Coverage-Reports zusammenführen
+reportgenerator \
+  -reports:"tests/**/TestResults/*/coverage.cobertura.xml" \
+  -targetdir:"coverage-report" \
+  -reporttypes:Html
+
+# Report öffnen (macOS)
+open coverage-report/index.html

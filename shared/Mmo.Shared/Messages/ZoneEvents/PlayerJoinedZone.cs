@@ -23,7 +23,7 @@ public class PlayerJoinedZone : INetworkMessage
     ///     Creates a new Player Join Zone Message.
     /// </summary>
     /// <param name="player">The player who joins the zone.</param>
-    public PlayerJoinedZone(PlayerState player)
+    public PlayerJoinedZone(PlayerEntity player)
     {
         Player = player;
     }
@@ -32,7 +32,7 @@ public class PlayerJoinedZone : INetworkMessage
     ///     Player who joined the zone.
     /// </summary>
     [Key(1)]
-    public PlayerState Player { get; set; } = new();
+    public PlayerEntity Player { get; set; } = new();
 
     /// <summary>
     ///     The Message Type of this Message.

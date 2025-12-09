@@ -1,0 +1,31 @@
+{
+  "zoneId": 2,
+  "zoneName": "MainCity",
+  "bounds": {
+    "minX": 0,
+    "maxX": 2048,
+    "minY": 0,
+    "maxY": 2048
+  },
+  "spawnPoints": [
+    {
+      "x": 1024,
+      "y": 1024,
+      "radius": 100,
+      "isDefault": true
+    },
+    {
+      "x": 500,
+      "y": 1800,
+      "radius": 40,
+      "isDefault": false
+    },
+    {
+      "x": 1800,
+      "y": 500,
+      "radius": 40,
+      "isDefault": false
+    }
+  ],
+  "isDefault": false
+}

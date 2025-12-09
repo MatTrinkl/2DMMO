@@ -9,6 +9,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.*"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.11"/>
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Config\Zones\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>

@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using Mmo.Server.Zones;
 using Mmo.Shared;
 using Mmo.Shared.Interfaces;
+using Mmo.Shared.Zones;
 
 namespace Mmo.Server.GameLoop;
 
@@ -14,6 +16,8 @@ public class GameServer
     /// </summary>
     private readonly ILog _log;
 
+    private readonly ZoneManager _zoneManager;
+
     /// <summary>
     ///     Creates a new GameServer object.
     /// </summary>
@@ -23,6 +27,8 @@ public class GameServer
         _log = log;
         CurrentTick = 0;
         IsRunning = false;
+        //Only temporary
+        _zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
     }
 
     /// <summary>

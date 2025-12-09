@@ -28,7 +28,6 @@ public class GameServerTests
     public async Task GameServerLogsStartupAndShutdownMessages()
     {
         var loggerMock = new Mock<ILog>();
-
         var gameServer = new Server.GameLoop.GameServer(loggerMock.Object);
         var cts = new CancellationTokenSource();
         Task task = gameServer.StartServerAsync(cts.Token);
