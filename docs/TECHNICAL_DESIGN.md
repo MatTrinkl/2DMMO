@@ -306,6 +306,8 @@ public class CollisionData
 
 ## Entity-System
 
+> **Hinweis:** Für die vollständige ID-System-Architektur siehe [ID-System Dokumentation](architecture/ID_SYSTEM.md).
+
 ### Entity-Hierarchie
 
 ```
@@ -391,6 +393,8 @@ Zone-Definitionen beschreiben alle statischen Entities einer Zone (Türen, Porta
 | **Loader** | `ZoneDefinitionLoader` (Shared) | Einheitliche Ladelogik |
 
 ### Entity-ID Bereiche
+
+> **Hinweis:** Dieses Dokument beschreibt eine frühe Version des ID-Systems. Für die aktuelle, umfassende ID-System-Architektur siehe [ID-System Dokumentation](architecture/ID_SYSTEM.md), die EntityIdentity, ZoneId, ShardId, GlobalKey und persistente vs. Runtime IDs behandelt.
 
 | Bereich | Verwendung |
 |---------|------------|
