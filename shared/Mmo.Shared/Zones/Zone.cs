@@ -8,7 +8,7 @@ namespace Mmo.Shared.Zones;
 /// </summary>
 /// <param name="id">Id of the zone.</param>
 /// <param name="zoneName">Display name of the zone.</param>
-/// <param name="bounds">The outer boarder of the zone.</param>
+/// <param name="bounds">The outer border of the zone.</param>
 public class Zone(ushort id, string zoneName, ZoneBounds bounds)
 {
     /// <summary>
@@ -32,7 +32,7 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
     public string ZoneName { get; } = zoneName;
 
     /// <summary>
-    ///     The outer boarder of the zone.
+    ///     The outer border of the zone.
     /// </summary>
     public ZoneBounds Bounds { get; } = bounds;
 

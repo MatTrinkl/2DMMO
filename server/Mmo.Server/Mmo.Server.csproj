@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.11"/>
   </ItemGroup>
   <ItemGroup>
-    <None Update="Config\Zones\*. json">
+    <None Update="Config\Zones\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

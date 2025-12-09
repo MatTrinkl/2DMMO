@@ -15,7 +15,7 @@ dotnet test tests/Mmo.Shared.Tests --collect:"XPlat Code Coverage"
 reportgenerator \
   -reports:"tests/**/TestResults/*/coverage.cobertura.xml" \
   -targetdir:"coverage-report" \
-  -reporttypes: Html
+  -reporttypes:Html
 
 # Report öffnen (macOS)
 open coverage-report/index.html

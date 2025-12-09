@@ -5,7 +5,7 @@ namespace Mmo.Shared.Configurations.Zones;
 /// </summary>
 /// <param name="zoneId">The ID of the zone.</param>
 /// <param name="zoneName">The Name of the zone.</param>
-/// <param name="bounds">The boarder of the zone.</param>
+/// <param name="bounds">The border of the zone.</param>
 /// <param name="spawnPoints">WIP: The SpawnPoints of the Zone.</param>
 /// <param name="isDefault">Is this Zone the default zone.</param>
 public class ZoneConfig(
@@ -26,7 +26,7 @@ public class ZoneConfig(
     public string ZoneName { get; init; } = zoneName;
 
     /// <summary>
-    ///     The outer boarder of the zone.
+    ///     The outer border of the zone.
     /// </summary>
     public ZoneBoundsConfig Bounds { get; init; } = bounds;
 

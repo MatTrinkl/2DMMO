@@ -18,7 +18,7 @@ public class ZoneBounds(float minX, float minY, float maxX, float maxY)
     public readonly float MaxX = maxX;
 
     /// <summary>
-    ///     The top side of the Y-Axis.@
+    ///     The top side of the Y-Axis.
     /// </summary>
     public readonly float MaxY = maxY;
 

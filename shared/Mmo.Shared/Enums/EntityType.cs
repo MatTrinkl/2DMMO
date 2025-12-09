@@ -13,14 +13,14 @@ public enum EntityType : byte
     Unknown = 0,
 
     /// <summary>
-    ///     Player or Charakter.
+    ///     Player or Character.
     /// </summary>
     Player = 1,
 
     /// <summary>
     ///     generic NPC (QuestGiver/Vendor etc. are <see cref="EntityRole" />.
     /// </summary>
-    NPC = 2,
+    Npc = 2,
 
     /// <summary>
     ///     Mob is neutral, only aggressive when attacked.
@@ -63,7 +63,7 @@ public enum EntityType : byte
     Decorative = 52,
 
     /// <summary>
-    ///     A moving pullet or arrow.
+    ///     A moving bullet or arrow.
     /// </summary>
     Projectile = 80,
 

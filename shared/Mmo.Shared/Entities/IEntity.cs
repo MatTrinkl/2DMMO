@@ -30,7 +30,7 @@ public interface IEntity
     Position Position { get; set; }
 
     /// <summary>
-    ///     This methode will be called when this entity changes zones.
+    ///     This method will be called when this entity changes zones.
     /// </summary>
     /// <param name="newZoneId">The ID of the new zone.</param>
     void ChangeZone(ushort newZoneId);

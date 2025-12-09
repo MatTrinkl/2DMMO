@@ -8,7 +8,7 @@ namespace Mmo.Server.Tests.Zones;
 public class ZoneManagerTests
 {
     [Fact]
-    public void AddZonesToZoneManager()
+    public void RegisterZone_AddsZoneAndRetrievable()
     {
         var zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
         zoneManager.RegisterZone(1, new Zone(1, "main", new ZoneBounds(0, 0, 0, 0)));
@@ -17,7 +17,7 @@ public class ZoneManagerTests
     }
 
     [Fact]
-    public void RemoveZonesFromZoneManager()
+    public void UnregisterZone_RemovesZoneSuccessfully()
     {
         var zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
 
@@ -25,7 +25,7 @@ public class ZoneManagerTests
     }
 
     [Fact]
-    public void AddZonesTwiceToZoneManager()
+    public void RegisterZone_SameZoneIdTwice_ThrowsArgumentException()
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 0, 0));
         var zoneManager = new ZoneManager(0, defaultZone);
@@ -33,7 +33,7 @@ public class ZoneManagerTests
     }
 
     [Fact]
-    public void TransferEntity()
+    public void TransferEntity_BetweenZones_UpdatesEntityZone()
     {
         var mockEntity = new Mock<IEntity>();
         var zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
@@ -44,7 +44,7 @@ public class ZoneManagerTests
     }
 
     [Fact]
-    public void TransferEntityWhichIsNotInZone()
+    public void TransferEntity_EntityNotInSourceZone_ThrowsArgumentException()
     {
         var mockEntity = new Mock<IEntity>();
         var zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
@@ -54,7 +54,7 @@ public class ZoneManagerTests
     }
 
     [Fact]
-    public void TransferNullEntity()
+    public void TransferEntity_NullEntity_ThrowsArgumentNullException()
     {
         var zoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
         zoneManager.RegisterZone(1, new Zone(1, "main", new ZoneBounds(0, 0, 0, 0)));

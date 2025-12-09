@@ -7,7 +7,7 @@ namespace Mmo.Shared.Tests.Zones;
 public class ZoneTests
 {
     [Fact]
-    public void TryAddTheSameEntityToAZone()
+    public void AddEntity_SameEntityTwice_ThrowsArgumentException()
     {
         var z = new Zone(1, "main", new ZoneBounds(0, 0, 0, 0));
         var entityMock = new Mock<IEntity>();
@@ -16,7 +16,7 @@ public class ZoneTests
     }
 
     [Fact]
-    public void CheckIDQueue()
+    public void RemoveEntity_ThenAddNewEntity_ReusesEntityId()
     {
         var z = new Zone(1, "main", new ZoneBounds(0, 0, 0, 0));
         var entityMock = new Mock<IEntity>();

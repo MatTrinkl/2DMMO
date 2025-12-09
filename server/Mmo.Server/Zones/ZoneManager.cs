@@ -82,7 +82,7 @@ public class ZoneManager
         ArgumentNullException.ThrowIfNull(entity);
 
         if (entity.EntityId.ZoneId != fromZoneId)
-            throw new ArgumentException($"Entity with ID {fromZoneId} does not belong to Zone  with ID {toZoneId}.");
+            throw new ArgumentException($"Entity with ID {entity.EntityId} does not belong to source Zone with ID {fromZoneId}.");
 
         if (oldZone == newZone) return;
 

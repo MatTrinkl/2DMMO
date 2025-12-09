@@ -2,7 +2,7 @@ using System.Text.Json;
 using Mmo.Shared.Configurations.Zones;
 using Mmo.Shared.Zones;
 
-namespace Mmo.Server.Tests.GameLoop;
+namespace Mmo.Server.Tests.Zones;
 
 public class ZoneLoaderTests
 {
@@ -120,7 +120,7 @@ public class ZoneLoaderTests
     public void LoadZoneConfig_EmptyFile_ThrowsException()
     {
         // Arrange
-        string filePath = CreateTestFile("empty. json", "");
+        string filePath = CreateTestFile("empty.json", "");
 
         // Act & Assert
         Assert.ThrowsAny<Exception>(() => ZoneLoader.LoadZoneConfig(filePath));
@@ -227,7 +227,7 @@ public class ZoneLoaderTests
         return filePath;
     }
 
-    public void Dispose()
+    internal void Dispose()
     {
         if (Directory.Exists(_testDirectory)) Directory.Delete(_testDirectory, true);
     }
