@@ -177,7 +177,7 @@ public readonly struct EntityIdentity : IEquatable<EntityIdentity>
     ///     Format: WorldId (8 bits) | ZoneId (16 bits) | ShardId (8 bits) | EntityId (32 bits)
     /// </summary>
     [IgnoreMember]
-    public long GlobalKey => ((long)WorldId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 32) | EntityId;
+    public long GlobalKey => ((long)WorldId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 32) | (long)EntityId;
 
     public bool Equals(EntityIdentity other)
     {
@@ -239,7 +239,7 @@ Der `GlobalKey` ist ein 64-bit long-Wert, der aus den ersten 4 ID-Komponenten (W
 long GlobalKey = ((long)WorldId << 56)   // WorldId an Position 56-63
                | ((long)ZoneId << 40)     // ZoneId an Position 40-55
                | ((long)ShardId << 32)    // ShardId an Position 32-39
-               | EntityId;                 // EntityId an Position 0-31
+               | (long)EntityId;          // EntityId an Position 0-31 (cast verhindert Sign-Extension)
 ```
 
 ### Verwendung
@@ -599,14 +599,14 @@ public class ShardSelector
     /// </summary>
     public byte SelectShard(ushort zoneId)
     {
-        if (!_shardsByZone.TryGetValue(zoneId, out var shards))
+        if (!_shardsByZone.TryGetValue(zoneId, out var shards) || shards.Count == 0)
         {
             return 0; // Default-Shard
         }
 
         // Shard mit geringster Spielerzahl
-        var bestShard = shards.OrderBy(s => s.PlayerCount).First();
-        return bestShard.ShardId;
+        var bestShard = shards.OrderBy(s => s.PlayerCount).FirstOrDefault();
+        return bestShard?.ShardId ?? 0;
     }
 }
 
@@ -614,7 +614,11 @@ public class ShardInfo
 {
     public byte ShardId { get; init; }
     public int PlayerCount { get; set; }
-    public int MaxCapacity { get; init; } = 200;
+    
+    /// <summary>
+    ///     Maximale Kapazität pro Shard. In der Produktion aus Konfiguration geladen.
+    /// </summary>
+    public int MaxCapacity { get; init; } = 200; // Konfigurierbar in appsettings.json
 }
 ```
 
