@@ -16,17 +16,17 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | # | Dokument | Beschreibung |
 |---|----------|--------------|
-| 1 | [Server-Komponenten](architecture/SERVER_COMPONENTS.md) | Gateway, Zone Server, Kommunikation |
-| 2 | [Netzwerk-Protokoll](architecture/NETWORK_PROTOCOL.md) | Transport, Message Framing, Connection Flow |
-| 3 | [Message-Spezifikation](architecture/MESSAGES.md) | Message Types, DTOs, Serialization |
-| 4 | [Game Loop Design](architecture/GAME_LOOP.md) | Server Game Loop, Tick Timing |
-| 5 | [Client-Server Sync](architecture/CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 6 | [ID-System](architecture/ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| 7 | [Redis-Strategie](architecture/REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 8 | [Datenbank-Strategie](architecture/DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 9 | [Sicherheit](architecture/SECURITY.md) | Security Layers, Input Validation |
-| 10 | [Azure Deployment](architecture/AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 11 | [Skalierung](architecture/SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 1 | [Server-Komponenten](SERVER_COMPONENTS.md) | Gateway, Zone Server, Kommunikation |
+| 2 | [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) | Transport, Message Framing, Connection Flow |
+| 3 | [Message-Spezifikation](MESSAGES.md) | Message Types, DTOs, Serialization |
+| 4 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
+| 5 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
+| 6 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
+| 7 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
+| 8 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
+| 9 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
+| 10 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 11 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
 
 ---
 

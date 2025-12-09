@@ -386,7 +386,7 @@ Mögliche Optionen:
 
 ### 7.1 Entity-Relationship-Diagramm (vereinfacht)
 
-> **Hinweis:** Dieses Diagramm zeigt persistente Datenbank-IDs (UUID/Guid). Für das vollständige ID-System inkl. Runtime-IDs (EntityId, ZoneId, ShardId) siehe [ID-System Dokumentation](architecture/ID_SYSTEM.md).
+> **Hinweis:** Dieses Diagramm zeigt persistente Datenbank-IDs (UUID/Guid). Für das vollständige ID-System inkl. Runtime-IDs (EntityId, ZoneId, ShardId) siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md).
 
 ```
 ┌─────────────┐       ┌─────────────────┐       ┌─────────────┐

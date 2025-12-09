@@ -14,7 +14,7 @@ Dieses Dokument zeigt, wie die bestehenden "großen" Issues aktualisiert werden 
 Basisklassen für die serverseitige Spiellogik mit Entity-System.
 
 > **📌 Zone-Konzept Update:** Die `World`-Klasse wird zu einem `ZoneManager` erweitert.
-> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+> Siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für Details.
 
 > **📌 Dies ist ein Epik-Issue.** Die Arbeit wurde in folgende Sub-Issues aufgeteilt:
 
@@ -83,7 +83,7 @@ Basisklassen für die serverseitige Spiellogik mit Entity-System.
 Server broadcastet jeden Tick den aktuellen ZoneState an alle Clients in der Zone.
 
 > **📌 Zone-Konzept Update:** WorldState wird zu ZoneState.
-> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+> Siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für Details.
 
 **ZoneState DTO (ersetzt WorldState):**
 ```csharp
@@ -135,7 +135,7 @@ public class ZoneState : INetworkMessage
 Startposition für neue Spieler in einer Zone definieren.
 
 > **📌 Zone-Konzept Update:** SpawnPoints sind Zone-spezifisch.
-> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+> Siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für Details.
 
 **SpawnPoint Klasse (Zone-spezifisch):**
 ```csharp
@@ -187,7 +187,7 @@ public class SpawnManager
 Spieler können nicht außerhalb ihrer Zone laufen.
 
 > **📌 Zone-Konzept Update:** WorldBounds wird zu ZoneBounds.
-> Siehe [ZONE_CONCEPT_UPDATES.md](docs/ZONE_CONCEPT_UPDATES.md) für Details.
+> Siehe [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für Details.
 
 **ZoneBounds Klasse (ersetzt WorldBounds):**
 ```csharp

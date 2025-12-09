@@ -733,7 +733,7 @@ public bool CanMoveTo(float fromX, float fromY, float toX, float toY)
 
 ### Interne Dokumentation
 
-- **[ID-System](architecture/ID_SYSTEM.md)** - Entity Identity, ZoneId Ranges, GlobalKey
+- **[ID-System](ID_SYSTEM.md)** - Entity Identity, ZoneId Ranges, GlobalKey
 - **[ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md)** - Zone-Konzept Integration in Issues
 - **[TECHNICAL_DESIGN.md](TECHNICAL_DESIGN.md)** - Technische Design-Entscheidungen
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Gesamt-Architektur Übersicht

@@ -17,13 +17,17 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 
 ## 📚 Dokumentation
 
+> **Hinweis:** Die Dokumentation wurde neu strukturiert. Siehe [docs/README.md](docs/README.md) für die vollständige Übersicht.
+
+### Schnellzugriff
+
 | Dokument | Beschreibung |
 |----------|--------------|
-| [Game Design Document](docs/GAME_DESIGN_DOCUMENT.md) | Gameplay, Rassen, Klassen, Systeme |
-| [Architektur](docs/ARCHITECTURE.md) | Technische Architektur, Netzwerk, Datenbank |
-| [Technical Design](docs/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen |
-| [Prototyp-Scope](docs/PROTOTYPE_SCOPE.md) | Was der Prototyp können muss |
-| [Assets](docs/ASSETS.md) | Asset-Quellen und Spezifikationen |
+| [📚 Dokumentations-Index](docs/README.md) | Zentrale Übersicht aller Dokumente |
+| [🎮 Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay, Rassen, Klassen, Systeme |
+| [🏗️ Architektur](docs/02-architecture/README.md) | Technische Architektur, Netzwerk, Datenbank |
+| [🛠️ Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen |
+| [🎯 Prototyp-Scope](docs/01-overview/PROTOTYPE_SCOPE.md) | Was der Prototyp können muss |
 
 ## 🛠️ Tech-Stack
 
@@ -73,11 +77,21 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 │   ├── Mmo.Shared.Tests/
 │   └── Mmo.Server.Tests/
 ├── docs/                       # Dokumentation
-│   ├── GAME_DESIGN_DOCUMENT.md
-│   ├── ARCHITECTURE.md
-│   ├── TECHNICAL_DESIGN.md
-│   ├── PROTOTYPE_SCOPE.md
-│   └── ASSETS.md
+│   ├── README.md               # Dokumentations-Index
+│   ├── 01-overview/            # High-level Projektinformationen
+│   │   ├── GAME_DESIGN_DOCUMENT.md
+│   │   ├── PROTOTYPE_SCOPE.md
+│   │   └── ASSETS.md
+│   ├── 02-architecture/        # Technische Architektur
+│   │   ├── README.md           # Architektur-Übersicht
+│   │   ├── SERVER_COMPONENTS.md
+│   │   ├── NETWORK_PROTOCOL.md
+│   │   └── ...                 # weitere Architektur-Dokumente
+│   ├── 03-technical-details/   # Implementierungs-Details
+│   │   └── TECHNICAL_DESIGN.md
+│   └── 04-project-management/  # Issue-Tracking & Planung
+│       ├── ISSUE_HIERARCHY.md
+│       └── ISSUES_ROADMAP.md
 ├── Mmo.sln                     # .NET Solution
 └── .github/workflows/          # CI/CD Pipelines
 ```
@@ -158,7 +172,7 @@ dotnet build -warnaserror
 - [ ] Einfache Tilemap-Welt
 - [ ] Basis-Chat
 
-Siehe [PROTOTYPE_SCOPE.md](docs/PROTOTYPE_SCOPE.md) für Details.
+Siehe [PROTOTYPE_SCOPE.md](docs/01-overview/PROTOTYPE_SCOPE.md) für Details.
 
 ## 🧪 CI/CD
 
