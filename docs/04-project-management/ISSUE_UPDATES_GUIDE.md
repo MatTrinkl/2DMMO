@@ -252,9 +252,9 @@ A: Issue-Body für permanente Updates, Kommentare für Diskussion/Kontext.
 ---
 
 **Version History:**
-- v3.0.0 (2025-12-09): Umstrukturiert als Prozess-Guide, spezifische Details entfernt
-- v2.0.0 (2025-12-09): Konsolidiert aus ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
-- v1.0.0: Original ISSUE_UPDATES.md
+- v3.0.0 (2025-12-09 14:00): Umstrukturiert als Prozess-Guide, spezifische Details entfernt
+- v2.0.0 (2025-12-09 02:00): Konsolidiert aus ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
+- v1.0.0 (früher): Original ISSUE_UPDATES.md
 
 ---
 
