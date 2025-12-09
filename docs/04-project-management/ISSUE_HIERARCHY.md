@@ -2,7 +2,7 @@
 
 Dieses Dokument zeigt die Beziehungen zwischen den Issues und die empfohlene Bearbeitungsreihenfolge.
 
-> **📌 Hinweis:** Siehe auch [ZONE_CONCEPT_UPDATES.md](ZONE_CONCEPT_UPDATES.md) für die Integration des Zone-Konzepts in die Server-Architektur. Die Issues #7, #74, #75 und #76 wurden entsprechend aktualisiert.
+> **📌 Hinweis:** Siehe auch [ISSUE_UPDATES_GUIDE.md](ISSUE_UPDATES_GUIDE.md) für die Integration des Zone-Konzepts in die Server-Architektur. Die Issues #7, #74, #75 und #76 wurden entsprechend aktualisiert.
 
 ---
 

@@ -6,10 +6,10 @@ Diese Anweisungen gelten für Copilot bei Code Reviews in Pull Requests.
 Copilot soll den Code gegen unsere Projekt-Dokumentation prüfen und Abweichungen melden.
 
 **Relevante Dokumentation:**
-- `docs/ARCHITECTURE.md` - Technische Architektur
-- `docs/TECHNICAL_DESIGN.md` - Detaillierte technische Entscheidungen
-- `docs/PROTOTYPE_SCOPE.md` - Scope des Prototyps
-- `docs/GAME_DESIGN_DOCUMENT.md` - Gameplay-Design
+- `docs/02-architecture/README.md` - Technische Architektur
+- `docs/03-technical-details/TECHNICAL_DESIGN.md` - Detaillierte technische Entscheidungen
+- `docs/01-overview/PROTOTYPE_SCOPE.md` - Scope des Prototyps
+- `docs/01-overview/GAME_DESIGN_DOCUMENT.md` - Gameplay-Design
 
 ---
 
@@ -477,7 +477,7 @@ Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
 ## 🎯 Prototype Scope
 
 ### Im Scope
-- [ ] Ist das Feature im Prototyp-Scope (`docs/PROTOTYPE_SCOPE.md`)?
+- [ ] Ist das Feature im Prototyp-Scope (`docs/01-overview/PROTOTYPE_SCOPE.md`)?
 - [ ] TCP Server/Client, MessagePack, Game Loop, Bewegung, Chat
 
 ### Außerhalb Scope
@@ -518,7 +518,7 @@ Bei Abweichungen von der Dokumentation:
 
 > ⚠️ **Architektur-Abweichung**
 > 
-> Laut `docs/TECHNICAL_DESIGN.md` soll MessagePack für Serialisierung verwendet werden:
+> Laut `docs/03-technical-details/TECHNICAL_DESIGN.md` soll MessagePack für Serialisierung verwendet werden:
 > > "Serialization: MessagePack"
 > 
 > Dieser Code verwendet jedoch JSON:
@@ -535,11 +535,12 @@ Bei Abweichungen von der Dokumentation:
 
 ## 🔗 Relevante Dokumentation
 
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Technische Architektur
-- [TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md) - Detaillierte technische Entscheidungen
-- [PROTOTYPE_SCOPE.md](docs/PROTOTYPE_SCOPE.md) - Was ist im Prototyp
-- [GAME_DESIGN_DOCUMENT.md](docs/GAME_DESIGN_DOCUMENT.md) - Gameplay Design
-- [ASSETS.md](docs/ASSETS.md) - Asset-Spezifikationen
+- [Dokumentations-Index](docs/README.md) - Zentrale Übersicht
+- [Architektur-Übersicht](docs/02-architecture/README.md) - Technische Architektur
+- [Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) - Detaillierte technische Entscheidungen
+- [Prototyp-Scope](docs/01-overview/PROTOTYPE_SCOPE.md) - Was ist im Prototyp
+- [Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) - Gameplay Design
+- [Assets](docs/01-overview/ASSETS.md) - Asset-Spezifikationen
 
 ---
 
