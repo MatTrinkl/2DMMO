@@ -230,12 +230,8 @@ public class GameServer
             if (playersInZone.Count == 0)
                 continue;
 
-            foreach (IEntity? entity in zoneGroup)
+            foreach (IEntity entity in zoneGroup.Where(e => e != null)!)
             {
-                // Skip null entities
-                if (entity == null)
-                    continue;
-
                 var positionBroadcast = new PositionBroadcast(
                     timestamp,
                     entity.PersistentId,
