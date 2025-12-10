@@ -1,6 +1,7 @@
 // server/Mmo.Server/Networking/INetworkServer.cs
+
 using Mmo.Server.Networking.NetworkEvents;
-using Mmo. Shared.Interfaces;
+using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Networking;
 

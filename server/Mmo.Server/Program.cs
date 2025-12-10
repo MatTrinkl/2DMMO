@@ -15,12 +15,12 @@ internal static class Program
         using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
-                . AddSimpleConsole(options =>
+                .AddSimpleConsole(options =>
                 {
                     options.TimestampFormat = "[HH:mm:ss] ";
                     options.SingleLine = true;
                 })
-                .SetMinimumLevel(LogLevel. Debug);
+                .SetMinimumLevel(LogLevel.Debug);
         });
 
         ILogger coreLogger = loggerFactory.CreateLogger("Mmo.Server");
@@ -29,7 +29,7 @@ internal static class Program
         log.Info("═══════════════════════════════════════════════════");
         log.Info("  2DMMO Server v0.1.0");
         log.Info("  Port:   {Port} | Tick Rate: {TickRate} Hz",
-            SharedConstants.DefaultPort, SharedConstants. TickRate);
+            SharedConstants.DefaultPort, SharedConstants.TickRate);
         log.Info("═══════════════════════════════════════════════════");
 
         // ══════════════════════════════════════════════════════════
@@ -44,8 +44,8 @@ internal static class Program
         using var cts = new CancellationTokenSource();
 
         // Flag to prevent double-cancellation
-        var shutdownRequested = false;
-        var shutdownLock = new object();
+        bool shutdownRequested = false;
+        object shutdownLock = new();
 
         void RequestShutdown(string source)
         {
@@ -58,10 +58,7 @@ internal static class Program
 
                 try
                 {
-                    if (! cts.IsCancellationRequested)
-                    {
-                        cts.Cancel();
-                    }
+                    if (!cts.IsCancellationRequested) cts.Cancel();
                 }
                 catch (ObjectDisposedException)
                 {
@@ -73,15 +70,12 @@ internal static class Program
         // Handle Ctrl+C
         Console.CancelKeyPress += (sender, eventArgs) =>
         {
-            eventArgs.Cancel = true;  // Prevent immediate termination
+            eventArgs.Cancel = true; // Prevent immediate termination
             RequestShutdown("Ctrl+C");
         };
 
         // Handle SIGTERM (for Docker/Kubernetes) - use weak reference pattern
-        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        {
-            RequestShutdown("SIGTERM");
-        };
+        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => { RequestShutdown("SIGTERM"); };
 
         // ══════════════════════════════════════════════════════════
         // RUN SERVER
@@ -91,8 +85,8 @@ internal static class Program
             log.Info("Starting server...");
 
             await Task.WhenAll(
-                networkServer.  RunAsync(cts. Token),
-                gameServer. StartServerAsync(cts.Token)
+                networkServer.RunAsync(cts.Token),
+                gameServer.StartServerAsync(cts.Token)
             );
 
             log.Info("Server shutdown completed gracefully.");
@@ -104,8 +98,8 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            log.Error("Unhandled exception in server: {Error}", ex. Message);
-            log.Error("Stack trace: {StackTrace}", ex.StackTrace ??  "N/A");
+            log.Error("Unhandled exception in server: {Error}", ex.Message);
+            log.Error("Stack trace: {StackTrace}", ex.StackTrace ?? "N/A");
             Environment.ExitCode = 1;
         }
         finally

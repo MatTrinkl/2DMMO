@@ -1,7 +1,7 @@
-using Mmo.Server.Networking. NetworkEvents;
+using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Shared.Enums;
 
-namespace Mmo.Server.Tests. Networking;
+namespace Mmo.Server.Tests.Networking;
 
 public class NetworkEventsTests
 {
@@ -9,7 +9,7 @@ public class NetworkEventsTests
     public void ClientConnectedEventArgs_SetsAllProperties()
     {
         var clientId = Guid.NewGuid();
-        var endPoint = "192.168.1.1:12345";
+        string endPoint = "192.168.1.1:12345";
 
         var args = new ClientConnectedEventArgs(clientId, endPoint);
 
@@ -22,22 +22,22 @@ public class NetworkEventsTests
     public void ClientDisconnectedEventArgs_SetsAllProperties()
     {
         var clientId = Guid.NewGuid();
-        var reason = DisconnectReason.ClientDisconnected;
+        DisconnectReason reason = DisconnectReason.ClientDisconnected;
 
         var args = new ClientDisconnectedEventArgs(clientId, reason);
 
         Assert.Equal(clientId, args.ClientId);
         Assert.Equal(reason, args.Reason);
-        Assert.True(args.DisconnectedAt <= DateTimeOffset. UtcNow);
+        Assert.True(args.DisconnectedAt <= DateTimeOffset.UtcNow);
     }
 
     [Theory]
     [InlineData(DisconnectReason.ClientDisconnected)]
-    [InlineData(DisconnectReason. Timeout)]
+    [InlineData(DisconnectReason.Timeout)]
     [InlineData(DisconnectReason.NetworkError)]
     [InlineData(DisconnectReason.ServerShutdown)]
-    [InlineData(DisconnectReason. Kicked)]
-    [InlineData(DisconnectReason. ProtocolError)]
+    [InlineData(DisconnectReason.Kicked)]
+    [InlineData(DisconnectReason.ProtocolError)]
     public void ClientDisconnectedEventArgs_AllReasonsWork(DisconnectReason reason)
     {
         var args = new ClientDisconnectedEventArgs(Guid.NewGuid(), reason);
@@ -50,7 +50,7 @@ public class NetworkEventsTests
     {
         var clientId = Guid.NewGuid();
         var exception = new Exception("Test error");
-        var context = "ReadLoop";
+        string context = "ReadLoop";
 
         var args = new NetworkErrorEventArgs(clientId, exception, context);
 
@@ -63,7 +63,7 @@ public class NetworkEventsTests
     public void NetworkErrorEventArgs_WithoutClientId_ClientIdIsNull()
     {
         var exception = new Exception("Server error");
-        var context = "AcceptLoop";
+        string context = "AcceptLoop";
 
         var args = new NetworkErrorEventArgs(null, exception, context);
 

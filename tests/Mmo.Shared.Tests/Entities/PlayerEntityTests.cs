@@ -12,7 +12,7 @@ public class PlayerEntityTests
     {
         var persistentId = Guid.NewGuid();
         var position = new Position(100, 200);
-        var displayName = "TestPlayer";
+        string displayName = "TestPlayer";
 
         var player = new PlayerEntity(persistentId, displayName, position);
 

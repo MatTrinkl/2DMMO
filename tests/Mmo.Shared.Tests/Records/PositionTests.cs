@@ -110,7 +110,7 @@ public class PositionTests
         var original = new Position(123.456f, 789.012f);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
+        Position deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
 
         Assert.Equal(original.X, deserialized.X);
         Assert.Equal(original.Y, deserialized.Y);
@@ -122,7 +122,7 @@ public class PositionTests
         var original = new Position(0, 0);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
+        Position deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
 
         Assert.Equal(0, deserialized.X);
         Assert.Equal(0, deserialized.Y);
@@ -134,7 +134,7 @@ public class PositionTests
         var original = new Position(-50.5f, -100.25f);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
+        Position deserialized = MessagePackSerializer.Deserialize<Position>(serialized);
 
         Assert.Equal(original.X, deserialized.X);
         Assert.Equal(original.Y, deserialized.Y);
@@ -157,7 +157,7 @@ public class PositionTests
     {
         var position = new Position(10, 20);
 
-        var (x, y) = position;
+        (float x, float y) = position;
 
         Assert.Equal(10, x);
         Assert.Equal(20, y);

@@ -31,7 +31,7 @@ public class GameServerTickTests
         // Assert:  Should have logged a warning about tick overrun
         Assert.True(
             _mockLog.HasMessageContaining("WARN", "overrun"),
-            $"Expected overrun warning.  Messages: {string.Join(Environment.NewLine, _mockLog. Messages)}"
+            $"Expected overrun warning.  Messages: {string.Join(Environment.NewLine, _mockLog.Messages)}"
         );
     }
 
@@ -88,10 +88,10 @@ public class GameServerTickTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
         // Should not throw
-        var exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
+        Exception? exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
 
         // Assert
-        Assert. Null(exception);
+        Assert.Null(exception);
         Assert.False(gameServer.IsRunning);
     }
 
@@ -104,7 +104,7 @@ public class GameServerTickTests
         cts.Cancel(); // Cancel immediately
 
         // Act
-        var exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
+        Exception? exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
 
         // Assert
         Assert.Null(exception);

@@ -1,6 +1,6 @@
 using Mmo.Server.Entities;
 using Mmo.Server.Zones;
-using Mmo.Shared. Entities;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 
@@ -14,14 +14,14 @@ public class ZoneManagerTests
         return new ZoneManager(0, defaultZone);
     }
 
-    private ServerPlayer CreateServerPlayer(Guid?  persistentId = null, Guid? connectionId = null)
+    private ServerPlayer CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
     {
         var entity = new PlayerEntity(
             persistentId ?? Guid.NewGuid(),
             "TestPlayer",
             new Position(100, 100)
         );
-        return new ServerPlayer(entity, connectionId ??  Guid.NewGuid());
+        return new ServerPlayer(entity, connectionId ?? Guid.NewGuid());
     }
 
     // ══════════════════════════════════════════════════════════
@@ -31,7 +31,7 @@ public class ZoneManagerTests
     [Fact]
     public void Constructor_CreatesWithDefaultZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
         Assert.Equal(1, zoneManager.ZoneCount);
         Assert.NotNull(zoneManager.GetDefaultZone());
@@ -41,19 +41,19 @@ public class ZoneManagerTests
     [Fact]
     public void RegisterZone_AddsNewZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "second", new ZoneBounds(0, 0, 500, 500));
 
         zoneManager.RegisterZone(1, newZone);
 
         Assert.Equal(2, zoneManager.ZoneCount);
-        Assert.NotNull(zoneManager. GetZone(1));
+        Assert.NotNull(zoneManager.GetZone(1));
     }
 
     [Fact]
     public void RegisterZone_DuplicateId_ThrowsArgumentException()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var duplicateZone = new Zone(0, "duplicate", new ZoneBounds(0, 0, 100, 100));
 
         Assert.Throws<ArgumentException>(() => zoneManager.RegisterZone(0, duplicateZone));
@@ -62,7 +62,7 @@ public class ZoneManagerTests
     [Fact]
     public void UnregisterZone_RemovesZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "toRemove", new ZoneBounds(0, 0, 100, 100));
         zoneManager.RegisterZone(1, newZone);
 
@@ -76,9 +76,9 @@ public class ZoneManagerTests
     [Fact]
     public void GetZone_NonExistent_ReturnsNull()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
-        Assert.Null(zoneManager. GetZone(999));
+        Assert.Null(zoneManager.GetZone(999));
     }
 
     // ══════════════════════════════════════════════════════════
@@ -88,8 +88,8 @@ public class ZoneManagerTests
     [Fact]
     public void AddPlayer_AddsToDefaultZone()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
 
         zoneManager.AddPlayer(player);
 
@@ -100,12 +100,12 @@ public class ZoneManagerTests
     [Fact]
     public void AddPlayer_AddsToSpecificZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "other", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, newZone);
-        var player = CreateServerPlayer();
+        ServerPlayer player = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player, zoneId: 1);
+        zoneManager.AddPlayer(player, 1);
 
         Assert.Equal(1, zoneManager.PlayerCount);
         var playersInZone = zoneManager.GetServerPlayersInZone(1).ToList();
@@ -116,28 +116,28 @@ public class ZoneManagerTests
     [Fact]
     public void AddPlayer_NonExistentZone_ThrowsInvalidOperationException()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
 
-        Assert.Throws<InvalidOperationException>(() => zoneManager.AddPlayer(player, zoneId: 999));
+        Assert.Throws<InvalidOperationException>(() => zoneManager.AddPlayer(player, 999));
     }
 
     [Fact]
     public void AddPlayer_NullPlayer_ThrowsArgumentNullException()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
-        Assert.Throws<ArgumentNullException>(() => zoneManager.AddPlayer(null! ));
+        Assert.Throws<ArgumentNullException>(() => zoneManager.AddPlayer(null!));
     }
 
     [Fact]
     public void TryGetPlayerByConnectionId_ExistingPlayer_ReturnsTrue()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player);
 
-        bool found = zoneManager.TryGetPlayerByConnectionId(player.ConnectionId, out var foundPlayer);
+        bool found = zoneManager.TryGetPlayerByConnectionId(player.ConnectionId, out ServerPlayer? foundPlayer);
 
         Assert.True(found);
         Assert.NotNull(foundPlayer);
@@ -147,9 +147,9 @@ public class ZoneManagerTests
     [Fact]
     public void TryGetPlayerByConnectionId_NonExistent_ReturnsFalse()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
-        bool found = zoneManager. TryGetPlayerByConnectionId(Guid.NewGuid(), out var foundPlayer);
+        bool found = zoneManager.TryGetPlayerByConnectionId(Guid.NewGuid(), out ServerPlayer? foundPlayer);
 
         Assert.False(found);
         Assert.Null(foundPlayer);
@@ -158,12 +158,12 @@ public class ZoneManagerTests
     [Fact]
     public void TryGetPlayerByPersistentId_ExistingPlayer_ReturnsTrue()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        var player = CreateServerPlayer(persistentId:  persistentId);
+        ServerPlayer player = CreateServerPlayer(persistentId);
         zoneManager.AddPlayer(player);
 
-        bool found = zoneManager. TryGetPlayerByPersistentId(persistentId, out var foundPlayer);
+        bool found = zoneManager.TryGetPlayerByPersistentId(persistentId, out ServerPlayer? foundPlayer);
 
         Assert.True(found);
         Assert.NotNull(foundPlayer);
@@ -173,11 +173,11 @@ public class ZoneManagerTests
     [Fact]
     public void RemovePlayerByConnectionId_ExistingPlayer_RemovesAndReturnsPlayer()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player);
 
-        var removedPlayer = zoneManager.RemovePlayerByConnectionId(player. ConnectionId);
+        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(player.ConnectionId);
 
         Assert.NotNull(removedPlayer);
         Assert.Equal(player.ConnectionId, removedPlayer.ConnectionId);
@@ -188,9 +188,9 @@ public class ZoneManagerTests
     [Fact]
     public void RemovePlayerByConnectionId_NonExistent_ReturnsNull()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
-        var removedPlayer = zoneManager. RemovePlayerByConnectionId(Guid.NewGuid());
+        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(Guid.NewGuid());
 
         Assert.Null(removedPlayer);
     }
@@ -198,9 +198,9 @@ public class ZoneManagerTests
     [Fact]
     public void RemovePlayerByConnectionId_AlsoRemovesFromPersistentIdLookup()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        var player = CreateServerPlayer(persistentId: persistentId);
+        ServerPlayer player = CreateServerPlayer(persistentId);
         zoneManager.AddPlayer(player);
 
         zoneManager.RemovePlayerByConnectionId(player.ConnectionId);
@@ -211,17 +211,17 @@ public class ZoneManagerTests
     [Fact]
     public void GetServerPlayersInZone_ReturnsOnlyPlayersInThatZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
 
-        var player1 = CreateServerPlayer();
-        var player2 = CreateServerPlayer();
-        var player3 = CreateServerPlayer();
+        ServerPlayer player1 = CreateServerPlayer();
+        ServerPlayer player2 = CreateServerPlayer();
+        ServerPlayer player3 = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player1, zoneId: 0);
-        zoneManager.AddPlayer(player2, zoneId: 0);
-        zoneManager.AddPlayer(player3, zoneId: 1);
+        zoneManager.AddPlayer(player1, 0);
+        zoneManager.AddPlayer(player2, 0);
+        zoneManager.AddPlayer(player3, 1);
 
         var playersInZone0 = zoneManager.GetServerPlayersInZone(0).ToList();
         var playersInZone1 = zoneManager.GetServerPlayersInZone(1).ToList();
@@ -237,12 +237,12 @@ public class ZoneManagerTests
     [Fact]
     public void TryGetEntityByPersistentId_PlayerEntity_ReturnsTrue()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        var player = CreateServerPlayer(persistentId: persistentId);
+        ServerPlayer player = CreateServerPlayer(persistentId);
         zoneManager.AddPlayer(player);
 
-        bool found = zoneManager.TryGetEntityByPersistentId(persistentId, out var entity);
+        bool found = zoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity);
 
         Assert.True(found);
         Assert.NotNull(entity);
@@ -252,13 +252,13 @@ public class ZoneManagerTests
     [Fact]
     public void GetAllEntities_ReturnsAllEntitiesInZone()
     {
-        var zoneManager = CreateZoneManager();
-        var player1 = CreateServerPlayer();
-        var player2 = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player1 = CreateServerPlayer();
+        ServerPlayer player2 = CreateServerPlayer();
         zoneManager.AddPlayer(player1);
         zoneManager.AddPlayer(player2);
 
-        var entities = zoneManager.GetAllEntities(0);
+        List<Entity> entities = zoneManager.GetAllEntities(0);
 
         Assert.Equal(2, entities.Count);
     }
@@ -270,13 +270,13 @@ public class ZoneManagerTests
     [Fact]
     public void TransferPlayerByConnectionId_MovesPlayerToNewZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
-        var player = CreateServerPlayer();
-        zoneManager.AddPlayer(player, zoneId: 0);
+        ServerPlayer player = CreateServerPlayer();
+        zoneManager.AddPlayer(player, 0);
 
-        bool result = zoneManager.TransferPlayerByConnectionId(player.ConnectionId, toZoneId: 1);
+        bool result = zoneManager.TransferPlayerByConnectionId(player.ConnectionId, 1);
 
         Assert.True(result);
         var playersInZone0 = zoneManager.GetServerPlayersInZone(0).ToList();
@@ -288,11 +288,11 @@ public class ZoneManagerTests
     [Fact]
     public void TransferPlayerByConnectionId_SameZone_ReturnsTrue()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
-        zoneManager.AddPlayer(player, zoneId: 0);
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
+        zoneManager.AddPlayer(player, 0);
 
-        bool result = zoneManager. TransferPlayerByConnectionId(player.ConnectionId, toZoneId: 0);
+        bool result = zoneManager.TransferPlayerByConnectionId(player.ConnectionId, 0);
 
         Assert.True(result);
     }
@@ -300,9 +300,9 @@ public class ZoneManagerTests
     [Fact]
     public void TransferPlayerByConnectionId_NonExistentPlayer_ReturnsFalse()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
 
-        bool result = zoneManager. TransferPlayerByConnectionId(Guid.NewGuid(), toZoneId: 0);
+        bool result = zoneManager.TransferPlayerByConnectionId(Guid.NewGuid(), 0);
 
         Assert.False(result);
     }
@@ -310,14 +310,14 @@ public class ZoneManagerTests
     [Fact]
     public void TransferPlayerByPersistentId_MovesPlayerToNewZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
         var persistentId = Guid.NewGuid();
-        var player = CreateServerPlayer(persistentId: persistentId);
-        zoneManager.AddPlayer(player, zoneId: 0);
+        ServerPlayer player = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(player, 0);
 
-        bool result = zoneManager.TransferPlayerByPersistentId(persistentId, toZoneId: 1);
+        bool result = zoneManager.TransferPlayerByPersistentId(persistentId, 1);
 
         Assert.True(result);
         // Player should still be findable by PersistentId after transfer
@@ -331,12 +331,12 @@ public class ZoneManagerTests
     [Fact]
     public void AddEntity_MobEntity_AddsToZone()
     {
-        var zoneManager = CreateZoneManager();
-        var mob = new MobEntity("Goblin", new Position(50, 50), maxHealth: 100);
+        ZoneManager zoneManager = CreateZoneManager();
+        var mob = new MobEntity("Goblin", new Position(50, 50));
 
-        zoneManager.AddEntity(mob, zoneId: 0);
+        zoneManager.AddEntity(mob, 0);
 
-        Assert.True(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out var foundEntity));
+        Assert.True(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out IEntity? foundEntity));
         Assert.Equal(mob, foundEntity);
         Assert.Equal(1, zoneManager.PersistentEntityCount);
     }
@@ -344,11 +344,11 @@ public class ZoneManagerTests
     [Fact]
     public void RemoveEntity_MobEntity_RemovesFromZone()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var mob = new MobEntity("Wolf", new Position(100, 100));
-        zoneManager.AddEntity(mob, zoneId: 0);
+        zoneManager.AddEntity(mob, 0);
 
-        var removed = zoneManager.RemoveEntity(mob.PersistentId);
+        IEntity? removed = zoneManager.RemoveEntity(mob.PersistentId);
 
         Assert.NotNull(removed);
         Assert.Equal(mob.PersistentId, removed.PersistentId);
@@ -359,14 +359,14 @@ public class ZoneManagerTests
     [Fact]
     public void AddEntity_MultipleMobs_AllHaveUniquePersistentIds()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var mob1 = new MobEntity("Goblin", new Position(10, 10));
         var mob2 = new MobEntity("Orc", new Position(20, 20));
         var mob3 = new MobEntity("Troll", new Position(30, 30));
 
-        zoneManager.AddEntity(mob1, zoneId: 0);
-        zoneManager.AddEntity(mob2, zoneId: 0);
-        zoneManager.AddEntity(mob3, zoneId: 0);
+        zoneManager.AddEntity(mob1, 0);
+        zoneManager.AddEntity(mob2, 0);
+        zoneManager.AddEntity(mob3, 0);
 
         Assert.NotEqual(mob1.PersistentId, mob2.PersistentId);
         Assert.NotEqual(mob2.PersistentId, mob3.PersistentId);
@@ -377,14 +377,14 @@ public class ZoneManagerTests
     [Fact]
     public void GetAllEntities_IncludesMobsAndPlayers()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
         var mob = new MobEntity("Spider", new Position(75, 75));
 
-        zoneManager.AddPlayer(player, zoneId: 0);
-        zoneManager.AddEntity(mob, zoneId: 0);
+        zoneManager.AddPlayer(player, 0);
+        zoneManager.AddEntity(mob, 0);
 
-        var entities = zoneManager.GetAllEntities(0);
+        List<Entity> entities = zoneManager.GetAllEntities(0);
 
         Assert.Equal(2, entities.Count);
         Assert.Contains(entities, e => e is PlayerEntity);
@@ -394,10 +394,10 @@ public class ZoneManagerTests
     [Fact]
     public void MobEntity_IsTrulyPersistent_IsFalse()
     {
-        var zoneManager = CreateZoneManager();
+        ZoneManager zoneManager = CreateZoneManager();
         var mob = new MobEntity("Skeleton", new Position(0, 0));
 
-        zoneManager.AddEntity(mob, zoneId: 0);
+        zoneManager.AddEntity(mob, 0);
 
         Assert.False(mob.IsTrulyPersistent);
     }
@@ -405,10 +405,10 @@ public class ZoneManagerTests
     [Fact]
     public void PlayerEntity_IsTrulyPersistent_IsTrue()
     {
-        var zoneManager = CreateZoneManager();
-        var player = CreateServerPlayer();
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayer player = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player, zoneId: 0);
+        zoneManager.AddPlayer(player, 0);
 
         Assert.True(player.Entity.IsTrulyPersistent);
     }

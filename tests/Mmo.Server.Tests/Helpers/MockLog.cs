@@ -1,5 +1,6 @@
 // tests/Mmo.Server.Tests/Helpers/MockLog.cs
-using Mmo. Shared.Interfaces;
+
+using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Tests.Helpers;
 
@@ -20,7 +21,7 @@ public class MockLog : ILog
 
     public void Info(string message, params object[] args)
     {
-        RawMessages. Add(("INFO", message, args));
+        RawMessages.Add(("INFO", message, args));
         Messages.Add($"[INFO] {FormatMessage(message, args)}");
     }
 
@@ -75,12 +76,12 @@ public class MockLog : ILog
                 }
 
                 // Extrahiere den Platzhalter (z.B. "TickRate" oder "0")
-                string placeholder = result. Substring(openBrace, closeBrace - openBrace + 1);
+                string placeholder = result.Substring(openBrace, closeBrace - openBrace + 1);
 
                 // Ersetze mit dem entsprechenden Argument
                 string replacement = args[argIndex]?.ToString() ?? "null";
-                result = result. Remove(openBrace, closeBrace - openBrace + 1)
-                               .Insert(openBrace, replacement);
+                result = result.Remove(openBrace, closeBrace - openBrace + 1)
+                    .Insert(openBrace, replacement);
 
                 startIndex = openBrace + replacement.Length;
                 argIndex++;
@@ -100,17 +101,15 @@ public class MockLog : ILog
     /// </summary>
     public void Clear()
     {
-        Messages. Clear();
-        RawMessages. Clear();
+        Messages.Clear();
+        RawMessages.Clear();
     }
 
     /// <summary>
     ///     Returns true if any message contains the specified text.
     /// </summary>
-    public bool HasMessageContaining(string text)
-    {
-        return Messages.Any(m => m.Contains(text, StringComparison.OrdinalIgnoreCase));
-    }
+    public bool HasMessageContaining(string text) =>
+        Messages.Any(m => m.Contains(text, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     ///     Returns true if any message at the specified level contains the text.

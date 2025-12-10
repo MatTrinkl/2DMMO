@@ -28,12 +28,13 @@ public class ServerPlayer(PlayerEntity entity, Guid connectionId)
     public DateTimeOffset LastActivity { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
-    /// The ID of the player. This includes the ID in the Zone, the ZoneId and the ShardID. All combined are the <see cref="EntityIdentity.GlobalKey"/>.
+    ///     The ID of the player. This includes the ID in the Zone, the ZoneId and the ShardID. All combined are the
+    ///     <see cref="EntityIdentity.GlobalKey" />.
     /// </summary>
     public EntityIdentity EntityId => Entity.EntityId;
 
     /// <summary>
-    /// The name of the player.
+    ///     The name of the player.
     /// </summary>
     public string Name => Entity.DisplayName;
 }

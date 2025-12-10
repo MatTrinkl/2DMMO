@@ -25,7 +25,7 @@ public class MobEntity : Entity
     /// <param name="position">The spawn position.</param>
     /// <param name="maxHealth">Maximum health of the mob.</param>
     public MobEntity(string mobName, Position position, int maxHealth = 100)
-        : base(position)  // Runtime-only (generates new PersistentId)
+        : base(position) // Runtime-only (generates new PersistentId)
     {
         MobName = mobName;
         MaxHealth = maxHealth;
@@ -40,7 +40,7 @@ public class MobEntity : Entity
     /// <param name="position">The spawn position.</param>
     /// <param name="maxHealth">Maximum health of the mob.</param>
     public MobEntity(Guid persistentId, string mobName, Position position, int maxHealth = 100)
-        : base(persistentId, position, isTrulyPersistent: false)
+        : base(persistentId, position, false)
     {
         MobName = mobName;
         MaxHealth = maxHealth;

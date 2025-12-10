@@ -25,11 +25,11 @@ public class ServerPlayerTests
     public void ConnectedAt_IsSetToCurrentTime()
     {
         var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
-        var before = DateTimeOffset.UtcNow;
+        DateTimeOffset before = DateTimeOffset.UtcNow;
 
         var serverPlayer = new ServerPlayer(entity, Guid.NewGuid());
 
-        var after = DateTimeOffset.UtcNow;
+        DateTimeOffset after = DateTimeOffset.UtcNow;
         Assert.True(serverPlayer.ConnectedAt >= before);
         Assert.True(serverPlayer.ConnectedAt <= after);
     }
@@ -39,7 +39,7 @@ public class ServerPlayerTests
     {
         var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
         var serverPlayer = new ServerPlayer(entity, Guid.NewGuid());
-        var originalActivity = serverPlayer.LastActivity;
+        DateTimeOffset originalActivity = serverPlayer.LastActivity;
 
         Thread.Sleep(10); // Kleine Verzögerung
         serverPlayer.LastActivity = DateTimeOffset.UtcNow;

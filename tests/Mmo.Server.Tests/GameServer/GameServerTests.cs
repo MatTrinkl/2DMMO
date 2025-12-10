@@ -60,7 +60,7 @@ public class GameServerTests
         using var cts = new CancellationTokenSource();
         cts.Cancel(); // Sofort canceln
 
-        await gameServer.StartServerAsync(cts. Token);
+        await gameServer.StartServerAsync(cts.Token);
 
         Assert.False(gameServer.IsRunning);
     }

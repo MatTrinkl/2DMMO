@@ -1,4 +1,5 @@
 // shared/Mmo. Shared/Entities/Entity. cs
+
 using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
@@ -8,7 +9,7 @@ namespace Mmo.Shared.Entities;
 [MessagePackObject]
 [Union(0, typeof(PlayerEntity))]
 // [Union(1, typeof(MobEntity))]  // Später hinzufügen
-public abstract class Entity :  IEntity
+public abstract class Entity : IEntity
 {
     [SerializationConstructor]
     protected Entity()
@@ -31,7 +32,7 @@ public abstract class Entity :  IEntity
     /// </summary>
     protected Entity(Position position)
     {
-        PersistentId = Guid. NewGuid();
+        PersistentId = Guid.NewGuid();
         Position = position;
         IsTrulyPersistent = false;
     }
@@ -60,11 +61,9 @@ public abstract class Entity :  IEntity
     [Key(3)]
     public bool IsTrulyPersistent { get; protected init; }
 
-    [IgnoreMember]
-    public abstract EntityType Type { get; }
+    [IgnoreMember] public abstract EntityType Type { get; }
 
-    [IgnoreMember]
-    public abstract EntityRole Role { get; }
+    [IgnoreMember] public abstract EntityRole Role { get; }
 
     /// <summary>
     ///     Sets the runtime EntityId. Called by Zone when entity is added.

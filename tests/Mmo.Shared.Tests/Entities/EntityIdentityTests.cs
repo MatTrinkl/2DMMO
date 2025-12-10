@@ -21,7 +21,7 @@ public class EntityIdentityTests
         var identity = new EntityIdentity(42, 100, 5, 7);
 
         // GlobalKey = ((long)ShardId << 48) | ((long)ZoneId << 32) | (uint)Id
-        long expected = ((long)5 << 48) | ((long)100 << 32) | (uint)42;
+        long expected = ((long)5 << 48) | ((long)100 << 32) | 42;
 
         Assert.Equal(expected, identity.GlobalKey);
     }
@@ -130,7 +130,7 @@ public class EntityIdentityTests
         var identity = new EntityIdentity(42, 100, 5, 7);
         long globalKey = identity.GlobalKey;
 
-        var (shardId, zoneId, id) = EntityIdentity.DecodeGlobalKey(globalKey);
+        (ushort shardId, ushort zoneId, int id) = EntityIdentity.DecodeGlobalKey(globalKey);
 
         Assert.Equal(5, shardId);
         Assert.Equal(100, zoneId);
@@ -143,7 +143,7 @@ public class EntityIdentityTests
         var identity = new EntityIdentity(0, 0, 0, 0);
         long globalKey = identity.GlobalKey;
 
-        var (shardId, zoneId, id) = EntityIdentity.DecodeGlobalKey(globalKey);
+        (ushort shardId, ushort zoneId, int id) = EntityIdentity.DecodeGlobalKey(globalKey);
 
         Assert.Equal(0, shardId);
         Assert.Equal(0, zoneId);
@@ -156,7 +156,7 @@ public class EntityIdentityTests
         var identity = new EntityIdentity(int.MaxValue, ushort.MaxValue, ushort.MaxValue, 0);
         long globalKey = identity.GlobalKey;
 
-        var (shardId, zoneId, id) = EntityIdentity.DecodeGlobalKey(globalKey);
+        (ushort shardId, ushort zoneId, int id) = EntityIdentity.DecodeGlobalKey(globalKey);
 
         Assert.Equal(ushort.MaxValue, shardId);
         Assert.Equal(ushort.MaxValue, zoneId);
@@ -171,8 +171,8 @@ public class EntityIdentityTests
         string result = identity.ToString();
 
         Assert.Contains("100", result); // ZoneId
-        Assert.Contains("42", result);  // Id
-        Assert.Contains("7", result);   // PrefabId
+        Assert.Contains("42", result); // Id
+        Assert.Contains("7", result); // PrefabId
     }
 
     [Fact]

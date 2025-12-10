@@ -118,7 +118,10 @@ public class MessageSerializerTests
     {
         ushort zoneId = 0;
         var original = new ZoneState(12345, zoneId,
-            [new PlayerEntity(Guid.Empty, "Player1", new Position(0, 0)), new PlayerEntity(Guid.Empty, "Player2", new Position(0, 0))]);
+        [
+            new PlayerEntity(Guid.Empty, "Player1", new Position(0, 0)),
+            new PlayerEntity(Guid.Empty, "Player2", new Position(0, 0))
+        ]);
 
         byte[] bytes = MessageSerializer.Serialize(original);
 

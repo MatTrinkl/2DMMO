@@ -1,5 +1,6 @@
 using Mmo.Server.Networking;
 using Mmo.Server.Networking.NetworkEvents;
+using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Tests.Helpers;
@@ -69,14 +70,14 @@ public class MockNetworkServer : INetworkServer
         return Task.CompletedTask;
     }
 
-    public IEnumerable<Guid> GetConnectedClientIds()
-    {
-        return _connectedClients.ToList();
-    }
+    public IEnumerable<Guid> GetConnectedClientIds() => _connectedClients.ToList();
 
-    public bool IsClientConnected(Guid clientId)
+    public bool IsClientConnected(Guid clientId) => _connectedClients.Contains(clientId);
+
+    public void Dispose()
     {
-        return _connectedClients.Contains(clientId);
+        _isDisposed = true;
+        _connectedClients.Clear();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -88,17 +89,14 @@ public class MockNetworkServer : INetworkServer
     /// </summary>
     public void SimulateClientConnected(Guid clientId, string remoteEndPoint = "127.0.0.1:12345")
     {
-        if (!_connectedClients.Contains(clientId))
-        {
-            _connectedClients.Add(clientId);
-        }
+        if (!_connectedClients.Contains(clientId)) _connectedClients.Add(clientId);
         ClientConnected?.Invoke(this, new ClientConnectedEventArgs(clientId, remoteEndPoint));
     }
 
     /// <summary>
     ///     Simulates a client disconnecting from the server.
     /// </summary>
-    public void SimulateClientDisconnected(Guid clientId, Mmo.Shared.Enums.DisconnectReason reason)
+    public void SimulateClientDisconnected(Guid clientId, DisconnectReason reason)
     {
         _connectedClients.Remove(clientId);
         ClientDisconnected?.Invoke(this, new ClientDisconnectedEventArgs(clientId, reason));
@@ -107,18 +105,14 @@ public class MockNetworkServer : INetworkServer
     /// <summary>
     ///     Simulates receiving a message from a client.
     /// </summary>
-    public void SimulateMessageReceived(Guid clientId, INetworkMessage message)
-    {
+    public void SimulateMessageReceived(Guid clientId, INetworkMessage message) =>
         MessageReceived?.Invoke(this, new MessageReceivedEventArgs(clientId, message));
-    }
 
     /// <summary>
     ///     Simulates a network error occurring.
     /// </summary>
-    public void SimulateNetworkError(Guid? clientId, Exception exception, string context = "Test error")
-    {
+    public void SimulateNetworkError(Guid? clientId, Exception exception, string context = "Test error") =>
         ErrorOccurred?.Invoke(this, new NetworkErrorEventArgs(clientId, exception, context));
-    }
 
     /// <summary>
     ///     Clears all tracked messages and events.
@@ -129,11 +123,5 @@ public class MockNetworkServer : INetworkServer
         BroadcastMessages.Clear();
         BroadcastExceptMessages.Clear();
         KickedClients.Clear();
-    }
-
-    public void Dispose()
-    {
-        _isDisposed = true;
-        _connectedClients.Clear();
     }
 }

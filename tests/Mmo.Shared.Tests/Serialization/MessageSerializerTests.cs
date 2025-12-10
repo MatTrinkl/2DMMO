@@ -6,7 +6,6 @@ using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
 using Mmo.Shared.Messages.ZoneEvents;
 using Mmo.Shared.Records;
-using Mmo.Shared.Serialization;
 
 namespace Mmo.Shared.Tests.Serialization;
 
@@ -25,7 +24,7 @@ public class MessageSerializerTests
         var original = new LoginRequest("testuser", "password123");
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
+        LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.LoginRequest, deserialized.Type);
@@ -40,7 +39,7 @@ public class MessageSerializerTests
         var original = new LoginResponse(true, playerId, 0, null);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<LoginResponse>(serialized);
+        LoginResponse deserialized = MessagePackSerializer.Deserialize<LoginResponse>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.LoginResponse, deserialized.Type);
@@ -57,7 +56,7 @@ public class MessageSerializerTests
         var original = new Heartbeat(12345L, playerId);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
+        Heartbeat deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.Heartbeat, deserialized.Type);
@@ -72,7 +71,7 @@ public class MessageSerializerTests
         var original = new Disconnect(playerId);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Disconnect>(serialized);
+        Disconnect deserialized = MessagePackSerializer.Deserialize<Disconnect>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.Disconnect, deserialized.Type);
@@ -91,7 +90,7 @@ public class MessageSerializerTests
         var original = new PositionUpdate(98765L, player, newPos);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<PositionUpdate>(serialized);
+        PositionUpdate deserialized = MessagePackSerializer.Deserialize<PositionUpdate>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.PositionUpdate, deserialized.Type);
@@ -109,7 +108,7 @@ public class MessageSerializerTests
         var original = new PositionBroadcast(11111L, entityId, newPos);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<PositionBroadcast>(serialized);
+        PositionBroadcast deserialized = MessagePackSerializer.Deserialize<PositionBroadcast>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.PositionBroadcast, deserialized.Type);
@@ -131,7 +130,7 @@ public class MessageSerializerTests
         var original = new ChatMessage(entityId, "Hello, world!");
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
+        ChatMessage deserialized = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.ChatMessage, deserialized.Type);
@@ -146,7 +145,7 @@ public class MessageSerializerTests
         var original = new ChatBroadcast(entityId, "Broadcast message");
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ChatBroadcast>(serialized);
+        ChatBroadcast deserialized = MessagePackSerializer.Deserialize<ChatBroadcast>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.ChatBroadcast, deserialized.Type);
@@ -165,7 +164,7 @@ public class MessageSerializerTests
         var original = new JoinZone(playerId);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
+        JoinZone deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.JoinZone, deserialized.Type);
@@ -179,7 +178,7 @@ public class MessageSerializerTests
         var original = new LeaveZone(playerId);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<LeaveZone>(serialized);
+        LeaveZone deserialized = MessagePackSerializer.Deserialize<LeaveZone>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.LeaveZone, deserialized.Type);
@@ -193,7 +192,7 @@ public class MessageSerializerTests
         var original = new PlayerJoinedZone(player);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<PlayerJoinedZone>(serialized);
+        PlayerJoinedZone deserialized = MessagePackSerializer.Deserialize<PlayerJoinedZone>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.PlayerJoinedZone, deserialized.Type);
@@ -208,7 +207,7 @@ public class MessageSerializerTests
         var original = new PlayerLeftZone(player);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<PlayerLeftZone>(serialized);
+        PlayerLeftZone deserialized = MessagePackSerializer.Deserialize<PlayerLeftZone>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.PlayerLeftZone, deserialized.Type);
@@ -226,7 +225,7 @@ public class MessageSerializerTests
         var original = new LoginRequest("", "");
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
+        LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal("", deserialized.Username);
@@ -239,7 +238,7 @@ public class MessageSerializerTests
         var original = new JoinZone(Guid.Empty);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
+        JoinZone deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(Guid.Empty, deserialized.PlayerId);
@@ -252,7 +251,7 @@ public class MessageSerializerTests
         var original = new Heartbeat(long.MaxValue, playerId);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
+        Heartbeat deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal(long.MaxValue, deserialized.Timestamp);
@@ -266,7 +265,7 @@ public class MessageSerializerTests
         var original = new ChatMessage(entityId, "Hello 你好 🎮 \n\t\r");
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
+        ChatMessage deserialized = MessagePackSerializer.Deserialize<ChatMessage>(serialized);
 
         Assert.NotNull(deserialized);
         Assert.Equal("Hello 你好 🎮 \n\t\r", deserialized.Message);

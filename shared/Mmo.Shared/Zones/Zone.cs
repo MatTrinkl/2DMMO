@@ -53,7 +53,7 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
         if (HasEntity(entity))
             throw new ArgumentException($"Entity {entity} is already registered in Zone {ZoneId} ({ZoneName})");
 
-        int newEntityId = _freedIds.Count > 0 ? _freedIds. Dequeue() : _nextEntityId++;
+        int newEntityId = _freedIds.Count > 0 ? _freedIds.Dequeue() : _nextEntityId++;
 
         entity.SetEntityId(newEntityId, ZoneId);
 

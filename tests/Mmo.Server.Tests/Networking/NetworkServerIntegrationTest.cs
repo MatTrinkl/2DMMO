@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using MessagePack;
 using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
@@ -17,9 +16,9 @@ namespace Mmo.Server.Tests.Networking;
 /// </summary>
 public class NetworkServerIntegrationTests : IAsyncLifetime
 {
-    private readonly ITestOutputHelper _testOutputHelper;
     private const int _testPort = 17777;
     private readonly MockLog _log = new();
+    private readonly ITestOutputHelper _testOutputHelper;
     private NetworkServer _server = null!;
     private CancellationTokenSource _serverCts = null!;
     private Task _serverTask = null!;
@@ -68,7 +67,7 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         await tcpClient.ConnectAsync("127.0.0.1", _testPort);
 
         // Assert
-        var clientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid clientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.NotEqual(Guid.Empty, clientId);
         Assert.Equal(1, _server.ClientCount);
     }
@@ -87,12 +86,12 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         var tcpClient = new TcpClient();
         await tcpClient.ConnectAsync("127.0.0.1", _testPort);
 
-        var connectedClientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid connectedClientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         tcpClient.Close();
 
         // Assert
-        var disconnectedClientId = await clientDisconnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid disconnectedClientId = await clientDisconnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.Equal(connectedClientId, disconnectedClientId);
     }
 
@@ -101,15 +100,12 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
     {
         // Arrange:  Connect 3 clients and wait for each connection to be confirmed
         var clients = new List<TcpClient>();
-        var connectedCount = 0;
+        int connectedCount = 0;
         var allConnectedTcs = new TaskCompletionSource();
 
         _server.ClientConnected += (_, _) =>
         {
-            if (Interlocked.Increment(ref connectedCount) == 3)
-            {
-                allConnectedTcs.TrySetResult();
-            }
+            if (Interlocked.Increment(ref connectedCount) == 3) allConnectedTcs.TrySetResult();
         };
 
         for (int i = 0; i < 3; i++)
@@ -133,18 +129,15 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         await Task.Delay(100);
 
         // Assert: All clients receive the message
-        foreach (var client in clients)
+        foreach (TcpClient client in clients)
         {
-            var message = await ReadMessageWithTimeoutAsync(client, TimeSpan.FromSeconds(2));
+            INetworkMessage? message = await ReadMessageWithTimeoutAsync(client, TimeSpan.FromSeconds(2));
             Assert.NotNull(message);
             Assert.IsType<PlayerJoinedZone>(message);
         }
 
         // Cleanup
-        foreach (var client in clients)
-        {
-            client.Close();
-        }
+        foreach (TcpClient client in clients) client.Close();
     }
 
     [Fact]
@@ -157,7 +150,7 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         using var tcpClient = new TcpClient();
         await tcpClient.ConnectAsync("127.0.0.1", _testPort);
 
-        var clientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid clientId = await clientConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         // Act: Server sends message to client
         var loginResponse = new LoginResponse
@@ -201,7 +194,7 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         await SendMessageAsync(tcpClient, loginRequest);
 
         // Assert
-        var receivedMessage = await messageReceivedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        INetworkMessage receivedMessage = await messageReceivedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.IsType<LoginRequest>(receivedMessage);
         Assert.Equal("TestUser", ((LoginRequest)receivedMessage).Username);
     }
@@ -212,11 +205,11 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         // Arrange:  Connect 2 clients
         var client1ConnectedTcs = new TaskCompletionSource<Guid>();
         var client2ConnectedTcs = new TaskCompletionSource<Guid>();
-        var connectionCount = 0;
+        int connectionCount = 0;
 
         _server.ClientConnected += (_, args) =>
         {
-            var count = Interlocked.Increment(ref connectionCount);
+            int count = Interlocked.Increment(ref connectionCount);
             if (count == 1)
                 client1ConnectedTcs.TrySetResult(args.ClientId);
             else if (count == 2)
@@ -225,11 +218,11 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
 
         using var client1 = new TcpClient();
         await client1.ConnectAsync("127.0.0.1", _testPort);
-        var client1Id = await client1ConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid client1Id = await client1ConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         using var client2 = new TcpClient();
         await client2.ConnectAsync("127.0.0.1", _testPort);
-        var client2Id = await client2ConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        Guid client2Id = await client2ConnectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         Assert.Equal(2, _server.ClientCount);
 
@@ -243,12 +236,12 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         await Task.Delay(200);
 
         // Assert: Client2 SHOULD receive message
-        var message2 = await ReadMessageWithTimeoutAsync(client2, TimeSpan.FromSeconds(2));
+        INetworkMessage? message2 = await ReadMessageWithTimeoutAsync(client2, TimeSpan.FromSeconds(2));
         Assert.NotNull(message2);
         Assert.IsType<PlayerJoinedZone>(message2);
 
         // Assert: Client1 should NOT receive message (expect null/timeout)
-        var message1 = await ReadMessageWithTimeoutAsync(client1, TimeSpan.FromMilliseconds(300));
+        INetworkMessage? message1 = await ReadMessageWithTimeoutAsync(client1, TimeSpan.FromMilliseconds(300));
         Assert.Null(message1); // This is expected - client1 was excluded
     }
 
@@ -267,7 +260,7 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
     private static async Task SendMessageAsync<T>(TcpClient client, T message)
         where T : INetworkMessage
     {
-        var stream = client.GetStream();
+        NetworkStream stream = client.GetStream();
 
         // Verwende MessageSerializer statt MessagePackSerializer!
         byte[] messageBytes = MessageSerializer.Serialize(message);
@@ -278,21 +271,18 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
         await stream.FlushAsync();
     }
 
-    private static async Task<INetworkMessage? > ReadMessageWithTimeoutAsync(
+    private static async Task<INetworkMessage?> ReadMessageWithTimeoutAsync(
         TcpClient client,
         TimeSpan timeout)
     {
         try
         {
             using var cts = new CancellationTokenSource(timeout);
-            var stream = client.GetStream();
+            NetworkStream stream = client.GetStream();
 
             // Wait for data
-            var waitStart = DateTime.UtcNow;
-            while (! stream.DataAvailable && DateTime.UtcNow - waitStart < timeout)
-            {
-                await Task.Delay(10, cts.Token);
-            }
+            DateTime waitStart = DateTime.UtcNow;
+            while (!stream.DataAvailable && DateTime.UtcNow - waitStart < timeout) await Task.Delay(10, cts.Token);
 
             if (!stream.DataAvailable)
                 return null;
@@ -303,7 +293,7 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
             while (bytesRead < 4)
             {
                 int read = await stream.ReadAsync(
-                    lengthBuffer. AsMemory(bytesRead, 4 - bytesRead),
+                    lengthBuffer.AsMemory(bytesRead, 4 - bytesRead),
                     cts.Token);
 
                 if (read == 0)
@@ -323,8 +313,8 @@ public class NetworkServerIntegrationTests : IAsyncLifetime
             bytesRead = 0;
             while (bytesRead < (int)messageLength)
             {
-                int read = await stream. ReadAsync(
-                    messageBuffer. AsMemory(bytesRead, (int)messageLength - bytesRead),
+                int read = await stream.ReadAsync(
+                    messageBuffer.AsMemory(bytesRead, (int)messageLength - bytesRead),
                     cts.Token);
 
                 if (read == 0)

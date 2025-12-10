@@ -13,7 +13,7 @@ public static class TestHelpers
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
         var zoneManager = new ZoneManager(0, defaultZone);
 
-        foreach (var (id, name) in zones)
+        foreach ((ushort id, string name) in zones)
         {
             if (id == 0) continue; // Default already exists
             var zone = new Zone(id, name, new ZoneBounds(0, 0, 1000, 1000));
@@ -41,7 +41,7 @@ public static class TestHelpers
     public static List<ServerPlayer> CreateMultiplePlayers(int count)
     {
         return Enumerable.Range(0, count)
-            .Select(i => CreateServerPlayer(name: $"Player{i}"))
+            .Select(i => CreateServerPlayer($"Player{i}"))
             .ToList();
     }
 }
