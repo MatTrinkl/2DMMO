@@ -108,7 +108,7 @@ public class ZoneManagerTests
         zoneManager.AddPlayer(player, zoneId: 1);
 
         Assert.Equal(1, zoneManager.PlayerCount);
-        var playersInZone = zoneManager. GetServerPlayersInZone(1).ToList();
+        var playersInZone = zoneManager.GetServerPlayersInZone(1).ToList();
         Assert.Single(playersInZone);
         Assert.Equal(player.ConnectionId, playersInZone[0].ConnectionId);
     }

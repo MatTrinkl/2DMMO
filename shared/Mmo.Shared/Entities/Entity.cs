@@ -1,31 +1,23 @@
+// shared/Mmo. Shared/Entities/Entity. cs
 using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
 
-/// <summary>
-///     The parent class of all entities for now. Todo: Split this into Prefab and Living.
-/// </summary>
 [MessagePackObject]
 [Union(0, typeof(PlayerEntity))]
-[Union(1, typeof(MobEntity))]
-public abstract class Entity : IEntity
+// [Union(1, typeof(MobEntity))]  // Später hinzufügen
+public abstract class Entity :  IEntity
 {
-    /// <summary>
-    ///     The constructor used by <see cref="MessagePackSerializer" />.
-    /// </summary>
     [SerializationConstructor]
-    public Entity()
+    protected Entity()
     {
     }
 
     /// <summary>
-    ///     Constructor for persistent entities (Players, static NPCs).
+    ///     Constructor for persistent entities (Players, NPCs from config).
     /// </summary>
-    /// <param name="persistentId">The ID that never changes.</param>
-    /// <param name="position">The current position of this entity.</param>
-    /// <param name="isTrulyPersistent">Whether this entity is saved to DB.</param>
     protected Entity(Guid persistentId, Position position, bool isTrulyPersistent = true)
     {
         PersistentId = persistentId;
@@ -34,60 +26,56 @@ public abstract class Entity : IEntity
     }
 
     /// <summary>
-    ///     Constructor for runtime entities (spawned mobs, projectiles).
-    ///     Automatically generates a new PersistentId.
+    ///     Constructor for runtime entities (Spawned Mobs, Projectiles).
+    ///     Generates a new PersistentId automatically.
     /// </summary>
-    /// <param name="position">The current position of this entity.</param>
     protected Entity(Position position)
     {
-        PersistentId = Guid.NewGuid();
+        PersistentId = Guid. NewGuid();
         Position = position;
         IsTrulyPersistent = false;
     }
 
     /// <summary>
-    ///     This identifies the entity everywhere.
+    ///     Runtime identity - changes on zone transfer.
     /// </summary>
     [Key(0)]
-    public EntityIdentity EntityId { get; protected init; }
+    public EntityIdentity EntityId { get; protected set; }
 
     /// <summary>
-    ///     Persistent identity - never changes.
-    ///     • Players: CharacterId from database
-    ///     • Static NPCs/Objects: From zone config
-    ///     • Spawned Mobs/Projectiles: Generated at creation
+    ///     Stable identity - never changes.
     /// </summary>
     [Key(1)]
     public Guid PersistentId { get; protected init; }
 
     /// <summary>
-    ///     The current position of this entity in its current zone..
+    ///     The current position of this entity.
     /// </summary>
     [Key(2)]
     public Position Position { get; set; } = new(0, 0);
 
     /// <summary>
-    ///     Whether this entity is truly persistent (saved to DB)
-    ///     or just runtime-persistent (exists only this session).
+    ///     True if this entity is saved to database.
     /// </summary>
     [Key(3)]
     public bool IsTrulyPersistent { get; protected init; }
 
-    /// <summary>
-    ///     Type of the entity.
-    /// </summary>
     [IgnoreMember]
     public abstract EntityType Type { get; }
 
-    /// <summary>
-    ///     Role of the entity.
-    /// </summary>
     [IgnoreMember]
     public abstract EntityRole Role { get; }
 
     /// <summary>
-    ///     This method will be called when this entity changes zone.
+    ///     Sets the runtime EntityId. Called by Zone when entity is added.
+    ///     Handles struct copy correctly.
     /// </summary>
-    /// <param name="newZoneId">ID of the zone.</param>
+    public void SetEntityId(int id, ushort zoneId)
+    {
+        EntityIdentity identity = EntityId;
+        identity.ZoneTransfer(id, zoneId);
+        EntityId = identity;
+    }
+
     public abstract void ChangeZone(ushort newZoneId);
 }

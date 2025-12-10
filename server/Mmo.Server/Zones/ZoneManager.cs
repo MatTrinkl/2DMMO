@@ -209,7 +209,7 @@ public class ZoneManager
     /// <param name="zoneId">The zone ID to filter by.</param>
     public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort zoneId)
     {
-        return _playersByConnectionId.Values
+        return GetAllServerPlayers()
             .Where(p => p.Entity.EntityId.ZoneId == zoneId);
     }
 

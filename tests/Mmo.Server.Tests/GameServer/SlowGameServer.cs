@@ -7,29 +7,22 @@ namespace Mmo.Server.Tests.GameServer;
 ///     A test implementation of GameServer that simulates slow tick phases
 ///     for testing tick overrun handling.
 /// </summary>
-internal sealed class SlowGameServer : Server. GameLoop.GameServer
+internal sealed class SlowGameServer(
+    ILog log,
+    INetworkServer networkServer,
+    TimeSpan? inputPhaseDuration = null,
+    TimeSpan? updatePhaseDuration = null,
+    TimeSpan? outputPhaseDuration = null)
+    : Server.GameLoop.GameServer(log, networkServer)
 {
-    private readonly TimeSpan _inputPhaseDuration;
-    private readonly TimeSpan _updatePhaseDuration;
-    private readonly TimeSpan _outputPhaseDuration;
-
-    public SlowGameServer(
-        ILog log,
-        NetworkServer networkServer,
-        TimeSpan?  inputPhaseDuration = null,
-        TimeSpan? updatePhaseDuration = null,
-        TimeSpan? outputPhaseDuration = null)
-        : base(log, networkServer)
-    {
-        _inputPhaseDuration = inputPhaseDuration ??  TimeSpan.Zero;
-        _updatePhaseDuration = updatePhaseDuration ?? TimeSpan.Zero;
-        _outputPhaseDuration = outputPhaseDuration ?? TimeSpan.Zero;
-    }
+    private readonly TimeSpan _inputPhaseDuration = inputPhaseDuration ??  TimeSpan.Zero;
+    private readonly TimeSpan _updatePhaseDuration = updatePhaseDuration ?? TimeSpan.Zero;
+    private readonly TimeSpan _outputPhaseDuration = outputPhaseDuration ?? TimeSpan.Zero;
 
     /// <summary>
     ///     Convenience constructor for simple slow tick simulation.
     /// </summary>
-    public SlowGameServer(ILog log, NetworkServer networkServer, TimeSpan tickWorkDuration)
+    public SlowGameServer(ILog log, INetworkServer networkServer, TimeSpan tickWorkDuration)
         : this(log, networkServer, inputPhaseDuration: tickWorkDuration)
     {
     }
@@ -38,16 +31,29 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     {
         if (_inputPhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_inputPhaseDuration, cancellationToken);
+            try
+            {
+                await Task. Delay(_inputPhaseDuration, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when test cancels - just return
+            }
         }
-        // Don't call base - we don't want to process real messages in tests
     }
 
     protected override async Task UpdatePhaseAsync(CancellationToken cancellationToken)
     {
         if (_updatePhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_updatePhaseDuration, cancellationToken);
+            try
+            {
+                await Task. Delay(_updatePhaseDuration, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when test cancels - still increment tick
+            }
         }
 
         // Call base to increment CurrentTick
@@ -58,7 +64,14 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     {
         if (_outputPhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_outputPhaseDuration, cancellationToken);
+            try
+            {
+                await Task.Delay(_outputPhaseDuration, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when test cancels - just return
+            }
         }
         // Don't call base - we don't want to broadcast in tests
     }
