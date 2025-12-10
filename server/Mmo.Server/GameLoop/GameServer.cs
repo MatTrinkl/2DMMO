@@ -215,14 +215,14 @@ public class GameServer
     /// </summary>
     private async Task BroadcastDirtyEntitiesAsync(long timestamp)
     {
-        // Collect dirty Entities und group them by Zone
-        IEnumerable<IGrouping<ushort, IEntity?>> entitiesByZone = _dirtyEntities
+        // Collect dirty Entities and group them by Zone
+        IEnumerable<IGrouping<ushort, IEntity>> entitiesByZone = _dirtyEntities
             .Select(persistentId =>
                 ZoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity) ? entity : null)
-            .Where(e => e != null)
-            .GroupBy(e => e!.EntityId.ZoneId);
+            .OfType<IEntity>()
+            .GroupBy(e => e.EntityId.ZoneId);
 
-        foreach (IGrouping<ushort, IEntity?> zoneGroup in entitiesByZone)
+        foreach (IGrouping<ushort, IEntity> zoneGroup in entitiesByZone)
         {
             ushort zoneId = zoneGroup.Key;
             var playersInZone = ZoneManager.GetServerPlayersInZone(zoneId).ToList();
@@ -230,12 +230,8 @@ public class GameServer
             if (playersInZone.Count == 0)
                 continue;
 
-            foreach (IEntity? entity in zoneGroup)
+            foreach (IEntity entity in zoneGroup)
             {
-                // Skip null entities
-                if (entity == null)
-                    continue;
-
                 var positionBroadcast = new PositionBroadcast(
                     timestamp,
                     entity.PersistentId,
