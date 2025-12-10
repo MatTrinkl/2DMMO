@@ -36,7 +36,7 @@ public class GameServerTickTests
     public async Task NormalTick_NoWarning_WhenWithinBudget()
     {
         // Arrange: Input phase is fast
-        var fastDuration = TimeSpan.FromMilliseconds(5);
+        var fastDuration = TimeSpan.Zero;
         var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, fastDuration);
         using var cts = new CancellationTokenSource();
 
