@@ -51,18 +51,6 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// <summary>Fired when a network error occurs.</summary>
     public event EventHandler<NetworkErrorEventArgs>? ErrorOccurred;
 
-    // ══════════════════════════════════════════════════════════
-    // EVENT INVOKERS
-    // ══════════════════════════════════════════════════════════
-
-    private void OnClientConnected(ClientConnectedEventArgs e) => ClientConnected?.Invoke(this, e);
-
-    private void OnClientDisconnected(ClientDisconnectedEventArgs e) => ClientDisconnected?.Invoke(this, e);
-
-    private void OnMessageReceived(MessageReceivedEventArgs e) => MessageReceived?.Invoke(this, e);
-
-    private void OnErrorOccurred(NetworkErrorEventArgs e) => ErrorOccurred?.Invoke(this, e);
-
 
     /// <summary>
     ///     Starts the server and listens for incoming connections.
@@ -109,32 +97,6 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
         {
             await ShutdownAsync();
         }
-    }
-
-    /// <summary>
-    ///     Sets up event handlers for a client connection.
-    /// </summary>
-    private void SetupConnectionEvents(ClientConnection connection)
-    {
-        // Message received
-        connection.MessageReceived += message =>
-        {
-            OnMessageReceived(new MessageReceivedEventArgs(connection.Id, message));
-        };
-
-        // Client disconnected (with reason from ClientConnection)
-        connection.Disconnected += reason => { HandleDisconnect(connection.Id, reason); };
-    }
-
-    /// <summary>
-    ///     Handles client disconnection.
-    /// </summary>
-    private void HandleDisconnect(Guid clientId, DisconnectReason reason)
-    {
-        if (_clients.TryRemove(clientId, out ClientConnection? connection)) connection.Dispose();
-
-        OnClientDisconnected(new ClientDisconnectedEventArgs(clientId, reason));
-        log.Info("Client {ClientId} disconnected:  {Reason}", clientId, reason);
     }
 
     /// <summary>
@@ -195,6 +157,44 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// </summary>
     /// <param name="clientId">The client ID to check.</param>
     public bool IsClientConnected(Guid clientId) => _clients.ContainsKey(clientId);
+
+    // ══════════════════════════════════════════════════════════
+    // EVENT INVOKERS
+    // ══════════════════════════════════════════════════════════
+
+    private void OnClientConnected(ClientConnectedEventArgs e) => ClientConnected?.Invoke(this, e);
+
+    private void OnClientDisconnected(ClientDisconnectedEventArgs e) => ClientDisconnected?.Invoke(this, e);
+
+    private void OnMessageReceived(MessageReceivedEventArgs e) => MessageReceived?.Invoke(this, e);
+
+    private void OnErrorOccurred(NetworkErrorEventArgs e) => ErrorOccurred?.Invoke(this, e);
+
+    /// <summary>
+    ///     Sets up event handlers for a client connection.
+    /// </summary>
+    private void SetupConnectionEvents(ClientConnection connection)
+    {
+        // Message received
+        connection.MessageReceived += message =>
+        {
+            OnMessageReceived(new MessageReceivedEventArgs(connection.Id, message));
+        };
+
+        // Client disconnected (with reason from ClientConnection)
+        connection.Disconnected += reason => { HandleDisconnect(connection.Id, reason); };
+    }
+
+    /// <summary>
+    ///     Handles client disconnection.
+    /// </summary>
+    private void HandleDisconnect(Guid clientId, DisconnectReason reason)
+    {
+        if (_clients.TryRemove(clientId, out ClientConnection? connection)) connection.Dispose();
+
+        OnClientDisconnected(new ClientDisconnectedEventArgs(clientId, reason));
+        log.Info("Client {ClientId} disconnected:  {Reason}", clientId, reason);
+    }
 
     /// <summary>
     ///     Gracefully shuts down the server and disconnects all clients.

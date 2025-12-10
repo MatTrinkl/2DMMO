@@ -60,11 +60,11 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
     /// <summary>
     ///     Sends a message to this client.
     /// </summary>
-    public async Task SendAsync(INetworkMessage message)  // ← Nicht mehr generisch!
+    public async Task SendAsync(INetworkMessage message) // ← Nicht mehr generisch!
     {
         if (_isDisposed || _isDisconnecting)
         {
-            log. Warn("Cannot send to disposed/disconnecting client {ClientId}", Id);
+            log.Warn("Cannot send to disposed/disconnecting client {ClientId}", Id);
             return;
         }
 
@@ -74,7 +74,7 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
             byte[] payload = SerializeMessage(message);
 
             // Frame:  [4 Bytes Length][Payload]
-            byte[] lengthBytes = BitConverter. GetBytes((uint)payload.Length);
+            byte[] lengthBytes = BitConverter.GetBytes((uint)payload.Length);
 
             await _stream.WriteAsync(lengthBytes);
             await _stream.WriteAsync(payload);
@@ -86,8 +86,8 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
         }
         catch (IOException ex)
         {
-            log.Error("Send failed for client {ClientId}: {Error}", Id, ex. Message);
-            await DisconnectAsync(DisconnectReason. NetworkError);
+            log.Error("Send failed for client {ClientId}: {Error}", Id, ex.Message);
+            await DisconnectAsync(DisconnectReason.NetworkError);
         }
         catch (Exception ex)
         {
@@ -102,7 +102,7 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
     private static byte[] SerializeMessage(INetworkMessage message)
     {
         // Verwende dynamic um den KONKRETEN Typ zu serialisieren
-        return MessageSerializer. Serialize((dynamic)message);
+        return MessageSerializer.Serialize((dynamic)message);
     }
 
     /// <summary>
