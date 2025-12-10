@@ -215,7 +215,7 @@ public class GameServer
     /// </summary>
     private async Task BroadcastDirtyEntitiesAsync(long timestamp)
     {
-        // Collect dirty Entities und group them by Zone
+        // Collect dirty Entities and group them by Zone
         IEnumerable<IGrouping<ushort, IEntity>> entitiesByZone = _dirtyEntities
             .Select(persistentId =>
                 ZoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity) ? entity : null)
