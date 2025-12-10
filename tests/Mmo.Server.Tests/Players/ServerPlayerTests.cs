@@ -11,8 +11,7 @@ public class ServerPlayerTests
     {
         var persistentId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0), persistentId, "TestPlayer",
-            new Position(100, 200));
+        var entity = new PlayerEntity(persistentId, "TestPlayer", new Position(100, 200));
 
         var serverPlayer = new ServerPlayer(entity, connectionId);
 
@@ -25,7 +24,7 @@ public class ServerPlayerTests
     [Fact]
     public void ConnectedAt_IsSetToCurrentTime()
     {
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0),Guid.NewGuid(), "Test", new Position(0, 0));
+        var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
         var before = DateTimeOffset.UtcNow;
 
         var serverPlayer = new ServerPlayer(entity, Guid.NewGuid());
@@ -38,7 +37,7 @@ public class ServerPlayerTests
     [Fact]
     public void LastActivity_CanBeUpdated()
     {
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0),Guid.NewGuid(), "Test", new Position(0, 0));
+        var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
         var serverPlayer = new ServerPlayer(entity, Guid.NewGuid());
         var originalActivity = serverPlayer.LastActivity;
 

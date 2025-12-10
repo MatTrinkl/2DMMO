@@ -19,27 +19,13 @@ public class PlayerEntity : Entity
     }
 
     /// <summary>
-    ///     Creates a new PlayerState object.
-    /// </summary>
-    /// <param name="playerId">ID of the Player (Entity).</param>
-    /// <param name="characterId">Persistent ID from database - NEVER changes. </param>
-    /// <param name="displayName">Username of the Player.</param>
-    /// <param name="x">Current X Position.</param>
-    /// <param name="y">Current Y Position.</param>
-    public PlayerEntity(EntityIdentity playerId,Guid characterId, string displayName, float x, float y):base(playerId, characterId, new Position(x, y))
-    {
-        DisplayName = displayName;
-    }
-
-    /// <summary>
     ///     Creates a new PlayerEntity.
     /// </summary>
-    /// <param name="playerId">ID of the Player (Entity).</param>
-    /// <param name="characterId">Persistent ID from database - NEVER changes. </param>
+    /// <param name="characterId">Persistent ID from database - NEVER changes.</param>
     /// <param name="displayName">Username of the player.</param>
-    /// <param name="position">Starting position. </param>
-    public PlayerEntity(EntityIdentity playerId,Guid characterId, string displayName, Position position)
-        : base(playerId, characterId, position)
+    /// <param name="position">Starting position.</param>
+    public PlayerEntity(Guid characterId, string displayName, Position position)
+        : base(characterId, position, isTrulyPersistent: true)
     {
         DisplayName = displayName;
     }
@@ -47,19 +33,19 @@ public class PlayerEntity : Entity
     /// <summary>
     ///     The username of the player.
     /// </summary>
-    [Key(3)]
-    public string DisplayName { get; set; }
+    [Key(4)]
+    public string DisplayName { get; set; } = "";
 
     /// <summary>
     ///     The EntityType of the player is Player.
     /// </summary>
-    [Key(4)]
+    [Key(5)]
     public override EntityType Type => EntityType.Player;
 
     /// <summary>
     ///     The player has no EntityRole for now.
     /// </summary>
-    [Key(5)]
+    [Key(6)]
     public override EntityRole Role => EntityRole.None;
 
     /// <summary>

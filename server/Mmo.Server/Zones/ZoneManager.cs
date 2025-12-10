@@ -131,12 +131,9 @@ public class ZoneManager
         // Add to ConnectionId lookup (session-stable)
         _playersByConnectionId.TryAdd(serverPlayer.ConnectionId, serverPlayer);
 
-        // Add to PersistentId lookups (permanent-stable)
-        if (serverPlayer.Entity.IsPersistent)
-        {
-            _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId!.Value, serverPlayer);
-            _entitiesByPersistentId.TryAdd(serverPlayer.Entity.PersistentId!.Value, serverPlayer.Entity);
-        }
+        // Add to PersistentId lookups (permanent-stable, all entities have PersistentId now)
+        _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer);
+        _entitiesByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer.Entity);
     }
 
     /// <summary>
@@ -150,11 +147,8 @@ public class ZoneManager
             return null;
 
         // Remove from PersistentId lookups
-        if (serverPlayer.Entity.PersistentId.HasValue)
-        {
-            _playersByPersistentId.TryRemove(serverPlayer.Entity.PersistentId.Value, out _);
-            _entitiesByPersistentId.TryRemove(serverPlayer.Entity.PersistentId.Value, out _);
-        }
+        _playersByPersistentId.TryRemove(serverPlayer.Entity.PersistentId, out _);
+        _entitiesByPersistentId.TryRemove(serverPlayer.Entity.PersistentId, out _);
 
         // Remove from zone
         ushort zoneId = serverPlayer.Entity.EntityId.ZoneId;
@@ -232,53 +226,48 @@ public class ZoneManager
     public bool HasPlayerWithPersistentId(Guid persistentId) => _playersByPersistentId.ContainsKey(persistentId);
 
     /// <summary>
-    ///     Adds a persistent entity (NPC, static object from zone config).
+    ///     Adds any entity to a zone (Players, NPCs, Mobs, etc.).
+    ///     All entities now have a PersistentId.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
     /// <param name="zoneId">The zone to add the entity to.</param>
-    /// <exception cref="ArgumentException">Thrown when entity has no PersistentId.</exception>
     /// <exception cref="InvalidOperationException">Thrown when zone doesn't exist.</exception>
-    public void AddPersistentEntity(IEntity entity, ushort zoneId)
+    public void AddEntity(IEntity entity, ushort zoneId)
     {
         ArgumentNullException.ThrowIfNull(entity);
-
-        if (!entity.PersistentId.HasValue)
-            throw new ArgumentException(
-                "Entity must have a PersistentId.  Use AddDynamicEntity for temporary entities.");
 
         Zone? zone = GetZone(zoneId);
         if (zone == null)
             throw new InvalidOperationException($"Zone {zoneId} does not exist.");
 
         zone.AddEntity(entity);
-        _entitiesByPersistentId.TryAdd(entity.PersistentId.Value, entity);
+        _entitiesByPersistentId.TryAdd(entity.PersistentId, entity);
     }
+
+    /// <summary>
+    ///     Adds a persistent entity (NPC, static object from zone config).
+    ///     Deprecated: Use AddEntity instead.
+    /// </summary>
+    /// <param name="entity">The entity to add.</param>
+    /// <param name="zoneId">The zone to add the entity to.</param>
+    [Obsolete("Use AddEntity instead - all entities now have PersistentId")]
+    public void AddPersistentEntity(IEntity entity, ushort zoneId) => AddEntity(entity, zoneId);
 
     /// <summary>
     ///     Adds a dynamic/temporary entity (spawned mob, projectile, drop).
-    ///     These entities have no PersistentId and are only tracked in the Zone.
+    ///     Deprecated: Use AddEntity instead.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
     /// <param name="zoneId">The zone to add the entity to.</param>
-    /// <exception cref="InvalidOperationException">Thrown when zone doesn't exist.</exception>
-    public void AddDynamicEntity(IEntity entity, ushort zoneId)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-
-        Zone? zone = GetZone(zoneId);
-        if (zone == null)
-            throw new InvalidOperationException($"Zone {zoneId} does not exist.");
-
-        // Only add to zone, no PersistentId lookup
-        zone.AddEntity(entity);
-    }
+    [Obsolete("Use AddEntity instead - all entities now have PersistentId")]
+    public void AddDynamicEntity(IEntity entity, ushort zoneId) => AddEntity(entity, zoneId);
 
     /// <summary>
-    ///     Removes a persistent entity by its PersistentId.
+    ///     Removes an entity by its PersistentId.
     /// </summary>
-    /// <param name="persistentId">The persistent ID of the entity. </param>
+    /// <param name="persistentId">The persistent ID of the entity.</param>
     /// <returns>The removed entity, or null if not found.</returns>
-    public IEntity? RemovePersistentEntity(Guid persistentId)
+    public IEntity? RemoveEntity(Guid persistentId)
     {
         if (!_entitiesByPersistentId.TryRemove(persistentId, out IEntity? entity))
             return null;
@@ -290,6 +279,15 @@ public class ZoneManager
 
         return entity;
     }
+
+    /// <summary>
+    ///     Removes a persistent entity by its PersistentId.
+    ///     Deprecated: Use RemoveEntity instead.
+    /// </summary>
+    /// <param name="persistentId">The persistent ID of the entity.</param>
+    /// <returns>The removed entity, or null if not found.</returns>
+    [Obsolete("Use RemoveEntity instead - all entities now have PersistentId")]
+    public IEntity? RemovePersistentEntity(Guid persistentId) => RemoveEntity(persistentId);
 
     /// <summary>
     ///     Gets any entity by PersistentId (Player, NPC, static object). O(1) lookup.

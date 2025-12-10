@@ -30,10 +30,21 @@ public interface IEntity
     Position Position { get; set; }
 
     /// <summary>
-    ///     Persistent identity - NEVER changes.
-    ///     Null for temporary/dynamic entities (spawned mobs, projectiles, drops).
+    ///     Stable identity for network communication.
+    ///     Never changes, even on zone transfer.
+    ///     
+    ///     • Players: CharacterId from database
+    ///     • Static NPCs: From zone config
+    ///     • Spawned Mobs: Generated at spawn time
+    ///     • Projectiles: Generated at creation
     /// </summary>
-    Guid? PersistentId { get; }
+    Guid PersistentId { get; }
+
+    /// <summary>
+    ///     Whether this entity is truly persistent (saved to DB)
+    ///     or just runtime-persistent (exists only this session).
+    /// </summary>
+    bool IsTrulyPersistent { get; }
 
     /// <summary>
     ///     This method will be called when this entity changes zones.

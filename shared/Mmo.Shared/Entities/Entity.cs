@@ -9,6 +9,7 @@ namespace Mmo.Shared.Entities;
 /// </summary>
 [MessagePackObject]
 [Union(0, typeof(PlayerEntity))]
+[Union(1, typeof(MobEntity))]
 public abstract class Entity : IEntity
 {
     /// <summary>
@@ -20,24 +21,29 @@ public abstract class Entity : IEntity
     }
 
     /// <summary>
-    ///     Sets the parameters which are shared over all children.
-    ///     Can only be called by children.
+    ///     Constructor for persistent entities (Players, static NPCs).
     /// </summary>
-    /// <param name="entityId">The id of this entity.</param>
-    /// <param name="persistentId">The ID that never chances.</param>
+    /// <param name="persistentId">The ID that never changes.</param>
     /// <param name="position">The current position of this entity.</param>
-    protected Entity(EntityIdentity entityId, Guid? persistentId, Position position)
+    /// <param name="isTrulyPersistent">Whether this entity is saved to DB.</param>
+    protected Entity(Guid persistentId, Position position, bool isTrulyPersistent = true)
     {
-        EntityId = entityId;
         PersistentId = persistentId;
         Position = position;
+        IsTrulyPersistent = isTrulyPersistent;
     }
 
     /// <summary>
-    ///     Whether this entity has a persistent identity.
+    ///     Constructor for runtime entities (spawned mobs, projectiles).
+    ///     Automatically generates a new PersistentId.
     /// </summary>
-    [IgnoreMember]
-    public bool IsPersistent => PersistentId.HasValue;
+    /// <param name="position">The current position of this entity.</param>
+    protected Entity(Position position)
+    {
+        PersistentId = Guid.NewGuid();
+        Position = position;
+        IsTrulyPersistent = false;
+    }
 
     /// <summary>
     ///     This identifies the entity everywhere.
@@ -49,16 +55,23 @@ public abstract class Entity : IEntity
     ///     Persistent identity - never changes.
     ///     • Players: CharacterId from database
     ///     • Static NPCs/Objects: From zone config
-    ///     • Dynamic Mobs/Drops: null
+    ///     • Spawned Mobs/Projectiles: Generated at creation
     /// </summary>
     [Key(1)]
-    public Guid? PersistentId { get; protected init; }
+    public Guid PersistentId { get; protected init; }
 
     /// <summary>
     ///     The current position of this entity in its current zone..
     /// </summary>
     [Key(2)]
     public Position Position { get; set; } = new(0, 0);
+
+    /// <summary>
+    ///     Whether this entity is truly persistent (saved to DB)
+    ///     or just runtime-persistent (exists only this session).
+    /// </summary>
+    [Key(3)]
+    public bool IsTrulyPersistent { get; protected init; }
 
     /// <summary>
     ///     Type of the entity.

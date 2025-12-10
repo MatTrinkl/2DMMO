@@ -16,8 +16,8 @@ public class ZoneManagerTests
 
     private ServerPlayer CreateServerPlayer(Guid?  persistentId = null, Guid? connectionId = null)
     {
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0),
-            persistentId ?? Guid. NewGuid(),
+        var entity = new PlayerEntity(
+            persistentId ?? Guid.NewGuid(),
             "TestPlayer",
             new Position(100, 100)
         );
