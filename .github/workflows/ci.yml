@@ -132,7 +132,7 @@ jobs:
             -reports:./coverage/**/coverage.cobertura.xml \
             -targetdir:./coverage-report \
             -reporttypes:"Html;Cobertura;MarkdownSummaryGithub;Badges" \
-            -assemblyfilters: "+Mmo.Server;+Mmo.Shared" \
+            -assemblyfilters:"+Mmo.Server;+Mmo.Shared" \
             -classfilters:"-*Tests*;-*Mock*"
 
       # Coverage Summary mit dem ZUSAMMENGEFASSTEN Report (keine Duplikate!)
