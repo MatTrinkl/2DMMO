@@ -1,4 +1,5 @@
 using Mmo.Shared.Entities;
+using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 using Moq;
 
@@ -7,28 +8,239 @@ namespace Mmo.Shared.Tests.Zones;
 public class ZoneTests
 {
     [Fact]
+    public void Constructor_SetsAllProperties()
+    {
+        var bounds = new ZoneBounds(10, 20, 100, 200);
+        var zone = new Zone(42, "TestZone", bounds);
+
+        Assert.Equal(42, zone.ZoneId);
+        Assert.Equal("TestZone", zone.ZoneName);
+        Assert.Equal(bounds, zone.Bounds);
+        Assert.Empty(zone.Entities);
+    }
+
+    [Fact]
+    public void AddEntity_AssignsCorrectEntityId()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(50, 50));
+
+        zone.AddEntity(player);
+
+        Assert.Equal(0, player.EntityId.Id); // First entity gets ID 0
+        Assert.Equal(1, player.EntityId.ZoneId); // ZoneId matches the zone
+        Assert.Equal(0, player.EntityId.ShardId); // ShardId is 0 (hardcoded for prototype)
+    }
+
+    [Fact]
+    public void AddEntity_CallsSetEntityId()
+    {
+        var zone = new Zone(5, "test", new ZoneBounds(0, 0, 100, 100));
+        var mob = new MobEntity("Goblin", new Position(25, 25));
+
+        zone.AddEntity(mob);
+
+        // Verify SetEntityId was called by checking the EntityId was set
+        Assert.Equal(0, mob.EntityId.Id);
+        Assert.Equal(5, mob.EntityId.ZoneId);
+    }
+
+    [Fact]
+    public void AddEntity_MultipleEntities_AssignsSequentialIds()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
+        var player3 = new PlayerEntity(Guid.NewGuid(), "Player3", new Position(30, 30));
+
+        zone.AddEntity(player1);
+        zone.AddEntity(player2);
+        zone.AddEntity(player3);
+
+        Assert.Equal(0, player1.EntityId.Id);
+        Assert.Equal(1, player2.EntityId.Id);
+        Assert.Equal(2, player3.EntityId.Id);
+        Assert.Equal(3, zone.Entities.Count);
+    }
+
+    [Fact]
     public void AddEntity_SameEntityTwice_ThrowsArgumentException()
     {
-        var z = new Zone(1, "main", new ZoneBounds(0, 0, 0, 0));
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 0, 0));
         var entityMock = new Mock<IEntity>();
-        z.AddEntity(entityMock.Object);
-        Assert.Throws<ArgumentException>(() => z.AddEntity(entityMock.Object));
+        zone.AddEntity(entityMock.Object);
+        Assert.Throws<ArgumentException>(() => zone.AddEntity(entityMock.Object));
+    }
+
+    [Fact]
+    public void AddEntity_NullEntity_ThrowsArgumentNullException()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        Assert.Throws<ArgumentNullException>(() => zone.AddEntity(null!));
+    }
+
+    [Fact]
+    public void RemoveEntity_RemovesFromDictionary()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        zone.AddEntity(player);
+        int entityId = player.EntityId.Id;
+
+        zone.RemoveEntity(entityId);
+
+        Assert.Empty(zone.Entities);
+        Assert.False(zone.HasEntity(entityId));
+    }
+
+    [Fact]
+    public void RemoveEntity_NonExistent_DoesNotThrow()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        // Should not throw
+        zone.RemoveEntity(999);
     }
 
     [Fact]
     public void RemoveEntity_ThenAddNewEntity_ReusesEntityId()
     {
-        var z = new Zone(1, "main", new ZoneBounds(0, 0, 0, 0));
-        var entityMock = new Mock<IEntity>();
-        var entityMock2 = new Mock<IEntity>();
-        var entityMock3 = new Mock<IEntity>();
-        z.AddEntity(entityMock.Object);
-        z.AddEntity(entityMock2.Object);
-        z.AddEntity(entityMock3.Object);
-        int idOld = entityMock.Object.EntityId.Id;
-        z.RemoveEntity(idOld);
-        z.AddEntity(entityMock.Object);
-        Assert.True(entityMock.Object.EntityId.Id == idOld);
-        Assert.True(z.HasEntity(idOld));
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
+        var player3 = new PlayerEntity(Guid.NewGuid(), "Player3", new Position(30, 30));
+
+        zone.AddEntity(player1); // Gets ID 0
+        zone.AddEntity(player2); // Gets ID 1
+        zone.AddEntity(player3); // Gets ID 2
+
+        int reusedId = player1.EntityId.Id;
+        zone.RemoveEntity(reusedId); // Free ID 0
+
+        var player4 = new PlayerEntity(Guid.NewGuid(), "Player4", new Position(40, 40));
+        zone.AddEntity(player4); // Should reuse ID 0
+
+        Assert.Equal(reusedId, player4.EntityId.Id);
+        Assert.True(zone.HasEntity(reusedId));
+    }
+
+    [Fact]
+    public void HasEntity_WithEntity_ReturnsTrue()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        zone.AddEntity(player);
+
+        Assert.True(zone.HasEntity(player));
+    }
+
+    [Fact]
+    public void HasEntity_WithEntityId_ReturnsTrue()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        zone.AddEntity(player);
+
+        Assert.True(zone.HasEntity(player.EntityId.Id));
+    }
+
+    [Fact]
+    public void HasEntity_NotInZone_ReturnsFalse()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+
+        Assert.False(zone.HasEntity(player));
+    }
+
+    [Fact]
+    public void HasEntity_WithNullEntity_ThrowsArgumentNullException()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        Assert.Throws<ArgumentNullException>(() => zone.HasEntity(null!));
+    }
+
+    [Fact]
+    public void GetPlayers_ReturnsOnlyPlayerEntities()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
+        var mob = new MobEntity("Goblin", new Position(30, 30));
+
+        zone.AddEntity(player1);
+        zone.AddEntity(mob);
+        zone.AddEntity(player2);
+
+        var players = zone.GetPlayers().ToList();
+
+        Assert.Equal(2, players.Count);
+        Assert.Contains(player1, players);
+        Assert.Contains(player2, players);
+        Assert.DoesNotContain(mob, players.Cast<IEntity>());
+    }
+
+    [Fact]
+    public void GetPlayers_NoPlayers_ReturnsEmpty()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var mob1 = new MobEntity("Goblin", new Position(10, 10));
+        var mob2 = new MobEntity("Orc", new Position(20, 20));
+
+        zone.AddEntity(mob1);
+        zone.AddEntity(mob2);
+
+        var players = zone.GetPlayers().ToList();
+
+        Assert.Empty(players);
+    }
+
+    [Fact]
+    public void IsPositionInBounds_InsideBounds_ReturnsTrue()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var position = new Position(50, 50);
+
+        Assert.True(zone.IsPositionInBounds(position));
+    }
+
+    [Fact]
+    public void IsPositionInBounds_OutsideBounds_ReturnsFalse()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var position = new Position(150, 150);
+
+        Assert.False(zone.IsPositionInBounds(position));
+    }
+
+    [Fact]
+    public void IsPositionInBounds_NullPosition_ThrowsArgumentNullException()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        Assert.Throws<ArgumentNullException>(() => zone.IsPositionInBounds(null!));
+    }
+
+    [Fact]
+    public void ZoneId_CanBeUpdated()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        zone.ZoneId = 42;
+
+        Assert.Equal(42, zone.ZoneId);
+    }
+
+    [Fact]
+    public void Entities_IsAccessible()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        zone.AddEntity(player);
+
+        Assert.NotEmpty(zone.Entities);
+        Assert.Contains(player, zone.Entities.Values);
     }
 }
