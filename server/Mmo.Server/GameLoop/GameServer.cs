@@ -230,7 +230,7 @@ public class GameServer
             if (playersInZone.Count == 0)
                 continue;
 
-            foreach (IEntity entity in zoneGroup.Where(e => e != null)!)
+            foreach (IEntity entity in zoneGroup.OfType<IEntity>())
             {
                 var positionBroadcast = new PositionBroadcast(
                     timestamp,
