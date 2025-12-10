@@ -219,8 +219,7 @@ public class GameServer
         IEnumerable<IGrouping<ushort, IEntity>> entitiesByZone = _dirtyEntities
             .Select(persistentId =>
                 ZoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity) ? entity : null)
-            .Where(e => e != null)
-            .Cast<IEntity>()
+            .OfType<IEntity>()
             .GroupBy(e => e.EntityId.ZoneId);
 
         foreach (IGrouping<ushort, IEntity> zoneGroup in entitiesByZone)
