@@ -60,42 +60,49 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
     /// <summary>
     ///     Sends a message to this client.
     /// </summary>
-    /// <typeparam name="T">The message type.</typeparam>
-    /// <param name="message">The message to send.</param>
-    public async Task SendAsync<T>(T message) where T : INetworkMessage
+    public async Task SendAsync(INetworkMessage message)  // ← Nicht mehr generisch!
     {
-        if (!IsConnected)
+        if (_isDisposed || _isDisconnecting)
         {
-            log.Warn("Cannot send to disconnected client {ClientId}", Id);
+            log. Warn("Cannot send to disposed/disconnecting client {ClientId}", Id);
             return;
         }
 
         try
         {
-            // Serialize with MessagePack (Type is Key(0) in payload)
-            byte[] payload = MessageSerializer.Serialize(message);
+            // Serialize - verwende dynamic dispatch um den konkreten Typ zu bekommen
+            byte[] payload = SerializeMessage(message);
 
             // Frame:  [4 Bytes Length][Payload]
-            byte[] lengthBytes = BitConverter.GetBytes((uint)payload.Length);
+            byte[] lengthBytes = BitConverter. GetBytes((uint)payload.Length);
 
             await _stream.WriteAsync(lengthBytes);
             await _stream.WriteAsync(payload);
+            await _stream.FlushAsync();
         }
         catch (ObjectDisposedException)
         {
-            // Stream was already closed, ignore
             log.Debug("Stream already disposed for client {ClientId}", Id);
         }
         catch (IOException ex)
         {
-            log.Error("Send failed for client {ClientId}: {Error}", Id, ex.Message);
-            await DisconnectAsync(DisconnectReason.NetworkError);
+            log.Error("Send failed for client {ClientId}: {Error}", Id, ex. Message);
+            await DisconnectAsync(DisconnectReason. NetworkError);
         }
         catch (Exception ex)
         {
-            log.Error("Unexpected send error for client {ClientId}: {Error}", Id, ex.Message);
+            log.Error("Unexpected send error for client {ClientId}:  {Error}", Id, ex.Message);
             await DisconnectAsync(DisconnectReason.NetworkError);
         }
+    }
+
+    /// <summary>
+    ///     Serializes a message using its runtime type, not the interface type.
+    /// </summary>
+    private static byte[] SerializeMessage(INetworkMessage message)
+    {
+        // Verwende dynamic um den KONKRETEN Typ zu serialisieren
+        return MessageSerializer. Serialize((dynamic)message);
     }
 
     /// <summary>
