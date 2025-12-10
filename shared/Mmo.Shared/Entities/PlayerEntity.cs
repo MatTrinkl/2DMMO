@@ -22,45 +22,44 @@ public class PlayerEntity : Entity
     ///     Creates a new PlayerState object.
     /// </summary>
     /// <param name="playerId">ID of the Player (Entity).</param>
+    /// <param name="characterId">Persistent ID from database - NEVER changes. </param>
     /// <param name="displayName">Username of the Player.</param>
     /// <param name="x">Current X Position.</param>
     /// <param name="y">Current Y Position.</param>
-    public PlayerEntity(EntityIdentity playerId, string displayName, float x, float y)
+    public PlayerEntity(EntityIdentity playerId,Guid characterId, string displayName, float x, float y):base(playerId, characterId, new Position(x, y))
     {
-        EntityId = playerId;
         DisplayName = displayName;
-        Position = new Position(x, y);
     }
 
     /// <summary>
-    ///     Creates a new PlayerState object.
+    ///     Creates a new PlayerEntity.
     /// </summary>
     /// <param name="playerId">ID of the Player (Entity).</param>
-    /// <param name="displayName">Username of the Player.</param>
-    /// <param name="position">Current position of the player.</param>
-    public PlayerEntity(EntityIdentity playerId, string displayName, Position position) : base(playerId, position)
+    /// <param name="characterId">Persistent ID from database - NEVER changes. </param>
+    /// <param name="displayName">Username of the player.</param>
+    /// <param name="position">Starting position. </param>
+    public PlayerEntity(EntityIdentity playerId,Guid characterId, string displayName, Position position)
+        : base(playerId, characterId, position)
     {
-        EntityId = playerId;
         DisplayName = displayName;
-        Position = position;
     }
 
     /// <summary>
     ///     The username of the player.
     /// </summary>
-    [Key(2)]
-    public string DisplayName { get; set; } = "";
+    [Key(3)]
+    public string DisplayName { get; set; }
 
     /// <summary>
     ///     The EntityType of the player is Player.
     /// </summary>
-    [Key(3)]
+    [Key(4)]
     public override EntityType Type => EntityType.Player;
 
     /// <summary>
     ///     The player has no EntityRole for now.
     /// </summary>
-    [Key(4)]
+    [Key(5)]
     public override EntityRole Role => EntityRole.None;
 
     /// <summary>

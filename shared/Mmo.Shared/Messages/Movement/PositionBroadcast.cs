@@ -7,12 +7,13 @@ namespace Mmo.Shared.Messages.Movement;
 
 /// <summary>
 ///     This class is sent to all clients for updating a position of an entity.
+///     Uses PersistentId for stable entity identification across zone transfers.
 /// </summary>
 [MessagePackObject]
 public class PositionBroadcast : ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public PositionBroadcast()
@@ -23,7 +24,7 @@ public class PositionBroadcast : ITimestampedMessage
     ///     Creates a new Position Broadcast Message.
     /// </summary>
     /// <param name="timestamp">The timestamp when this position update happened.</param>
-    /// <param name="entityId">The Entity which changed the position.</param>
+    /// <param name="entityId">The PersistentId of the entity (stable across zone transfers).</param>
     /// <param name="newPosition">The new Position of the Entity.</param>
     public PositionBroadcast(long timestamp, Guid entityId, Position newPosition)
     {
@@ -33,7 +34,7 @@ public class PositionBroadcast : ITimestampedMessage
     }
 
     /// <summary>
-    ///     Entity which has changed position
+    ///     The PersistentId of the entity (stable across zone transfers).
     /// </summary>
     [Key(2)]
     public Guid EntityId { get; set; }
@@ -49,6 +50,7 @@ public class PositionBroadcast : ITimestampedMessage
     /// </summary>
     [Key(0)]
     public MessageType Type => MessageType.PositionBroadcast;
+
 
     /// <summary>
     ///     The timestamp of the message.

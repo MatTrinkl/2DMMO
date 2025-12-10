@@ -24,12 +24,20 @@ public abstract class Entity : IEntity
     ///     Can only be called by children.
     /// </summary>
     /// <param name="entityId">The id of this entity.</param>
+    /// <param name="persistentId">The ID that never chances.</param>
     /// <param name="position">The current position of this entity.</param>
-    protected Entity(EntityIdentity entityId, Position position)
+    protected Entity(EntityIdentity entityId, Guid? persistentId, Position position)
     {
         EntityId = entityId;
+        PersistentId = persistentId;
         Position = position;
     }
+
+    /// <summary>
+    ///     Whether this entity has a persistent identity.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsPersistent => PersistentId.HasValue;
 
     /// <summary>
     ///     This identifies the entity everywhere.
@@ -38,9 +46,18 @@ public abstract class Entity : IEntity
     public EntityIdentity EntityId { get; protected init; }
 
     /// <summary>
-    ///     The current position of this entity in its current zone..
+    ///     Persistent identity - never changes.
+    ///     • Players: CharacterId from database
+    ///     • Static NPCs/Objects: From zone config
+    ///     • Dynamic Mobs/Drops: null
     /// </summary>
     [Key(1)]
+    public Guid? PersistentId { get; protected init; }
+
+    /// <summary>
+    ///     The current position of this entity in its current zone..
+    /// </summary>
+    [Key(2)]
     public Position Position { get; set; } = new(0, 0);
 
     /// <summary>

@@ -11,13 +11,10 @@ config_version=5
 [application]
 
 config/name="2DMMO Client"
-run/main_scene="res://scenes/Main.tscn"
-config/features=PackedStringArray("4.3", "C#", "Forward Plus")
+run/main_scene="uid://dfhd8xr7g2uj1"
+config/features=PackedStringArray("4.5", "Forward Plus")
+config/icon="res://icon.svg"
 
 [dotnet]
 
-project/assembly_name="GodotProject"
-
-[rendering]
-
-renderer/rendering_method="forward_plus"
+project/assembly_name="2DMMO Client"

@@ -30,6 +30,12 @@ public interface IEntity
     Position Position { get; set; }
 
     /// <summary>
+    ///     Persistent identity - NEVER changes.
+    ///     Null for temporary/dynamic entities (spawned mobs, projectiles, drops).
+    /// </summary>
+    Guid? PersistentId { get; }
+
+    /// <summary>
     ///     This method will be called when this entity changes zones.
     /// </summary>
     /// <param name="newZoneId">The ID of the new zone.</param>
