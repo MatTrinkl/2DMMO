@@ -13,7 +13,7 @@ namespace Mmo.Shared.Entities;
 public abstract class Entity : IEntity
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public Entity()

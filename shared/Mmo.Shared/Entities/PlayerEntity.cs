@@ -11,7 +11,7 @@ namespace Mmo.Shared.Entities;
 public class PlayerEntity : Entity
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public PlayerEntity()
