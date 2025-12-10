@@ -49,7 +49,7 @@ public abstract class Entity : IEntity
     ///     This identifies the entity everywhere.
     /// </summary>
     [Key(0)]
-    public EntityIdentity EntityId { get; protected init; }
+    public EntityIdentity EntityId { get; protected set; }
 
     /// <summary>
     ///     Persistent identity - never changes.
@@ -90,4 +90,17 @@ public abstract class Entity : IEntity
     /// </summary>
     /// <param name="newZoneId">ID of the zone.</param>
     public abstract void ChangeZone(ushort newZoneId);
+    
+    /// <summary>
+    ///     Internal method to update the EntityId when zone changes.
+    ///     Called by Zone.AddEntity() and ZoneManager.TransferEntity().
+    /// </summary>
+    /// <param name="newEntityId">New entity ID within the zone.</param>
+    /// <param name="newZoneId">New zone ID.</param>
+    internal void UpdateEntityId(int newEntityId, ushort newZoneId)
+    {
+        var currentId = EntityId;
+        currentId.ZoneTransfer(newEntityId, newZoneId);
+        EntityId = currentId;
+    }
 }

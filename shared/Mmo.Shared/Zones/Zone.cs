@@ -53,7 +53,13 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
         if (HasEntity(entity))
             throw new ArgumentException($"Entity {entity} is already registered in Zone {ZoneId} ({ZoneName})");
         int newEntityId = _freedIds.Count > 0 ? _freedIds.Dequeue() : _nextEntityId++;
-        entity.EntityId.ZoneTransfer(newEntityId, ZoneId);
+        
+        // Update the entity's EntityId with the new zone and entity ID
+        if (entity is Entity baseEntity)
+        {
+            baseEntity.UpdateEntityId(newEntityId, ZoneId);
+        }
+        
         Entities.Add(newEntityId, entity);
     }
 
