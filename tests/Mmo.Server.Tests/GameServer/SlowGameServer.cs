@@ -15,7 +15,7 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
 
     public SlowGameServer(
         ILog log,
-        NetworkServer networkServer,
+        INetworkServer networkServer,
         TimeSpan?  inputPhaseDuration = null,
         TimeSpan? updatePhaseDuration = null,
         TimeSpan? outputPhaseDuration = null)
@@ -29,7 +29,7 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     /// <summary>
     ///     Convenience constructor for simple slow tick simulation.
     /// </summary>
-    public SlowGameServer(ILog log, NetworkServer networkServer, TimeSpan tickWorkDuration)
+    public SlowGameServer(ILog log, INetworkServer networkServer, TimeSpan tickWorkDuration)
         : this(log, networkServer, inputPhaseDuration: tickWorkDuration)
     {
     }
@@ -38,7 +38,9 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     {
         if (_inputPhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_inputPhaseDuration, cancellationToken);
+            // Don't pass cancellation token to the delay - we want to simulate actual work
+            // that can't be interrupted mid-phase. Cancellation is checked by the game loop.
+            await Task.Delay(_inputPhaseDuration);
         }
         // Don't call base - we don't want to process real messages in tests
     }
@@ -47,7 +49,7 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     {
         if (_updatePhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_updatePhaseDuration, cancellationToken);
+            await Task.Delay(_updatePhaseDuration);
         }
 
         // Call base to increment CurrentTick
@@ -58,7 +60,7 @@ internal sealed class SlowGameServer : Server. GameLoop.GameServer
     {
         if (_outputPhaseDuration > TimeSpan.Zero)
         {
-            await Task.Delay(_outputPhaseDuration, cancellationToken);
+            await Task.Delay(_outputPhaseDuration);
         }
         // Don't call base - we don't want to broadcast in tests
     }

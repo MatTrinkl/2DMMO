@@ -7,11 +7,11 @@ namespace Mmo.Server.Tests.GameServer;
 public class GameServerTickTests
 {
     private readonly MockLog _mockLog = new();
-    private readonly Mock<NetworkServer> _mockNetworkServer;
+    private readonly Mock<INetworkServer> _mockNetworkServer;
 
     public GameServerTickTests()
     {
-        _mockNetworkServer = new Mock<NetworkServer>(7777, _mockLog);
+        _mockNetworkServer = new Mock<INetworkServer>();
     }
 
     [Fact]
