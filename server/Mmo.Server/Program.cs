@@ -35,7 +35,7 @@ internal static class Program
         // ══════════════════════════════════════════════════════════
         // SERVER SETUP
         // ══════════════════════════════════════════════════════════
-        var networkServer = new NetworkServer(SharedConstants.DefaultPort, log);
+        using var networkServer = new NetworkServer(SharedConstants.DefaultPort, log);
         var gameServer = new GameServer(log, networkServer);
 
         // ══════════════════════════════════════════════════════════
@@ -102,10 +102,7 @@ internal static class Program
             log.Error("Stack trace: {StackTrace}", ex.StackTrace ?? "N/A");
             Environment.ExitCode = 1;
         }
-        finally
-        {
-            networkServer.Dispose();
-            log.Info("Server resources cleaned up.   Goodbye!");
-        }
+
+        log.Info("Server resources cleaned up.   Goodbye!");
     }
 }
