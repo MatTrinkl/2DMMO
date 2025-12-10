@@ -30,7 +30,7 @@ public static class TestHelpers
         float x = 100,
         float y = 100)
     {
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0),
+        var entity = new PlayerEntity(
             persistentId ?? Guid.NewGuid(),
             name,
             new Position(x, y)

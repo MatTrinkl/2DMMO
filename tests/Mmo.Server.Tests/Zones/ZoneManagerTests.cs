@@ -16,8 +16,8 @@ public class ZoneManagerTests
 
     private ServerPlayer CreateServerPlayer(Guid?  persistentId = null, Guid? connectionId = null)
     {
-        var entity = new PlayerEntity(new EntityIdentity(0, 0, 0, 0),
-            persistentId ?? Guid. NewGuid(),
+        var entity = new PlayerEntity(
+            persistentId ?? Guid.NewGuid(),
             "TestPlayer",
             new Position(100, 100)
         );
@@ -322,5 +322,94 @@ public class ZoneManagerTests
         Assert.True(result);
         // Player should still be findable by PersistentId after transfer
         Assert.True(zoneManager.TryGetPlayerByPersistentId(persistentId, out _));
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MOB ENTITY TESTS
+    // ══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void AddEntity_MobEntity_AddsToZone()
+    {
+        var zoneManager = CreateZoneManager();
+        var mob = new MobEntity("Goblin", new Position(50, 50), maxHealth: 100);
+
+        zoneManager.AddEntity(mob, zoneId: 0);
+
+        Assert.True(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out var foundEntity));
+        Assert.Equal(mob, foundEntity);
+        Assert.Equal(1, zoneManager.PersistentEntityCount);
+    }
+
+    [Fact]
+    public void RemoveEntity_MobEntity_RemovesFromZone()
+    {
+        var zoneManager = CreateZoneManager();
+        var mob = new MobEntity("Wolf", new Position(100, 100));
+        zoneManager.AddEntity(mob, zoneId: 0);
+
+        var removed = zoneManager.RemoveEntity(mob.PersistentId);
+
+        Assert.NotNull(removed);
+        Assert.Equal(mob.PersistentId, removed.PersistentId);
+        Assert.False(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out _));
+        Assert.Equal(0, zoneManager.PersistentEntityCount);
+    }
+
+    [Fact]
+    public void AddEntity_MultipleMobs_AllHaveUniquePersistentIds()
+    {
+        var zoneManager = CreateZoneManager();
+        var mob1 = new MobEntity("Goblin", new Position(10, 10));
+        var mob2 = new MobEntity("Orc", new Position(20, 20));
+        var mob3 = new MobEntity("Troll", new Position(30, 30));
+
+        zoneManager.AddEntity(mob1, zoneId: 0);
+        zoneManager.AddEntity(mob2, zoneId: 0);
+        zoneManager.AddEntity(mob3, zoneId: 0);
+
+        Assert.NotEqual(mob1.PersistentId, mob2.PersistentId);
+        Assert.NotEqual(mob2.PersistentId, mob3.PersistentId);
+        Assert.NotEqual(mob1.PersistentId, mob3.PersistentId);
+        Assert.Equal(3, zoneManager.PersistentEntityCount);
+    }
+
+    [Fact]
+    public void GetAllEntities_IncludesMobsAndPlayers()
+    {
+        var zoneManager = CreateZoneManager();
+        var player = CreateServerPlayer();
+        var mob = new MobEntity("Spider", new Position(75, 75));
+
+        zoneManager.AddPlayer(player, zoneId: 0);
+        zoneManager.AddEntity(mob, zoneId: 0);
+
+        var entities = zoneManager.GetAllEntities(0);
+
+        Assert.Equal(2, entities.Count);
+        Assert.Contains(entities, e => e is PlayerEntity);
+        Assert.Contains(entities, e => e is MobEntity);
+    }
+
+    [Fact]
+    public void MobEntity_IsTrulyPersistent_IsFalse()
+    {
+        var zoneManager = CreateZoneManager();
+        var mob = new MobEntity("Skeleton", new Position(0, 0));
+
+        zoneManager.AddEntity(mob, zoneId: 0);
+
+        Assert.False(mob.IsTrulyPersistent);
+    }
+
+    [Fact]
+    public void PlayerEntity_IsTrulyPersistent_IsTrue()
+    {
+        var zoneManager = CreateZoneManager();
+        var player = CreateServerPlayer();
+
+        zoneManager.AddPlayer(player, zoneId: 0);
+
+        Assert.True(player.Entity.IsTrulyPersistent);
     }
 }

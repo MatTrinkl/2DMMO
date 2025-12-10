@@ -232,13 +232,13 @@ public class GameServer
 
             foreach (IEntity? entity in zoneGroup)
             {
-                // Skip null or non-persistent entities
-                if (entity?.PersistentId == null)
+                // Skip null entities
+                if (entity == null)
                     continue;
 
                 var positionBroadcast = new PositionBroadcast(
                     timestamp,
-                    entity.PersistentId.Value,
+                    entity.PersistentId,
                     entity.Position
                 );
 
@@ -319,18 +319,14 @@ public class GameServer
     ///     Mark an entity as dirty (changed) for delta broadcasts.
     ///     Uses PersistentId for stability across zone transfers.
     /// </summary>
-    /// <param name="persistentId">The PersistentId of the entity. </param>
+    /// <param name="persistentId">The PersistentId of the entity.</param>
     public void MarkEntityDirty(Guid persistentId) => _dirtyEntities.Add(persistentId);
 
     /// <summary>
     ///     Mark an entity as dirty (changed) for delta broadcasts.
     /// </summary>
-    /// <param name="entity">The entity to mark as dirty. </param>
-    public void MarkEntityDirty(IEntity entity)
-    {
-        if (entity.PersistentId.HasValue) _dirtyEntities.Add(entity.PersistentId.Value);
-        // Non-persistent entities will only be sent in a full ZoneState for now
-    }
+    /// <param name="entity">The entity to mark as dirty.</param>
+    public void MarkEntityDirty(IEntity entity) => _dirtyEntities.Add(entity.PersistentId);
 
     /// <summary>
     ///     Queue an event broadcast to be sent in the next OutputPhase.
