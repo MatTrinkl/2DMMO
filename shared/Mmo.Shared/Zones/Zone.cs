@@ -42,7 +42,7 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
     public Dictionary<int, IEntity> Entities { get; } = new();
 
     /// <summary>
-    ///     Add a new Entity to this zone. WIP: The Transfer logic is not complete yet.
+    ///     Add a new Entity to this zone.
     /// </summary>
     /// <param name="entity">Entity to add.</param>
     /// <exception cref="ArgumentNullException">Thrown if entity is null.</exception>
@@ -52,8 +52,11 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
         ArgumentNullException.ThrowIfNull(entity);
         if (HasEntity(entity))
             throw new ArgumentException($"Entity {entity} is already registered in Zone {ZoneId} ({ZoneName})");
+
         int newEntityId = _freedIds.Count > 0 ? _freedIds.Dequeue() : _nextEntityId++;
-        entity.EntityId.ZoneTransfer(newEntityId, ZoneId);
+
+        entity.SetEntityId(newEntityId, ZoneId);
+
         Entities.Add(newEntityId, entity);
     }
 

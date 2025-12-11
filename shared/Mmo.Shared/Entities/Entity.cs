@@ -1,63 +1,80 @@
+// shared/Mmo. Shared/Entities/Entity. cs
+
 using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
 
-/// <summary>
-///     The parent class of all entities for now. Todo: Split this into Prefab and Living.
-/// </summary>
 [MessagePackObject]
 [Union(0, typeof(PlayerEntity))]
+// [Union(1, typeof(MobEntity))]  // Später hinzufügen
 public abstract class Entity : IEntity
 {
-    /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
-    /// </summary>
     [SerializationConstructor]
-    public Entity()
+    protected Entity()
     {
     }
 
     /// <summary>
-    ///     Sets the parameters which are shared over all children.
-    ///     Can only be called by children.
+    ///     Constructor for persistent entities (Players, NPCs from config).
     /// </summary>
-    /// <param name="entityId">The id of this entity.</param>
-    /// <param name="position">The current position of this entity.</param>
-    protected Entity(EntityIdentity entityId, Position position)
+    protected Entity(Guid persistentId, Position position, bool isTrulyPersistent = true)
     {
-        EntityId = entityId;
+        PersistentId = persistentId;
         Position = position;
+        IsTrulyPersistent = isTrulyPersistent;
     }
 
     /// <summary>
-    ///     This identifies the entity everywhere.
+    ///     Constructor for runtime entities (Spawned Mobs, Projectiles).
+    ///     Generates a new PersistentId automatically.
+    /// </summary>
+    protected Entity(Position position)
+    {
+        PersistentId = Guid.NewGuid();
+        Position = position;
+        IsTrulyPersistent = false;
+    }
+
+    /// <summary>
+    ///     Runtime identity - changes on zone transfer.
     /// </summary>
     [Key(0)]
-    public EntityIdentity EntityId { get; protected init; }
+    public EntityIdentity EntityId { get; protected set; }
 
     /// <summary>
-    ///     The current position of this entity in its current zone..
+    ///     Stable identity - never changes.
     /// </summary>
     [Key(1)]
+    public Guid PersistentId { get; protected init; }
+
+    /// <summary>
+    ///     The current position of this entity.
+    /// </summary>
+    [Key(2)]
     public Position Position { get; set; } = new(0, 0);
 
     /// <summary>
-    ///     Type of the entity.
+    ///     True if this entity is saved to database.
     /// </summary>
-    [IgnoreMember]
-    public abstract EntityType Type { get; }
+    [Key(3)]
+    public bool IsTrulyPersistent { get; protected init; }
+
+    [IgnoreMember] public abstract EntityType Type { get; }
+
+    [IgnoreMember] public abstract EntityRole Role { get; }
 
     /// <summary>
-    ///     Role of the entity.
+    ///     Sets the runtime EntityId. Called by Zone when entity is added.
+    ///     Handles struct copy correctly.
     /// </summary>
-    [IgnoreMember]
-    public abstract EntityRole Role { get; }
+    public void SetEntityId(int id, ushort zoneId)
+    {
+        EntityIdentity identity = EntityId;
+        identity.ZoneTransfer(id, zoneId);
+        EntityId = identity;
+    }
 
-    /// <summary>
-    ///     This method will be called when this entity changes zone.
-    /// </summary>
-    /// <param name="newZoneId">ID of the zone.</param>
     public abstract void ChangeZone(ushort newZoneId);
 }

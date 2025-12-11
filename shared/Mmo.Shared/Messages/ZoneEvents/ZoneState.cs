@@ -25,7 +25,7 @@ public class ZoneState : ITimestampedMessage
     /// <param name="timestamp">The timestamp of the message.</param>
     /// <param name="zoneId">The ID of the zone. (Later we need to see how shards work with that).</param>
     /// <param name="entities">All Entities in this Zone.</param>
-    public ZoneState(long timestamp, Guid zoneId, List<Entity> entities)
+    public ZoneState(long timestamp, ushort zoneId, List<Entity> entities)
     {
         Timestamp = timestamp;
         ZoneId = zoneId;
@@ -36,7 +36,7 @@ public class ZoneState : ITimestampedMessage
     ///     ID of the zone. WIP!
     /// </summary>
     [Key(2)]
-    public Guid ZoneId { get; set; }
+    public ushort ZoneId { get; set; }
 
     /// <summary>
     ///     List of all Entities in this zone.
