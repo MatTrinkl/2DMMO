@@ -25,7 +25,7 @@ public class PlayerEntity : Entity
     /// <param name="displayName">Username of the player.</param>
     /// <param name="position">Starting position.</param>
     public PlayerEntity(Guid characterId, string displayName, Position position)
-        : base(characterId, position, true)
+        : base(characterId, position, PrefabIds.PlayerDefault, true)
     {
         DisplayName = displayName;
     }

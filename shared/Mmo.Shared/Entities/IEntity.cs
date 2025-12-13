@@ -11,7 +11,7 @@ public interface IEntity
     ///     Runtime identity - changes on zone transfer!
     ///     Use for zone-internal lookups only.
     /// </summary>
-    EntityIdentity EntityId { get; }
+    EntityIdentity RuntimeId { get; }
 
     /// <summary>
     ///     Stable identity for network communication.
@@ -30,11 +30,11 @@ public interface IEntity
     Position Position { get; set; }
 
     /// <summary>
-    ///     Sets the runtime EntityId. Called by Zone when entity is added/transferred.
+    ///     Sets the runtime identity. Called by Zone when entity is added/transferred.
     /// </summary>
-    /// <param name="id">The new entity ID within the zone.</param>
-    /// <param name="zoneId">The zone ID. </param>
-    void SetEntityId(int id, ushort zoneId);
+    /// <param name="localId">The new local ID within the zone.</param>
+    /// <parameter name="zoneId">The zone ID. </param>
+    void SetEntityId(int localId, ushort zoneId);
 
     /// <summary>
     ///     Called when this entity changes zones.
