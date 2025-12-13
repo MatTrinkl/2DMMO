@@ -22,4 +22,6 @@ public interface INetworkServer : IDisposable
     Task KickClientAsync(Guid clientId);
     IEnumerable<Guid> GetConnectedClientIds();
     bool IsClientConnected(Guid clientId);
+    public void AssociatePlayer(Guid connectionId, Guid playerId);
+    public void RemovePlayer(Guid playerId);
 }

@@ -13,6 +13,7 @@ namespace Mmo.Server.Networking;
 public sealed class NetworkServer(int port, ILog log) : INetworkServer
 {
     private readonly ConcurrentDictionary<Guid, ClientConnection> _clients = new();
+    private readonly ConcurrentDictionary<Guid, Guid> _playerToConnection = new();  // PlayerId → ConnId
     private bool _isDisposed;
     private TcpListener? _listener;
 
@@ -158,6 +159,17 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// <param name="clientId">The client ID to check.</param>
     public bool IsClientConnected(Guid clientId) => _clients.ContainsKey(clientId);
 
+    public void AssociatePlayer(Guid connectionId, Guid playerId)
+    {
+        _playerToConnection[playerId] = connectionId;
+        if (_clients.TryGetValue(connectionId, out ClientConnection? conn))
+        {
+            conn. PlayerId = playerId;
+        }
+    }
+
+    public void RemovePlayer(Guid playerId) => _playerToConnection.TryRemove(playerId, out _);
+
     // ══════════════════════════════════════════════════════════
     // EVENT INVOKERS
     // ══════════════════════════════════════════════════════════
@@ -166,7 +178,7 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
 
     private void OnClientDisconnected(ClientDisconnectedEventArgs e) => ClientDisconnected?.Invoke(this, e);
 
-    private void OnMessageReceived(MessageReceivedEventArgs e) => MessageReceived?.Invoke(this, e);
+    internal void OnMessageReceived(Guid connectionId, INetworkMessage message) => MessageReceived?.Invoke(this, new MessageReceivedEventArgs(connectionId, message, DateTimeOffset.UtcNow));
 
     private void OnErrorOccurred(NetworkErrorEventArgs e) => ErrorOccurred?.Invoke(this, e);
 
@@ -178,7 +190,7 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
         // Message received
         connection.MessageReceived += message =>
         {
-            OnMessageReceived(new MessageReceivedEventArgs(connection.Id, message));
+            OnMessageReceived(connection.Id, message);
         };
 
         // Client disconnected (with reason from ClientConnection)

@@ -106,7 +106,7 @@ public class MockNetworkServer : INetworkServer
     ///     Simulates receiving a message from a client.
     /// </summary>
     public void SimulateMessageReceived(Guid clientId, INetworkMessage message) =>
-        MessageReceived?.Invoke(this, new MessageReceivedEventArgs(clientId, message));
+        MessageReceived?.Invoke(this, new MessageReceivedEventArgs(clientId, message,DateTime.UtcNow));
 
     /// <summary>
     ///     Simulates a network error occurring.

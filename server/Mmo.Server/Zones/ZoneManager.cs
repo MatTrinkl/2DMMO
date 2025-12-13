@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Mmo.Server.Entities;
 using Mmo.Shared.Entities;
+using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones;
@@ -107,6 +108,13 @@ public class ZoneManager
     ///     Gets all registered zones.
     /// </summary>
     public IEnumerable<Zone> GetAllZones() => _zones.Values;
+
+    public PlayerEntity SpawnPlayer(Guid connectionId, string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        //TODO: CharacterId and Position read from DB, currently its the connectionId and always spawn at 0,0
+        return new PlayerEntity(connectionId, username,new Position(0,0));
+    }
 
     /// <summary>
     ///     Adds a player to a zone with connection and persistent ID tracking.
