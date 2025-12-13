@@ -39,7 +39,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     ///     See <see cref="PrefabIds"/> for available prefabs.
     /// </summary>
     [Key(4)]
-    public readonly ushort PrefabId;
+    public ushort PrefabId { get; private set; }
 
     /// <summary>
     ///     Creates a new EntityIdentity struct.
@@ -49,6 +49,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// <param name="shardId">The ID of the shard of the zone.</param>
     /// <param name="localId">The local ID of the Entity within the zone/shard.</param>
     /// <param name="prefabId">The ID of the prefab of this entity.</param>
+    [SerializationConstructor]
     public EntityIdentity(byte serverId, ushort zoneId, ushort shardId, int localId, ushort prefabId)
     {
         ServerId = serverId;

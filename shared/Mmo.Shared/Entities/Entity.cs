@@ -14,6 +14,8 @@ public abstract class Entity : IEntity
     [SerializationConstructor]
     protected Entity()
     {
+        // RuntimeId will be set by MessagePack during deserialization
+        // PrefabId should be part of the serialized RuntimeId
     }
 
     /// <summary>

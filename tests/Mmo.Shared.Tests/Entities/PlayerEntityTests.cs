@@ -40,9 +40,9 @@ public class PlayerEntityTests
 
         player.SetEntityId(42, 100);
 
-        Assert.Equal(42, player.EntityId.Id);
-        Assert.Equal(100, player.EntityId.ZoneId);
-        Assert.Equal(0, player.EntityId.ShardId);
+        Assert.Equal(42, player.RuntimeId.LocalId);
+        Assert.Equal(100, player.RuntimeId.ZoneId);
+        Assert.Equal(0, player.RuntimeId.ShardId);
     }
 
     [Fact]
@@ -51,12 +51,12 @@ public class PlayerEntityTests
         var player = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(75, 75));
 
         player.SetEntityId(1, 10);
-        Assert.Equal(1, player.EntityId.Id);
-        Assert.Equal(10, player.EntityId.ZoneId);
+        Assert.Equal(1, player.RuntimeId.LocalId);
+        Assert.Equal(10, player.RuntimeId.ZoneId);
 
         player.SetEntityId(2, 20);
-        Assert.Equal(2, player.EntityId.Id);
-        Assert.Equal(20, player.EntityId.ZoneId);
+        Assert.Equal(2, player.RuntimeId.LocalId);
+        Assert.Equal(20, player.RuntimeId.ZoneId);
     }
 
     [Fact]

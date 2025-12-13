@@ -27,9 +27,9 @@ public class ZoneTests
 
         zone.AddEntity(player);
 
-        Assert.Equal(0, player.EntityId.Id); // First entity gets ID 0
-        Assert.Equal(1, player.EntityId.ZoneId); // ZoneId matches the zone
-        Assert.Equal(0, player.EntityId.ShardId); // ShardId is 0 (hardcoded for prototype)
+        Assert.Equal(0, player.RuntimeId.LocalId); // First entity gets ID 0
+        Assert.Equal(1, player.RuntimeId.ZoneId); // ZoneId matches the zone
+        Assert.Equal(0, player.RuntimeId.ShardId); // ShardId is 0 (hardcoded for prototype)
     }
 
     [Fact]
@@ -40,9 +40,9 @@ public class ZoneTests
 
         zone.AddEntity(mob);
 
-        // Verify SetEntityId was called by checking the EntityId was set
-        Assert.Equal(0, mob.EntityId.Id);
-        Assert.Equal(5, mob.EntityId.ZoneId);
+        // Verify SetEntityId was called by checking the RuntimeId was set
+        Assert.Equal(0, mob.RuntimeId.LocalId);
+        Assert.Equal(5, mob.RuntimeId.ZoneId);
     }
 
     [Fact]
@@ -57,9 +57,9 @@ public class ZoneTests
         zone.AddEntity(player2);
         zone.AddEntity(player3);
 
-        Assert.Equal(0, player1.EntityId.Id);
-        Assert.Equal(1, player2.EntityId.Id);
-        Assert.Equal(2, player3.EntityId.Id);
+        Assert.Equal(0, player1.RuntimeId.LocalId);
+        Assert.Equal(1, player2.RuntimeId.LocalId);
+        Assert.Equal(2, player3.RuntimeId.LocalId);
         Assert.Equal(3, zone.Entities.Count);
     }
 
@@ -86,7 +86,7 @@ public class ZoneTests
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
         var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
-        int entityId = player.EntityId.Id;
+        int entityId = player.RuntimeId.LocalId;
 
         zone.RemoveEntity(entityId);
 
@@ -115,13 +115,13 @@ public class ZoneTests
         zone.AddEntity(player2); // Gets ID 1
         zone.AddEntity(player3); // Gets ID 2
 
-        int reusedId = player1.EntityId.Id;
+        int reusedId = player1.RuntimeId.LocalId;
         zone.RemoveEntity(reusedId); // Free ID 0
 
         var player4 = new PlayerEntity(Guid.NewGuid(), "Player4", new Position(40, 40));
         zone.AddEntity(player4); // Should reuse ID 0
 
-        Assert.Equal(reusedId, player4.EntityId.Id);
+        Assert.Equal(reusedId, player4.RuntimeId.LocalId);
         Assert.True(zone.HasEntity(reusedId));
     }
 
@@ -142,7 +142,7 @@ public class ZoneTests
         var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
 
-        Assert.True(zone.HasEntity(player.EntityId.Id));
+        Assert.True(zone.HasEntity(player.RuntimeId.LocalId));
     }
 
     [Fact]

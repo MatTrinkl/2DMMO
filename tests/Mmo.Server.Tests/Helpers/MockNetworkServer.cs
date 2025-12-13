@@ -74,6 +74,16 @@ public class MockNetworkServer : INetworkServer
 
     public bool IsClientConnected(Guid clientId) => _connectedClients.Contains(clientId);
 
+    public void AssociatePlayer(Guid connectionId, Guid playerId)
+    {
+        // Mock implementation - track association if needed for tests
+    }
+
+    public void RemovePlayer(Guid playerId)
+    {
+        // Mock implementation - track removal if needed for tests
+    }
+
     public void Dispose()
     {
         _isDisposed = true;
