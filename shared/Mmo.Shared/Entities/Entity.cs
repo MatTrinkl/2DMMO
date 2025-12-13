@@ -45,7 +45,7 @@ public abstract class Entity : IEntity
     ///     Runtime identity - changes on zone transfer.
     /// </summary>
     [Key(0)]
-    public EntityIdentity RuntimeId { get; protected set; }
+    public EntityIdentity RuntimeId { get; set; }
 
     /// <summary>
     ///     Stable identity - never changes.
