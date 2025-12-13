@@ -33,7 +33,7 @@ public interface IEntity
     ///     Sets the runtime identity. Called by Zone when entity is added/transferred.
     /// </summary>
     /// <param name="localId">The new local ID within the zone.</param>
-    /// <parameter name="zoneId">The zone ID. </param>
+    /// <param name="zoneId">The zone ID.</param>
     void SetEntityId(int localId, ushort zoneId);
 
     /// <summary>
