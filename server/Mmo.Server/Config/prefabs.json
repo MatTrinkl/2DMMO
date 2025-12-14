@@ -1,0 +1,58 @@
+{
+  "prefabs": [
+    {
+      "id": 1,
+      "name": "playerDefault",
+      "category": "player",
+      "description": "Default player character"
+    },
+    {
+      "id": 100,
+      "name": "questgiverOldMan",
+      "category": "npc",
+      "description": "Old man NPC that gives quests"
+    },
+    {
+      "id": 101,
+      "name": "questgiverElf",
+      "category": "npc",
+      "description": "Elf NPC that gives quests"
+    },
+    {
+      "id": 200,
+      "name": "vendorBlacksmith",
+      "category": "npc",
+      "description": "Blacksmith vendor NPC"
+    },
+    {
+      "id": 1000,
+      "name": "goblin",
+      "category": "mob",
+      "description": "Goblin enemy mob"
+    },
+    {
+      "id": 2000,
+      "name": "chestWooden",
+      "category": "object",
+      "description": "Wooden chest that can be opened for loot"
+    },
+    {
+      "id": 2100,
+      "name": "herbRed",
+      "category": "object",
+      "description": "Red herb that can be harvested"
+    },
+    {
+      "id": 3000,
+      "name": "door",
+      "category": "object",
+      "description": "Door that can be opened/closed"
+    },
+    {
+      "id": 3001,
+      "name": "sign",
+      "category": "object",
+      "description": "Sign with text information"
+    }
+  ]
+}

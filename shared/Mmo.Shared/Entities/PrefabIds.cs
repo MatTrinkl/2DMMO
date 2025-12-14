@@ -1,7 +1,8 @@
 namespace Mmo.Shared.Entities;
 
 /// <summary>
-///     Central registry for all Prefab IDs in the game.
+///     Provides convenient access to Prefab IDs.
+///     Can be loaded from prefabs.json via PrefabRegistry or use default constants.
 ///     PrefabIds define the type/template of an entity and never change.
 /// </summary>
 public static class PrefabIds
@@ -12,8 +13,10 @@ public static class PrefabIds
     
     /// <summary>
     ///     Default player prefab.
+    ///     Can be loaded from prefabs.json: player:playerDefault
     /// </summary>
-    public const ushort PlayerDefault = 1;
+    public static ushort PlayerDefault => 
+        PrefabRegistry.Instance.TryGetId("player", "playerDefault", out var id) ? id : (ushort)1;
     
     // ═══════════════════════════════════════════════════
     // NPCs - QUESTGIVERS (100-199)
@@ -21,13 +24,17 @@ public static class PrefabIds
     
     /// <summary>
     ///     Old man questgiver NPC.
+    ///     Can be loaded from prefabs.json: npc:questgiverOldMan
     /// </summary>
-    public const ushort QuestgiverOldMan = 100;
+    public static ushort QuestgiverOldMan => 
+        PrefabRegistry.Instance.TryGetId("npc", "questgiverOldMan", out var id) ? id : (ushort)100;
     
     /// <summary>
     ///     Elf questgiver NPC.
+    ///     Can be loaded from prefabs.json: npc:questgiverElf
     /// </summary>
-    public const ushort QuestgiverElf = 101;
+    public static ushort QuestgiverElf => 
+        PrefabRegistry.Instance.TryGetId("npc", "questgiverElf", out var id) ? id : (ushort)101;
     
     // ═══════════════════════════════════════════════════
     // NPCs - VENDORS (200-299)
@@ -35,8 +42,10 @@ public static class PrefabIds
     
     /// <summary>
     ///     Blacksmith vendor NPC.
+    ///     Can be loaded from prefabs.json: npc:vendorBlacksmith
     /// </summary>
-    public const ushort VendorBlacksmith = 200;
+    public static ushort VendorBlacksmith => 
+        PrefabRegistry.Instance.TryGetId("npc", "vendorBlacksmith", out var id) ? id : (ushort)200;
     
     // ═══════════════════════════════════════════════════
     // MOBS (1000-1999)
@@ -44,8 +53,10 @@ public static class PrefabIds
     
     /// <summary>
     ///     Goblin mob enemy.
+    ///     Can be loaded from prefabs.json: mob:goblin
     /// </summary>
-    public const ushort MobGoblin = 1000;
+    public static ushort MobGoblin => 
+        PrefabRegistry.Instance.TryGetId("mob", "goblin", out var id) ? id : (ushort)1000;
     
     // ═══════════════════════════════════════════════════
     // INTERACTABLE OBJECTS (2000-2999)
@@ -53,13 +64,17 @@ public static class PrefabIds
     
     /// <summary>
     ///     Wooden chest that can be opened for loot.
+    ///     Can be loaded from prefabs.json: object:chestWooden
     /// </summary>
-    public const ushort ObjectChestWooden = 2000;
+    public static ushort ObjectChestWooden => 
+        PrefabRegistry.Instance.TryGetId("object", "chestWooden", out var id) ? id : (ushort)2000;
     
     /// <summary>
     ///     Red herb that can be harvested.
+    ///     Can be loaded from prefabs.json: object:herbRed
     /// </summary>
-    public const ushort ObjectHerbRed = 2100;
+    public static ushort ObjectHerbRed => 
+        PrefabRegistry.Instance.TryGetId("object", "herbRed", out var id) ? id : (ushort)2100;
     
     // ═══════════════════════════════════════════════════
     // STATIC OBJECTS (3000-3999)
@@ -67,11 +82,15 @@ public static class PrefabIds
     
     /// <summary>
     ///     Door that can be opened/closed.
+    ///     Can be loaded from prefabs.json: object:door
     /// </summary>
-    public const ushort ObjectDoor = 3000;
+    public static ushort ObjectDoor => 
+        PrefabRegistry.Instance.TryGetId("object", "door", out var id) ? id : (ushort)3000;
     
     /// <summary>
     ///     Sign with text information.
+    ///     Can be loaded from prefabs.json: object:sign
     /// </summary>
-    public const ushort ObjectSign = 3001;
+    public static ushort ObjectSign => 
+        PrefabRegistry.Instance.TryGetId("object", "sign", out var id) ? id : (ushort)3001;
 }
