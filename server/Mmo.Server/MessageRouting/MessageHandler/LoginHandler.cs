@@ -37,7 +37,7 @@ public class LoginHandler(GameServer gameServer, ILog log)
         gameServer.NetworkServer.AssociatePlayer(connectionId, player.Entity.PersistentId);
 
         // 4. Queue Response
-        QueueLoginResponse(connectionId, true, player.Id, null);
+        QueueLoginResponse(connectionId, true, player.RuntimeId.LocalId, null);
     }
 
     private void QueueLoginResponse(Guid connectionId, bool success, int playerId, string? error)

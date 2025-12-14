@@ -227,7 +227,7 @@ public class GameServer
             .Select(persistentId =>
                 ZoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity) ? entity : null)
             .OfType<IEntity>()
-            .GroupBy(e => e.EntityId.ZoneId);
+            .GroupBy(e => e.RuntimeId.ZoneId);
 
         foreach (IGrouping<ushort, IEntity> zoneGroup in entitiesByZone)
         {
