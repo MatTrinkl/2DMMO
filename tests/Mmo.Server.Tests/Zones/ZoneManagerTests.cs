@@ -8,9 +8,21 @@ using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Tests.Zones;
 
-public class ZoneManagerTests
+public class ZoneManagerTests : IDisposable
 {
     private static readonly MockNetworkServer _sharedMockNetworkServer = new();
+
+    public ZoneManagerTests()
+    {
+        // Clear IdRegistry before each test
+        IdRegistry.Instance.Clear();
+    }
+
+    public void Dispose()
+    {
+        // Clear IdRegistry after each test
+        IdRegistry.Instance.Clear();
+    }
 
     private ZoneManager CreateZoneManager()
     {
@@ -21,11 +33,11 @@ public class ZoneManagerTests
     private ServerPlayer CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
     {
         var entity = new PlayerEntity(
-            persistentId ?? Guid.NewGuid(),
+            persistentId ?? IdRegistry.Instance.GeneratePersistentId(),
             "TestPlayer",
             new Position(100, 100)
         );
-        Guid connId = connectionId ?? Guid.NewGuid();
+        Guid connId = connectionId ?? IdRegistry.Instance.GeneratePersistentId();
         ClientConnection connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
         return new ServerPlayer(entity, connection);
     }
@@ -344,7 +356,6 @@ public class ZoneManagerTests
 
         Assert.True(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out IEntity? foundEntity));
         Assert.Equal(mob, foundEntity);
-        Assert.Equal(1, zoneManager.PersistentEntityCount);
     }
 
     [Fact]
@@ -359,7 +370,6 @@ public class ZoneManagerTests
         Assert.NotNull(removed);
         Assert.Equal(mob.PersistentId, removed.PersistentId);
         Assert.False(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out _));
-        Assert.Equal(0, zoneManager.PersistentEntityCount);
     }
 
     [Fact]
@@ -377,7 +387,10 @@ public class ZoneManagerTests
         Assert.NotEqual(mob1.PersistentId, mob2.PersistentId);
         Assert.NotEqual(mob2.PersistentId, mob3.PersistentId);
         Assert.NotEqual(mob1.PersistentId, mob3.PersistentId);
-        Assert.Equal(3, zoneManager.PersistentEntityCount);
+        // All 3 entities should be in the zone
+        Assert.True(zoneManager.HasPersistentEntity(mob1.PersistentId));
+        Assert.True(zoneManager.HasPersistentEntity(mob2.PersistentId));
+        Assert.True(zoneManager.HasPersistentEntity(mob3.PersistentId));
     }
 
     [Fact]

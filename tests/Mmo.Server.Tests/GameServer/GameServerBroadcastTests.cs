@@ -13,10 +13,22 @@ using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
 
-public class GameServerBroadcastTests
+public class GameServerBroadcastTests : IDisposable
 {
     private readonly Mock<ILog> _mockLog = new();
     private readonly MockNetworkServer _mockNetworkServer = new();
+
+    public GameServerBroadcastTests()
+    {
+        // Clear IdRegistry before each test
+        IdRegistry.Instance.Clear();
+    }
+
+    public void Dispose()
+    {
+        // Clear IdRegistry after each test
+        IdRegistry.Instance.Clear();
+    }
 
     [Fact]
     public async Task OutputPhase_SendsQueuedBroadcasts()

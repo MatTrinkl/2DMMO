@@ -9,17 +9,18 @@ namespace Mmo.Shared.Zones;
 /// <param name="id">Id of the zone.</param>
 /// <param name="zoneName">Display name of the zone.</param>
 /// <param name="bounds">The outer border of the zone.</param>
-public class Zone(ushort id, string zoneName, ZoneBounds bounds)
+/// <param name="idRegistry">Optional IdRegistry for ID management. If null, uses IdRegistry.Instance.</param>
+public class Zone(ushort id, string zoneName, ZoneBounds bounds, IIdRegistry? idRegistry = null)
 {
     /// <summary>
-    ///     Queue of free ids.
+    ///     The IdRegistry used for LocalId allocation.
     /// </summary>
-    private readonly Queue<int> _freedIds = new();
+    private readonly IIdRegistry _idRegistry = idRegistry ?? IdRegistry.Instance;
 
     /// <summary>
-    ///     Next new id.
+    ///     Shard ID for this zone (default 0 for prototype).
     /// </summary>
-    private int _nextEntityId;
+    private readonly ushort _shardId = 0;
 
     /// <summary>
     ///     ID of this zone.
@@ -37,12 +38,13 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
     public ZoneBounds Bounds { get; } = bounds;
 
     /// <summary>
-    ///     All entities in this zone. Access it with <see cref="EntityIdentity.Id" />.
+    ///     All entities in this zone. Access it with <see cref="EntityIdentity.LocalId" />.
     /// </summary>
     public Dictionary<int, IEntity> Entities { get; } = new();
 
     /// <summary>
     ///     Add a new Entity to this zone.
+    ///     Uses IdRegistry for LocalId allocation.
     /// </summary>
     /// <param name="entity">Entity to add.</param>
     /// <exception cref="ArgumentNullException">Thrown if entity is null.</exception>
@@ -53,7 +55,8 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
         if (HasEntity(entity))
             throw new ArgumentException($"Entity {entity} is already registered in Zone {ZoneId} ({ZoneName})");
 
-        int newEntityId = _freedIds.Count > 0 ? _freedIds.Dequeue() : _nextEntityId++;
+        // Get next LocalId from IdRegistry
+        int newEntityId = _idRegistry.GetNextLocalId(ZoneId, _shardId);
 
         entity.SetEntityId(newEntityId, ZoneId);
 
@@ -62,11 +65,14 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds)
 
     /// <summary>
     ///     Remove a entity from this zone.
+    ///     Releases the LocalId back to IdRegistry for reuse.
     /// </summary>
     /// <param name="entityId">Entity to remove.</param>
     public void RemoveEntity(int entityId)
     {
-        if (Entities.Remove(entityId)) _freedIds.Enqueue(entityId);
+        if (Entities.Remove(entityId))
+            // Release LocalId back to IdRegistry for reuse
+            _idRegistry.ReleaseLocalId(ZoneId, _shardId, entityId);
     }
 
     /// <summary>

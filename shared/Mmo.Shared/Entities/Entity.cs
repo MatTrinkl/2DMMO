@@ -31,11 +31,11 @@ public abstract class Entity : IEntity
 
     /// <summary>
     ///     Constructor for runtime entities (Spawned Mobs, Projectiles).
-    ///     Generates a new PersistentId automatically.
+    ///     Generates a new PersistentId through IdRegistry.
     /// </summary>
     protected Entity(Position position, ushort prefabId)
     {
-        PersistentId = Guid.NewGuid();
+        PersistentId = IdRegistry.Instance.GeneratePersistentId();
         Position = position;
         IsTrulyPersistent = false;
         RuntimeId = EntityIdentity.Unassigned(prefabId);

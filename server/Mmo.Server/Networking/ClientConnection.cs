@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Serialization;
@@ -16,8 +17,9 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
 
     /// <summary>
     ///     Unique identifier for this connection.
+    ///     Generated through IdRegistry for centralized ID management.
     /// </summary>
-    public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; } = IdRegistry.Instance.GeneratePersistentId();
 
     /// <summary>
     ///     Returns true if the underlying TCP connection is still active.

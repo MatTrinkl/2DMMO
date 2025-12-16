@@ -5,8 +5,20 @@ using Moq;
 
 namespace Mmo.Shared.Tests.Zones;
 
-public class ZoneTests
+public class ZoneTests : IDisposable
 {
+    public ZoneTests()
+    {
+        // Clear IdRegistry before each test
+        IdRegistry.Instance.Clear();
+    }
+
+    public void Dispose()
+    {
+        // Clear IdRegistry after each test
+        IdRegistry.Instance.Clear();
+    }
+
     [Fact]
     public void Constructor_SetsAllProperties()
     {

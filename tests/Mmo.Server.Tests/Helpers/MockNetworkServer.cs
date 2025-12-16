@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using Mmo.Server.Networking;
 using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Shared.Enums;
