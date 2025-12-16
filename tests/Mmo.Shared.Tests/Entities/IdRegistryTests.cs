@@ -91,7 +91,7 @@ public class IdRegistryTests : IDisposable
         ushort zoneId = 1;
 
         int id1 = IdRegistry.Instance.GetNextLocalId(zoneId);
-        int id2 = IdRegistry.Instance.GetNextLocalId(zoneId);
+        IdRegistry.Instance.GetNextLocalId(zoneId);
 
         IdRegistry.Instance.ReleaseLocalId(zoneId, 0, id1);
 
@@ -337,29 +337,24 @@ public class IdRegistryTests : IDisposable
     private class TestEntity : IEntity
     {
         /// <summary>Test server ID.</summary>
-        private const byte TestServerId = 1;
+        private const byte _testServerId = 1;
 
         /// <summary>Test shard ID (not used in prototype).</summary>
-        private const ushort TestShardId = 0;
+        private const ushort _testShardId = 0;
 
         /// <summary>Test prefab ID for player entity (corresponds to PrefabIds.PlayerDefault fallback value).</summary>
-        private const ushort TestPrefabId = 1;
+        private const ushort _testPrefabId = 1;
 
-        public TestEntity()
-        {
-            PersistentId = Guid.NewGuid();
-        }
+        public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(_testPrefabId);
 
-        public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(TestPrefabId);
-
-        public Guid PersistentId { get; }
+        public Guid PersistentId { get; } = Guid.NewGuid();
         public bool IsTrulyPersistent => false;
         public EntityType Type => EntityType.Player;
         public EntityRole Role => EntityRole.None;
         public Position Position { get; set; } = new(0, 0);
 
         public void SetEntityId(int localId, ushort zoneId) =>
-            RuntimeId = new EntityIdentity(TestServerId, zoneId, TestShardId, localId, TestPrefabId);
+            RuntimeId = new EntityIdentity(_testServerId, zoneId, _testShardId, localId, _testPrefabId);
 
         public void ChangeZone(ushort newZoneId)
         {
