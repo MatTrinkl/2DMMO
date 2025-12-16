@@ -14,12 +14,12 @@ public class MessageRouter(GameServer gameServer, ILog log)
     private readonly LoginHandler _loginHandler=new LoginHandler(gameServer,log);
 
 
-    public void Route(Guid connectionId, INetworkMessage message)
+    public void Route(ClientConnection connection, INetworkMessage message)
     {
         switch (message.Type)
         {
             case MessageType.LoginRequest:
-                _loginHandler.Handle(connectionId, (LoginRequest)message);
+                _loginHandler.Handle(connection, (LoginRequest)message);
                 break;
             case MessageType.LoginResponse:
             case MessageType.LogoutRequest:
@@ -43,7 +43,7 @@ public class MessageRouter(GameServer gameServer, ILog log)
             case MessageType.Pong:
             default:
                 _log.Warn("Unknown message type: {Type} from {ConnectionId}",
-                    message.Type, connectionId);
+                    message.Type, connection.Id);
                 break;
         }
     }

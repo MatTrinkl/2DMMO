@@ -137,7 +137,7 @@ public class ZoneManager
         zone.AddEntity(serverPlayer.Entity);
 
         // Add to ConnectionId lookup (session-stable)
-        _playersByConnectionId.TryAdd(serverPlayer.ConnectionId, serverPlayer);
+        _playersByConnectionId.TryAdd(serverPlayer.Connection.Id, serverPlayer);
 
         // Add to PersistentId lookups (permanent-stable, all entities have PersistentId now)
         _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer);
@@ -177,7 +177,7 @@ public class ZoneManager
             return null;
 
         // Remove from other lookups
-        _playersByConnectionId.TryRemove(serverPlayer.ConnectionId, out _);
+        _playersByConnectionId.TryRemove(serverPlayer.Connection.Id, out _);
         _entitiesByPersistentId.TryRemove(persistentId, out _);
 
         // Remove from zone

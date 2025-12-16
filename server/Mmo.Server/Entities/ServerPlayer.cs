@@ -1,3 +1,4 @@
+using Mmo.Server.Networking;
 using Mmo.Shared.Entities;
 
 namespace Mmo.Server.Entities;
@@ -5,7 +6,7 @@ namespace Mmo.Server.Entities;
 /// <summary>
 ///     Server-side wrapper for PlayerEntity with connection info.
 /// </summary>
-public class ServerPlayer(PlayerEntity entity, Guid connectionId)
+public class ServerPlayer(PlayerEntity entity, ClientConnection connection)
 {
     /// <summary>
     ///     The shared PlayerEntity (position, stats, etc.).
@@ -15,7 +16,7 @@ public class ServerPlayer(PlayerEntity entity, Guid connectionId)
     /// <summary>
     ///     The ClientConnection ID for this player.
     /// </summary>
-    public Guid ConnectionId { get; } = connectionId;
+    public ClientConnection Connection { get; } = connection;
 
     /// <summary>
     ///     When this player connected.

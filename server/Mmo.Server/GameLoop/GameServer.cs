@@ -141,7 +141,7 @@ public class GameServer
     {
         while (_incomingMessages. TryDequeue(out MessageReceivedEventArgs? incoming))
         {
-            _router.Route(incoming.ConnectionId, incoming.Message);
+            _router.Route(incoming.Connection, incoming.Message);
         }
 
         return Task.CompletedTask;
@@ -258,7 +258,7 @@ public class GameServer
     /// </summary>
     private async Task BroadcastToPlayersAsync(IEnumerable<ServerPlayer> players, INetworkMessage message)
     {
-        IEnumerable<Task> tasks = players.Select(p => NetworkServer.SendToClientAsync(p.ConnectionId, message));
+        IEnumerable<Task> tasks = players.Select(p => NetworkServer.SendToClientAsync(p.Connection, message));
         await Task.WhenAll(tasks);
     }
 

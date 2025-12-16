@@ -33,12 +33,12 @@ public class MockNetworkServer : INetworkServer
         return Task.Delay(-1, cancellationToken).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnCanceled);
     }
 
-    public Task SendToClientAsync(Guid clientId, INetworkMessage message)
+    public Task SendToClientAsync(ClientConnection client, INetworkMessage message)
     {
         if (_isDisposed)
             throw new ObjectDisposedException(nameof(MockNetworkServer));
 
-        SentMessages.Add((clientId, message));
+        SentMessages.Add((client, message));
         return Task.CompletedTask;
     }
 

@@ -16,12 +16,12 @@ public interface INetworkServer : IDisposable
     event EventHandler<NetworkErrorEventArgs>? ErrorOccurred;
 
     Task RunAsync(CancellationToken cancellationToken);
-    Task SendToClientAsync(Guid clientId, INetworkMessage message);
+    Task SendToClientAsync(ClientConnection client, INetworkMessage message);
     Task BroadcastAsync(INetworkMessage message);
-    Task BroadcastExceptAsync(INetworkMessage message, Guid excludeClientId);
-    Task KickClientAsync(Guid clientId);
+    Task BroadcastExceptAsync(INetworkMessage message, ClientConnection excludeClientId);
+    Task KickClientAsync(ClientConnection clientId);
     IEnumerable<Guid> GetConnectedClientIds();
-    bool IsClientConnected(Guid clientId);
-    public void AssociatePlayer(Guid connectionId, Guid playerId);
-    public void RemovePlayer(Guid playerId);
+    bool IsClientConnected(ClientConnection clientId);
+    public void AssociatePlayer(ClientConnection connectionId, Guid playerId);
+    public void RemovePlayer(ClientConnection playerId);
 }

@@ -11,7 +11,7 @@ public class LoginHandler(GameServer gameServer, ILog log)
     private readonly ILog _log = log;
     private readonly GameServer _gameServer = gameServer;
 
-    internal void Handle(Guid connectionId, LoginRequest request)
+    internal void Handle(ClientConnection connection, LoginRequest request)
     {
         // TODO: Später durch IAuthenticationService ersetzen
         // - Async Validierung VOR dem Game Loop (in ClientConnection/AuthState)
@@ -24,23 +24,23 @@ public class LoginHandler(GameServer gameServer, ILog log)
             request.Username.Length < 3 ||
             request.Username.Length > 20)
         {
-            QueueLoginResponse(connectionId, false, 0, "Invalid username");
+            QueueLoginResponse(connection, false, 0, "Invalid username");
             return;
         }
 
         //Spawns player in his last position or in the start region.
-        var playerEntity = _gameServer.ZoneManager.SpawnPlayer(connectionId, request.Username);
-        var player = new ServerPlayer(playerEntity, connectionId);
+        var playerEntity = _gameServer.ZoneManager.SpawnPlayer(connection.Id, request.Username);
+        var player = new ServerPlayer(playerEntity, connection);
         //Connect Player Entity with connection
         _gameServer.ZoneManager.AddPlayer(player /*later with ZoneID*/);
         //Connect the connectionId to the persistentID of the Player entity
-        gameServer.NetworkServer.AssociatePlayer(connectionId, player.Entity.PersistentId);
+        gameServer.NetworkServer.AssociatePlayer(connection, player.Entity.PersistentId);
 
         // 4. Queue Response
-        QueueLoginResponse(connectionId, true, player.RuntimeId.LocalId, null);
+        QueueLoginResponse(connection, true, player.RuntimeId.LocalId, null);
     }
 
-    private void QueueLoginResponse(Guid connectionId, bool success, int playerId, string? error)
+    private void QueueLoginResponse(ClientConnection connectionId, bool success, int playerId, string? error)
     {
         //Queue Login Response in the GameServer which will be worked of in the Outputphase
     }
