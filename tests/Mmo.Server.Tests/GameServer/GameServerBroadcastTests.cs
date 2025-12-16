@@ -1,13 +1,13 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Movement;
 using Mmo.Shared.Messages.ZoneEvents;
 using Mmo.Shared.Records;
-using Mmo.Shared.Zones;
 using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -49,9 +49,9 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
             connection
         );
         gameServer.ZoneManager.AddPlayer(player);
@@ -77,9 +77,9 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
             connection
         );
         gameServer.ZoneManager.AddPlayer(player);
@@ -106,9 +106,9 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
             connection
         );
         gameServer.ZoneManager.AddPlayer(player);
@@ -120,7 +120,7 @@ public class GameServerBroadcastTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
         await gameServer.StartServerAsync(cts.Token);
 
-        var initialBroadcastCount = _mockNetworkServer.SentMessages.Count;
+        int initialBroadcastCount = _mockNetworkServer.SentMessages.Count;
         _mockNetworkServer.Clear();
 
         // Run more ticks without marking dirty again
@@ -132,12 +132,9 @@ public class GameServerBroadcastTests
         var positionBroadcasts = _mockNetworkServer.SentMessages
             .Where(m => m.Message is PositionBroadcast)
             .ToList();
-        
+
         // If we didn't hit a full state tick, there should be no position broadcasts
-        if (gameServer.CurrentTick % SharedConstants.TickRate != 0)
-        {
-            Assert.Empty(positionBroadcasts);
-        }
+        if (gameServer.CurrentTick % SharedConstants.TickRate != 0) Assert.Empty(positionBroadcasts);
     }
 
     [Fact]
@@ -149,14 +146,14 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add two players to the zone
-        var connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
+        ClientConnection connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
         var player1 = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
             connection1
         );
-        var connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
+        ClientConnection connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
         var player2 = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
+            new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
             connection2
         );
         gameServer.ZoneManager.AddPlayer(player1);
@@ -182,20 +179,20 @@ public class GameServerBroadcastTests
     public async Task BroadcastDirtyEntities_OnlyBroadcastsToPlayersInSameZone()
     {
         var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
-        
+
         var clientId1 = Guid.NewGuid();
         var clientId2 = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
         // Add players to the same zone
-        var connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
+        ClientConnection connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
         var player1 = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
             connection1
         );
-        var connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
+        ClientConnection connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
         var player2 = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
+            new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
             connection2
         );
         gameServer.ZoneManager.AddPlayer(player1);
@@ -227,7 +224,7 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a mob but no players
-        var mob = new Shared.Entities.MobEntity("TestMob", new Position(10, 10), 100);
+        var mob = new MobEntity("TestMob", new Position(10, 10));
         gameServer.ZoneManager.AddEntity(mob, 0);
         gameServer.MarkEntityDirty(mob);
 
@@ -247,7 +244,7 @@ public class GameServerBroadcastTests
 
         // Should not throw
         gameServer.MarkEntityDirty(persistentId);
-        
+
         Assert.True(true); // Success if no exception
     }
 
@@ -255,11 +252,11 @@ public class GameServerBroadcastTests
     public void MarkEntityDirty_WithEntity_MarksForDeltaBroadcast()
     {
         var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
-        var entity = new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10));
+        var entity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10));
 
         // Should not throw
         gameServer.MarkEntityDirty(entity);
-        
+
         Assert.True(true); // Success if no exception
     }
 

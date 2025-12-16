@@ -1,8 +1,9 @@
+using System.Reflection;
+using System.Runtime.Serialization;
 using Mmo.Server.Networking;
 using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
-using Moq;
 
 namespace Mmo.Server.Tests.Helpers;
 
@@ -122,17 +123,15 @@ public class MockNetworkServer : INetworkServer
     /// <summary>
     ///     Simulates a client disconnecting from the server.
     /// </summary>
-    public void SimulateClientDisconnected(Guid clientId, DisconnectReason reason)
-    {
+    public void SimulateClientDisconnected(Guid clientId, DisconnectReason reason) =>
         ClientDisconnected?.Invoke(this, new ClientDisconnectedEventArgs(clientId, reason));
-    }
 
     /// <summary>
     ///     Simulates receiving a message from a client.
     /// </summary>
     public void SimulateMessageReceived(Guid clientId, INetworkMessage message)
     {
-        var connection = GetOrCreateMockConnection(clientId);
+        ClientConnection connection = GetOrCreateMockConnection(clientId);
         MessageReceived?.Invoke(this, new MessageReceivedEventArgs(connection, message, DateTime.UtcNow));
     }
 
@@ -158,7 +157,7 @@ public class MockNetworkServer : INetworkServer
     /// </summary>
     public ClientConnection GetOrCreateMockConnection(Guid clientId)
     {
-        if (!_mockConnections.TryGetValue(clientId, out var connection))
+        if (!_mockConnections.TryGetValue(clientId, out ClientConnection? connection))
         {
             // Create a mock using System.Net.Sockets.TcpClient mock
             // Since we can't easily mock this, we'll use reflection to create a ClientConnection
@@ -166,6 +165,7 @@ public class MockNetworkServer : INetworkServer
             connection = CreateMockClientConnection(clientId);
             _mockConnections[clientId] = connection;
         }
+
         return connection;
     }
 
@@ -173,14 +173,14 @@ public class MockNetworkServer : INetworkServer
     {
         // Use FormatterServices to create an instance without calling the constructor
         // This avoids the need for a real TcpClient
-        var connection = (ClientConnection)System.Runtime.Serialization.FormatterServices
+        var connection = (ClientConnection)FormatterServices
             .GetUninitializedObject(typeof(ClientConnection));
-        
+
         // Set the Id using reflection
-        var idField = typeof(ClientConnection).GetField("<Id>k__BackingField",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        FieldInfo? idField = typeof(ClientConnection).GetField("<Id>k__BackingField",
+            BindingFlags.Instance | BindingFlags.NonPublic);
         idField?.SetValue(connection, clientId);
-        
+
         return connection;
     }
 }

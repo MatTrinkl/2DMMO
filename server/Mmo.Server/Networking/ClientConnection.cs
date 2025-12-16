@@ -29,7 +29,7 @@ public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
     /// </summary>
     public string RemoteEndPoint => tcpClient.Client.RemoteEndPoint?.ToString() ?? "unknown";
 
-    public Guid PlayerId { get;set; }
+    public Guid PlayerId { get; set; }
 
     public void Dispose()
     {

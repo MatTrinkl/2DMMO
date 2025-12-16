@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
@@ -15,7 +16,7 @@ public class ServerPlayerTests
         var persistentId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
         var entity = new PlayerEntity(persistentId, "TestPlayer", new Position(100, 200));
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(connectionId);
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connectionId);
 
         var serverPlayer = new ServerPlayer(entity, connection);
 
@@ -31,7 +32,7 @@ public class ServerPlayerTests
         var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
         DateTimeOffset before = DateTimeOffset.UtcNow;
 
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var serverPlayer = new ServerPlayer(entity, connection);
 
         DateTimeOffset after = DateTimeOffset.UtcNow;
@@ -43,7 +44,7 @@ public class ServerPlayerTests
     public void LastActivity_CanBeUpdated()
     {
         var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var serverPlayer = new ServerPlayer(entity, connection);
         DateTimeOffset originalActivity = serverPlayer.LastActivity;
 

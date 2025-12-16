@@ -1,7 +1,7 @@
 using Mmo.Server.Entities;
 using Mmo.Server.Networking;
-using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Server.Tests.Helpers;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
@@ -98,9 +98,9 @@ public class GameServerTests
         mockNetworkServer.SimulateClientConnected(clientId, "192.168.1.1:5000");
 
         _mockLog.Verify(log => log.Info(
-            It.Is<string>(s => s.Contains("connected")),
-            It.Is<Guid>(g => g == clientId),
-            It.IsAny<string>()),
+                It.Is<string>(s => s.Contains("connected")),
+                It.Is<Guid>(g => g == clientId),
+                It.IsAny<string>()),
             Times.Once);
     }
 
@@ -114,9 +114,9 @@ public class GameServerTests
         mockNetworkServer.SimulateClientDisconnected(clientId, DisconnectReason.ClientDisconnected);
 
         _mockLog.Verify(log => log.Info(
-            It.Is<string>(s => s.Contains("disconnected")),
-            It.Is<Guid>(g => g == clientId),
-            It.IsAny<DisconnectReason>()),
+                It.Is<string>(s => s.Contains("disconnected")),
+                It.Is<Guid>(g => g == clientId),
+                It.IsAny<DisconnectReason>()),
             Times.Once);
     }
 
@@ -128,9 +128,9 @@ public class GameServerTests
         var clientId = Guid.NewGuid();
 
         // Add a player to the zone first
-        var connection = mockNetworkServer.GetOrCreateMockConnection(clientId);
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
-            new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
+            new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
             connection
         );
         gameServer.ZoneManager.AddPlayer(player);
@@ -144,8 +144,8 @@ public class GameServerTests
 
         // Verify logs
         _mockLog.Verify(log => log.Info(
-            It.Is<string>(s => s.Contains("removed from zone")),
-            It.IsAny<string>()),
+                It.Is<string>(s => s.Contains("removed from zone")),
+                It.IsAny<string>()),
             Times.Once);
     }
 
@@ -160,10 +160,10 @@ public class GameServerTests
         mockNetworkServer.SimulateNetworkError(clientId, exception, "TestContext");
 
         _mockLog.Verify(log => log.Error(
-            It.Is<string>(s => s.Contains("Network error")),
-            It.Is<Guid>(g => g == clientId),
-            It.Is<string>(s => s == "TestContext"),
-            It.Is<string>(s => s.Contains("Test error"))),
+                It.Is<string>(s => s.Contains("Network error")),
+                It.Is<Guid>(g => g == clientId),
+                It.Is<string>(s => s == "TestContext"),
+                It.Is<string>(s => s.Contains("Test error"))),
             Times.Once);
     }
 
@@ -177,9 +177,9 @@ public class GameServerTests
         mockNetworkServer.SimulateNetworkError(null, exception, "ServerContext");
 
         _mockLog.Verify(log => log.Error(
-            It.Is<string>(s => s.Contains("Server network error")),
-            It.Is<string>(s => s == "ServerContext"),
-            It.Is<string>(s => s.Contains("Server error"))),
+                It.Is<string>(s => s.Contains("Server network error")),
+                It.Is<string>(s => s == "ServerContext"),
+                It.Is<string>(s => s.Contains("Server error"))),
             Times.Once);
     }
 
@@ -201,9 +201,9 @@ public class GameServerTests
 
         // Verify message was routed (ChatMessage is unhandled, logs warning)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            It.Is<MessageType>(t => t == MessageType.ChatMessage),
-            It.Is<Guid>(g => g == clientId)),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                It.Is<MessageType>(t => t == MessageType.ChatMessage),
+                It.Is<Guid>(g => g == clientId)),
             Times.Once);
     }
 
@@ -217,8 +217,9 @@ public class GameServerTests
 
         // Simulate different message types
         var loginRequest = new LoginRequest("TestUser", "password123");
-        var testEntity = new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
-        var positionUpdate = new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
+        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var positionUpdate =
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
         var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");
 
         mockNetworkServer.SimulateMessageReceived(clientId, loginRequest);
@@ -232,22 +233,22 @@ public class GameServerTests
         // Verify all messages were routed
         // LoginRequest is handled by LoginHandler (should not log "Unknown")
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            It.Is<MessageType>(t => t == MessageType.LoginRequest),
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                It.Is<MessageType>(t => t == MessageType.LoginRequest),
+                It.IsAny<Guid>()),
             Times.Never);
 
         // PositionUpdate and ChatMessage are unhandled (log warnings)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            It.Is<MessageType>(t => t == MessageType.PositionUpdate),
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                It.Is<MessageType>(t => t == MessageType.PositionUpdate),
+                It.IsAny<Guid>()),
             Times.Once);
 
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            It.Is<MessageType>(t => t == MessageType.ChatMessage),
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                It.Is<MessageType>(t => t == MessageType.ChatMessage),
+                It.IsAny<Guid>()),
             Times.Once);
     }
 }

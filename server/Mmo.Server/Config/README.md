@@ -7,20 +7,22 @@ This directory contains configuration files for the server.
 ### prefabs.json
 
 Defines all entity prefabs (templates) used in the game. Each prefab has:
+
 - `id`: Unique numeric identifier (ushort, 0-65535)
 - `name`: Human-readable name for the prefab
 - `category`: The category (player, npc, mob, object)
 - `description`: Optional description
 
 **ID Ranges:**
+
 - Players: 1-99
 - NPCs: 100-999
-  - Questgivers: 100-199
-  - Vendors: 200-299
+    - Questgivers: 100-199
+    - Vendors: 200-299
 - Mobs: 1000-1999
 - Objects: 2000-3999
-  - Interactable: 2000-2999
-  - Static: 3000-3999
+    - Interactable: 2000-2999
+    - Static: 3000-3999
 
 **Usage:**
 

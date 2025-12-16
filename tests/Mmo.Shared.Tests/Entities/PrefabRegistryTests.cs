@@ -21,7 +21,7 @@ public class PrefabRegistryTests
     [Fact]
     public void LoadFromConfig_LoadsPrefabs()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         Assert.Equal(3, registry.Count);
     }
@@ -29,9 +29,9 @@ public class PrefabRegistryTests
     [Fact]
     public void GetId_WithValidCategoryAndName_ReturnsCorrectId()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
-        var id = registry.GetId("player", "playerDefault");
+        ushort id = registry.GetId("player", "playerDefault");
 
         Assert.Equal((ushort)1, id);
     }
@@ -39,7 +39,7 @@ public class PrefabRegistryTests
     [Fact]
     public void GetId_WithInvalidName_ThrowsKeyNotFoundException()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         Assert.Throws<KeyNotFoundException>(() => registry.GetId("player", "invalid"));
     }
@@ -47,9 +47,9 @@ public class PrefabRegistryTests
     [Fact]
     public void GetConfig_WithValidId_ReturnsConfig()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
-        var config = registry.GetConfig(1);
+        PrefabConfig config = registry.GetConfig(1);
 
         Assert.Equal("playerDefault", config.Name);
         Assert.Equal("player", config.Category);
@@ -58,7 +58,7 @@ public class PrefabRegistryTests
     [Fact]
     public void GetConfig_WithInvalidId_ThrowsKeyNotFoundException()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         Assert.Throws<KeyNotFoundException>(() => registry.GetConfig(999));
     }
@@ -66,7 +66,7 @@ public class PrefabRegistryTests
     [Fact]
     public void TryGetId_WithValidName_ReturnsTrue()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         bool result = registry.TryGetId("mob", "goblin", out ushort id);
 
@@ -77,7 +77,7 @@ public class PrefabRegistryTests
     [Fact]
     public void TryGetId_WithInvalidName_ReturnsFalse()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         bool result = registry.TryGetId("mob", "invalid", out ushort id);
 
@@ -88,7 +88,7 @@ public class PrefabRegistryTests
     [Fact]
     public void HasPrefab_WithValidId_ReturnsTrue()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         Assert.True(registry.HasPrefab(1));
         Assert.True(registry.HasPrefab(100));
@@ -98,7 +98,7 @@ public class PrefabRegistryTests
     [Fact]
     public void HasPrefab_WithInvalidId_ReturnsFalse()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         Assert.False(registry.HasPrefab(999));
     }
@@ -106,7 +106,7 @@ public class PrefabRegistryTests
     [Fact]
     public void GetPrefabsByCategory_ReturnsCorrectPrefabs()
     {
-        var registry = CreateTestRegistry();
+        PrefabRegistry registry = CreateTestRegistry();
 
         var npcs = registry.GetPrefabsByCategory("npc").ToList();
 

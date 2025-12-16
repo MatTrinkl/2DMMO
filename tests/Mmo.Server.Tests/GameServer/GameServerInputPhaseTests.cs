@@ -1,5 +1,5 @@
-using Mmo.Server.Entities;
 using Mmo.Server.Tests.Helpers;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
@@ -40,9 +40,9 @@ public class GameServerInputPhaseTests
 
         // Verify all messages were routed (and logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                It.IsAny<Guid>()),
             Times.Exactly(3));
     }
 
@@ -66,21 +66,21 @@ public class GameServerInputPhaseTests
 
         // Verify messages from all clients were routed (logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            clientId1),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                clientId1),
             Times.Once);
 
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            clientId2),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                clientId2),
             Times.Once);
 
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            clientId3),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                clientId3),
             Times.Once);
     }
 
@@ -101,9 +101,9 @@ public class GameServerInputPhaseTests
         // LoginRequest is handled by LoginHandler - verify it doesn't log as "Unknown"
         // (Unlike unhandled messages, it should be processed without warning)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.LoginRequest,
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.LoginRequest,
+                It.IsAny<Guid>()),
             Times.Never);
     }
 
@@ -115,8 +115,9 @@ public class GameServerInputPhaseTests
         using var cts = new CancellationTokenSource();
 
         // Send PositionUpdate (currently unhandled, logs warning)
-        var testEntity = new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(5, 5));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(10, 20)));
+        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(5, 5));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(10, 20)));
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
@@ -124,9 +125,9 @@ public class GameServerInputPhaseTests
 
         // Verify PositionUpdate was routed (logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.PositionUpdate,
-            clientId),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.PositionUpdate,
+                clientId),
             Times.Once);
     }
 
@@ -146,9 +147,9 @@ public class GameServerInputPhaseTests
 
         // Verify ChatMessage was routed (logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            clientId),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                clientId),
             Times.Once);
     }
 
@@ -168,9 +169,9 @@ public class GameServerInputPhaseTests
 
         // Verify Ping was routed (logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.Ping,
-            clientId),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.Ping,
+                clientId),
             Times.Once);
     }
 
@@ -182,7 +183,8 @@ public class GameServerInputPhaseTests
         using var cts = new CancellationTokenSource();
 
         // Send Heartbeat (currently unhandled, logs warning)
-        _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Guid.NewGuid()));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new Heartbeat(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Guid.NewGuid()));
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
@@ -190,9 +192,9 @@ public class GameServerInputPhaseTests
 
         // Verify Heartbeat was routed (logged as unknown)
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.Heartbeat,
-            clientId),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.Heartbeat,
+                clientId),
             Times.Once);
     }
 
@@ -206,19 +208,17 @@ public class GameServerInputPhaseTests
 
         // Setup to capture message order from warnings (unhandled messages)
         _mockLog.Setup(log => log.Warn(
-            It.IsAny<string>(),
-            It.IsAny<object[]>()))
-            .Callback<string, object[]>((msg, args) => 
+                It.IsAny<string>(),
+                It.IsAny<object[]>()))
+            .Callback<string, object[]>((msg, args) =>
             {
-                if (args.Length >= 1 && args[0] is MessageType msgType)
-                {
-                    receivedMessages.Add(msgType);
-                }
+                if (args.Length >= 1 && args[0] is MessageType msgType) receivedMessages.Add(msgType);
             });
 
         // Queue messages in specific order (all except LoginRequest will be unhandled and logged)
-        var testEntity = new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5)));
+        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5)));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Hi"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
 
@@ -249,9 +249,9 @@ public class GameServerInputPhaseTests
 
         // No message processing should have occurred
         _mockLog.Verify(log => log.Debug(
-            It.Is<string>(s => s.Contains("Received message")),
-            It.IsAny<MessageType>(),
-            It.IsAny<Guid>()),
+                It.Is<string>(s => s.Contains("Received message")),
+                It.IsAny<MessageType>(),
+                It.IsAny<Guid>()),
             Times.Never);
     }
 
@@ -269,7 +269,7 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        var firstTickCount = gameServer.CurrentTick;
+        long firstTickCount = gameServer.CurrentTick;
 
         // Send another message
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Second"));
@@ -282,9 +282,9 @@ public class GameServerInputPhaseTests
         // Both messages should have been processed
         Assert.True(gameServer.CurrentTick > firstTickCount);
         _mockLog.Verify(log => log.Warn(
-            It.Is<string>(s => s.Contains("Unknown message type")),
-            MessageType.ChatMessage,
-            clientId),
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                MessageType.ChatMessage,
+                clientId),
             Times.Exactly(2));
     }
 
@@ -296,11 +296,12 @@ public class GameServerInputPhaseTests
         using var cts = new CancellationTokenSource();
 
         // Send various message types
-        var testEntity = new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("Player1", "password123"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Test"));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(1, 1)));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(1, 1)));
         _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat(123456789, Guid.NewGuid()));
 
         // Run one tick
@@ -309,11 +310,21 @@ public class GameServerInputPhaseTests
 
         // Verify all different types were processed
         // LoginRequest is handled by LoginHandler (should not log "Unknown")
-        _mockLog.Verify(log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.LoginRequest, It.IsAny<Guid>()), Times.Never);
+        _mockLog.Verify(
+            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.LoginRequest,
+                It.IsAny<Guid>()), Times.Never);
         // Other types are unhandled and log warnings
-        _mockLog.Verify(log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Ping, clientId), Times.Once);
-        _mockLog.Verify(log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.ChatMessage, clientId), Times.Once);
-        _mockLog.Verify(log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.PositionUpdate, clientId), Times.Once);
-        _mockLog.Verify(log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Heartbeat, clientId), Times.Once);
+        _mockLog.Verify(
+            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Ping, clientId),
+            Times.Once);
+        _mockLog.Verify(
+            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.ChatMessage, clientId),
+            Times.Once);
+        _mockLog.Verify(
+            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.PositionUpdate,
+                clientId), Times.Once);
+        _mockLog.Verify(
+            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Heartbeat, clientId),
+            Times.Once);
     }
 }

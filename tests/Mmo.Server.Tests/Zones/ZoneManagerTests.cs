@@ -3,10 +3,8 @@ using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
-using Moq;
 
 namespace Mmo.Server.Tests.Zones;
 
@@ -27,8 +25,8 @@ public class ZoneManagerTests
             "TestPlayer",
             new Position(100, 100)
         );
-        var connId = connectionId ?? Guid.NewGuid();
-        var connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
+        Guid connId = connectionId ?? Guid.NewGuid();
+        ClientConnection connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
         return new ServerPlayer(entity, connection);
     }
 

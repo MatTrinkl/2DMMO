@@ -11,7 +11,7 @@ public class MessageRouter(GameServer gameServer, ILog log)
 {
     private readonly GameServer _gameServer = gameServer;
     private readonly ILog _log = log;
-    private readonly LoginHandler _loginHandler=new LoginHandler(gameServer,log);
+    private readonly LoginHandler _loginHandler = new(gameServer, log);
 
 
     public void Route(ClientConnection connection, INetworkMessage message)

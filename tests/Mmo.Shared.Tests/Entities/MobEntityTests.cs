@@ -27,7 +27,7 @@ public class MobEntityTests
     {
         var persistentId = Guid.NewGuid();
         var position = new Position(50, 75);
-        var mob = new MobEntity(persistentId, "Wolf", position, 100);
+        var mob = new MobEntity(persistentId, "Wolf", position);
 
         Assert.Equal(persistentId, mob.PersistentId);
         Assert.Equal("Wolf", mob.MobName);
@@ -67,7 +67,7 @@ public class MobEntityTests
     [Fact]
     public void HealthPercentage_ReturnsCorrectValue()
     {
-        var mob = new MobEntity("Spider", new Position(0, 0), 100);
+        var mob = new MobEntity("Spider", new Position(0, 0));
         mob.CurrentHealth = 75;
 
         Assert.Equal(0.75f, mob.HealthPercentage);
