@@ -114,6 +114,20 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     }
 
     /// <summary>
+    ///     Sends a message to a specific client by connection ID.
+    ///     Helper overload for backward compatibility with tests.
+    /// </summary>
+    /// <param name="clientId">The client connection ID.</param>
+    /// <param name="message">The message to send.</param>
+    public async Task SendToClientAsync(Guid clientId, INetworkMessage message)
+    {
+        if (_clients.TryGetValue(clientId, out ClientConnection? connection))
+            await connection.SendAsync(message);
+        else
+            log.Debug("Cannot send to unknown client {ClientId}", clientId);
+    }
+
+    /// <summary>
     ///     Broadcasts a message to all connected clients.
     /// </summary>
     /// <param name="message">The message to broadcast.</param>
@@ -134,6 +148,21 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     {
         IEnumerable<Task> tasks = _clients
             .Where(kvp => kvp.Key != excludeClient.Id)
+            .Select(kvp => kvp.Value.SendAsync(message));
+
+        await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    ///     Broadcasts a message to all clients except one by connection ID.
+    ///     Helper overload for backward compatibility with tests.
+    /// </summary>
+    /// <param name="message">The message to broadcast.</param>
+    /// <param name="excludeClientId">The client connection ID to exclude.</param>
+    public async Task BroadcastExceptAsync(INetworkMessage message, Guid excludeClientId)
+    {
+        IEnumerable<Task> tasks = _clients
+            .Where(kvp => kvp.Key != excludeClientId)
             .Select(kvp => kvp.Value.SendAsync(message));
 
         await Task.WhenAll(tasks);

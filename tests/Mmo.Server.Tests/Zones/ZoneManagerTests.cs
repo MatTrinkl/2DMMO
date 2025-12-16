@@ -1,13 +1,19 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Networking;
+using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Entities;
+using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
+using Moq;
 
 namespace Mmo.Server.Tests.Zones;
 
 public class ZoneManagerTests
 {
+    private static readonly MockNetworkServer _sharedMockNetworkServer = new();
+
     private ZoneManager CreateZoneManager()
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
@@ -21,7 +27,9 @@ public class ZoneManagerTests
             "TestPlayer",
             new Position(100, 100)
         );
-        return new ServerPlayer(entity, connectionId ?? Guid.NewGuid());
+        var connId = connectionId ?? Guid.NewGuid();
+        var connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
+        return new ServerPlayer(entity, connection);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -94,7 +102,7 @@ public class ZoneManagerTests
         zoneManager.AddPlayer(player);
 
         Assert.Equal(1, zoneManager.PlayerCount);
-        Assert.True(zoneManager.HasPlayerWithConnectionId(player.ConnectionId));
+        Assert.True(zoneManager.HasPlayerWithConnectionId(player.Connection.Id));
     }
 
     [Fact]
@@ -110,7 +118,7 @@ public class ZoneManagerTests
         Assert.Equal(1, zoneManager.PlayerCount);
         var playersInZone = zoneManager.GetServerPlayersInZone(1).ToList();
         Assert.Single(playersInZone);
-        Assert.Equal(player.ConnectionId, playersInZone[0].ConnectionId);
+        Assert.Equal(player.Connection.Id, playersInZone[0].Connection.Id);
     }
 
     [Fact]
@@ -137,11 +145,11 @@ public class ZoneManagerTests
         ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player);
 
-        bool found = zoneManager.TryGetPlayerByConnectionId(player.ConnectionId, out ServerPlayer? foundPlayer);
+        bool found = zoneManager.TryGetPlayerByConnectionId(player.Connection.Id, out ServerPlayer? foundPlayer);
 
         Assert.True(found);
         Assert.NotNull(foundPlayer);
-        Assert.Equal(player.ConnectionId, foundPlayer.ConnectionId);
+        Assert.Equal(player.Connection.Id, foundPlayer.Connection.Id);
     }
 
     [Fact]
@@ -177,12 +185,12 @@ public class ZoneManagerTests
         ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player);
 
-        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(player.ConnectionId);
+        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
 
         Assert.NotNull(removedPlayer);
-        Assert.Equal(player.ConnectionId, removedPlayer.ConnectionId);
+        Assert.Equal(player.Connection.Id, removedPlayer.Connection.Id);
         Assert.Equal(0, zoneManager.PlayerCount);
-        Assert.False(zoneManager.HasPlayerWithConnectionId(player.ConnectionId));
+        Assert.False(zoneManager.HasPlayerWithConnectionId(player.Connection.Id));
     }
 
     [Fact]
@@ -203,7 +211,7 @@ public class ZoneManagerTests
         ServerPlayer player = CreateServerPlayer(persistentId);
         zoneManager.AddPlayer(player);
 
-        zoneManager.RemovePlayerByConnectionId(player.ConnectionId);
+        zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
 
         Assert.False(zoneManager.HasPlayerWithPersistentId(persistentId));
     }
@@ -276,7 +284,7 @@ public class ZoneManagerTests
         ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player, 0);
 
-        bool result = zoneManager.TransferPlayerByConnectionId(player.ConnectionId, 1);
+        bool result = zoneManager.TransferPlayerByConnectionId(player.Connection.Id, 1);
 
         Assert.True(result);
         var playersInZone0 = zoneManager.GetServerPlayersInZone(0).ToList();
@@ -292,7 +300,7 @@ public class ZoneManagerTests
         ServerPlayer player = CreateServerPlayer();
         zoneManager.AddPlayer(player, 0);
 
-        bool result = zoneManager.TransferPlayerByConnectionId(player.ConnectionId, 0);
+        bool result = zoneManager.TransferPlayerByConnectionId(player.Connection.Id, 0);
 
         Assert.True(result);
     }

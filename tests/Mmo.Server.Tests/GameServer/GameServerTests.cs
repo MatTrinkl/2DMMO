@@ -128,9 +128,10 @@ public class GameServerTests
         var clientId = Guid.NewGuid();
 
         // Add a player to the zone first
+        var connection = mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
-            clientId
+            connection
         );
         gameServer.ZoneManager.AddPlayer(player);
 

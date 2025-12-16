@@ -49,9 +49,10 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
+        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
-            clientId
+            connection
         );
         gameServer.ZoneManager.AddPlayer(player);
 
@@ -76,9 +77,10 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
+        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
-            clientId
+            connection
         );
         gameServer.ZoneManager.AddPlayer(player);
 
@@ -104,9 +106,10 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add a player to the zone
+        var connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var player = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
-            clientId
+            connection
         );
         gameServer.ZoneManager.AddPlayer(player);
 
@@ -146,13 +149,15 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add two players to the zone
+        var connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
         var player1 = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
-            clientId1
+            connection1
         );
+        var connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
         var player2 = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
-            clientId2
+            connection2
         );
         gameServer.ZoneManager.AddPlayer(player1);
         gameServer.ZoneManager.AddPlayer(player2);
@@ -163,10 +168,10 @@ public class GameServerBroadcastTests
 
         // Verify both players received ZoneState
         var player1Messages = _mockNetworkServer.SentMessages
-            .Where(m => m.ClientId == clientId1 && m.Message is ZoneState)
+            .Where(m => m.Client.Id == clientId1 && m.Message is ZoneState)
             .ToList();
         var player2Messages = _mockNetworkServer.SentMessages
-            .Where(m => m.ClientId == clientId2 && m.Message is ZoneState)
+            .Where(m => m.Client.Id == clientId2 && m.Message is ZoneState)
             .ToList();
 
         Assert.NotEmpty(player1Messages);
@@ -183,13 +188,15 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Add players to the same zone
+        var connection1 = _mockNetworkServer.GetOrCreateMockConnection(clientId1);
         var player1 = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10)),
-            clientId1
+            connection1
         );
+        var connection2 = _mockNetworkServer.GetOrCreateMockConnection(clientId2);
         var player2 = new ServerPlayer(
             new Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20)),
-            clientId2
+            connection2
         );
         gameServer.ZoneManager.AddPlayer(player1);
         gameServer.ZoneManager.AddPlayer(player2);
@@ -203,10 +210,10 @@ public class GameServerBroadcastTests
 
         // Both players should receive the position broadcast (same zone)
         var player1Broadcasts = _mockNetworkServer.SentMessages
-            .Where(m => m.ClientId == clientId1 && m.Message is PositionBroadcast)
+            .Where(m => m.Client.Id == clientId1 && m.Message is PositionBroadcast)
             .ToList();
         var player2Broadcasts = _mockNetworkServer.SentMessages
-            .Where(m => m.ClientId == clientId2 && m.Message is PositionBroadcast)
+            .Where(m => m.Client.Id == clientId2 && m.Message is PositionBroadcast)
             .ToList();
 
         Assert.NotEmpty(player1Broadcasts);
