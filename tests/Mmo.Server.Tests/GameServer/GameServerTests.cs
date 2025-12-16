@@ -199,9 +199,9 @@ public class GameServerTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify message was logged (processed)
-        _mockLog.Verify(log => log.Debug(
-            It.Is<string>(s => s.Contains("Received message")),
+        // Verify message was routed (ChatMessage is unhandled, logs warning)
+        _mockLog.Verify(log => log.Warn(
+            It.Is<string>(s => s.Contains("Unknown message type")),
             It.Is<MessageType>(t => t == MessageType.ChatMessage),
             It.Is<Guid>(g => g == clientId)),
             Times.Once);
@@ -229,21 +229,23 @@ public class GameServerTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify all messages were logged
-        _mockLog.Verify(log => log.Debug(
-            It.Is<string>(s => s.Contains("Received message")),
+        // Verify all messages were routed
+        // LoginRequest is handled by LoginHandler (should not log "Unknown")
+        _mockLog.Verify(log => log.Warn(
+            It.Is<string>(s => s.Contains("Unknown message type")),
             It.Is<MessageType>(t => t == MessageType.LoginRequest),
             It.IsAny<Guid>()),
-            Times.Once);
+            Times.Never);
 
-        _mockLog.Verify(log => log.Debug(
-            It.Is<string>(s => s.Contains("Received message")),
+        // PositionUpdate and ChatMessage are unhandled (log warnings)
+        _mockLog.Verify(log => log.Warn(
+            It.Is<string>(s => s.Contains("Unknown message type")),
             It.Is<MessageType>(t => t == MessageType.PositionUpdate),
             It.IsAny<Guid>()),
             Times.Once);
 
-        _mockLog.Verify(log => log.Debug(
-            It.Is<string>(s => s.Contains("Received message")),
+        _mockLog.Verify(log => log.Warn(
+            It.Is<string>(s => s.Contains("Unknown message type")),
             It.Is<MessageType>(t => t == MessageType.ChatMessage),
             It.IsAny<Guid>()),
             Times.Once);
