@@ -77,8 +77,8 @@ public sealed class IdRegistry : IIdRegistry
             return freedId;
         }
 
-        // Otherwise, get the next ID from the counter
-        return _localIdCounters.AddOrUpdate(key, 1, (_, current) => current + 1);
+        // Otherwise, get the next ID from the counter (starts at 0)
+        return _localIdCounters.AddOrUpdate(key, 0, (_, current) => current + 1);
     }
 
     /// <inheritdoc />
@@ -112,6 +112,11 @@ public sealed class IdRegistry : IIdRegistry
         _entityToConnection.TryGetValue(persistentId, out connectionId);
 
     /// <inheritdoc />
+    /// <remarks>
+    ///     Duplicate registrations are silently ignored (TryAdd returns false).
+    ///     This is intentional to support scenarios like reconnecting players
+    ///     or zone transfers where the entity might already be registered.
+    /// </remarks>
     public void RegisterEntity(IEntity entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -215,7 +220,14 @@ public sealed class IdRegistry : IIdRegistry
 
     /// <summary>
     ///     Creates a combined key for zone/shard lookup.
+    ///     Uses bit-packing to create a unique 32-bit key from two 16-bit values:
+    ///     - Upper 16 bits: ZoneId
+    ///     - Lower 16 bits: ShardId
+    ///     This allows O(1) lookup in the _localIdCounters and _freedLocalIds dictionaries.
     /// </summary>
+    /// <param name="zoneId">The zone ID (0-65535).</param>
+    /// <param name="shardId">The shard ID (0-65535).</param>
+    /// <returns>A unique 32-bit key combining both IDs.</returns>
     private static uint GetZoneShardKey(ushort zoneId, ushort shardId) =>
         ((uint)zoneId << 16) | shardId;
 }

@@ -36,9 +36,9 @@ public class IdRegistryTests : IDisposable
         int id2 = IdRegistry.Instance.GetNextLocalId(zoneId);
         int id3 = IdRegistry.Instance.GetNextLocalId(zoneId);
 
-        Assert.Equal(1, id1);
-        Assert.Equal(2, id2);
-        Assert.Equal(3, id3);
+        Assert.Equal(0, id1);
+        Assert.Equal(1, id2);
+        Assert.Equal(2, id3);
     }
 
     [Fact]
@@ -51,9 +51,9 @@ public class IdRegistryTests : IDisposable
         int id2Zone1 = IdRegistry.Instance.GetNextLocalId(zone1);
         int id1Zone2 = IdRegistry.Instance.GetNextLocalId(zone2);
 
-        Assert.Equal(1, id1Zone1);
-        Assert.Equal(2, id2Zone1);
-        Assert.Equal(1, id1Zone2);
+        Assert.Equal(0, id1Zone1);
+        Assert.Equal(1, id2Zone1);
+        Assert.Equal(0, id1Zone2);
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public class IdRegistryTests : IDisposable
         int idShard0 = IdRegistry.Instance.GetNextLocalId(zoneId, shard0);
         int idShard1 = IdRegistry.Instance.GetNextLocalId(zoneId, shard1);
 
-        Assert.Equal(1, idShard0);
-        Assert.Equal(1, idShard1);
+        Assert.Equal(0, idShard0);
+        Assert.Equal(0, idShard1);
     }
 
     [Fact]
@@ -313,8 +313,8 @@ public class IdRegistryTests : IDisposable
 
         Assert.Equal(0, IdRegistry.Instance.EntityCount);
         Assert.Equal(0, IdRegistry.Instance.ConnectionCount);
-        // Counter should be reset
-        Assert.Equal(1, IdRegistry.Instance.GetNextLocalId(1));
+        // Counter should be reset (starts at 0)
+        Assert.Equal(0, IdRegistry.Instance.GetNextLocalId(1));
     }
 
     private static TestEntity CreateTestEntity() => new();
@@ -324,7 +324,16 @@ public class IdRegistryTests : IDisposable
     /// </summary>
     private class TestEntity : IEntity
     {
-        private EntityIdentity _runtimeId = EntityIdentity.Unassigned(1);
+        /// <summary>Test server ID.</summary>
+        private const byte TestServerId = 1;
+        
+        /// <summary>Test shard ID (not used in prototype).</summary>
+        private const ushort TestShardId = 0;
+        
+        /// <summary>Test prefab ID for player entity (corresponds to PrefabIds.PlayerDefault fallback value).</summary>
+        private const ushort TestPrefabId = 1;
+
+        private EntityIdentity _runtimeId = EntityIdentity.Unassigned(TestPrefabId);
 
         public TestEntity()
         {
@@ -340,7 +349,7 @@ public class IdRegistryTests : IDisposable
 
         public void SetEntityId(int localId, ushort zoneId)
         {
-            _runtimeId = new EntityIdentity(1, zoneId, 0, localId, 1);
+            _runtimeId = new EntityIdentity(TestServerId, zoneId, TestShardId, localId, TestPrefabId);
         }
 
         public void ChangeZone(ushort newZoneId)

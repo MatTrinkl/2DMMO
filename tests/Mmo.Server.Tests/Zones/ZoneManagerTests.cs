@@ -8,9 +8,21 @@ using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Tests.Zones;
 
-public class ZoneManagerTests
+public class ZoneManagerTests : IDisposable
 {
     private static readonly MockNetworkServer _sharedMockNetworkServer = new();
+
+    public ZoneManagerTests()
+    {
+        // Clear IdRegistry before each test
+        IdRegistry.Instance.Clear();
+    }
+
+    public void Dispose()
+    {
+        // Clear IdRegistry after each test
+        IdRegistry.Instance.Clear();
+    }
 
     private ZoneManager CreateZoneManager()
     {

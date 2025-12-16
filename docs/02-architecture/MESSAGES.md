@@ -1315,4 +1315,50 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     CutsceneStart = 4400,
     CutsceneEnd = 4401,
-    Cut
+    CutsceneSkip = 4402,
+    CutscenePause = 4403,
+    CutsceneResume = 4404,
+    CutsceneProgress = 4405,
+
+    // ═══════════════════════════════════════════════════════════════
+    // HOUSING / PLAYER BUILDINGS (4500-4599)
+    // ═══════════════════════════════════════════════════════════════
+    HousingEnter = 4500,
+    HousingLeave = 4501,
+    HousingEdit = 4502,
+    HousingPlace = 4503,
+    HousingRemove = 4504,
+    HousingSave = 4505,
+
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS / SEASONAL CONTENT (4600-4699)
+    // ═══════════════════════════════════════════════════════════════
+    EventStart = 4600,
+    EventEnd = 4601,
+    EventProgress = 4602,
+    SeasonalStart = 4603,
+    SeasonalEnd = 4604,
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEBUG / DEVELOPMENT (4900-4999)
+    // ═══════════════════════════════════════════════════════════════
+    DebugCommand = 4900,
+    DebugResponse = 4901,
+    DebugLog = 4902,
+    DebugTeleport = 4903,
+    DebugSpawn = 4904,
+}
+```
+
+---
+
+## 🔗 Verwandte Dokumentation
+
+- [ID-System](ID_SYSTEM.md) - Entity Identity, PersistentId, RuntimeId
+- [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
+- [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden
+- [Sicherheit](SECURITY.md) - Input Validation
+
+---
+
+*Teil der [Architektur-Dokumentation](README.md)*
