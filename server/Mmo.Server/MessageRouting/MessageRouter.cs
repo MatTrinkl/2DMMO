@@ -7,13 +7,37 @@ using Mmo.Shared.Messages.Connection;
 
 namespace Mmo.Server.MessageRouting;
 
+/// <summary>
+/// Routes incoming network messages to their appropriate handlers based on message type.
+/// </summary>
+/// <remarks>
+/// The MessageRouter categorizes messages into three groups:
+/// <list type="bullet">
+/// <item><description>Client → Server: Messages that should be processed by the server (LoginRequest, PositionUpdate, etc.)</description></item>
+/// <item><description>Server → Client: Messages that should never be received from clients (LoginResponse, broadcasts, etc.)</description></item>
+/// <item><description>Bidirectional: Messages that can flow in both directions (JoinZone, LeaveZone)</description></item>
+/// </list>
+/// <para>
+/// Unimplemented handlers log at Debug level to indicate missing functionality without cluttering production logs.
+/// Invalid messages (e.g., server-to-client messages received from clients) log at Warn level.
+/// </para>
+/// </remarks>
 public class MessageRouter(GameServer gameServer, ILog log)
 {
     private readonly GameServer _gameServer = gameServer;
     private readonly ILog _log = log;
     private readonly LoginHandler _loginHandler = new(gameServer, log);
 
-
+    /// <summary>
+    /// Routes an incoming network message to its appropriate handler.
+    /// </summary>
+    /// <param name="connection">The client connection that sent the message.</param>
+    /// <param name="message">The network message to route.</param>
+    /// <remarks>
+    /// Messages are routed based on their <see cref="MessageType"/>. Unimplemented handlers
+    /// log at Debug level with a TODO comment. Invalid messages (server-to-client messages
+    /// received from clients) log at Warn level.
+    /// </remarks>
     public void Route(ClientConnection connection, INetworkMessage message)
     {
         switch (message.Type)

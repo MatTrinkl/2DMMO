@@ -9,11 +9,40 @@ using Mmo.Shared.Messages.ZoneEvents;
 
 namespace Mmo.Server.MessageRouting.MessageHandler;
 
+/// <summary>
+/// Handles login requests from clients, performing validation and player spawning.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This is a temporary implementation that will be replaced with IAuthenticationService.
+/// Currently performs synchronous validation within the Game Loop, which is acceptable
+/// for the prototype but should be moved to an async Auth phase before the Game Loop in production.
+/// </para>
+/// <para>
+/// <strong>Security Note:</strong> Password validation is not yet implemented.
+/// Duplicate username/session checks are also missing.
+/// </para>
+/// </remarks>
 public class LoginHandler(GameServer gameServer, ILog log)
 {
     private readonly GameServer _gameServer = gameServer;
     private readonly ILog _log = log;
 
+    /// <summary>
+    /// Handles a login request from a client.
+    /// </summary>
+    /// <param name="connection">The client connection making the login request.</param>
+    /// <param name="request">The login request containing username and password.</param>
+    /// <remarks>
+    /// <para>
+    /// Validates the username (length and non-empty), spawns a player entity,
+    /// and queues the appropriate response (success or failure) to be sent during the Output phase.
+    /// </para>
+    /// <para>
+    /// On successful login, the player is spawned in their last position (or start zone),
+    /// and a PlayerJoinedZone broadcast is queued to notify other players in the zone.
+    /// </para>
+    /// </remarks>
     internal void Handle(ClientConnection connection, LoginRequest request)
     {
         // TODO: Replace with IAuthenticationService later
@@ -74,6 +103,16 @@ public class LoginHandler(GameServer gameServer, ILog log)
         QueueLoginResponse(connection, true, player, null);
     }
 
+    /// <summary>
+    /// Queues a login response message to be sent to the client during the Output phase.
+    /// </summary>
+    /// <param name="connection">The client connection to send the response to.</param>
+    /// <param name="success">Whether the login was successful.</param>
+    /// <param name="player">The spawned player (null if login failed).</param>
+    /// <param name="error">Error message if login failed (null if successful).</param>
+    /// <remarks>
+    /// On successful login, also queues a PlayerJoinedZone broadcast to notify other players in the zone.
+    /// </remarks>
     private void QueueLoginResponse(ClientConnection connection, bool success, ServerPlayer? player, string? error)
     {
         // Queue Login Response in the GameServer which will be processed in the Output phase
