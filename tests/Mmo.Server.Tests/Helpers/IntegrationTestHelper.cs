@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Networking;
 using Mmo.Server.Zones;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
@@ -8,6 +9,8 @@ namespace Mmo.Server.Tests.Helpers;
 
 public static class TestHelpers
 {
+    private static readonly MockNetworkServer _mockNetworkServer = new();
+
     public static ZoneManager CreateZoneManagerWithZones(params (ushort id, string name)[] zones)
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
@@ -35,7 +38,9 @@ public static class TestHelpers
             name,
             new Position(x, y)
         );
-        return new ServerPlayer(entity, connectionId ?? Guid.NewGuid());
+        Guid connId = connectionId ?? Guid.NewGuid();
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connId);
+        return new ServerPlayer(entity, connection);
     }
 
     public static List<ServerPlayer> CreateMultiplePlayers(int count)

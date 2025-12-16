@@ -1,21 +1,24 @@
+using Mmo.Server.Entities;
+using Mmo.Server.Messages;
 using Mmo.Server.Networking;
+using Mmo.Server.Tests.Helpers;
+using Mmo.Shared.Entities;
+using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
+using Mmo.Shared.Messages.Chat;
+using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messages.Movement;
+using Mmo.Shared.Records;
 using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
 
 public class GameServerTests
 {
-    private readonly Mock<ILog> _mockLog;
-    private readonly Mock<INetworkServer> _mockNetworkServer;
+    private readonly Mock<ILog> _mockLog = new();
+    private readonly Mock<INetworkServer> _mockNetworkServer = new();
 
-    public GameServerTests()
-    {
-        _mockLog = new Mock<ILog>();
-
-        // NetworkServer braucht einen echten Constructor, daher anders mocken
-        _mockNetworkServer = new Mock<INetworkServer>();
-    }
+    // NetworkServer braucht einen echten Constructor, daher anders mocken
 
     [Fact]
     public void Constructor_InitializesCorrectly()
@@ -46,7 +49,7 @@ public class GameServerTests
         var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         var mockMessage = new Mock<INetworkMessage>();
 
-        gameServer.QueueBroadcast(mockMessage.Object);
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(mockMessage.Object));
 
         // Wieder:  ohne Reflection schwer zu testen,
         // aber keine Exception = gut
@@ -78,5 +81,202 @@ public class GameServerTests
 
         Assert.True(gameServer.CurrentTick > 0);
         Assert.False(gameServer.IsRunning);
+    }
+
+    [Fact]
+    public void OnClientConnected_LogsConnection()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+
+        mockNetworkServer.SimulateClientConnected(clientId, "192.168.1.1:5000");
+
+        _mockLog.Verify(log => log.Info(
+                It.Is<string>(s => s.Contains("connected")),
+                It.Is<Guid>(g => g == clientId),
+                It.IsAny<string>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public void OnClientDisconnected_WithoutPlayer_LogsDisconnection()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+
+        mockNetworkServer.SimulateClientDisconnected(clientId, DisconnectReason.ClientDisconnected);
+
+        _mockLog.Verify(log => log.Info(
+                It.Is<string>(s => s.Contains("disconnected")),
+                It.Is<Guid>(g => g == clientId),
+                It.IsAny<DisconnectReason>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public void OnClientDisconnected_WithPlayer_RemovesPlayerAndQueuesBroadcast()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+
+        // Add a player to the zone first
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(clientId);
+        var player = new ServerPlayer(
+            new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10)),
+            connection
+        );
+        gameServer.ZoneManager.AddPlayer(player);
+
+        // Simulate disconnect
+        mockNetworkServer.SimulateClientDisconnected(clientId, DisconnectReason.ClientDisconnected);
+
+        // Verify player was removed
+        bool playerFound = gameServer.ZoneManager.TryGetPlayerByConnectionId(clientId, out _);
+        Assert.False(playerFound);
+
+        // Verify logs
+        _mockLog.Verify(log => log.Info(
+                It.Is<string>(s => s.Contains("removed from zone")),
+                It.IsAny<string>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public void OnNetworkError_WithClientId_LogsClientError()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+        var exception = new Exception("Test error");
+
+        mockNetworkServer.SimulateNetworkError(clientId, exception, "TestContext");
+
+        _mockLog.Verify(log => log.Error(
+                It.Is<string>(s => s.Contains("Network error")),
+                It.Is<Guid>(g => g == clientId),
+                It.Is<string>(s => s == "TestContext"),
+                It.Is<string>(s => s.Contains("Test error"))),
+            Times.Once);
+    }
+
+    [Fact]
+    public void OnNetworkError_WithoutClientId_LogsServerError()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var exception = new Exception("Server error");
+
+        mockNetworkServer.SimulateNetworkError(null, exception, "ServerContext");
+
+        _mockLog.Verify(log => log.Error(
+                It.Is<string>(s => s.Contains("Server network error")),
+                It.Is<string>(s => s == "ServerContext"),
+                It.Is<string>(s => s.Contains("Server error"))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task OnMessageReceived_QueuesMessageForProcessing()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+        var message = new ChatMessage(Guid.NewGuid(), "Hello");
+        using var cts = new CancellationTokenSource();
+
+        // Simulate message received
+        mockNetworkServer.SimulateMessageReceived(clientId, message);
+
+        // Run one tick to process the message
+        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+        await gameServer.StartServerAsync(cts.Token);
+
+        // Verify message was routed (ChatMessage handler not yet implemented, logs Debug)
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
+                It.Is<Guid>(g => g == clientId)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_LogsDifferentMessageTypes()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+        using var cts = new CancellationTokenSource();
+
+        // Simulate different message types
+        var loginRequest = new LoginRequest("TestUser", "password123");
+        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var positionUpdate =
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
+        var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");
+
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest);
+        mockNetworkServer.SimulateMessageReceived(clientId, positionUpdate);
+        mockNetworkServer.SimulateMessageReceived(clientId, chatMessage);
+
+        // Run one tick to process messages
+        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+        await gameServer.StartServerAsync(cts.Token);
+
+        // Verify all messages were routed
+        // LoginRequest is handled by LoginHandler (should not log "Unknown" or "not yet implemented")
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Unknown message type")),
+                It.Is<MessageType>(t => t == MessageType.LoginRequest),
+                It.IsAny<Guid>()),
+            Times.Never);
+
+        // PositionUpdate and ChatMessage are not yet implemented (log Debug, not Warn)
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")),
+                It.IsAny<Guid>()),
+            Times.Once);
+
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
+                It.IsAny<Guid>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task PlayerLoginFails()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+        using var cts = new CancellationTokenSource();
+
+        // Simulate different message types
+        var loginRequest1 = new LoginRequest("Te", "password123");
+        var loginRequest2 = new LoginRequest("Teasdfasdfasfsdfasdfasdfasdfasdfasdfsf", "password123");
+        var loginRequest3 = new LoginRequest("", "password123");
+
+
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest1);
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest2);
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest3);
+
+        // Run one tick to process messages
+        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+        await gameServer.StartServerAsync(cts.Token);
+
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username too short")),
+                It.IsAny<Guid>()),
+            Times.Once);
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username is empty")),
+                It.IsAny<Guid>()),
+            Times.Once);
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username too long")),
+                It.IsAny<Guid>()),
+            Times.Once);
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Mmo.Server.Entities;
 using Mmo.Shared.Entities;
+using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones;
@@ -108,6 +109,13 @@ public class ZoneManager
     /// </summary>
     public IEnumerable<Zone> GetAllZones() => _zones.Values;
 
+    public PlayerEntity SpawnPlayer(Guid connectionId, string username)
+    {
+        ArgumentNullException.ThrowIfNull(username);
+        //TODO: CharacterId and Position read from DB, currently its the connectionId and always spawn at 0,0
+        return new PlayerEntity(connectionId, username, new Position(0, 0));
+    }
+
     /// <summary>
     ///     Adds a player to a zone with connection and persistent ID tracking.
     /// </summary>
@@ -129,7 +137,7 @@ public class ZoneManager
         zone.AddEntity(serverPlayer.Entity);
 
         // Add to ConnectionId lookup (session-stable)
-        _playersByConnectionId.TryAdd(serverPlayer.ConnectionId, serverPlayer);
+        _playersByConnectionId.TryAdd(serverPlayer.Connection.Id, serverPlayer);
 
         // Add to PersistentId lookups (permanent-stable, all entities have PersistentId now)
         _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer);
@@ -151,9 +159,9 @@ public class ZoneManager
         _entitiesByPersistentId.TryRemove(serverPlayer.Entity.PersistentId, out _);
 
         // Remove from zone
-        ushort zoneId = serverPlayer.Entity.EntityId.ZoneId;
+        ushort zoneId = serverPlayer.Entity.RuntimeId.ZoneId;
         Zone? zone = GetZone(zoneId);
-        zone?.RemoveEntity(serverPlayer.Entity.EntityId.Id);
+        zone?.RemoveEntity(serverPlayer.Entity.RuntimeId.LocalId);
 
         return serverPlayer;
     }
@@ -169,13 +177,13 @@ public class ZoneManager
             return null;
 
         // Remove from other lookups
-        _playersByConnectionId.TryRemove(serverPlayer.ConnectionId, out _);
+        _playersByConnectionId.TryRemove(serverPlayer.Connection.Id, out _);
         _entitiesByPersistentId.TryRemove(persistentId, out _);
 
         // Remove from zone
-        ushort zoneId = serverPlayer.Entity.EntityId.ZoneId;
+        ushort zoneId = serverPlayer.Entity.RuntimeId.ZoneId;
         Zone? zone = GetZone(zoneId);
-        zone?.RemoveEntity(serverPlayer.Entity.EntityId.Id);
+        zone?.RemoveEntity(serverPlayer.Entity.RuntimeId.LocalId);
 
         return serverPlayer;
     }
@@ -207,10 +215,10 @@ public class ZoneManager
     ///     Gets all server players in a specific zone.
     /// </summary>
     /// <param name="zoneId">The zone ID to filter by.</param>
-    public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort zoneId)
+    public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort? zoneId)
     {
         return GetAllServerPlayers()
-            .Where(p => p.Entity.EntityId.ZoneId == zoneId);
+            .Where(p => p.Entity.RuntimeId.ZoneId == zoneId);
     }
 
     /// <summary>
@@ -273,9 +281,9 @@ public class ZoneManager
             return null;
 
         // Remove from zone
-        ushort zoneId = entity.EntityId.ZoneId;
+        ushort zoneId = entity.RuntimeId.ZoneId;
         Zone? zone = GetZone(zoneId);
-        zone?.RemoveEntity(entity.EntityId.Id);
+        zone?.RemoveEntity(entity.RuntimeId.LocalId);
 
         return entity;
     }
@@ -369,14 +377,14 @@ public class ZoneManager
         ArgumentNullException.ThrowIfNull(newZone, nameof(toZoneId));
         ArgumentNullException.ThrowIfNull(entity);
 
-        if (entity.EntityId.ZoneId != fromZoneId)
+        if (entity.RuntimeId.ZoneId != fromZoneId)
             throw new ArgumentException(
-                $"Entity with ID {entity.EntityId} does not belong to source Zone with ID {fromZoneId}.");
+                $"Entity with ID {entity.RuntimeId} does not belong to source Zone with ID {fromZoneId}.");
 
         if (oldZone == newZone) return;
 
         // Remove from old zone
-        oldZone.RemoveEntity(entity.EntityId.Id);
+        oldZone.RemoveEntity(entity.RuntimeId.LocalId);
 
         // Add to new zone (this assigns a new EntityId!)
         newZone.AddEntity(entity);
@@ -398,7 +406,7 @@ public class ZoneManager
         if (!TryGetPlayerByConnectionId(connectionId, out ServerPlayer? serverPlayer))
             return false;
 
-        ushort fromZoneId = serverPlayer.Entity.EntityId.ZoneId;
+        ushort fromZoneId = serverPlayer.Entity.RuntimeId.ZoneId;
 
         if (fromZoneId == toZoneId)
             return true; // Already in target zone
@@ -418,7 +426,7 @@ public class ZoneManager
         if (!TryGetPlayerByPersistentId(persistentId, out ServerPlayer? serverPlayer))
             return false;
 
-        ushort fromZoneId = serverPlayer.Entity.EntityId.ZoneId;
+        ushort fromZoneId = serverPlayer.Entity.RuntimeId.ZoneId;
 
         if (fromZoneId == toZoneId)
             return true; // Already in target zone

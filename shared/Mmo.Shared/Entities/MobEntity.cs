@@ -20,12 +20,14 @@ public class MobEntity : Entity
 
     /// <summary>
     ///     Creates a new spawned mob with auto-generated PersistentId.
+    ///     Uses default Goblin prefab if not specified.
     /// </summary>
     /// <param name="mobName">The name/type of the mob.</param>
     /// <param name="position">The spawn position.</param>
-    /// <param name="maxHealth">Maximum health of the mob.</param>
-    public MobEntity(string mobName, Position position, int maxHealth = 100)
-        : base(position) // Runtime-only (generates new PersistentId)
+    /// <param name="maxHealth">Maximum health of the mob (default: 100).</param>
+    /// <param name="prefabId">The prefab ID of the mob (default: Goblin from PrefabIds).</param>
+    public MobEntity(string mobName, Position position, int maxHealth = 100, ushort prefabId = 1000)
+        : base(position, prefabId) // Runtime-only (generates new PersistentId)
     {
         MobName = mobName;
         MaxHealth = maxHealth;
@@ -34,13 +36,15 @@ public class MobEntity : Entity
 
     /// <summary>
     ///     Creates a mob with specific PersistentId (for syncing/respawn).
+    ///     Uses default Goblin prefab if not specified.
     /// </summary>
     /// <param name="persistentId">The persistent ID.</param>
     /// <param name="mobName">The name/type of the mob.</param>
     /// <param name="position">The spawn position.</param>
-    /// <param name="maxHealth">Maximum health of the mob.</param>
-    public MobEntity(Guid persistentId, string mobName, Position position, int maxHealth = 100)
-        : base(persistentId, position, false)
+    /// <param name="maxHealth">Maximum health of the mob (default: 100).</param>
+    /// <param name="prefabId">The prefab ID of the mob (default: Goblin from PrefabIds).</param>
+    public MobEntity(Guid persistentId, string mobName, Position position, int maxHealth = 100, ushort prefabId = 1000)
+        : base(persistentId, position, prefabId, false)
     {
         MobName = mobName;
         MaxHealth = maxHealth;

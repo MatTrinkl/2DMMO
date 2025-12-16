@@ -13,6 +13,7 @@ namespace Mmo.Server.Networking;
 public sealed class NetworkServer(int port, ILog log) : INetworkServer
 {
     private readonly ConcurrentDictionary<Guid, ClientConnection> _clients = new();
+    private readonly ConcurrentDictionary<Guid, Guid> _playerToConnection = new(); // PlayerId → ConnId
     private bool _isDisposed;
     private TcpListener? _listener;
 
@@ -102,14 +103,14 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// <summary>
     ///     Sends a message to a specific client.
     /// </summary>
-    /// <param name="clientId">The target client ID.</param>
+    /// <param name="client"></param>
     /// <param name="message">The message to send.</param>
-    public async Task SendToClientAsync(Guid clientId, INetworkMessage message)
+    public async Task SendToClientAsync(ClientConnection client, INetworkMessage message)
     {
-        if (_clients.TryGetValue(clientId, out ClientConnection? connection))
+        if (_clients.TryGetValue(client.Id, out ClientConnection? connection))
             await connection.SendAsync(message);
         else
-            log.Debug("Cannot send to unknown client {ClientId}", clientId);
+            log.Debug("Cannot send to unknown client {ClientId}", client);
     }
 
     /// <summary>
@@ -128,11 +129,11 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     ///     Broadcasts a message to all clients except one (e.g., the sender).
     /// </summary>
     /// <param name="message">The message to broadcast.</param>
-    /// <param name="excludeClientId">The client ID to exclude.</param>
-    public async Task BroadcastExceptAsync(INetworkMessage message, Guid excludeClientId)
+    /// <param name="excludeClient">The client ID to exclude.</param>
+    public async Task BroadcastExceptAsync(INetworkMessage message, ClientConnection excludeClient)
     {
         IEnumerable<Task> tasks = _clients
-            .Where(kvp => kvp.Key != excludeClientId)
+            .Where(kvp => kvp.Key != excludeClient.Id)
             .Select(kvp => kvp.Value.SendAsync(message));
 
         await Task.WhenAll(tasks);
@@ -141,10 +142,10 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// <summary>
     ///     Kicks a client from the server.
     /// </summary>
-    /// <param name="clientId">The client to kick.</param>
-    public async Task KickClientAsync(Guid clientId)
+    /// <param name="client">The client to kick.</param>
+    public async Task KickClientAsync(ClientConnection client)
     {
-        if (_clients.TryGetValue(clientId, out ClientConnection? connection)) await connection.KickAsync();
+        if (_clients.TryGetValue(client.Id, out ClientConnection? connection)) await connection.KickAsync();
     }
 
     /// <summary>
@@ -155,8 +156,46 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     /// <summary>
     ///     Checks if a client is connected.
     /// </summary>
-    /// <param name="clientId">The client ID to check.</param>
-    public bool IsClientConnected(Guid clientId) => _clients.ContainsKey(clientId);
+    /// <param name="client">The client ID to check.</param>
+    public bool IsClientConnected(ClientConnection client) => _clients.ContainsKey(client.Id);
+
+    public void AssociatePlayer(ClientConnection connection, Guid playerId)
+    {
+        _playerToConnection[playerId] = connection.Id;
+        if (_clients.TryGetValue(connection.Id, out ClientConnection? conn)) conn.PlayerId = playerId;
+    }
+
+    public void RemovePlayer(ClientConnection player) => _playerToConnection.TryRemove(player.Id, out _);
+    public Task BroadcastToZoneAsync(INetworkMessage eventMessageMessage) => throw new NotImplementedException();
+
+    /// <summary>
+    ///     Sends a message to a specific client by connection ID.
+    ///     Helper overload for backward compatibility with tests.
+    /// </summary>
+    /// <param name="clientId">The client connection ID.</param>
+    /// <param name="message">The message to send.</param>
+    public async Task SendToClientAsync(Guid clientId, INetworkMessage message)
+    {
+        if (_clients.TryGetValue(clientId, out ClientConnection? connection))
+            await connection.SendAsync(message);
+        else
+            log.Debug("Cannot send to unknown client {ClientId}", clientId);
+    }
+
+    /// <summary>
+    ///     Broadcasts a message to all clients except one by connection ID.
+    ///     Helper overload for backward compatibility with tests.
+    /// </summary>
+    /// <param name="message">The message to broadcast.</param>
+    /// <param name="excludeClientId">The client connection ID to exclude.</param>
+    public async Task BroadcastExceptAsync(INetworkMessage message, Guid excludeClientId)
+    {
+        IEnumerable<Task> tasks = _clients
+            .Where(kvp => kvp.Key != excludeClientId)
+            .Select(kvp => kvp.Value.SendAsync(message));
+
+        await Task.WhenAll(tasks);
+    }
 
     // ══════════════════════════════════════════════════════════
     // EVENT INVOKERS
@@ -166,7 +205,9 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
 
     private void OnClientDisconnected(ClientDisconnectedEventArgs e) => ClientDisconnected?.Invoke(this, e);
 
-    private void OnMessageReceived(MessageReceivedEventArgs e) => MessageReceived?.Invoke(this, e);
+    internal void OnMessageReceived(ClientConnection connection, INetworkMessage message) => MessageReceived?.Invoke(
+        this,
+        new MessageReceivedEventArgs(connection, message, DateTimeOffset.UtcNow));
 
     private void OnErrorOccurred(NetworkErrorEventArgs e) => ErrorOccurred?.Invoke(this, e);
 
@@ -176,23 +217,20 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     private void SetupConnectionEvents(ClientConnection connection)
     {
         // Message received
-        connection.MessageReceived += message =>
-        {
-            OnMessageReceived(new MessageReceivedEventArgs(connection.Id, message));
-        };
+        connection.MessageReceived += message => { OnMessageReceived(connection, message); };
 
         // Client disconnected (with reason from ClientConnection)
-        connection.Disconnected += reason => { HandleDisconnect(connection.Id, reason); };
+        connection.Disconnected += reason => { HandleDisconnect(connection, reason); };
     }
 
     /// <summary>
     ///     Handles client disconnection.
     /// </summary>
-    private void HandleDisconnect(Guid clientId, DisconnectReason reason)
+    private void HandleDisconnect(ClientConnection clientId, DisconnectReason reason)
     {
-        if (_clients.TryRemove(clientId, out ClientConnection? connection)) connection.Dispose();
+        if (_clients.TryRemove(clientId.Id, out ClientConnection? connection)) connection.Dispose();
 
-        OnClientDisconnected(new ClientDisconnectedEventArgs(clientId, reason));
+        OnClientDisconnected(new ClientDisconnectedEventArgs(clientId.Id, reason));
         log.Info("Client {ClientId} disconnected:  {Reason}", clientId, reason);
     }
 

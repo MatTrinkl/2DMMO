@@ -64,7 +64,7 @@ public class MessageSerializerTests
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (PlayerJoinedZone)MessageSerializer.Deserialize(bytes);
 
-        Assert.Equal(original.Player.EntityId, deserialized.Player.EntityId);
+        Assert.Equal(original.Player.RuntimeId, deserialized.Player.RuntimeId);
         Assert.Equal(original.Player.DisplayName, deserialized.Player.DisplayName);
         Assert.Equal(original.Player.Position.X, deserialized.Player.Position.X);
         Assert.Equal(original.Player.Position.Y, deserialized.Player.Position.Y);
@@ -105,7 +105,7 @@ public class MessageSerializerTests
 
         Debug.Assert(original.EntityOldPosition != null);
         Debug.Assert(deserialized.EntityOldPosition != null);
-        Assert.Equal(original.EntityOldPosition.EntityId, deserialized.EntityOldPosition.EntityId);
+        Assert.Equal(original.EntityOldPosition.RuntimeId, deserialized.EntityOldPosition.RuntimeId);
         Assert.Equal(original.EntityOldPosition.Position.X, deserialized.EntityOldPosition.Position.X);
         Debug.Assert(original.NewPosition != null);
         Debug.Assert(deserialized.NewPosition != null);
