@@ -4,6 +4,7 @@ using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Tests.Entities;
 
+[Collection("IdRegistry")]
 public class IdRegistryTests : IDisposable
 {
     public IdRegistryTests()

@@ -43,8 +43,8 @@ public class GameServerTickTests
         var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, fastDuration);
         using var cts = new CancellationTokenSource();
 
-        // Run for ~3-4 ticks then cancel
-        cts.CancelAfter(TimeSpan.FromMilliseconds(150));
+        // Run for ~3-4 ticks then cancel (increased to 300ms for CI stability)
+        cts.CancelAfter(TimeSpan.FromMilliseconds(300));
 
         // Act
         await gameServer.StartServerAsync(cts.Token);

@@ -8,6 +8,7 @@ using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Tests.Zones;
 
+[Collection("IdRegistry")]
 public class ZoneManagerTests : IDisposable
 {
     private static readonly MockNetworkServer _sharedMockNetworkServer = new();

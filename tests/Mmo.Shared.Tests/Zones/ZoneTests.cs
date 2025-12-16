@@ -5,6 +5,7 @@ using Moq;
 
 namespace Mmo.Shared.Tests.Zones;
 
+[Collection("IdRegistry")]
 public class ZoneTests : IDisposable
 {
     public ZoneTests()

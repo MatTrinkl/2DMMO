@@ -13,6 +13,7 @@ using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
 
+[Collection("IdRegistry")]
 public class GameServerBroadcastTests : IDisposable
 {
     private readonly Mock<ILog> _mockLog = new();

@@ -11,6 +11,7 @@ using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
 
+[Collection("IdRegistry")]
 public class GameServerInputPhaseTests
 {
     private readonly Mock<ILog> _mockLog;
