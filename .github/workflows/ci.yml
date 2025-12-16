@@ -50,11 +50,8 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name:  Restore dependencies
-        run: dotnet restore Mmo.sln
-
       - name: Run Shared Tests
-        run: dotnet test tests/Mmo.Shared.Tests --no-restore --verbosity normal --logger "trx;LogFileName=shared-test-results.trx" --collect:"XPlat Code Coverage"
+        run: dotnet test tests/Mmo.Shared.Tests --verbosity normal --logger "trx;LogFileName=shared-test-results.trx" --collect:"XPlat Code Coverage"
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -79,11 +76,8 @@ jobs:
         with: 
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore Mmo.sln
-
       - name: Run Server Tests
-        run: dotnet test tests/Mmo.Server.Tests --no-restore --verbosity normal --logger "trx;LogFileName=server-test-results.trx" --collect:"XPlat Code Coverage"
+        run: dotnet test tests/Mmo.Server.Tests --verbosity normal --logger "trx;LogFileName=server-test-results.trx" --collect:"XPlat Code Coverage"
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -109,14 +103,10 @@ jobs:
         with:
           dotnet-version: ${{ env. DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore Mmo.sln
-
       # Tests mit Coverage ausführen
       - name: Run all tests with coverage
         run: |
           dotnet test Mmo.sln \
-            --no-restore \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
@@ -260,9 +250,6 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore Mmo.sln
-
       - name: Check code formatting
         run: dotnet format Mmo.sln --verify-no-changes --verbosity diagnostic
 
@@ -294,9 +281,6 @@ jobs:
       # Install Stryker from local tool manifest (tracked by Dependabot)
       - name: Install Stryker.NET
         run: dotnet tool restore
-
-      - name:  Restore dependencies
-        run: dotnet restore Mmo.sln
 
       # Run Stryker for Shared Tests
       - name:  Run mutation tests (Shared)
@@ -450,9 +434,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore dependencies
-        run:  dotnet restore Mmo.sln
 
       - name: Run security scan
         run: |

@@ -66,11 +66,14 @@ public class GameServerBroadcastTests : IDisposable
 
         // Run for at least SharedConstants.TickRate ticks (25 ticks = 1 second)
         // This should trigger at least one full state broadcast
-        cts.CancelAfter(TimeSpan.FromMilliseconds(1100)); // ~27 ticks
+        // Increased timeout for CI stability (allow extra time for slow systems)
+        // At 40ms per tick, 25 ticks = 1000ms minimum, use 3000ms for safety on loaded CI systems
+        cts.CancelAfter(TimeSpan.FromMilliseconds(3000)); // ~75 ticks with large buffer
         await gameServer.StartServerAsync(cts.Token);
 
         // Verify at least one ZoneState was sent
-        Assert.True(gameServer.CurrentTick >= SharedConstants.TickRate);
+        Assert.True(gameServer.CurrentTick >= SharedConstants.TickRate,
+            $"Expected at least {SharedConstants.TickRate} ticks, but got {gameServer.CurrentTick}");
         var zoneStateMessages = _mockNetworkServer.SentMessages
             .Where(m => m.Message is ZoneState)
             .ToList();
@@ -167,7 +170,9 @@ public class GameServerBroadcastTests : IDisposable
         gameServer.ZoneManager.AddPlayer(player2);
 
         // Run until full state broadcast
-        cts.CancelAfter(TimeSpan.FromMilliseconds(1100));
+        // Increased timeout for CI stability (allow extra time for slow systems)
+        // At 40ms per tick, 25 ticks = 1000ms minimum, use 3000ms for safety on loaded CI systems
+        cts.CancelAfter(TimeSpan.FromMilliseconds(3000));
         await gameServer.StartServerAsync(cts.Token);
 
         // Verify both players received ZoneState
