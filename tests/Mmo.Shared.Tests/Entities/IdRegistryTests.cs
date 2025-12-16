@@ -21,8 +21,8 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void Instance_ReturnsSameInstance()
     {
-        var instance1 = IdRegistry.Instance;
-        var instance2 = IdRegistry.Instance;
+        IdRegistry instance1 = IdRegistry.Instance;
+        IdRegistry instance2 = IdRegistry.Instance;
 
         Assert.Same(instance1, instance2);
     }
@@ -103,8 +103,8 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void RegisterEntity_CanBeRetrievedByPersistentId()
     {
-        var entity = CreateTestEntity();
-        
+        TestEntity entity = CreateTestEntity();
+
         IdRegistry.Instance.RegisterEntity(entity);
 
         bool found = IdRegistry.Instance.TryGetEntity(entity.PersistentId, out IEntity? retrieved);
@@ -116,10 +116,10 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void RegisterEntity_WithAssignedRuntimeId_CanBeRetrievedByGlobalKey()
     {
-        var entity = CreateTestEntity();
+        TestEntity entity = CreateTestEntity();
         // Simulate zone assignment
         entity.SetEntityId(1, 100);
-        
+
         IdRegistry.Instance.RegisterEntity(entity);
 
         bool found = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out IEntity? retrieved);
@@ -131,9 +131,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void RegisterEntity_WithUnassignedRuntimeId_NotFoundByGlobalKey()
     {
-        var entity = CreateTestEntity();
+        TestEntity entity = CreateTestEntity();
         // Entity not assigned to zone - RuntimeId.IsAssigned is false
-        
+
         IdRegistry.Instance.RegisterEntity(entity);
 
         bool found = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out _);
@@ -144,9 +144,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void UnregisterEntity_RemovesFromAllLookups()
     {
-        var entity = CreateTestEntity();
+        TestEntity entity = CreateTestEntity();
         entity.SetEntityId(1, 100);
-        
+
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.UnregisterEntity(entity.PersistentId);
 
@@ -160,14 +160,15 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void RegisterConnection_CreatesMapping()
     {
-        var entity = CreateTestEntity();
-        Guid connectionId = Guid.NewGuid();
-        
+        TestEntity entity = CreateTestEntity();
+        var connectionId = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.RegisterConnection(connectionId, entity.PersistentId);
 
         bool foundEntity = IdRegistry.Instance.TryGetEntityByConnection(connectionId, out IEntity? retrieved);
-        bool foundConnection = IdRegistry.Instance.TryGetConnectionByEntity(entity.PersistentId, out Guid retrievedConnId);
+        bool foundConnection =
+            IdRegistry.Instance.TryGetConnectionByEntity(entity.PersistentId, out Guid retrievedConnId);
 
         Assert.True(foundEntity);
         Assert.Same(entity, retrieved);
@@ -178,9 +179,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void UnregisterConnection_RemovesBothMappings()
     {
-        var entity = CreateTestEntity();
-        Guid connectionId = Guid.NewGuid();
-        
+        TestEntity entity = CreateTestEntity();
+        var connectionId = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.RegisterConnection(connectionId, entity.PersistentId);
         IdRegistry.Instance.UnregisterConnection(connectionId);
@@ -195,9 +196,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void UnregisterEntity_AlsoRemovesConnectionMapping()
     {
-        var entity = CreateTestEntity();
-        Guid connectionId = Guid.NewGuid();
-        
+        TestEntity entity = CreateTestEntity();
+        var connectionId = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.RegisterConnection(connectionId, entity.PersistentId);
         IdRegistry.Instance.UnregisterEntity(entity.PersistentId);
@@ -212,10 +213,10 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void UpdateEntityGlobalKey_UpdatesLookup()
     {
-        var entity = CreateTestEntity();
+        TestEntity entity = CreateTestEntity();
         entity.SetEntityId(1, 100);
         long oldGlobalKey = entity.RuntimeId.GlobalKey;
-        
+
         IdRegistry.Instance.RegisterEntity(entity);
 
         // Simulate zone transfer
@@ -233,43 +234,39 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void HasEntity_ReturnsTrueForRegisteredEntity()
     {
-        var entity = CreateTestEntity();
-        
+        TestEntity entity = CreateTestEntity();
+
         IdRegistry.Instance.RegisterEntity(entity);
 
         Assert.True(IdRegistry.Instance.HasEntity(entity.PersistentId));
     }
 
     [Fact]
-    public void HasEntity_ReturnsFalseForUnregisteredEntity()
-    {
+    public void HasEntity_ReturnsFalseForUnregisteredEntity() =>
         Assert.False(IdRegistry.Instance.HasEntity(Guid.NewGuid()));
-    }
 
     [Fact]
     public void HasConnection_ReturnsTrueForRegisteredConnection()
     {
-        Guid connectionId = Guid.NewGuid();
-        
+        var connectionId = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterConnection(connectionId, Guid.NewGuid());
 
         Assert.True(IdRegistry.Instance.HasConnection(connectionId));
     }
 
     [Fact]
-    public void HasConnection_ReturnsFalseForUnregisteredConnection()
-    {
+    public void HasConnection_ReturnsFalseForUnregisteredConnection() =>
         Assert.False(IdRegistry.Instance.HasConnection(Guid.NewGuid()));
-    }
 
     [Fact]
     public void EntityCount_ReflectsRegisteredEntities()
     {
         Assert.Equal(0, IdRegistry.Instance.EntityCount);
 
-        var entity1 = CreateTestEntity();
-        var entity2 = CreateTestEntity();
-        
+        TestEntity entity1 = CreateTestEntity();
+        TestEntity entity2 = CreateTestEntity();
+
         IdRegistry.Instance.RegisterEntity(entity1);
         Assert.Equal(1, IdRegistry.Instance.EntityCount);
 
@@ -285,9 +282,9 @@ public class IdRegistryTests : IDisposable
     {
         Assert.Equal(0, IdRegistry.Instance.ConnectionCount);
 
-        Guid conn1 = Guid.NewGuid();
-        Guid conn2 = Guid.NewGuid();
-        
+        var conn1 = Guid.NewGuid();
+        var conn2 = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterConnection(conn1, Guid.NewGuid());
         Assert.Equal(1, IdRegistry.Instance.ConnectionCount);
 
@@ -301,9 +298,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void GetAllEntities_ReturnsAllRegistered()
     {
-        var entity1 = CreateTestEntity();
-        var entity2 = CreateTestEntity();
-        
+        TestEntity entity1 = CreateTestEntity();
+        TestEntity entity2 = CreateTestEntity();
+
         IdRegistry.Instance.RegisterEntity(entity1);
         IdRegistry.Instance.RegisterEntity(entity2);
 
@@ -317,9 +314,9 @@ public class IdRegistryTests : IDisposable
     [Fact]
     public void Clear_RemovesEverything()
     {
-        var entity = CreateTestEntity();
-        Guid connectionId = Guid.NewGuid();
-        
+        TestEntity entity = CreateTestEntity();
+        var connectionId = Guid.NewGuid();
+
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.RegisterConnection(connectionId, entity.PersistentId);
         IdRegistry.Instance.GetNextLocalId(1);
@@ -341,31 +338,28 @@ public class IdRegistryTests : IDisposable
     {
         /// <summary>Test server ID.</summary>
         private const byte TestServerId = 1;
-        
+
         /// <summary>Test shard ID (not used in prototype).</summary>
         private const ushort TestShardId = 0;
-        
+
         /// <summary>Test prefab ID for player entity (corresponds to PrefabIds.PlayerDefault fallback value).</summary>
         private const ushort TestPrefabId = 1;
-
-        private EntityIdentity _runtimeId = EntityIdentity.Unassigned(TestPrefabId);
 
         public TestEntity()
         {
             PersistentId = Guid.NewGuid();
         }
 
-        public EntityIdentity RuntimeId => _runtimeId;
+        public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(TestPrefabId);
+
         public Guid PersistentId { get; }
         public bool IsTrulyPersistent => false;
         public EntityType Type => EntityType.Player;
         public EntityRole Role => EntityRole.None;
         public Position Position { get; set; } = new(0, 0);
 
-        public void SetEntityId(int localId, ushort zoneId)
-        {
-            _runtimeId = new EntityIdentity(TestServerId, zoneId, TestShardId, localId, TestPrefabId);
-        }
+        public void SetEntityId(int localId, ushort zoneId) =>
+            RuntimeId = new EntityIdentity(TestServerId, zoneId, TestShardId, localId, TestPrefabId);
 
         public void ChangeZone(ushort newZoneId)
         {

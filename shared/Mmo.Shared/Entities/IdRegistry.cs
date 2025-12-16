@@ -9,29 +9,7 @@ namespace Mmo.Shared.Entities;
 /// </summary>
 public sealed class IdRegistry : IIdRegistry
 {
-    private static readonly Lazy<IdRegistry> LazyInstance = new(() => new IdRegistry());
-
-    /// <summary>
-    ///     LocalId counters per zone/shard combination.
-    ///     Key = (ZoneId << 16) | ShardId
-    /// </summary>
-    private readonly ConcurrentDictionary<uint, int> _localIdCounters = new();
-
-    /// <summary>
-    ///     Freed LocalIds per zone/shard for reuse.
-    ///     Key = (ZoneId << 16) | ShardId
-    /// </summary>
-    private readonly ConcurrentDictionary<uint, ConcurrentQueue<int>> _freedLocalIds = new();
-
-    /// <summary>
-    ///     PersistentId → IEntity lookup.
-    /// </summary>
-    private readonly ConcurrentDictionary<Guid, IEntity> _entitiesByPersistentId = new();
-
-    /// <summary>
-    ///     GlobalKey → IEntity lookup (for runtime lookups).
-    /// </summary>
-    private readonly ConcurrentDictionary<long, IEntity> _entitiesByGlobalKey = new();
+    private static readonly Lazy<IdRegistry> _lazyInstance = new(() => new IdRegistry());
 
     /// <summary>
     ///     ConnectionId → PersistentId mapping.
@@ -39,9 +17,31 @@ public sealed class IdRegistry : IIdRegistry
     private readonly ConcurrentDictionary<Guid, Guid> _connectionToEntity = new();
 
     /// <summary>
+    ///     GlobalKey → IEntity lookup (for runtime lookups).
+    /// </summary>
+    private readonly ConcurrentDictionary<long, IEntity> _entitiesByGlobalKey = new();
+
+    /// <summary>
+    ///     PersistentId → IEntity lookup.
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, IEntity> _entitiesByPersistentId = new();
+
+    /// <summary>
     ///     PersistentId → ConnectionId mapping.
     /// </summary>
     private readonly ConcurrentDictionary<Guid, Guid> _entityToConnection = new();
+
+    /// <summary>
+    ///     Freed LocalIds per zone/shard for reuse.
+    ///     Key = (ZoneId  16) | ShardId
+    /// </summary>
+    private readonly ConcurrentDictionary<uint, ConcurrentQueue<int>> _freedLocalIds = new();
+
+    /// <summary>
+    ///     LocalId counters per zone/shard combination.
+    ///     Key = (ZoneId  16) | ShardId
+    /// </summary>
+    private readonly ConcurrentDictionary<uint, int> _localIdCounters = new();
 
     /// <summary>
     ///     Private constructor for singleton pattern.
@@ -53,7 +53,7 @@ public sealed class IdRegistry : IIdRegistry
     /// <summary>
     ///     Gets the singleton instance of the IdRegistry.
     /// </summary>
-    public static IdRegistry Instance => LazyInstance.Value;
+    public static IdRegistry Instance => _lazyInstance.Value;
 
     /// <summary>
     ///     Number of registered entities.
@@ -76,9 +76,7 @@ public sealed class IdRegistry : IIdRegistry
         // Try to reuse a freed ID first
         if (_freedLocalIds.TryGetValue(key, out ConcurrentQueue<int>? freedQueue) &&
             freedQueue.TryDequeue(out int freedId))
-        {
             return freedId;
-        }
 
         // AddOrUpdate behavior:
         // - First call (key doesn't exist): returns addValue (0), stores 0
@@ -130,29 +128,20 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByPersistentId.TryAdd(entity.PersistentId, entity);
 
         // Only register by GlobalKey if entity is assigned to a zone
-        if (entity.RuntimeId.IsAssigned)
-        {
-            _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
-        }
+        if (entity.RuntimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
     }
 
     /// <inheritdoc />
     public void UnregisterEntity(Guid persistentId)
     {
         if (_entitiesByPersistentId.TryRemove(persistentId, out IEntity? entity))
-        {
             // Also remove from GlobalKey lookup if it was assigned
             if (entity.RuntimeId.IsAssigned)
-            {
                 _entitiesByGlobalKey.TryRemove(entity.RuntimeId.GlobalKey, out _);
-            }
-        }
 
         // Also clean up any connection mapping
         if (_entityToConnection.TryRemove(persistentId, out Guid connectionId))
-        {
             _connectionToEntity.TryRemove(connectionId, out _);
-        }
     }
 
     /// <inheritdoc />
@@ -166,9 +155,7 @@ public sealed class IdRegistry : IIdRegistry
     public void UnregisterConnection(Guid connectionId)
     {
         if (_connectionToEntity.TryRemove(connectionId, out Guid persistentId))
-        {
             _entityToConnection.TryRemove(persistentId, out _);
-        }
     }
 
     /// <summary>
@@ -185,10 +172,7 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByGlobalKey.TryRemove(oldGlobalKey, out _);
 
         // Add new GlobalKey mapping if assigned
-        if (entity.RuntimeId.IsAssigned)
-        {
-            _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
-        }
+        if (entity.RuntimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
     }
 
     /// <summary>

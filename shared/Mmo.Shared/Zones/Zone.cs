@@ -71,10 +71,8 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds, IIdRegistry? id
     public void RemoveEntity(int entityId)
     {
         if (Entities.Remove(entityId))
-        {
             // Release LocalId back to IdRegistry for reuse
             _idRegistry.ReleaseLocalId(ZoneId, _shardId, entityId);
-        }
     }
 
     /// <summary>
