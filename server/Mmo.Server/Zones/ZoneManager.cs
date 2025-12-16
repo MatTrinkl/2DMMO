@@ -262,16 +262,27 @@ public class ZoneManager
 
     /// <summary>
     ///     Removes an entity by its PersistentId.
+    ///     Uses IdRegistry for O(1) lookup if entity is registered there.
     ///     Note: Caller is responsible for unregistering from IdRegistry.
     /// </summary>
     /// <param name="persistentId">The persistent ID of the entity.</param>
     /// <returns>The removed entity, or null if not found.</returns>
     public IEntity? RemoveEntity(Guid persistentId)
     {
-        // Search through all zones for the entity
+        // Try O(1) lookup via IdRegistry first
+        if (IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity))
+        {
+            // Remove from zone
+            ushort zoneId = entity.RuntimeId.ZoneId;
+            Zone? zone = GetZone(zoneId);
+            zone?.RemoveEntity(entity.RuntimeId.LocalId);
+            return entity;
+        }
+
+        // Fallback: Search through all zones (for entities not in IdRegistry)
         foreach (Zone zone in _zones.Values)
         {
-            IEntity? entity = zone.Entities.Values.FirstOrDefault(e => e.PersistentId == persistentId);
+            entity = zone.Entities.Values.FirstOrDefault(e => e.PersistentId == persistentId);
             if (entity != null)
             {
                 zone.RemoveEntity(entity.RuntimeId.LocalId);
@@ -292,13 +303,18 @@ public class ZoneManager
     public IEntity? RemovePersistentEntity(Guid persistentId) => RemoveEntity(persistentId);
 
     /// <summary>
-    ///     Gets any entity by PersistentId. Searches through all zones.
+    ///     Gets any entity by PersistentId. Uses IdRegistry for O(1) lookup.
     /// </summary>
     /// <param name="persistentId">The persistent ID to search for.</param>
     /// <param name="entity">The found entity, or null.</param>
     /// <returns>True if the entity was found.</returns>
     public bool TryGetEntityByPersistentId(Guid persistentId, [NotNullWhen(true)] out IEntity? entity)
     {
+        // Try O(1) lookup via IdRegistry first
+        if (IdRegistry.Instance.TryGetEntity(persistentId, out entity))
+            return true;
+
+        // Fallback: Search through all zones (for entities not in IdRegistry)
         foreach (Zone zone in _zones.Values)
         {
             entity = zone.Entities.Values.FirstOrDefault(e => e.PersistentId == persistentId);
@@ -311,10 +327,12 @@ public class ZoneManager
     }
 
     /// <summary>
-    ///     Checks if an entity with the given PersistentId exists in any zone.
+    ///     Checks if an entity with the given PersistentId exists.
+    ///     Uses IdRegistry for O(1) lookup.
     /// </summary>
     /// <param name="persistentId">The persistent ID to check.</param>
     public bool HasPersistentEntity(Guid persistentId) =>
+        IdRegistry.Instance.HasEntity(persistentId) ||
         _zones.Values.Any(zone => zone.Entities.Values.Any(e => e.PersistentId == persistentId));
 
     /// <summary>
@@ -367,7 +385,7 @@ public class ZoneManager
     /// <summary>
     ///     Transfer an Entity from one zone to another.
     ///     Note: EntityId will change, but PersistentId stays the same!
-    ///     Note: Caller is responsible for updating GlobalKey in IdRegistry.
+    ///     Updates GlobalKey lookup in IdRegistry if entity is registered there.
     /// </summary>
     /// <param name="entity">Entity to transfer.</param>
     /// <param name="fromZoneId">ID of the old Zone.</param>
@@ -389,11 +407,17 @@ public class ZoneManager
 
         if (oldZone == newZone) return;
 
+        // Save old GlobalKey for IdRegistry update
+        long oldGlobalKey = entity.RuntimeId.GlobalKey;
+
         // Remove from old zone (releases LocalId via IdRegistry)
         oldZone.RemoveEntity(entity.RuntimeId.LocalId);
 
         // Add to new zone (assigns new LocalId via IdRegistry)
         newZone.AddEntity(entity);
+
+        // Update GlobalKey lookup in IdRegistry if entity is registered
+        IdRegistry.Instance.UpdateEntityGlobalKey(entity, oldGlobalKey);
 
         // Notify entity of zone change
         entity.ChangeZone(toZoneId);
