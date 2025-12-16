@@ -243,6 +243,7 @@ public class GameServerTests
                 It.IsAny<Guid>()),
             Times.Once);
     }
+
     [Fact]
     public async Task PlayerLoginFails()
     {

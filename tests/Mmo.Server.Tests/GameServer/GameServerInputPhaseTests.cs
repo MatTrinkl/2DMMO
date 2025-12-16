@@ -317,18 +317,22 @@ public class GameServerInputPhaseTests
         // LoginRequest is handled by LoginHandler (should not log Debug or Warn)
         _mockLog.Verify(
             log => log.Warn(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never);
-        
+
         // Ping, ChatMessage, PositionUpdate: handlers not yet implemented (log Debug)
         _mockLog.Verify(
-            log => log.Debug(It.Is<string>(s => s.Contains("Ping") && s.Contains("Handler not yet implemented")), clientId),
+            log => log.Debug(It.Is<string>(s => s.Contains("Ping") && s.Contains("Handler not yet implemented")),
+                clientId),
             Times.Once);
         _mockLog.Verify(
-            log => log.Debug(It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")), clientId),
+            log => log.Debug(It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
+                clientId),
             Times.Once);
         _mockLog.Verify(
-            log => log.Debug(It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")), clientId),
+            log => log.Debug(
+                It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")),
+                clientId),
             Times.Once);
-        
+
         // Heartbeat: handled silently (no logging) - already verified by Times.Never for both Debug and Warn above
     }
 }

@@ -172,14 +172,10 @@ public class GameServer
             if (eventMessage.TargetClient == null)
             {
                 if (eventMessage.ZoneId == null)
-                {
                     await NetworkServer.BroadcastAsync(eventMessage.Message);
-                }
                 else
-                {
-                    foreach(ServerPlayer playerInZone in ZoneManager.GetServerPlayersInZone(eventMessage.ZoneId))
-                        await NetworkServer.SendToClientAsync(playerInZone.Connection,eventMessage.Message);
-                }
+                    foreach (ServerPlayer playerInZone in ZoneManager.GetServerPlayersInZone(eventMessage.ZoneId))
+                        await NetworkServer.SendToClientAsync(playerInZone.Connection, eventMessage.Message);
             }
             else
             {

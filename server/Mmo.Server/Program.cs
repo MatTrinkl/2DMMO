@@ -6,25 +6,29 @@ using Mmo.Shared;
 namespace Mmo.Server;
 
 /// <summary>
-/// Entry point for the 2DMMO server application.
+///     Entry point for the 2DMMO server application.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The server consists of two main components running in parallel:
-/// <list type="bullet">
-/// <item><description><strong>NetworkServer:</strong> Handles TCP connections and message transmission</description></item>
-/// <item><description><strong>GameServer:</strong> Runs the game loop at 25 Hz (40ms per tick)</description></item>
-/// </list>
-/// </para>
-/// <para>
-/// The server supports graceful shutdown via Ctrl+C or SIGTERM signals,
-/// ensuring all resources are properly cleaned up before exit.
-/// </para>
+///     <para>
+///         The server consists of two main components running in parallel:
+///         <list type="bullet">
+///             <item>
+///                 <description><strong>NetworkServer:</strong> Handles TCP connections and message transmission</description>
+///             </item>
+///             <item>
+///                 <description><strong>GameServer:</strong> Runs the game loop at 25 Hz (40ms per tick)</description>
+///             </item>
+///         </list>
+///     </para>
+///     <para>
+///         The server supports graceful shutdown via Ctrl+C or SIGTERM signals,
+///         ensuring all resources are properly cleaned up before exit.
+///     </para>
 /// </remarks>
 internal static class Program
 {
     /// <summary>
-    /// Main entry point for the server application.
+    ///     Main entry point for the server application.
     /// </summary>
     /// <param name="args">Command-line arguments (currently unused).</param>
     /// <returns>A task that completes when the server shuts down.</returns>
