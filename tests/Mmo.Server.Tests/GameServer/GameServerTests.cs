@@ -243,4 +243,39 @@ public class GameServerTests
                 It.IsAny<Guid>()),
             Times.Once);
     }
+    [Fact]
+    public async Task PlayerLoginFails()
+    {
+        var mockNetworkServer = new MockNetworkServer();
+        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var clientId = Guid.NewGuid();
+        using var cts = new CancellationTokenSource();
+
+        // Simulate different message types
+        var loginRequest1 = new LoginRequest("Te", "password123");
+        var loginRequest2 = new LoginRequest("Teasdfasdfasfsdfasdfasdfasdfasdfasdfsf", "password123");
+        var loginRequest3 = new LoginRequest("", "password123");
+
+
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest1);
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest2);
+        mockNetworkServer.SimulateMessageReceived(clientId, loginRequest3);
+
+        // Run one tick to process messages
+        cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+        await gameServer.StartServerAsync(cts.Token);
+
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username too short")),
+                It.IsAny<Guid>()),
+            Times.Once);
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username is empty")),
+                It.IsAny<Guid>()),
+            Times.Once);
+        _mockLog.Verify(log => log.Warn(
+                It.Is<string>(s => s.Contains("Username too long")),
+                It.IsAny<Guid>()),
+            Times.Once);
+    }
 }
