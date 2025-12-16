@@ -213,8 +213,8 @@ public class GameServerInputPhaseTests
             {
                 if (msg.Contains("Handler not yet implemented"))
                 {
-                    // The message format is: "{MessageType} from {ConnectionId} - Handler not yet implemented"
-                    // where {MessageType} is in the template string itself
+                    // The message format is: "{Type} from {ConnectionId} - Handler not yet implemented"
+                    // We parse the message type from the literal text in the template
                     if (msg.Contains("PositionUpdate")) receivedMessages.Add("PositionUpdate");
                     else if (msg.Contains("ChatMessage")) receivedMessages.Add("ChatMessage");
                     else if (msg.Contains("Ping")) receivedMessages.Add("Ping");

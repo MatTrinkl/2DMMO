@@ -83,7 +83,7 @@ public class MessageRouter(GameServer gameServer, ILog log)
             
             case MessageType.JoinZone:
             case MessageType.LeaveZone:
-                _log.Debug("{MessageType} from {ConnectionId} - Handler not yet implemented", 
+                _log.Debug("{Type} from {ConnectionId} - Handler not yet implemented", 
                     message.Type, connection.Id);
                 // TODO: Implement when zone transfer system is ready
                 break;
