@@ -194,10 +194,9 @@ public class GameServerTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify message was routed (ChatMessage is unhandled, logs warning)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                It.Is<MessageType>(t => t == MessageType.ChatMessage),
+        // Verify message was routed (ChatMessage handler not yet implemented, logs Debug)
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 It.Is<Guid>(g => g == clientId)),
             Times.Once);
     }
@@ -226,23 +225,21 @@ public class GameServerTests
         await gameServer.StartServerAsync(cts.Token);
 
         // Verify all messages were routed
-        // LoginRequest is handled by LoginHandler (should not log "Unknown")
+        // LoginRequest is handled by LoginHandler (should not log "Unknown" or "not yet implemented")
         _mockLog.Verify(log => log.Warn(
                 It.Is<string>(s => s.Contains("Unknown message type")),
                 It.Is<MessageType>(t => t == MessageType.LoginRequest),
                 It.IsAny<Guid>()),
             Times.Never);
 
-        // PositionUpdate and ChatMessage are unhandled (log warnings)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                It.Is<MessageType>(t => t == MessageType.PositionUpdate),
+        // PositionUpdate and ChatMessage are not yet implemented (log Debug, not Warn)
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")),
                 It.IsAny<Guid>()),
             Times.Once);
 
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                It.Is<MessageType>(t => t == MessageType.ChatMessage),
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 It.IsAny<Guid>()),
             Times.Once);
     }
