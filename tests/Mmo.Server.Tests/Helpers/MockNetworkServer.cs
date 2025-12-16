@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using Mmo.Server.Networking;
 using Mmo.Server.Networking.NetworkEvents;
@@ -19,7 +20,9 @@ public class MockNetworkServer : INetworkServer
 
     public List<(ClientConnection Client, INetworkMessage Message)> SentMessages { get; } = new();
     public List<INetworkMessage> BroadcastMessages { get; } = new();
+
     public List<(INetworkMessage Message, ClientConnection ExcludedClient)> BroadcastExceptMessages { get; } = new();
+
     public List<ClientConnection> KickedClients { get; } = new();
 
     public int ClientCount => _connectedClients.Count;
@@ -173,7 +176,7 @@ public class MockNetworkServer : INetworkServer
     {
         // Use FormatterServices to create an instance without calling the constructor
         // This avoids the need for a real TcpClient
-        var connection = (ClientConnection)FormatterServices
+        var connection = (ClientConnection)RuntimeHelpers
             .GetUninitializedObject(typeof(ClientConnection));
 
         // Set the Id using reflection

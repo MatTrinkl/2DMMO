@@ -61,11 +61,11 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
 
     /// <summary>
     ///     The global ID of the entity. This is unique at every time. This ID will change when a zone or shard is changed.
-    ///     Format: (ServerId << 56) | (ZoneId << 40) | (ShardId << 24) | (LocalId & 0 xFFFFFF)
+    ///     Format: (ServerId  56) | (ZoneId  40) | (ShardId  24) | (LocalId & 0 xFFFFFF )
     /// </summary>
     [IgnoreMember]
     public long GlobalKey =>
-        ((long)ServerId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 24) | (LocalId & 0xFFFFFF);
+        ((long)ServerId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 24) | (uint)(LocalId & 0xFFFFFF);
 
 
     /// <summary>
