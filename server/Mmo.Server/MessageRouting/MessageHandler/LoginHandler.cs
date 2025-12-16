@@ -1,6 +1,7 @@
 using Mmo.Server.Entities;
 using Mmo.Server.GameLoop;
 using Mmo.Server.Networking;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Connection;
 
@@ -8,8 +9,8 @@ namespace Mmo.Server.MessageRouting.MessageHandler;
 
 public class LoginHandler(GameServer gameServer, ILog log)
 {
-    private readonly ILog _log = log;
     private readonly GameServer _gameServer = gameServer;
+    private readonly ILog _log = log;
 
     internal void Handle(ClientConnection connection, LoginRequest request)
     {
@@ -29,7 +30,7 @@ public class LoginHandler(GameServer gameServer, ILog log)
         }
 
         //Spawns player in his last position or in the start region.
-        var playerEntity = _gameServer.ZoneManager.SpawnPlayer(connection.Id, request.Username);
+        PlayerEntity playerEntity = _gameServer.ZoneManager.SpawnPlayer(connection.Id, request.Username);
         var player = new ServerPlayer(playerEntity, connection);
         //Connect Player Entity with connection
         _gameServer.ZoneManager.AddPlayer(player /*later with ZoneID*/);

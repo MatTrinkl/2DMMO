@@ -42,6 +42,24 @@ public abstract class Entity : IEntity
     }
 
     /// <summary>
+    ///     Convenience property for accessing the PrefabId.
+    /// </summary>
+    [IgnoreMember]
+    public ushort PrefabId => RuntimeId.PrefabId;
+
+    /// <summary>
+    ///     Convenience property for accessing the ZoneId.
+    /// </summary>
+    [IgnoreMember]
+    public ushort ZoneId => RuntimeId.ZoneId;
+
+    /// <summary>
+    ///     Checks if this entity is currently assigned to a zone.
+    /// </summary>
+    [IgnoreMember]
+    public bool IsInZone => RuntimeId.IsAssigned;
+
+    /// <summary>
     ///     Runtime identity - changes on zone transfer.
     /// </summary>
     [Key(0)]
@@ -70,24 +88,6 @@ public abstract class Entity : IEntity
     [IgnoreMember] public abstract EntityRole Role { get; }
 
     /// <summary>
-    ///     Convenience property for accessing the PrefabId.
-    /// </summary>
-    [IgnoreMember]
-    public ushort PrefabId => RuntimeId.PrefabId;
-
-    /// <summary>
-    ///     Convenience property for accessing the ZoneId.
-    /// </summary>
-    [IgnoreMember]
-    public ushort ZoneId => RuntimeId.ZoneId;
-
-    /// <summary>
-    ///     Checks if this entity is currently assigned to a zone.
-    /// </summary>
-    [IgnoreMember]
-    public bool IsInZone => RuntimeId.IsAssigned;
-
-    /// <summary>
     ///     Sets the runtime identity. Called by Zone when entity is added.
     ///     Handles struct copy correctly.
     /// </summary>
@@ -98,21 +98,16 @@ public abstract class Entity : IEntity
         RuntimeId = identity;
     }
 
+    public abstract void ChangeZone(ushort newZoneId);
+
     /// <summary>
     ///     Assigns this entity to a zone. Called internally by Zone.AddEntity().
     /// </summary>
-    internal void AssignToZone(byte serverId, ushort zoneId, ushort shardId, int localId)
-    {
+    internal void AssignToZone(byte serverId, ushort zoneId, ushort shardId, int localId) =>
         RuntimeId = new EntityIdentity(serverId, zoneId, shardId, localId, RuntimeId.PrefabId);
-    }
 
     /// <summary>
     ///     Removes this entity from its current zone. Called internally by Zone.RemoveEntity().
     /// </summary>
-    internal void RemoveFromZone()
-    {
-        RuntimeId = EntityIdentity.Unassigned(RuntimeId.PrefabId);
-    }
-
-    public abstract void ChangeZone(ushort newZoneId);
+    internal void RemoveFromZone() => RuntimeId = EntityIdentity.Unassigned(RuntimeId.PrefabId);
 }

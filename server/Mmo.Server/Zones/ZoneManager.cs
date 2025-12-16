@@ -113,7 +113,7 @@ public class ZoneManager
     {
         ArgumentNullException.ThrowIfNull(username);
         //TODO: CharacterId and Position read from DB, currently its the connectionId and always spawn at 0,0
-        return new PlayerEntity(connectionId, username,new Position(0,0));
+        return new PlayerEntity(connectionId, username, new Position(0, 0));
     }
 
     /// <summary>

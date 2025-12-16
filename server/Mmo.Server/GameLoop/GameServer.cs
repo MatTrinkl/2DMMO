@@ -30,14 +30,15 @@ public class GameServer
     private readonly ConcurrentQueue<MessageReceivedEventArgs> _incomingMessages = new();
 
     private readonly ILog _log;
-    internal readonly INetworkServer NetworkServer;
-    private readonly MessageRouter _router;
 
     /// <summary>
     ///     Outgoing event broadcasts (PlayerJoined, PlayerLeft, Chat, etc. ),
     ///     collected during the tick and sent in OutputPhase.
     /// </summary>
     private readonly ConcurrentQueue<INetworkMessage> _pendingBroadcasts = new();
+
+    private readonly MessageRouter _router;
+    internal readonly INetworkServer NetworkServer;
 
     /// <summary>
     ///     Creates a new GameServer object.
@@ -48,7 +49,7 @@ public class GameServer
     {
         _log = log;
         NetworkServer = networkServer;
-        _router = new MessageRouter(this,log);
+        _router = new MessageRouter(this, log);
 
         CurrentTick = 0;
         IsRunning = false;
@@ -139,10 +140,8 @@ public class GameServer
     /// </summary>
     protected virtual Task InputPhaseAsync(CancellationToken cancellationToken)
     {
-        while (_incomingMessages. TryDequeue(out MessageReceivedEventArgs? incoming))
-        {
+        while (_incomingMessages.TryDequeue(out MessageReceivedEventArgs? incoming))
             _router.Route(incoming.Connection, incoming.Message);
-        }
 
         return Task.CompletedTask;
     }

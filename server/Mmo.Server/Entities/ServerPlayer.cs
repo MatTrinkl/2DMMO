@@ -29,7 +29,8 @@ public class ServerPlayer(PlayerEntity entity, ClientConnection connection)
     public DateTimeOffset LastActivity { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
-    ///     The runtime ID of the player. This includes the LocalId in the Zone, the ZoneId and the ShardID. All combined are the
+    ///     The runtime ID of the player. This includes the LocalId in the Zone, the ZoneId and the ShardID. All combined are
+    ///     the
     ///     <see cref="EntityIdentity.GlobalKey" />.
     /// </summary>
     public EntityIdentity RuntimeId => Entity.RuntimeId;

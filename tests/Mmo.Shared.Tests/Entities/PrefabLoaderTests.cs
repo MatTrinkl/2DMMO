@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Mmo.Shared.Configurations.Prefabs;
 using Mmo.Shared.Entities;
 
 namespace Mmo.Shared.Tests.Entities;
@@ -26,7 +28,7 @@ public class PrefabLoaderTests
 }";
             File.WriteAllText(jsonFile, json);
 
-            var config = PrefabLoader.LoadPrefabConfig(jsonFile);
+            PrefabsConfig config = PrefabLoader.LoadPrefabConfig(jsonFile);
 
             Assert.NotNull(config);
             Assert.Single(config.Prefabs);
@@ -43,7 +45,7 @@ public class PrefabLoaderTests
     [Fact]
     public void LoadPrefabConfig_WithNonExistentFile_ThrowsFileNotFoundException()
     {
-        Assert.Throws<FileNotFoundException>(() => 
+        Assert.Throws<FileNotFoundException>(() =>
             PrefabLoader.LoadPrefabConfig("nonexistent.json"));
     }
 
@@ -56,7 +58,7 @@ public class PrefabLoaderTests
 
         try
         {
-            Assert.Throws<ArgumentException>(() => 
+            Assert.Throws<ArgumentException>(() =>
                 PrefabLoader.LoadPrefabConfig(txtFile));
         }
         finally
@@ -77,7 +79,7 @@ public class PrefabLoaderTests
         {
             File.WriteAllText(jsonFile, "invalid json");
 
-            Assert.Throws<System.Text.Json.JsonException>(() => 
+            Assert.Throws<JsonException>(() =>
                 PrefabLoader.LoadPrefabConfig(jsonFile));
         }
         finally

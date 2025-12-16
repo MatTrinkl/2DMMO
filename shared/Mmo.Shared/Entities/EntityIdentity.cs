@@ -36,10 +36,10 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
 
     /// <summary>
     ///     Reference to the prefab of this entity. Defines the type/template.
-    ///     See <see cref="PrefabIds"/> for available prefabs.
+    ///     See <see cref="PrefabIds" /> for available prefabs.
     /// </summary>
     [Key(4)]
-    public ushort PrefabId { get; private set; }
+    public ushort PrefabId { get; }
 
     /// <summary>
     ///     Creates a new EntityIdentity struct.
@@ -61,10 +61,11 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
 
     /// <summary>
     ///     The global ID of the entity. This is unique at every time. This ID will change when a zone or shard is changed.
-    ///     Format: (ServerId << 56) | (ZoneId << 40) | (ShardId << 24) | (LocalId & 0xFFFFFF)
+    ///     Format: (ServerId << 56) | (ZoneId << 40) | (ShardId << 24) | (LocalId & 0 xFFFFFF)
     /// </summary>
     [IgnoreMember]
-    public long GlobalKey => ((long)ServerId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 24) | (LocalId & 0xFFFFFF);
+    public long GlobalKey =>
+        ((long)ServerId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 24) | (LocalId & 0xFFFFFF);
 
 
     /// <summary>
@@ -111,12 +112,16 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// <summary>
     ///     Turns this EntityIdentity into a string.
     /// </summary>
-    /// <returns>Returns a string with format: "Entity[Server:{ServerId} Zone:{ZoneId} Shard:{ShardId} Local:{LocalId} Prefab:{PrefabId}]".</returns>
+    /// <returns>
+    ///     Returns a string with format: "Entity[Server:{ServerId} Zone:{ZoneId} Shard:{ShardId} Local:{LocalId}
+    ///     Prefab:{PrefabId}]".
+    /// </returns>
     public override string ToString()
         => $"Entity[Server:{ServerId} Zone:{ZoneId} Shard:{ShardId} Local:{LocalId} Prefab:{PrefabId}]";
 
     /// <summary>
-    ///     Decodes the global key into <see cref="ServerId" />, <see cref="ZoneId" />, <see cref="ShardId" /> and <see cref="LocalId" />.
+    ///     Decodes the global key into <see cref="ServerId" />, <see cref="ZoneId" />, <see cref="ShardId" /> and
+    ///     <see cref="LocalId" />.
     /// </summary>
     /// <param name="globalKey">The key to decode.</param>
     /// <returns>A 4-Tuple with the Ids.</returns>
@@ -147,10 +152,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// </summary>
     /// <param name="prefabId">The prefab ID of the entity.</param>
     /// <returns>An EntityIdentity with all location fields set to 0.</returns>
-    public static EntityIdentity Unassigned(ushort prefabId)
-    {
-        return new EntityIdentity(0, 0, 0, 0, prefabId);
-    }
+    public static EntityIdentity Unassigned(ushort prefabId) => new(0, 0, 0, 0, prefabId);
 
     /// <summary>
     ///     Checks if this EntityIdentity has been assigned to a zone.
@@ -162,10 +164,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     ///     Transfers this entity to a different server.
     /// </summary>
     /// <param name="newServerId">The target server ID.</param>
-    public void TransferToServer(byte newServerId)
-    {
-        ServerId = newServerId;
-    }
+    public void TransferToServer(byte newServerId) => ServerId = newServerId;
 
     /// <summary>
     ///     Transfers this entity to a different zone on the same server.
