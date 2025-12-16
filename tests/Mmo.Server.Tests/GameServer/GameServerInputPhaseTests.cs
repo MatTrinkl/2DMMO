@@ -29,7 +29,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Queue multiple messages (ChatMessage is currently unhandled, so will log warnings)
+        // Queue multiple messages (ChatMessage handler not yet implemented, logs Debug)
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Message 1"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Message 2"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Message 3"));
@@ -38,10 +38,9 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify all messages were routed (and logged as unknown)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        // Verify all messages were routed (logged as "Handler not yet implemented")
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 It.IsAny<Guid>()),
             Times.Exactly(3));
     }
@@ -55,7 +54,7 @@ public class GameServerInputPhaseTests
         var clientId3 = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Messages from different clients (unhandled message type will log warnings)
+        // Messages from different clients (handler not yet implemented, logs Debug)
         _mockNetworkServer.SimulateMessageReceived(clientId1, new ChatMessage(Guid.NewGuid(), "From Client 1"));
         _mockNetworkServer.SimulateMessageReceived(clientId2, new ChatMessage(Guid.NewGuid(), "From Client 2"));
         _mockNetworkServer.SimulateMessageReceived(clientId3, new ChatMessage(Guid.NewGuid(), "From Client 3"));
@@ -64,22 +63,19 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify messages from all clients were routed (logged as unknown)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        // Verify messages from all clients were routed
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 clientId1),
             Times.Once);
 
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 clientId2),
             Times.Once);
 
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 clientId3),
             Times.Once);
     }
@@ -98,11 +94,14 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // LoginRequest is handled by LoginHandler - verify it doesn't log as "Unknown"
-        // (Unlike unhandled messages, it should be processed without warning)
+        // LoginRequest is handled by LoginHandler - verify it doesn't log as "Unknown" or "not yet implemented"
         _mockLog.Verify(log => log.Warn(
                 It.Is<string>(s => s.Contains("Unknown message type")),
                 MessageType.LoginRequest,
+                It.IsAny<Guid>()),
+            Times.Never);
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("Handler not yet implemented")),
                 It.IsAny<Guid>()),
             Times.Never);
     }
@@ -114,7 +113,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Send PositionUpdate (currently unhandled, logs warning)
+        // Send PositionUpdate (handler not yet implemented, logs Debug)
         var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(5, 5));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(10, 20)));
@@ -123,10 +122,9 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify PositionUpdate was routed (logged as unknown)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.PositionUpdate,
+        // Verify PositionUpdate was routed
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")),
                 clientId),
             Times.Once);
     }
@@ -138,17 +136,16 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Send ChatMessage (currently unhandled, logs warning)
+        // Send ChatMessage (handler not yet implemented, logs Debug)
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Hello, World!"));
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify ChatMessage was routed (logged as unknown)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        // Verify ChatMessage was routed
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 clientId),
             Times.Once);
     }
@@ -160,17 +157,16 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Send Ping (currently unhandled, logs warning)
+        // Send Ping (handler not yet implemented, logs Debug)
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify Ping was routed (logged as unknown)
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.Ping,
+        // Verify Ping was routed
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("Ping") && s.Contains("Handler not yet implemented")),
                 clientId),
             Times.Once);
     }
@@ -182,7 +178,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
-        // Send Heartbeat (currently unhandled, logs warning)
+        // Send Heartbeat (handled silently by ClientConnection timeout logic)
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new Heartbeat(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Guid.NewGuid()));
 
@@ -190,12 +186,15 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify Heartbeat was routed (logged as unknown)
+        // Verify Heartbeat was routed but NOT logged (handled silently)
         _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.Heartbeat,
-                clientId),
-            Times.Once);
+                It.IsAny<string>(),
+                It.IsAny<object[]>()),
+            Times.Never);
+        _mockLog.Verify(log => log.Debug(
+                It.IsAny<string>(),
+                It.IsAny<object[]>()),
+            Times.Never);
     }
 
     [Fact]
@@ -203,19 +202,26 @@ public class GameServerInputPhaseTests
     {
         var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
-        var receivedMessages = new List<MessageType>();
+        var receivedMessages = new List<string>();
         using var cts = new CancellationTokenSource();
 
-        // Setup to capture message order from warnings (unhandled messages)
-        _mockLog.Setup(log => log.Warn(
+        // Setup to capture message order from Debug logs (unimplemented handlers)
+        _mockLog.Setup(log => log.Debug(
                 It.IsAny<string>(),
                 It.IsAny<object[]>()))
             .Callback<string, object[]>((msg, args) =>
             {
-                if (args.Length >= 1 && args[0] is MessageType msgType) receivedMessages.Add(msgType);
+                if (msg.Contains("Handler not yet implemented"))
+                {
+                    // The message format is: "{Type} from {ConnectionId} - Handler not yet implemented"
+                    // We parse the message type from the literal text in the template
+                    if (msg.Contains("PositionUpdate")) receivedMessages.Add("PositionUpdate");
+                    else if (msg.Contains("ChatMessage")) receivedMessages.Add("ChatMessage");
+                    else if (msg.Contains("Ping")) receivedMessages.Add("Ping");
+                }
             });
 
-        // Queue messages in specific order (all except LoginRequest will be unhandled and logged)
+        // Queue messages in specific order (all will log Debug as handlers not implemented)
         var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5)));
@@ -226,11 +232,11 @@ public class GameServerInputPhaseTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
         await gameServer.StartServerAsync(cts.Token);
 
-        // Verify order (LoginRequest would be handled, so we only test unhandled messages)
+        // Verify order
         Assert.Equal(3, receivedMessages.Count);
-        Assert.Equal(MessageType.PositionUpdate, receivedMessages[0]);
-        Assert.Equal(MessageType.ChatMessage, receivedMessages[1]);
-        Assert.Equal(MessageType.Ping, receivedMessages[2]);
+        Assert.Equal("PositionUpdate", receivedMessages[0]);
+        Assert.Equal("ChatMessage", receivedMessages[1]);
+        Assert.Equal("Ping", receivedMessages[2]);
     }
 
     [Fact]
@@ -281,9 +287,8 @@ public class GameServerInputPhaseTests
 
         // Both messages should have been processed
         Assert.True(gameServer.CurrentTick > firstTickCount);
-        _mockLog.Verify(log => log.Warn(
-                It.Is<string>(s => s.Contains("Unknown message type")),
-                MessageType.ChatMessage,
+        _mockLog.Verify(log => log.Debug(
+                It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")),
                 clientId),
             Times.Exactly(2));
     }
@@ -309,22 +314,21 @@ public class GameServerInputPhaseTests
         await gameServer.StartServerAsync(cts.Token);
 
         // Verify all different types were processed
-        // LoginRequest is handled by LoginHandler (should not log "Unknown")
+        // LoginRequest is handled by LoginHandler (should not log Debug or Warn)
         _mockLog.Verify(
-            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.LoginRequest,
-                It.IsAny<Guid>()), Times.Never);
-        // Other types are unhandled and log warnings
+            log => log.Warn(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never);
+        
+        // Ping, ChatMessage, PositionUpdate: handlers not yet implemented (log Debug)
         _mockLog.Verify(
-            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Ping, clientId),
+            log => log.Debug(It.Is<string>(s => s.Contains("Ping") && s.Contains("Handler not yet implemented")), clientId),
             Times.Once);
         _mockLog.Verify(
-            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.ChatMessage, clientId),
+            log => log.Debug(It.Is<string>(s => s.Contains("ChatMessage") && s.Contains("Handler not yet implemented")), clientId),
             Times.Once);
         _mockLog.Verify(
-            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.PositionUpdate,
-                clientId), Times.Once);
-        _mockLog.Verify(
-            log => log.Warn(It.Is<string>(s => s.Contains("Unknown message type")), MessageType.Heartbeat, clientId),
+            log => log.Debug(It.Is<string>(s => s.Contains("PositionUpdate") && s.Contains("Handler not yet implemented")), clientId),
             Times.Once);
+        
+        // Heartbeat: handled silently (no logging) - already verified by Times.Never for both Debug and Warn above
     }
 }
