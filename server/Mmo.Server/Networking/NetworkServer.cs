@@ -166,6 +166,7 @@ public sealed class NetworkServer(int port, ILog log) : INetworkServer
     }
 
     public void RemovePlayer(ClientConnection player) => _playerToConnection.TryRemove(player.Id, out _);
+    public Task BroadcastToZoneAsync(INetworkMessage eventMessageMessage) => throw new NotImplementedException();
 
     /// <summary>
     ///     Sends a message to a specific client by connection ID.

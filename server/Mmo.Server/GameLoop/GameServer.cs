@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using Mmo.Server.Entities;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.Messages;
 using Mmo.Server.Networking;
 using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Server.Zones;
@@ -35,7 +36,7 @@ public class GameServer
     ///     Outgoing event broadcasts (PlayerJoined, PlayerLeft, Chat, etc. ),
     ///     collected during the tick and sent in OutputPhase.
     /// </summary>
-    private readonly ConcurrentQueue<INetworkMessage> _pendingBroadcasts = new();
+    private readonly ConcurrentQueue<OutgoingMessage> _outgoingMessages = new();
 
     private readonly MessageRouter _router;
     internal readonly INetworkServer NetworkServer;
@@ -166,11 +167,26 @@ public class GameServer
         // ══════════════════════════════════════════════════════════
         // 1. EVENT BROADCASTS (highest priority)
         // ══════════════════════════════════════════════════════════
-        while (_pendingBroadcasts.TryDequeue(out INetworkMessage? eventMessage))
+        while (_outgoingMessages.TryDequeue(out OutgoingMessage eventMessage))
         {
-            // TODO: Send Events zone-specific if necessary.
-            await NetworkServer.BroadcastAsync(eventMessage);
-            _log.Debug("Event broadcast:  {MessageType}", eventMessage.Type);
+            if (eventMessage.TargetClient == null)
+            {
+                if (eventMessage.ZoneId == null)
+                {
+                    await NetworkServer.BroadcastAsync(eventMessage.Message);
+                }
+                else
+                {
+                    foreach(ServerPlayer playerInZone in ZoneManager.GetServerPlayersInZone(eventMessage.ZoneId))
+                        await NetworkServer.SendToClientAsync(playerInZone.Connection,eventMessage.Message);
+                }
+            }
+            else
+            {
+                await NetworkServer.SendToClientAsync(eventMessage.TargetClient, eventMessage.Message);
+            }
+
+            _log.Debug("Event broadcast:  {MessageType}", eventMessage.Message.Type);
         }
 
         // ══════════════════════════════════════════════════════════
@@ -282,7 +298,7 @@ public class GameServer
 
         // Notify other clients via pending broadcasts
         var playerLeft = new PlayerLeftZone(serverPlayer.Entity);
-        _pendingBroadcasts.Enqueue(playerLeft);
+        _outgoingMessages.Enqueue(OutgoingMessage.BroadcastToServer(playerLeft));
     }
 
     private void OnMessageReceived(object? sender, MessageReceivedEventArgs e) => _incomingMessages.Enqueue(e);
@@ -314,5 +330,5 @@ public class GameServer
     ///     Queue an event broadcast to be sent in the next OutputPhase.
     /// </summary>
     /// <param name="message">The message to broadcast.</param>
-    public void QueueBroadcast(INetworkMessage message) => _pendingBroadcasts.Enqueue(message);
+    public void QueueOutgoingMessage(OutgoingMessage message) => _outgoingMessages.Enqueue(message);
 }

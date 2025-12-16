@@ -215,7 +215,7 @@ public class ZoneManager
     ///     Gets all server players in a specific zone.
     /// </summary>
     /// <param name="zoneId">The zone ID to filter by.</param>
-    public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort zoneId)
+    public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort? zoneId)
     {
         return GetAllServerPlayers()
             .Where(p => p.Entity.RuntimeId.ZoneId == zoneId);

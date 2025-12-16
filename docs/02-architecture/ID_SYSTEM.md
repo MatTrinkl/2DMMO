@@ -1,10 +1,11 @@
-# 🆔 ID-System
+# 📨 Message-Spezifikation
 
-## 2DMMO – Entity Identity Architecture
+## 2DMMO – Network Messages
 
-**Version:** 1.0.0  
-**Letzte Aktualisierung:** 2025-12-09  
-**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
+**Version:** 2.0.0  
+**Letzte Aktualisierung:** 2025-12-16  
+**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)  
+**Siehe auch:** [Issue #140 - MessageType Rework](https://github.com/MatTrinkl/2DMMO/issues/140)
 
 ---
 
@@ -21,1039 +22,1301 @@
 9. [Code-Beispiele](#code-beispiele)
 10. [Diagramme](#diagramme)
 
----
+## 📋 Übersicht
 
-## Übersicht
+Diese Dokumentation beschreibt alle Netzwerk-Nachrichten, DTOs und die Serialisierung für das 2DMMO.
 
-Das ID-System des 2DMMO verwendet eine hierarchische Struktur zur eindeutigen Identifikation aller Entities in der Spielwelt. Das System ist optimiert für:
+### Wichtige Änderungen in v2.0.0
 
-- **Performance:** Schnelle Lookups und Dictionary-Keys
-- **Skalierbarkeit:** Multi-World, Multi-Zone, Multi-Shard Architektur
-- **Flexibilität:** Unterstützt sowohl persistente als auch temporäre Entities
-- **Netzwerk-Effizienz:** Kompakte Serialisierung (10 Bytes pro Entity)
-
----
-
-## ID-Typen
-
-### Übersichtstabelle
-
-| ID | Typ | Änderung bei Zonenwechsel | Persistenz | Beschreibung |
-|----|-----|---------------------------|------------|--------------|
-| `AccountId` | Guid | ❌ Nie | Datenbank | Eindeutiger Spieler-Account (Login, OAuth) |
-| `CharacterId` | int | ❌ Nie | Datenbank | Charakter des Spielers (mehrere pro Account möglich) |
-| `WorldId` | byte | ❌ Selten | Runtime | Welt/Region (für Multi-Region Support) |
-| `ZoneId` | ushort | ✅ Ja | Runtime | Aktuelle Zone (0-65535) |
-| `ShardId` | byte | ✅ Ja | Runtime | Shard innerhalb der Zone (0-255) |
-| `EntityId` | int | ✅ Ja | Runtime | Eindeutige ID innerhalb des Shards |
-| `PrefabId` | ushort | ❌ Nie | Konstant | Entity-Template (z.B. "Goblin", "Chest") |
-
-### Detaillierte Beschreibung
-
-#### AccountId (Guid)
-- **Zweck:** Eindeutiger Account-Identifier für Login und OAuth
-- **Persistenz:** PostgreSQL Datenbank
-- **Verwendung:** Authentication, Account-Management, Freundeslisten
-- **Beispiel:** `f47ac10b-58cc-4372-a567-0e02b2c3d479`
-
-#### CharacterId (int)
-- **Zweck:** Eindeutiger Charakter innerhalb eines Accounts
-- **Persistenz:** PostgreSQL Datenbank
-- **Verwendung:** Charakter-Auswahl, Persistierung von Charakter-Daten
-- **Range:** 1 - 2,147,483,647
-- **Hinweis:** Ein Account kann mehrere Charaktere haben (z.B. max. 5)
-
-#### WorldId (byte)
-- **Zweck:** Unterscheidung verschiedener Welten/Regionen (für zukünftige Multi-Region Skalierung)
-- **Persistenz:** Runtime (konfigurierbar, selten geändert)
-- **Verwendung:** Multi-Region Support (EU, US, Asia)
-- **Range:** 1 - 255 (0 = ungültig)
-- **Prototyp:** Immer `1` (Single-World)
-
-#### ZoneId (ushort)
-- **Zweck:** Eindeutige Zone innerhalb einer Welt
-- **Persistenz:** Runtime (aus Zone-Konfiguration)
-- **Verwendung:** Zone-Lookups, Broadcasting, Zone-Transfers
-- **Range:** 1 - 65535 (0 = ungültig)
-- **Siehe auch:** [ZoneId Ranges](#zoneid-ranges) für Zone-Kategorien
-
-#### ShardId (byte)
-- **Zweck:** Shard innerhalb einer Zone für Skalierung bei hoher Spielerzahl
-- **Persistenz:** Runtime (dynamisch vom ShardSelector vergeben)
-- **Verwendung:** Last-Verteilung innerhalb einer Zone
-- **Range:** 0 - 255
-- **Prototyp:** Immer `0` (Single-Shard pro Zone)
-
-#### EntityId (int)
-- **Zweck:** Eindeutige ID innerhalb eines Zone-Shards
-- **Persistenz:** Runtime (pro Zone/Shard Counter)
-- **Verwendung:** Entity-Lookups innerhalb eines Shards
-- **Range:** 1 - 2,147,483,647
-- **Vergabe:** Aufsteigender Counter pro Zone/Shard
-
-#### PrefabId (ushort)
-- **Zweck:** Template/Typ der Entity (z.B. "Goblin", "Chest", "Player")
-- **Persistenz:** Konstant (Teil der Spiel-Konfiguration)
-- **Verwendung:** Entity-Spawning, Client-Rendering, Verhalten
-- **Range:** 1 - 65535 (0 = ungültig)
-- **Beispiele:** `1 = Player`, `100 = Goblin`, `500 = Wooden Chest`
+- **`ushort` statt `byte`** für MessageType (0-65535 statt 0-255)
+- **100er Blöcke** pro Kategorie für bessere Skalierbarkeit
+- **O(1) Routing** durch Category-basiertes Dispatch
+- **50 Kategorien** für alle MMO-Features vorbereitet
 
 ---
 
-## EntityIdentity Struktur
+## 🏗️ Architektur-Übersicht
 
-### Memory-Layout
+### Message Frame Format
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      EntityIdentity                             │
-├─────────────────────────────────────────────────────────────────┤
-│  WorldId    │  ZoneId   │  ShardId  │  EntityId  │  PrefabId   │
-│  (byte)     │  (ushort) │  (byte)   │  (int)     │  (ushort)   │
-├─────────────────────────────────────────────────────────────────┤
-│  1 Byte     │  2 Bytes  │  1 Byte   │  4 Bytes   │  2 Bytes    │
-└─────────────────────────────────────────────────────────────────┘
-                    Total: 10 Bytes pro Entity
+┌──────────────┬──────────────┬─────────────────────────────┐
+│   2 Bytes    │   4 Bytes    │         N Bytes             │
+│    Type      │   Length     │         Payload             │
+│  (ushort)    │  (uint32)    │    (MessagePack Data)       │
+└──────────────┴──────────────┴─────────────────────────────┘
 ```
 
-### C# Implementierung
+### O(1) Routing Konzept
+
+```
+MessageType (ushort) ──► Category = Type / 100 ──► Handler[Category]
+     1234             ──►      12 (Targeting)   ──► TargetingHandler
+```
+
+---
+
+## 📊 Message Categories
+
+| Category | Range | Beschreibung | Phase |
+|----------|-------|--------------|-------|
+| 0 | 0000-0099 | Connection/Authentication | Prototyp |
+| 1 | 0100-0199 | Zone Events | Prototyp |
+| 2 | 0200-0299 | Movement/Position | Prototyp |
+| 3 | 0300-0399 | Combat | Phase 2 |
+| 4 | 0400-0499 | Chat | Prototyp |
+| 5 | 0500-0599 | Inventory/Items | Phase 2 |
+| 6 | 0600-0699 | Character/Stats/Progression | Phase 2 |
+| 7 | 0700-0799 | Group/Party | Phase 2 |
+| 8 | 0800-0899 | Guild | Phase 2 |
+| 9 | 0900-0999 | Ping/Latency/System | Prototyp |
+| 10 | 1000-1099 | Quest | Phase 2 |
+| 11 | 1100-1199 | Trading | Phase 2 |
+| 12 | 1200-1299 | Targeting | Phase 2 |
+| 13 | 1300-1399 | NPC/Dialog/Vendor | Phase 2 |
+| 14 | 1400-1499 | Entity Spawning/Sync | Phase 2 |
+| 15 | 1500-1599 | Buffs/Debuffs/Auras | Phase 2 |
+| 16 | 1600-1699 | Crafting/Professions | Phase 3 |
+| 17 | 1700-1799 | Auction House/Market | Phase 3 |
+| 18 | 1800-1899 | Mail System | Phase 3 |
+| 19 | 1900-1999 | Achievements/Titles | Phase 3 |
+| 20 | 2000-2099 | Mounts/Pets/Companions | Phase 3 |
+| 21 | 2100-2199 | Social (Friends, Block) | Phase 2 |
+| 22 | 2200-2299 | Emotes/Animations/Cosmetics | Phase 3 |
+| 23 | 2300-2399 | Admin/GM Tools | Phase 2 |
+| 24 | 2400-2499 | Instancing/Dungeons/Raids | Phase 2 |
+| 25 | 2500-2599 | PvP/Arena/Battleground | Phase 2 |
+| 26 | 2600-2699 | World State (Weather, Time) | Phase 2 |
+| 27 | 2700-2799 | Matchmaking/Queue | Phase 3 |
+| 28 | 2800-2899 | Leaderboard/Rankings | Phase 3 |
+| 29 | 2900-2999 | Tutorial/Guide System | Phase 2 |
+| 30 | 3000-3099 | Settings/Preferences Sync | Phase 3 |
+| 31 | 3100-3199 | Loot/Rewards | Phase 2 |
+| 32 | 3200-3299 | Cooldowns/Timers | Phase 2 |
+| 33 | 3300-3399 | Inspection/Character Info | Phase 3 |
+| 34 | 3400-3499 | Map/Minimap/Waypoints | Phase 2 |
+| 35 | 3500-3599 | Voice Chat/Audio | Phase 3 |
+| 36 | 3600-3699 | Reporting/Moderation | Phase 2 |
+| 37 | 3700-3799 | Economy/Currency | Phase 2 |
+| 38 | 3800-3899 | Skills/Talents/Abilities | Phase 2 |
+| 39 | 3900-3999 | Equipment/Gear | Phase 2 |
+| 40 | 4000-4099 | Bank/Storage | Phase 3 |
+| 41 | 4100-4199 | Death/Respawn/Ghost | Phase 2 |
+| 42 | 4200-4299 | Transportation | Phase 3 |
+| 43 | 4300-4399 | Notifications/Alerts | Phase 2 |
+| 44 | 4400-4499 | Cutscenes/Cinematics | Phase 3 |
+| 45 | 4500-4599 | Housing/Player Buildings | Phase 3 |
+| 46 | 4600-4699 | Events/Seasonal Content | Phase 3 |
+| 47 | 4700-4799 | Reserved | - |
+| 48 | 4800-4899 | Reserved | - |
+| 49 | 4900-4999 | Debug/Development | Dev |
+
+---
+
+## MessageType Enum
 
 ```csharp
-using MessagePack;
-
-namespace Mmo.Shared.Entities;
+namespace Mmo.Shared. Enums;
 
 /// <summary>
-///     Vollständige Identität einer Entity in der Spielwelt.
-///     Ermöglicht eindeutige Identifikation über World, Zone, Shard und Entity-ID.
+///     Network message types organized in 100-blocks for O(1) routing.
+///     Category = MessageType / 100
 /// </summary>
-[MessagePackObject]
-public readonly struct EntityIdentity : IEquatable<EntityIdentity>
+public enum MessageType : ushort
 {
-    /// <summary>
-    ///     World/Region ID (für Multi-Region Support).
-    /// </summary>
-    [Key(0)]
-    public byte WorldId { get; init; }
-
-    /// <summary>
-    ///     Zone ID innerhalb der World.
-    /// </summary>
-    [Key(1)]
-    public ushort ZoneId { get; init; }
-
-    /// <summary>
-    ///     Shard ID innerhalb der Zone (für Skalierung).
-    /// </summary>
-    [Key(2)]
-    public byte ShardId { get; init; }
-
-    /// <summary>
-    ///     Entity ID innerhalb des Shards.
-    /// </summary>
-    [Key(3)]
-    public int EntityId { get; init; }
-
-    /// <summary>
-    ///     Prefab/Template ID (z.B. "Player", "Goblin", "Chest").
-    /// </summary>
-    [Key(4)]
-    public ushort PrefabId { get; init; }
-
-    /// <summary>
-    ///     Erstellt eine neue EntityIdentity.
-    /// </summary>
-    public EntityIdentity(byte worldId, ushort zoneId, byte shardId, int entityId, ushort prefabId)
-    {
-        WorldId = worldId;
-        ZoneId = zoneId;
-        ShardId = shardId;
-        EntityId = entityId;
-        PrefabId = prefabId;
-    }
-
-    /// <summary>
-    ///     Berechnet einen globalen Key für schnelle Lookups.
-    ///     Format: WorldId (8 bits) | ZoneId (16 bits) | ShardId (8 bits) | EntityId (32 bits)
-    /// </summary>
-    [IgnoreMember]
-    public long GlobalKey => ((long)WorldId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 32) | (long)EntityId;
-
-    public bool Equals(EntityIdentity other)
-    {
-        return WorldId == other.WorldId 
-            && ZoneId == other.ZoneId 
-            && ShardId == other.ShardId 
-            && EntityId == other.EntityId 
-            && PrefabId == other.PrefabId;
-    }
-
-    public override bool Equals(object? obj) => obj is EntityIdentity other && Equals(other);
-
-    public override int GetHashCode() => HashCode.Combine(WorldId, ZoneId, ShardId, EntityId, PrefabId);
-
-    public static bool operator ==(EntityIdentity left, EntityIdentity right) => left.Equals(right);
-
-    public static bool operator !=(EntityIdentity left, EntityIdentity right) => !left.Equals(right);
-
-    public override string ToString() 
-        => $"World:{WorldId} Zone:{ZoneId} Shard:{ShardId} Entity:{EntityId} Prefab:{PrefabId}";
-}
-```
-
-### Eigenschaften
-
-| Eigenschaft | Typ | Beschreibung |
-|-------------|-----|--------------|
-| `WorldId` | byte | Welt/Region (1-255) |
-| `ZoneId` | ushort | Zone (1-65535) |
-| `ShardId` | byte | Shard (0-255) |
-| `EntityId` | int | Entity innerhalb Shard (1-2.1B) |
-| `PrefabId` | ushort | Template/Typ (1-65535) |
-| `GlobalKey` | long | Kombinierter Key für Dictionary-Lookups |
-
----
-
-## GlobalEntityKey
-
-### Konzept
-
-Der `GlobalKey` ist ein 64-bit long-Wert, der aus den ersten 4 ID-Komponenten (WorldId, ZoneId, ShardId, EntityId) berechnet wird. Er dient als **performanter Dictionary-Key** für schnelle Entity-Lookups.
-
-### Bit-Layout
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     GlobalKey (64 bits / 8 bytes)               │
-├────────────┬────────────────────┬──────────┬───────────────────┤
-│  WorldId   │      ZoneId        │ ShardId  │     EntityId      │
-│  (8 bits)  │    (16 bits)       │ (8 bits) │    (32 bits)      │
-├────────────┴────────────────────┴──────────┴───────────────────┤
-│   Byte 7   │   Byte 6-5        │  Byte 4  │   Byte 3-0        │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Berechnung
-
-```csharp
-long GlobalKey = ((long)WorldId << 56)   // WorldId an Position 56-63
-               | ((long)ZoneId << 40)     // ZoneId an Position 40-55
-               | ((long)ShardId << 32)    // ShardId an Position 32-39
-               | (long)EntityId;          // EntityId an Position 0-31 (cast verhindert Sign-Extension)
-```
-
-### Verwendung
-
-```csharp
-// Dictionary mit GlobalKey als Index
-private readonly Dictionary<long, EntityState> _entitiesByGlobalKey = new();
-
-// Schneller Lookup
-public EntityState? GetEntity(EntityIdentity identity)
-{
-    return _entitiesByGlobalKey.TryGetValue(identity.GlobalKey, out var entity) 
-        ? entity 
-        : null;
-}
-
-// Einfügen
-public void AddEntity(EntityIdentity identity, EntityState state)
-{
-    _entitiesByGlobalKey[identity.GlobalKey] = state;
-}
-```
-
-### Vorteile
-
-✅ **Performance:** O(1) Lookup statt verschachtelter Dictionaries  
-✅ **Memory:** Einzelner long (8 Bytes) als Key  
-✅ **Einfachheit:** Keine komplexen Key-Objekte  
-✅ **Sortierbar:** Entities können nach GlobalKey sortiert werden
-
-### Hinweis
-
-⚠️ **PrefabId ist NICHT Teil des GlobalKey**, da eine Entity-ID innerhalb eines Shards bereits eindeutig ist. Die PrefabId wird separat gespeichert.
-
----
-
-## Persistente vs. Runtime IDs
-
-### Persistente IDs (bleiben immer gleich)
-
-Diese IDs werden in der PostgreSQL Datenbank gespeichert und ändern sich nie:
-
-| ID | Typ | Persistenz | Use Case |
-|----|-----|------------|----------|
-| `AccountId` | Guid | ✅ Datenbank | Login, OAuth, Account-Management |
-| `CharacterId` | int | ✅ Datenbank | Charakter-Persistierung, Inventar, Quests |
-| `PrefabId` | ushort | ✅ Konstant | Entity-Templates, Spawning |
-
-**Beispiel:** Ein Spieler mit `CharacterId = 42` behält diese ID für immer, egal in welcher Zone er sich befindet.
-
-### Runtime IDs (ändern sich bei Zonenwechsel)
-
-Diese IDs werden während der Laufzeit vergeben und ändern sich, wenn ein Spieler die Zone wechselt:
-
-| ID | Typ | Persistenz | Use Case |
-|----|-----|------------|----------|
-| `WorldId` | byte | ⚠️ Runtime | Multi-Region (ändert sich selten) |
-| `ZoneId` | ushort | ❌ Runtime | Aktuelle Zone |
-| `ShardId` | byte | ❌ Runtime | Aktueller Shard |
-| `EntityId` | int | ❌ Runtime | ID innerhalb des Shards |
-
-**Beispiel:** Ein Spieler wechselt von Zone 1 (Startzone) zu Zone 2 (Hauptstadt):
-- **Vorher:** `ZoneId=1, ShardId=0, EntityId=5`
-- **Nachher:** `ZoneId=2, ShardId=0, EntityId=12` (neue EntityId!)
-
-### Warum Runtime IDs?
-
-**Skalierbarkeit:**
-- Jeder Zone/Shard verwaltet seinen eigenen EntityId-Counter
-- Keine globalen Locks oder Datenbank-Queries für ID-Vergabe
-- Ermöglicht parallele ID-Vergabe in verschiedenen Zonen
-
-**Performance:**
-- Lokale ID-Vergabe ist extrem schnell (Interlocked.Increment)
-- Keine Netzwerk-Latenz oder Datenbank-Zugriff
-
-**Flexibilität:**
-- Zone/Shard kann neu gestartet werden ohne ID-Kollisionen
-- Einfache Shard-Migration bei Lastverteilung
-
----
-
-## ZoneId Ranges
-
-Die `ZoneId` (ushort, 0-65535) ist in Kategorien unterteilt, um verschiedene Zone-Typen zu unterscheiden:
-
-```csharp
-namespace Mmo.Shared;
-
-/// <summary>
-///     Definiert die Bereiche für verschiedene Zone-Typen.
-/// </summary>
-public static class ZoneIdRanges
-{
-    // ═══════════════════════════════════════════════════
-    // PERSISTENTE WELTZONEN (1 - 9999)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für persistente Weltzonen (inklusive).
-    /// </summary>
-    public const ushort PersistentZoneMin = 1;
-
-    /// <summary>
-    ///     Maximum ZoneId für persistente Weltzonen (inklusive).
-    /// </summary>
-    public const ushort PersistentZoneMax = 9999;
-
-    // Beispiele: Startzone = 1, Hauptstadt = 2, Wald = 3, etc.
-
-    // ═══════════════════════════════════════════════════
-    // DUNGEONS (10000 - 19999)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für Dungeons (inklusive).
-    /// </summary>
-    public const ushort DungeonZoneMin = 10000;
-
-    /// <summary>
-    ///     Maximum ZoneId für Dungeons (inklusive).
-    /// </summary>
-    public const ushort DungeonZoneMax = 19999;
-
-    // Beispiele: Goblin Cave = 10001, Dragon Lair = 10002, etc.
-
-    // ═══════════════════════════════════════════════════
-    // ARENEN (20000 - 29999)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für PvP Arenen (inklusive).
-    /// </summary>
-    public const ushort ArenaZoneMin = 20000;
-
-    /// <summary>
-    ///     Maximum ZoneId für PvP Arenen (inklusive).
-    /// </summary>
-    public const ushort ArenaZoneMax = 29999;
-
-    // Beispiele: 1v1 Arena = 20001, 5v5 Battleground = 20002, etc.
-
-    // ═══════════════════════════════════════════════════
-    // HOUSING (30000 - 39999)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für Housing Instanzen (inklusive).
-    /// </summary>
-    public const ushort HousingZoneMin = 30000;
-
-    /// <summary>
-    ///     Maximum ZoneId für Housing Instanzen (inklusive).
-    /// </summary>
-    public const ushort HousingZoneMax = 39999;
-
-    // Beispiele: Player House 1 = 30001, Guild Hall 5 = 30005, etc.
-
-    // ═══════════════════════════════════════════════════
-    // EVENTS (40000 - 49999)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für Event-Zonen (inklusive).
-    /// </summary>
-    public const ushort EventZoneMin = 40000;
-
-    /// <summary>
-    ///     Maximum ZoneId für Event-Zonen (inklusive).
-    /// </summary>
-    public const ushort EventZoneMax = 49999;
-
-    // Beispiele: Christmas Event = 40001, Halloween Event = 40002, etc.
-
-    // ═══════════════════════════════════════════════════
-    // RESERVIERT (50000 - 65535)
-    // ═══════════════════════════════════════════════════
-    /// <summary>
-    ///     Minimum ZoneId für reservierte/zukünftige Zone-Typen (inklusive).
-    /// </summary>
-    public const ushort ReservedZoneMin = 50000;
-
-    /// <summary>
-    ///     Maximum ZoneId (inklusive).
-    /// </summary>
-    public const ushort ReservedZoneMax = 65535;
-
-    // Für zukünftige Erweiterungen reserviert
-
-    // ═══════════════════════════════════════════════════
-    // HELPER METHODS
-    // ═══════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Prüft ob die ZoneId eine persistente Weltzone ist.
-    /// </summary>
-    public static bool IsPersistentZone(ushort zoneId) 
-        => zoneId >= PersistentZoneMin && zoneId <= PersistentZoneMax;
-
-    /// <summary>
-    ///     Prüft ob die ZoneId ein Dungeon ist.
-    /// </summary>
-    public static bool IsDungeon(ushort zoneId) 
-        => zoneId >= DungeonZoneMin && zoneId <= DungeonZoneMax;
-
-    /// <summary>
-    ///     Prüft ob die ZoneId eine Arena ist.
-    /// </summary>
-    public static bool IsArena(ushort zoneId) 
-        => zoneId >= ArenaZoneMin && zoneId <= ArenaZoneMax;
-
-    /// <summary>
-    ///     Prüft ob die ZoneId eine Housing-Instanz ist.
-    /// </summary>
-    public static bool IsHousing(ushort zoneId) 
-        => zoneId >= HousingZoneMin && zoneId <= HousingZoneMax;
-
-    /// <summary>
-    ///     Prüft ob die ZoneId eine Event-Zone ist.
-    /// </summary>
-    public static bool IsEvent(ushort zoneId) 
-        => zoneId >= EventZoneMin && zoneId <= EventZoneMax;
-
-    /// <summary>
-    ///     Prüft ob die ZoneId gültig ist.
-    /// </summary>
-    public static bool IsValid(ushort zoneId) => zoneId > 0;
-}
-```
-
-### Übersichtstabelle
-
-| Range | Zone-Typ | Persistierung | Instanzierung | Beispiele |
-|-------|----------|---------------|---------------|-----------|
-| **1 - 9999** | Persistente Weltzonen | ✅ Immer | Statisch beim Start | Startzone, Hauptstadt, Wald |
-| **10000 - 19999** | Dungeons | ❌ Temporär | Dynamisch on-demand | Goblin Cave, Dragon Lair |
-| **20000 - 29999** | Arenen | ❌ Temporär | Dynamisch on-demand | 1v1 Arena, 5v5 Battleground |
-| **30000 - 39999** | Housing | ✅ Pro Spieler | Dynamisch bei Bedarf | Player Houses, Guild Halls |
-| **40000 - 49999** | Events | ❌ Event-basiert | Dynamisch bei Event | Christmas, Halloween |
-| **50000 - 65535** | Reserviert | - | - | Zukünftige Erweiterungen |
-
-### Verwendung
-
-```csharp
-// Zone-Typ prüfen
-if (ZoneIdRanges.IsDungeon(zoneId))
-{
-    // Dungeon-spezifische Logik
-    // z.B. Loot-Boost, instanzierte Drops
-}
-
-if (ZoneIdRanges.IsPersistentZone(zoneId))
-{
-    // Persistente Zone
-    // z.B. Position wird in DB gespeichert
-}
-```
-
----
-
-## ID-Vergabe
-
-### EntityId-Vergabe pro Zone/Shard
-
-Jeder Zone/Shard hat seinen eigenen **EntityId-Counter**, der bei 1 startet und aufsteigend vergeben wird:
-
-```csharp
-namespace Mmo.Server.Zones;
-
-/// <summary>
-///     Verwaltet Entities innerhalb eines Zone/Shard Paares.
-/// </summary>
-public class ZoneEntityManager
-{
-    private readonly byte _worldId;
-    private readonly ushort _zoneId;
-    private readonly byte _shardId;
-    
-    private int _nextEntityId = 1;
-    private readonly Dictionary<long, EntityState> _entities = new();
-
-    public ZoneEntityManager(byte worldId, ushort zoneId, byte shardId)
-    {
-        _worldId = worldId;
-        _zoneId = zoneId;
-        _shardId = shardId;
-    }
-
-    /// <summary>
-    ///     Erstellt eine neue EntityIdentity mit der nächsten verfügbaren EntityId.
-    /// </summary>
-    public EntityIdentity CreateEntityIdentity(ushort prefabId)
-    {
-        int entityId = Interlocked.Increment(ref _nextEntityId);
-        
-        return new EntityIdentity(
-            worldId: _worldId,
-            zoneId: _zoneId,
-            shardId: _shardId,
-            entityId: entityId,
-            prefabId: prefabId
-        );
-    }
-
-    /// <summary>
-    ///     Registriert eine neue Entity im Manager.
-    /// </summary>
-    public void AddEntity(EntityIdentity identity, EntityState state)
-    {
-        _entities[identity.GlobalKey] = state;
-    }
-
-    /// <summary>
-    ///     Entfernt eine Entity aus dem Manager.
-    /// </summary>
-    public void RemoveEntity(EntityIdentity identity)
-    {
-        _entities.Remove(identity.GlobalKey);
-    }
-
-    /// <summary>
-    ///     Holt eine Entity nach Identity.
-    /// </summary>
-    public EntityState? GetEntity(EntityIdentity identity)
-    {
-        return _entities.TryGetValue(identity.GlobalKey, out var entity) 
-            ? entity 
-            : null;
-    }
-
-    /// <summary>
-    ///     Gibt alle Entities zurück.
-    /// </summary>
-    public IEnumerable<EntityState> GetAllEntities()
-    {
-        return _entities.Values;
-    }
-}
-```
-
-### Vergabe-Eigenschaften
-
-| Aspekt | Detail |
-|--------|--------|
-| **Thread-Safety** | Ja, via `Interlocked.Increment` |
-| **Startwert** | 1 (0 ist ungültig) |
-| **Performance** | O(1), keine Locks |
-| **Kollisionen** | Unmöglich innerhalb eines Zone/Shard |
-| **Wiederverwendung** | Nein, Counter läuft nur aufwärts |
-
-### ShardId-Vergabe
-
-Im Prototyp ist `ShardId` immer `0` (Single-Shard pro Zone). In einer skalierten Umgebung würde ein **ShardSelector** basierend auf Last entscheiden:
-
-```csharp
-public class ShardSelector
-{
-    private readonly Dictionary<ushort, List<ShardInfo>> _shardsByZone = new();
-
-    /// <summary>
-    ///     Wählt den Shard mit der geringsten Last.
-    /// </summary>
-    public byte SelectShard(ushort zoneId)
-    {
-        if (!_shardsByZone.TryGetValue(zoneId, out var shards) || shards.Count == 0)
-        {
-            return 0; // Default-Shard
-        }
-
-        // Shard mit geringster Spielerzahl
-        var bestShard = shards.OrderBy(s => s.PlayerCount).FirstOrDefault();
-        return bestShard?.ShardId ?? 0;
-    }
-}
-
-public class ShardInfo
-{
-    public byte ShardId { get; init; }
-    public int PlayerCount { get; set; }
-    
-    /// <summary>
-    ///     Maximale Kapazität pro Shard. In der Produktion aus Konfiguration geladen.
-    /// </summary>
-    public int MaxCapacity { get; init; } = 200; // Konfigurierbar in appsettings.json
-}
-```
-
-### WorldId-Konfiguration
-
-Die `WorldId` ist serverseitig konfiguriert und ändert sich selten:
-
-```json
-// appsettings.json
-{
-  "Server": {
-    "WorldId": 1,
-    "Region": "EU"
-  }
-}
-```
-
-Für Multi-Region Support:
-- **EU Server:** `WorldId = 1`
-- **US Server:** `WorldId = 2`
-- **Asia Server:** `WorldId = 3`
-
----
-
-## Verhalten bei Zonenwechsel
-
-### Was ändert sich, was bleibt gleich?
-
-| Feld | Zone→Zone | Shard→Shard | Zone→Dungeon | Dungeon→Zone |
-|------|-----------|-------------|--------------|--------------|
-| **AccountId** | ✅ gleich | ✅ gleich | ✅ gleich | ✅ gleich |
-| **CharacterId** | ✅ gleich | ✅ gleich | ✅ gleich | ✅ gleich |
-| **PrefabId** | ✅ gleich | ✅ gleich | ✅ gleich | ✅ gleich |
-| **WorldId** | ✅ gleich | ✅ gleich | ✅ gleich | ✅ gleich |
-| **ZoneId** | ❌ neu | ✅ gleich | ❌ neu | ❌ neu |
-| **ShardId** | ❌ neu | ❌ neu | ❌ neu | ❌ neu |
-| **EntityId** | ❌ neu | ❌ neu | ❌ neu | ❌ neu |
-
-### Zonenwechsel-Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  ZONENWECHSEL-FLOW                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1️⃣ Spieler in Zone A (Startzone)                              │
-│     Identity: World:1 Zone:1 Shard:0 Entity:5 Prefab:1         │
-│                                                                 │
-│  2️⃣ Spieler läuft zur Zonengrenze                              │
-│     ZoneBounds.IsNearEdge(x, y, threshold) → true              │
-│                                                                 │
-│  3️⃣ Server initiiert Zone-Transfer                             │
-│     • RemoveEntity(Zone A, EntityId:5)                          │
-│     • Persistiere Charakter-Daten (Position, HP, etc.)         │
-│                                                                 │
-│  4️⃣ Spieler wechselt zu Zone B (Hauptstadt)                    │
-│     • Neue EntityId wird vergeben: EntityId:12                 │
-│     • Neue Identity: World:1 Zone:2 Shard:0 Entity:12 Prefab:1│
-│     • AddEntity(Zone B, EntityId:12)                            │
-│                                                                 │
-│  5️⃣ Client-Benachrichtigung                                    │
-│     • ZoneTransferMessage mit neuer Identity                   │
-│     • Client lädt Zone B Assets                                │
-│     • Neue Spieler-Liste für Zone B                            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Code-Beispiel: Zone-Transfer
-
-```csharp
-public class ZoneTransferManager
-{
-    private readonly ZoneManager _zoneManager;
-    private readonly CharacterRepository _characterRepo;
-
-    /// <summary>
-    ///     Transferiert einen Spieler von einer Zone zu einer anderen.
-    /// </summary>
-    public async Task<EntityIdentity> TransferPlayerAsync(
-        Player player,
-        ushort fromZoneId,
-        ushort toZoneId)
-    {
-        // 1. Alte Zone
-        var fromZone = _zoneManager.GetZone(fromZoneId);
-        var oldIdentity = player.Identity;
-
-        // 2. Aus alter Zone entfernen
-        fromZone.RemoveEntity(oldIdentity);
-
-        // 3. Charakter-Daten persistieren
-        await _characterRepo.SaveCharacterStateAsync(player.CharacterId, player.State);
-
-        // 4. Neue Zone
-        var toZone = _zoneManager.GetZone(toZoneId);
-        var shardId = SelectShardForZone(toZoneId); // Im Prototyp: 0
-
-        // 5. Neue EntityIdentity erstellen
-        var newIdentity = toZone.EntityManager.CreateEntityIdentity(player.PrefabId);
-
-        // 6. Spieler-Daten aktualisieren
-        player.Identity = newIdentity;
-        player.Position = toZone.GetSpawnPosition(); // Spawn-Position in neuer Zone
-
-        // 7. In neue Zone einfügen
-        toZone.AddEntity(newIdentity, player.State);
-
-        // 8. Client benachrichtigen
-        await SendZoneTransferMessageAsync(player, newIdentity, toZone);
-
-        // 9. Andere Spieler benachrichtigen
-        await BroadcastPlayerJoinedAsync(toZone, player);
-        await BroadcastPlayerLeftAsync(fromZone, oldIdentity);
-
-        return newIdentity;
-    }
-}
-```
-
-### Wichtige Hinweise
-
-⚠️ **EntityId ist NICHT stabil über Zonenwechsel!**
-- Verwende NIEMALS `EntityId` alleine für persistente Referenzen
-- Für persistente Daten: Verwende `CharacterId` oder `AccountId`
-- `EntityId` ist nur innerhalb einer Zone/Shard eindeutig
-
-✅ **Was persistent ist:**
-- `AccountId` — Immer gleich
-- `CharacterId` — Immer gleich
-- `PrefabId` — Immer gleich (Spieler bleibt Spieler)
-
-❌ **Was sich ändert:**
-- `ZoneId` — Neue Zone
-- `ShardId` — Neuer Shard (je nach Last-Verteilung)
-- `EntityId` — Neue ID im neuen Shard
-
----
-
-## Code-Beispiele
-
-### Beispiel 1: Entity erstellen
-
-```csharp
-// Zone/Shard Manager hat WorldId, ZoneId, ShardId
-var zoneManager = new ZoneEntityManager(
-    worldId: 1,    // EU Server
-    zoneId: 1,     // Startzone
-    shardId: 0     // Erster Shard
-);
-
-// Neue Player-Entity erstellen
-var playerIdentity = zoneManager.CreateEntityIdentity(prefabId: 1); // 1 = Player
-
-// Ergebnis:
-// World:1 Zone:1 Shard:0 Entity:1 Prefab:1
-
-// Zweiter Player
-var secondPlayerIdentity = zoneManager.CreateEntityIdentity(prefabId: 1);
-// World:1 Zone:1 Shard:0 Entity:2 Prefab:1
-```
-
-### Beispiel 2: Entity-Lookup via GlobalKey
-
-```csharp
-// Dictionary mit GlobalKey
-var entities = new Dictionary<long, EntityState>();
-
-// Entity hinzufügen
-entities[playerIdentity.GlobalKey] = new PlayerState
-{
-    CharacterId = 42,
-    Username = "TestPlayer",
-    Position = new Position(100, 200)
-};
-
-// Entity abrufen
-if (entities.TryGetValue(playerIdentity.GlobalKey, out var player))
-{
-    Console.WriteLine($"Found player: {player.Username}");
-}
-```
-
-### Beispiel 3: MessagePack Serialisierung
-
-```csharp
-using MessagePack;
-
-// EntityIdentity serialisieren
-var identity = new EntityIdentity(
-    worldId: 1,
-    zoneId: 1,
-    shardId: 0,
-    entityId: 5,
-    prefabId: 1
-);
-
-byte[] bytes = MessagePackSerializer.Serialize(identity);
-// Nur 10 Bytes!
-
-// Deserialisieren
-var deserialized = MessagePackSerializer.Deserialize<EntityIdentity>(bytes);
-
-Console.WriteLine(deserialized.ToString());
-// Output: World:1 Zone:1 Shard:0 Entity:5 Prefab:1
-```
-
-### Beispiel 4: Zone-spezifischer Broadcast
-
-```csharp
-public class ZoneBroadcaster
-{
-    /// <summary>
-    ///     Sendet ZoneState nur an Spieler in der Zone.
-    /// </summary>
-    public async Task BroadcastZoneStateAsync(Zone zone)
-    {
-        var players = zone.GetPlayers();
-
-        var zoneState = new ZoneState
-        {
-            ZoneId = zone.ZoneId,
-            Entities = players
-                .Select(p => new EntityData
-                {
-                    Identity = p.Identity,  // Vollständige EntityIdentity
-                    Position = p.Position,
-                    // ... weitere Daten
-                })
-                .ToList()
-        };
-
-        byte[] message = MessagePackSerializer.Serialize(zoneState);
-
-        // Nur an Spieler in dieser Zone senden
-        foreach (var player in players)
-        {
-            await player.Connection.SendAsync(message);
-        }
-    }
-}
-```
-
-### Beispiel 5: ZoneId Range Check
-
-```csharp
-// Zone-Typ prüfen
-public bool CanPlayerEnter(ushort zoneId, Player player)
-{
-    if (ZoneIdRanges.IsDungeon(zoneId))
-    {
-        // Dungeons haben Level-Anforderung
-        return player.Level >= GetDungeonMinLevel(zoneId);
-    }
-
-    if (ZoneIdRanges.IsHousing(zoneId))
-    {
-        // Housing nur für Besitzer/Gildenmitglieder
-        return player.CharacterId == GetHousingOwnerId(zoneId);
-    }
-
-    // Persistente Zonen sind für alle zugänglich
-    return ZoneIdRanges.IsPersistentZone(zoneId);
-}
-```
-
----
-
-## Diagramme
-
-### Diagramm 1: EntityIdentity Hierarchie
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ENTITY IDENTITY HIERARCHIE                   │
-│                                                                 │
-│                         WORLD 1 (EU)                            │
-│                              │                                  │
-│              ┌───────────────┼───────────────┐                 │
-│              │               │               │                 │
-│          Zone 1          Zone 2          Zone 10001            │
-│        (Startzone)    (Hauptstadt)      (Dungeon)              │
-│              │               │               │                 │
-│     ┌────────┴────────┐      │               │                 │
-│  Shard 0          Shard 1    │               │                 │
-│     │                 │      │               │                 │
-│  Entities:        Entities:  │               │                 │
-│  ├─ Entity 1      ├─ Entity 1│               │                 │
-│  ├─ Entity 2      ├─ Entity 2│               │                 │
-│  ├─ Entity 3      ├─ Entity 3│               │                 │
-│  └─ Entity 4      └─ Entity 4│               │                 │
-│                               │               │                 │
-│                          Shard 0         Shard 0               │
-│                               │               │                 │
-│                           Entities:       Entities:            │
-│                           ├─ Entity 1     ├─ Entity 1          │
-│                           ├─ Entity 2     ├─ Entity 2          │
-│                           └─ Entity 3     └─ Entity 3          │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Diagramm 2: ID-Flow bei Zonenwechsel
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│               ID-FLOW BEI ZONENWECHSEL                          │
-│                                                                 │
-│  SPIELER IN ZONE A                                             │
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │ AccountId:    f47ac10b-58cc-4372-a567-0e02b2c3d479  │      │
-│  │ CharacterId:  42                        ◄─── PERSISTENT     │
-│  │ PrefabId:     1 (Player)                ◄─── PERSISTENT     │
-│  │ WorldId:      1                         ◄─── CONFIG         │
-│  │ ─────────────────────────────────────────────────── │      │
-│  │ ZoneId:       1  (Startzone)           ◄─── ZONE A          │
-│  │ ShardId:      0                        ◄─── ZONE A          │
-│  │ EntityId:     5                        ◄─── ZONE A          │
-│  └──────────────────────────────────────────────────────┘      │
-│                          │                                      │
-│                          ▼                                      │
-│                  [ZONE TRANSFER]                               │
-│                          │                                      │
-│                          ▼                                      │
-│  SPIELER IN ZONE B                                             │
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │ AccountId:    f47ac10b-58cc-4372-a567-0e02b2c3d479  │      │
-│  │ CharacterId:  42                        ◄─── PERSISTENT     │
-│  │ PrefabId:     1 (Player)                ◄─── PERSISTENT     │
-│  │ WorldId:      1                         ◄─── CONFIG         │
-│  │ ─────────────────────────────────────────────────── │      │
-│  │ ZoneId:       2  (Hauptstadt)          ◄─── ZONE B (NEU!)   │
-│  │ ShardId:      0                        ◄─── ZONE B (NEU!)   │
-│  │ EntityId:     12                       ◄─── ZONE B (NEU!)   │
-│  └──────────────────────────────────────────────────────┘      │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Diagramm 3: GlobalKey Berechnung
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   GLOBALKEY BERECHNUNG                          │
-│                                                                 │
-│  Input:                                                         │
-│  ├─ WorldId:  1    (byte)                                      │
-│  ├─ ZoneId:   2    (ushort)                                    │
-│  ├─ ShardId:  0    (byte)                                      │
-│  └─ EntityId: 5    (int)                                       │
-│                                                                 │
-│  Bit-Shift:                                                     │
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │                64-bit long                            │      │
-│  ├─────────┬──────────────┬─────────┬──────────────────┤      │
-│  │ WorldId │    ZoneId    │ ShardId │    EntityId      │      │
-│  │ (8 bit) │   (16 bit)   │ (8 bit) │    (32 bit)      │      │
-│  ├─────────┼──────────────┼─────────┼──────────────────┤      │
-│  │    1    │      2       │    0    │       5          │      │
-│  │  << 56  │    << 40     │  << 32  │     (keine)      │      │
-│  └─────────┴──────────────┴─────────┴──────────────────┘      │
-│                          │                                      │
-│                          ▼ (OR alle Teile)                     │
-│                                                                 │
-│  GlobalKey = 0x0100020000000005                                │
-│              └┬┘└──┬──┘└┬┘└────┬────┘                         │
-│               1    2    0      5                               │
-│                                                                 │
-│  Verwendung:                                                    │
-│  Dictionary<long, EntityState> entities;                       │
-│  entities[globalKey] = playerState;                            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Diagramm 4: Zone-Sharding mit EntityId
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│              ZONE-SHARDING MIT ENTITYID                         │
-│                                                                 │
-│  Zone 2 (Hauptstadt) bei hoher Last:                           │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                  Shard 0 (150 Spieler)                   │   │
-│  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │ EntityId: 1, 2, 3, ..., 150                        │  │   │
-│  │  │ WorldId: 1, ZoneId: 2, ShardId: 0                  │  │   │
-│  │  │                                                     │  │   │
-│  │  │ 👤 Player 1:   World:1 Zone:2 Shard:0 Entity:1    │  │   │
-│  │  │ 👤 Player 2:   World:1 Zone:2 Shard:0 Entity:2    │  │   │
-│  │  │ 👤 Player 150: World:1 Zone:2 Shard:0 Entity:150  │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                  Shard 1 (120 Spieler)                   │   │
-│  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │ EntityId: 1, 2, 3, ..., 120                        │  │   │
-│  │  │ WorldId: 1, ZoneId: 2, ShardId: 1                  │  │   │
-│  │  │                                                     │  │   │
-│  │  │ 👤 Player 151: World:1 Zone:2 Shard:1 Entity:1    │  │   │
-│  │  │ 👤 Player 152: World:1 Zone:2 Shard:1 Entity:2    │  │   │
-│  │  │ 👤 Player 270: World:1 Zone:2 Shard:1 Entity:120  │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  Wichtig: EntityId ist unabhängig pro Shard!                   │
-│  Shard 0 kann EntityId 5 haben UND Shard 1 kann auch          │
-│  EntityId 5 haben → Unterscheidung durch ShardId!              │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Verwandte Dokumentation
-
-- [Architektur-Übersicht](../ARCHITECTURE.md) — Gesamtarchitektur
-- [Zone Data Architecture](../ZONE_DATA_ARCHITECTURE.md) — ZoneBounds und CollisionData
-- [Server-Komponenten](SERVER_COMPONENTS.md) — Zone Server Details
-- [Messages](MESSAGES.md) — Netzwerk-Nachrichten mit IDs
-- [Redis-Strategie](REDIS.md) — Session Storage mit IDs
-- [Database](DATABASE.md) — Persistierung von CharacterId und AccountId
-- [Scaling](SCALING.md) — Zone Sharding Details
-
----
-
-## 🔗 Nützliche Links
-
-- [MessagePack Specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
-- [C# Struct Best Practices](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/struct)
-- [Dictionary Performance](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2)
-- [Interlocked Operations](https://learn.microsoft.com/en-us/dotnet/api/system.threading.interlocked)
-
----
-
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+    // ═══════════════════════════════════════════════════════════════
+    // CONNECTION / AUTHENTICATION (0000-0099)
+    // ═══════════════════════════════════════════════════════════════
+    LoginRequest = 1,
+    LoginResponse = 2,
+    LogoutRequest = 3,
+    Heartbeat = 4,
+    Disconnect = 5,
+    ReconnectRequest = 6,
+    ReconnectResponse = 7,
+    SessionValidate = 8,
+    CharacterSelect = 9,
+    CharacterCreate = 10,
+    CharacterDelete = 11,
+    CharacterListRequest = 12,
+    CharacterListResponse = 13,
+    ServerSelect = 14,
+    RealmListRequest = 15,
+    RealmListResponse = 16,
+    AccountDataRequest = 17,
+    AccountDataResponse = 18,
+    EncryptionHandshake = 19,
+    CompressionToggle = 20,
+
+    // ═══════════════════════════════════════════════════════════════
+    // ZONE EVENTS (0100-0199)
+    // ═══════════════════════════════════════════════════════════════
+    JoinZone = 100,
+    LeaveZone = 101,
+    ZoneState = 102,
+    PlayerJoinedZone = 103,
+    PlayerLeftZone = 104,
+    ZoneTransferRequest = 105,
+    ZoneTransferResponse = 106,
+    ZoneLoadingProgress = 107,
+    ZoneDiscovered = 108,
+    ZoneListRequest = 109,
+    ZoneListResponse = 110,
+    ShardTransfer = 111,
+    ShardListRequest = 112,
+    ShardListResponse = 113,
+    SubZoneEnter = 114,
+    SubZoneLeave = 115,
+    ZonePhaseChange = 116,
+
+    // ═══════════════════════════════════════════════════════════════
+    // MOVEMENT / POSITION (0200-0299)
+    // ═══════════════════════════════════════════════════════════════
+    PositionUpdate = 200,
+    PositionBroadcast = 201,
+    MovementCorrection = 202,
+    TeleportRequest = 203,
+    TeleportExecute = 204,
+    MovementSpeedUpdate = 205,
+    JumpRequest = 206,
+    JumpBroadcast = 207,
+    FallDamage = 208,
+    StuckRequest = 209,
+    StuckResponse = 210,
+    PathfindingRequest = 211,
+    PathfindingResponse = 212,
+    ForcePosition = 213,
+    MovementModeChange = 214,
+    CollisionEvent = 215,
+    KnockbackEvent = 216,
+    PullEvent = 217,
+    RootEvent = 218,
+    StunMovement = 219,
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMBAT (0300-0399)
+    // ═══════════════════════════════════════════════════════════════
+    ActionRequest = 300,
+    ActionResult = 301,
+    DamageEvent = 302,
+    DeathEvent = 303,
+    HealEvent = 304,
+    MissEvent = 305,
+    DodgeEvent = 306,
+    ParryEvent = 307,
+    BlockEvent = 308,
+    CriticalHitEvent = 309,
+    CombatStart = 310,
+    CombatEnd = 311,
+    ThreatUpdate = 312,
+    ThreatListRequest = 313,
+    InterruptEvent = 314,
+    ReflectEvent = 315,
+    AbsorbEvent = 316,
+    LifestealEvent = 317,
+    ExecutePhase = 318,
+    EnrageEvent = 319,
+    CombatLogEntry = 320,
+    AggroTransfer = 321,
+    TauntEvent = 322,
+    FeintEvent = 323,
+    CounterAttack = 324,
+    ComboFinisher = 325,
+    AreaDamage = 326,
+    DamageOverTime = 327,
+    HealOverTime = 328,
+    ShieldApplied = 329,
+    ShieldBroken = 330,
+    Resurrection = 331,
+    CombatStateSync = 332,
+
+    // ═══════════════════════════════════════════════════════════════
+    // CHAT (0400-0499)
+    // ═══════════════════════════════════════════════════════════════
+    ChatMessage = 400,
+    ChatBroadcast = 401,
+    ChatWhisper = 402,
+    ChatWhisperResponse = 403,
+    ChatParty = 404,
+    ChatGuild = 405,
+    ChatRaid = 406,
+    ChatZone = 407,
+    ChatTrade = 408,
+    ChatLFG = 409,
+    ChatSystem = 410,
+    ChatYell = 411,
+    ChatSay = 412,
+    ChatEmote = 413,
+    ChatAFK = 414,
+    ChatDND = 415,
+    ChatChannelJoin = 416,
+    ChatChannelLeave = 417,
+    ChatChannelList = 418,
+    ChatChannelCreate = 419,
+    ChatChannelDelete = 420,
+    ChatChannelPassword = 421,
+    ChatChannelMute = 422,
+    ChatChannelUnmute = 423,
+    ChatChannelKick = 424,
+    ChatChannelBan = 425,
+    ChatChannelOwner = 426,
+    ChatChannelModerator = 427,
+    ChatMOTD = 428,
+    ChatFilter = 429,
+    ChatSpamWarning = 430,
+
+    // ═══════════════════════════════════════════════════════════════
+    // INVENTORY / ITEMS (0500-0599)
+    // ═══════════════════════════════════════════════════════════════
+    InventoryUpdate = 500,
+    InventorySlotUpdate = 501,
+    ItemPickup = 502,
+    ItemPickupFailed = 503,
+    ItemDrop = 504,
+    ItemUse = 505,
+    ItemUseResult = 506,
+    ItemDestroy = 507,
+    ItemSplit = 508,
+    ItemMerge = 509,
+    ItemMove = 510,
+    ItemSwap = 511,
+    ItemLock = 512,
+    ItemUnlock = 513,
+    ItemCooldownStart = 514,
+    ItemCooldownEnd = 515,
+    ItemDurabilityChange = 516,
+    ItemRepair = 517,
+    ItemRepairAll = 518,
+    ItemEnchant = 519,
+    ItemEnchantResult = 520,
+    ItemSocket = 521,
+    ItemSocketResult = 522,
+    ItemUpgrade = 523,
+    ItemUpgradeResult = 524,
+    ItemTransmog = 525,
+    ItemTransmogResult = 526,
+    ItemSalvage = 527,
+    ItemSalvageResult = 528,
+    ItemIdentify = 529,
+    ItemIdentifyResult = 530,
+    BagSort = 531,
+    BagExpand = 532,
+    ItemTooltipRequest = 533,
+    ItemTooltipResponse = 534,
+    ItemLink = 535,
+
+    // ═══════════════════════════════════════════════════════════════
+    // CHARACTER / STATS / PROGRESSION (0600-0699)
+    // ═══════════════════════════════════════════════════════════════
+    LevelUp = 600,
+    XpGain = 601,
+    StatUpdate = 602,
+    StatFullSync = 603,
+    ResourceUpdate = 604,
+    ResourceRegen = 605,
+    CharacterInfo = 606,
+    CharacterInfoRequest = 607,
+    SkillPointGain = 608,
+    TalentPointGain = 609,
+    ReputationChange = 610,
+    ReputationListRequest = 611,
+    ReputationListResponse = 612,
+    TitleUnlocked = 613,
+    TitleSelect = 614,
+    TitleListRequest = 615,
+    TitleListResponse = 616,
+    AppearanceChange = 617,
+    AppearancePreview = 618,
+    RaceChange = 619,
+    ClassChange = 620,
+    NameChange = 621,
+    GenderChange = 622,
+    RestXpUpdate = 623,
+    RestStateChange = 624,
+
+    // ═══════════════════════════════════════════════════════════════
+    // GROUP / PARTY (0700-0799)
+    // ═══════════════════════════════════════════════════════════════
+    PartyInvite = 700,
+    PartyInviteResponse = 701,
+    PartyLeave = 702,
+    PartyKick = 703,
+    PartyUpdate = 704,
+    PartyDisband = 705,
+    PartyLeaderChange = 706,
+    PartyLootChange = 707,
+    PartyReadyCheck = 708,
+    PartyReadyResponse = 709,
+    PartyMemberUpdate = 710,
+    PartyPositionUpdate = 711,
+    PartyHealthUpdate = 712,
+    PartyResourceUpdate = 713,
+    PartyBuffUpdate = 714,
+    PartyTargetUpdate = 715,
+    PartyRoleSet = 716,
+    PartyRoleCheck = 717,
+    PartyConvertToRaid = 718,
+    PartySync = 719,
+    PartySummon = 720,
+    PartySummonResponse = 721,
+    PartyMarkerSet = 722,
+    PartyMarkerClear = 723,
+    PartyDifficultyVote = 724,
+    PartyDifficultySet = 725,
+
+    // ═══════════════════════════════════════════════════════════════
+    // GUILD (0800-0899)
+    // ═══════════════════════════════════════════════════════════════
+    GuildInvite = 800,
+    GuildInviteResponse = 801,
+    GuildLeave = 802,
+    GuildKick = 803,
+    GuildUpdate = 804,
+    GuildDisband = 805,
+    GuildPromote = 806,
+    GuildDemote = 807,
+    GuildMOTD = 808,
+    GuildMOTDSet = 809,
+    GuildRosterRequest = 810,
+    GuildRosterResponse = 811,
+    GuildRankCreate = 812,
+    GuildRankDelete = 813,
+    GuildRankEdit = 814,
+    GuildRankReorder = 815,
+    GuildPermissionSet = 816,
+    GuildInfoEdit = 817,
+    GuildTabardChange = 818,
+    GuildBankOpen = 819,
+    GuildBankDeposit = 820,
+    GuildBankWithdraw = 821,
+    GuildBankLog = 822,
+    GuildBankTabCreate = 823,
+    GuildBankTabEdit = 824,
+    GuildBankPermission = 825,
+    GuildAchievement = 826,
+    GuildNews = 827,
+    GuildEventCreate = 828,
+    GuildEventEdit = 829,
+    GuildEventDelete = 830,
+    GuildEventSignup = 831,
+    GuildSearch = 832,
+    GuildApply = 833,
+    GuildApplicationList = 834,
+    GuildApplicationResponse = 835,
+    GuildAllianceInvite = 836,
+    GuildAllianceResponse = 837,
+    GuildAllianceLeave = 838,
+
+    // ═══════════════════════════════════════════════════════════════
+    // PING / LATENCY / SYSTEM (0900-0999)
+    // ═══════════════════════════════════════════════════════════════
+    Ping = 900,
+    Pong = 901,
+    LatencyReport = 902,
+    NetworkStats = 903,
+    ConnectionQuality = 904,
+    ErrorMessage = 910,
+    ServerAnnouncement = 911,
+    KickNotification = 912,
+    MaintenanceWarning = 913,
+    ServerShutdown = 914,
+    VersionMismatch = 915,
+    BanNotification = 916,
+    RateLimitWarning = 917,
+    ServerStatus = 918,
+    ServerMOTD = 919,
+    ServerTime = 920,
+    ServerConfig = 921,
+    ClientConfig = 922,
+    FeatureToggle = 923,
+    AntiCheatWarning = 924,
+    AntiCheatKick = 925,
+
+    // ═══════════════════════════════════════════════════════════════
+    // QUEST (1000-1099)
+    // ═══════════════════════════════════════════════════════════════
+    QuestAccept = 1000,
+    QuestAcceptResult = 1001,
+    QuestAbandon = 1002,
+    QuestProgress = 1003,
+    QuestComplete = 1004,
+    QuestCompleteResult = 1005,
+    QuestRewardChoose = 1006,
+    QuestRewardReceive = 1007,
+    QuestListRequest = 1008,
+    QuestListResponse = 1009,
+    QuestLogUpdate = 1010,
+    QuestShare = 1011,
+    QuestShareResponse = 1012,
+    QuestTrack = 1013,
+    QuestUntrack = 1014,
+    QuestObjectiveUpdate = 1015,
+    QuestPoiRequest = 1016,
+    QuestPoiResponse = 1017,
+    QuestGiverStatus = 1018,
+    QuestGiverList = 1019,
+    DailyQuestReset = 1020,
+    WeeklyQuestReset = 1021,
+    QuestChainUpdate = 1022,
+    QuestRepeatableReset = 1023,
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRADING (1100-1199)
+    // ═══════════════════════════════════════════════════════════════
+    TradeRequest = 1100,
+    TradeRequestResponse = 1101,
+    TradeUpdate = 1102,
+    TradeSetItem = 1103,
+    TradeRemoveItem = 1104,
+    TradeSetGold = 1105,
+    TradeConfirm = 1106,
+    TradeUnconfirm = 1107,
+    TradeLock = 1108,
+    TradeCancel = 1109,
+    TradeComplete = 1110,
+    TradeError = 1111,
+    TradeBusy = 1112,
+    TradeTargetBusy = 1113,
+
+    // ═══════════════════════════════════════════════════════════════
+    // TARGETING (1200-1299)
+    // ═══════════════════════════════════════════════════════════════
+    TargetSelect = 1200,
+    TargetClear = 1201,
+    TargetUpdate = 1202,
+    TargetInfoRequest = 1203,
+    TargetInfoResponse = 1204,
+    TargetOfTarget = 1205,
+    TargetOfTargetUpdate = 1206,
+    FocusTarget = 1207,
+    FocusClear = 1208,
+    AssistTarget = 1209,
+    MarkTarget = 1210,
+    MarkClear = 1211,
+    MarkClearAll = 1212,
+    MouseoverTarget = 1213,
+    TabTarget = 1214,
+    NearestEnemyTarget = 1215,
+    NearestFriendTarget = 1216,
+
+    // ═══════════════════════════════════════════════════════════════
+    // NPC / DIALOG / VENDOR (1300-1399)
+    // ═══════════════════════════════════════════════════════════════
+    NpcInteract = 1300,
+    NpcInteractResult = 1301,
+    NpcDialogOpen = 1302,
+    NpcDialogChoice = 1303,
+    NpcDialogClose = 1304,
+    NpcGossipRequest = 1305,
+    NpcGossipResponse = 1306,
+    VendorOpen = 1310,
+    VendorClose = 1311,
+    VendorListRequest = 1312,
+    VendorListResponse = 1313,
+    VendorBuy = 1314,
+    VendorBuyResult = 1315,
+    VendorSell = 1316,
+    VendorSellResult = 1317,
+    VendorBuyback = 1318,
+    VendorBuybackResult = 1319,
+    VendorRepair = 1320,
+    VendorRepairAll = 1321,
+    VendorRepairResult = 1322,
+    TrainerOpen = 1330,
+    TrainerClose = 1331,
+    TrainerListRequest = 1332,
+    TrainerListResponse = 1333,
+    TrainerLearn = 1334,
+    TrainerLearnResult = 1335,
+    InnkeeperBind = 1340,
+    InnkeeperBindResult = 1341,
+    FlightmasterOpen = 1342,
+    FlightmasterList = 1343,
+    BankerOpen = 1344,
+    AuctioneerOpen = 1345,
+    MailboxOpen = 1346,
+    StablemasterOpen = 1347,
+    BarberOpen = 1348,
+    TransmogOpen = 1349,
+
+    // ═══════════════════════════════════════════════════════════════
+    // ENTITY SPAWNING / SYNC (1400-1499)
+    // ═══════════════════════════════════════════════════════════════
+    EntitySpawn = 1400,
+    EntitySpawnBatch = 1401,
+    EntityDespawn = 1402,
+    EntityDespawnBatch = 1403,
+    EntityUpdate = 1404,
+    EntityUpdateBatch = 1405,
+    EntityListRequest = 1406,
+    EntityListResponse = 1407,
+    EntityPathUpdate = 1408,
+    EntityStateChange = 1409,
+    EntityAnimation = 1410,
+    EntityAnimationBatch = 1411,
+    EntityNameplate = 1412,
+    EntityNameplateUpdate = 1413,
+    EntityFaction = 1414,
+    EntityScale = 1415,
+    EntityMountUpdate = 1416,
+    EntityEquipmentUpdate = 1417,
+    EntityAuraUpdate = 1418,
+    EntityEmote = 1419,
+    EntitySay = 1420,
+    EntityYell = 1421,
+    LootableSpawn = 1430,
+    LootableDespawn = 1431,
+    ResourceNodeSpawn = 1432,
+    ResourceNodeDespawn = 1433,
+    ResourceNodeState = 1434,
+
+    // ═══════════════════════════════════════════════════════════════
+    // BUFFS / DEBUFFS / AURAS (1500-1599)
+    // ═══════════════════════════════════════════════════════════════
+    BuffApplied = 1500,
+    BuffRemoved = 1501,
+    BuffRefreshed = 1502,
+    BuffStackUpdate = 1503,
+    DebuffApplied = 1504,
+    DebuffRemoved = 1505,
+    AuraListSync = 1506,
+    AuraUpdate = 1507,
+    DispelRequest = 1508,
+    DispelResult = 1509,
+    StealRequest = 1510,
+    StealResult = 1511,
+    PurgeRequest = 1512,
+    PurgeResult = 1513,
+    AuraImmune = 1514,
+    AuraResist = 1515,
+    BuffCategoryUpdate = 1516,
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRAFTING / PROFESSIONS (1600-1699)
+    // ═══════════════════════════════════════════════════════════════
+    CraftingOpen = 1600,
+    CraftingClose = 1601,
+    CraftingRecipeList = 1602,
+    CraftingStart = 1603,
+    CraftingProgress = 1604,
+    CraftingComplete = 1605,
+    CraftingFailed = 1606,
+    CraftingCancel = 1607,
+    CraftingQueue = 1608,
+    CraftingQueueAdd = 1609,
+    CraftingQueueRemove = 1610,
+    RecipeLearn = 1611,
+    RecipeUnlearn = 1612,
+    RecipeDiscovery = 1613,
+    ProfessionInfo = 1620,
+    ProfessionLevelUp = 1621,
+    ProfessionSkillUp = 1622,
+    GatheringStart = 1630,
+    GatheringProgress = 1631,
+    GatheringComplete = 1632,
+    GatheringFailed = 1633,
+    GatheringInterrupt = 1634,
+
+    // ═══════════════════════════════════════════════════════════════
+    // AUCTION HOUSE / MARKET (1700-1799)
+    // ═══════════════════════════════════════════════════════════════
+    AuctionOpen = 1700,
+    AuctionClose = 1701,
+    AuctionSearch = 1702,
+    AuctionSearchResults = 1703,
+    AuctionCreate = 1704,
+    AuctionCreateResult = 1705,
+    AuctionBid = 1706,
+    AuctionBidResult = 1707,
+    AuctionBuyout = 1708,
+    AuctionBuyoutResult = 1709,
+    AuctionCancel = 1710,
+    AuctionCancelResult = 1711,
+    AuctionExpired = 1712,
+    AuctionSold = 1713,
+    AuctionOutbid = 1714,
+    AuctionWon = 1715,
+    AuctionListOwned = 1716,
+    AuctionListBids = 1717,
+    AuctionPriceHistory = 1718,
+    AuctionFavorite = 1719,
+    AuctionFavoriteList = 1720,
+
+    // ═══════════════════════════════════════════════════════════════
+    // MAIL SYSTEM (1800-1899)
+    // ═══════════════════════════════════════════════════════════════
+    MailInboxRequest = 1800,
+    MailInboxResponse = 1801,
+    MailSend = 1802,
+    MailSendResult = 1803,
+    MailRead = 1804,
+    MailMarkRead = 1805,
+    MailTakeAttachment = 1806,
+    MailTakeAttachmentResult = 1807,
+    MailTakeGold = 1808,
+    MailTakeGoldResult = 1809,
+    MailTakeAll = 1810,
+    MailDelete = 1811,
+    MailReturn = 1812,
+    MailNotification = 1813,
+    MailCOD = 1814,
+    MailCODPay = 1815,
+    MailExpired = 1816,
+
+    // ═══════════════════════════════════════════════════════════════
+    // ACHIEVEMENTS / TITLES (1900-1999)
+    // ═══════════════════════════════════════════════════════════════
+    AchievementUnlocked = 1900,
+    AchievementProgress = 1901,
+    AchievementListRequest = 1902,
+    AchievementListResponse = 1903,
+    AchievementCriteriaUpdate = 1904,
+    AchievementPointsUpdate = 1905,
+    AchievementToast = 1906,
+    AchievementLink = 1907,
+    AchievementCompare = 1908,
+    AchievementCompareResult = 1909,
+    TitleUnlock = 1920,
+    TitleSelectMsg = 1921,
+    TitleClear = 1922,
+    TitleListRequest = 1923,
+    TitleListResponse = 1924,
+
+    // ═══════════════════════════════════════════════════════════════
+    // MOUNTS / PETS / COMPANIONS (2000-2099)
+    // ═══════════════════════════════════════════════════════════════
+    MountSummon = 2000,
+    MountSummonResult = 2001,
+    MountDismount = 2002,
+    MountListRequest = 2003,
+    MountListResponse = 2004,
+    MountFavorite = 2005,
+    MountUnfavorite = 2006,
+    MountRandomFavorite = 2007,
+    PetSummon = 2020,
+    PetSummonResult = 2021,
+    PetDismiss = 2022,
+    PetRename = 2023,
+    PetCommand = 2024,
+    PetCommandResult = 2025,
+    PetUpdate = 2026,
+    PetFeed = 2027,
+    PetTrain = 2028,
+    PetAbandon = 2029,
+    PetStable = 2030,
+    PetUnstable = 2031,
+    PetListRequest = 2032,
+    PetListResponse = 2033,
+    CompanionSummon = 2050,
+    CompanionDismiss = 2051,
+    CompanionInteract = 2052,
+    CompanionListRequest = 2053,
+    CompanionListResponse = 2054,
+
+    // ═══════════════════════════════════════════════════════════════
+    // SOCIAL (FRIENDS, BLOCK) (2100-2199)
+    // ═══════════════════════════════════════════════════════════════
+    FriendRequest = 2100,
+    FriendRequestResult = 2101,
+    FriendAccept = 2102,
+    FriendDecline = 2103,
+    FriendRemove = 2104,
+    FriendListRequest = 2105,
+    FriendListResponse = 2106,
+    FriendOnline = 2107,
+    FriendOffline = 2108,
+    FriendUpdate = 2109,
+    FriendNote = 2110,
+    BlockPlayer = 2120,
+    BlockPlayerResult = 2121,
+    UnblockPlayer = 2122,
+    BlockListRequest = 2123,
+    BlockListResponse = 2124,
+    IgnorePlayer = 2125,
+    UnignorePlayer = 2126,
+    WhoRequest = 2130,
+    WhoResponse = 2131,
+    PlayerLocation = 2132,
+
+    // ═══════════════════════════════════════════════════════════════
+    // EMOTES / ANIMATIONS / COSMETICS (2200-2299)
+    // ═══════════════════════════════════════════════════════════════
+    EmoteRequest = 2200,
+    EmoteBroadcast = 2201,
+    EmoteTargeted = 2202,
+    AnimationTrigger = 2203,
+    AnimationCancel = 2204,
+    DanceStart = 2210,
+    DanceStop = 2211,
+    SitRequest = 2212,
+    StandRequest = 2213,
+    SleepRequest = 2214,
+    KneelRequest = 2215,
+    CosmeticEquip = 2230,
+    CosmeticUnequip = 2231,
+    CosmeticPreview = 2232,
+    TransmogApply = 2233,
+    TransmogRemove = 2234,
+    TransmogSave = 2235,
+    TransmogLoad = 2236,
+    ToyUse = 2240,
+    ToyListRequest = 2241,
+    ToyListResponse = 2242,
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN / GM TOOLS (2300-2399)
+    // ═══════════════════════════════════════════════════════════════
+    AdminCommand = 2300,
+    AdminCommandResult = 2301,
+    AdminTeleport = 2302,
+    AdminTeleportPlayer = 2303,
+    AdminKick = 2304,
+    AdminBan = 2305,
+    AdminUnban = 2306,
+    AdminMute = 2307,
+    AdminUnmute = 2308,
+    AdminSpawn = 2309,
+    AdminDespawn = 2310,
+    AdminKill = 2311,
+    AdminRevive = 2312,
+    AdminHeal = 2313,
+    AdminGodMode = 2314,
+    AdminInvisible = 2315,
+    AdminFreeze = 2316,
+    AdminUnfreeze = 2317,
+    AdminGiveItem = 2318,
+    AdminRemoveItem = 2319,
+    AdminSetLevel = 2320,
+    AdminSetStat = 2321,
+    AdminSetReputation = 2322,
+    AdminAddGold = 2323,
+    AdminRemoveGold = 2324,
+    AdminAnnounce = 2325,
+    AdminWhisper = 2326,
+    AdminSummonPlayer = 2327,
+    AdminAppearPlayer = 2328,
+    AdminPlayerInfo = 2329,
+    AdminServerInfo = 2330,
+    AdminReloadConfig = 2331,
+    AdminReloadScripts = 2332,
+    AdminShutdown = 2333,
+    AdminRestart = 2334,
+    AdminMaintenance = 2335,
+    AdminLog = 2336,
+
+    // ═══════════════════════════════════════════════════════════════
+    // INSTANCING / DUNGEONS / RAIDS (2400-2499)
+    // ═══════════════════════════════════════════════════════════════
+    InstanceCreate = 2400,
+    InstanceCreateResult = 2401,
+    InstanceJoin = 2402,
+    InstanceJoinResult = 2403,
+    InstanceLeave = 2404,
+    InstanceReset = 2405,
+    InstanceResetResult = 2406,
+    InstanceLockout = 2407,
+    InstanceLockoutList = 2408,
+    InstanceDifficultySet = 2409,
+    InstanceDifficultyVote = 2410,
+    InstanceSaved = 2411,
+    InstanceExtend = 2412,
+    InstanceEncounterStart = 2420,
+    InstanceEncounterEnd = 2421,
+    InstanceEncounterUpdate = 2422,
+    InstanceBossKill = 2423,
+    InstanceWipe = 2424,
+    InstanceCheckpoint = 2425,
+    RaidConvert = 2430,
+    RaidDisband = 2431,
+    RaidGroupSet = 2432,
+    RaidTargetSet = 2433,
+    RaidReadyCheck = 2434,
+    RaidReadyResponse = 2435,
+    DungeonFinderJoin = 2440,
+    DungeonFinderLeave = 2441,
+    DungeonFinderUpdate = 2442,
+    DungeonFinderProposal = 2443,
+    DungeonFinderAccept = 2444,
+    DungeonFinderDecline = 2445,
+    RaidFinderJoin = 2450,
+    RaidFinderLeave = 2451,
+    RaidFinderUpdate = 2452,
+
+    // ═══════════════════════════════════════════════════════════════
+    // PVP / ARENA / BATTLEGROUND (2500-2599)
+    // ═══════════════════════════════════════════════════════════════
+    PvpFlagRequest = 2500,
+    PvpFlagUpdate = 2501,
+    PvpFlagExpiring = 2502,
+    PvpKill = 2503,
+    PvpDeath = 2504,
+    PvpHonorGain = 2505,
+    PvpHonorUpdate = 2506,
+    PvpRankUpdate = 2507,
+    ArenaTeamCreate = 2520,
+    ArenaTeamDisband = 2521,
+    ArenaTeamInvite = 2522,
+    ArenaTeamLeave = 2523,
+    ArenaTeamKick = 2524,
+    ArenaTeamUpdate = 2525,
+    ArenaJoinQueue = 2530,
+    ArenaLeaveQueue = 2531,
+    ArenaQueueUpdate = 2532,
+    ArenaMatchFound = 2533,
+    ArenaMatchStart = 2534,
+    ArenaMatchEnd = 2535,
+    ArenaMatchResult = 2536,
+    ArenaRatingUpdate = 2537,
+    BattlegroundJoinQueue = 2550,
+    BattlegroundLeaveQueue = 2551,
+    BattlegroundQueueUpdate = 2552,
+    BattlegroundJoin = 2553,
+    BattlegroundLeave = 2554,
+    BattlegroundStart = 2555,
+    BattlegroundEnd = 2556,
+    BattlegroundScore = 2557,
+    BattlegroundScoreUpdate = 2558,
+    BattlegroundObjective = 2559,
+    BattlegroundFlag = 2560,
+    WorldPvpObjective = 2570,
+    WorldPvpZoneUpdate = 2571,
+
+    // ═══════════════════════════════════════════════════════════════
+    // WORLD STATE (WEATHER, TIME, EVENTS) (2600-2699)
+    // ═══════════════════════════════════════════════════════════════
+    WeatherUpdate = 2600,
+    WeatherForecast = 2601,
+    TimeOfDayUpdate = 2602,
+    TimeOfDaySync = 2603,
+    DayNightCycle = 2604,
+    MoonPhase = 2605,
+    SeasonChange = 2606,
+    WorldEventStart = 2620,
+    WorldEventEnd = 2621,
+    WorldEventProgress = 2622,
+    WorldEventObjective = 2623,
+    WorldBossSpawn = 2624,
+    WorldBossKill = 2625,
+    WorldBossAnnounce = 2626,
+    HolidayStart = 2630,
+    HolidayEnd = 2631,
+    HolidayInfo = 2632,
+    ServerFirstAnnounce = 2640,
+    ServerFirstList = 2641,
+    ZoneControlUpdate = 2650,
+    TerritoryCapture = 2651,
+
+    // ═══════════════════════════════════════════════════════════════
+    // MATCHMAKING / QUEUE (2700-2799)
+    // ═══════════════════════════════════════════════════════════════
+    QueueJoin = 2700,
+    QueueJoinResult = 2701,
+    QueueLeave = 2702,
+    QueueUpdate = 2703,
+    QueueEstimate = 2704,
+    QueuePop = 2705,
+    QueueAccept = 2706,
+    QueueDecline = 2707,
+    QueueTimeout = 2708,
+    QueueKick = 2709,
+    QueueDeserter = 2710,
+    RoleSelect = 2720,
+    RoleConfirm = 2721,
+    RoleShortage = 2722,
+    SkirmishJoin = 2730,
+    SkirmishLeave = 2731,
+    SkirmishUpdate = 2732,
+
+    // ═══════════════════════════════════════════════════════════════
+    // LEADERBOARD / RANKINGS (2800-2899)
+    // ═══════════════════════════════════════════════════════════════
+    LeaderboardRequest = 2800,
+    LeaderboardResponse = 2801,
+    LeaderboardUpdate = 2802,
+    RankingPersonal = 2803,
+    RankingGuild = 2804,
+    PvpRatingRequest = 2810,
+    PvpRatingResponse = 2811,
+    PvpSeasonInfo = 2812,
+    PvpSeasonEnd = 2813,
+    PvpSeasonReward = 2814,
+    MythicRankingRequest = 2820,
+    MythicRankingResponse = 2821,
+    RaidProgressRanking = 2822,
+    AchievementRanking = 2823,
+
+    // ═══════════════════════════════════════════════════════════════
+    // TUTORIAL / GUIDE SYSTEM (2900-2999)
+    // ═══════════════════════════════════════════════════════════════
+    TutorialStart = 2900,
+    TutorialStep = 2901,
+    TutorialComplete = 2902,
+    TutorialSkip = 2903,
+    TutorialReset = 2904,
+    TutorialFlag = 2905,
+    HintShow = 2910,
+    HintDismiss = 2911,
+    HintDisable = 2912,
+    TipOfTheDay = 2920,
+    NewFeatureHighlight = 2921,
+    GuideOpen = 2930,
+    GuideClose = 2931,
+    GuideProgress = 2932,
+
+    // ═══════════════════════════════════════════════════════════════
+    // SETTINGS / PREFERENCES SYNC (3000-3099)
+    // ═══════════════════════════════════════════════════════════════
+    SettingsLoad = 3000,
+    SettingsLoadResult = 3001,
+    SettingsSave = 3002,
+    SettingsSaveResult = 3003,
+    SettingsReset = 3004,
+    KeybindingsLoad = 3010,
+    KeybindingsSave = 3011,
+    KeybindingsReset = 3012,
+    UILayoutLoad = 3020,
+    UILayoutSave = 3021,
+    UILayoutReset = 3022,
+    MacroCreate = 3030,
+    MacroEdit = 3031,
+    MacroDelete = 3032,
+    MacroSync = 3033,
+    AddonDataLoad = 3040,
+    AddonDataSave = 3041,
+
+    // ═══════════════════════════════════════════════════════════════
+    // LOOT / REWARDS (3100-3199)
+    // ═══════════════════════════════════════════════════════════════
+    LootWindowOpen = 3100,
+    LootWindowClose = 3101,
+    LootItem = 3102,
+    LootItemResult = 3103,
+    LootGold = 3104,
+    LootAll = 3105,
+    LootRollStart = 3110,
+    LootRollNeed = 3111,
+    LootRollGreed = 3112,
+    LootRollPass = 3113,
+    LootRollResult = 3114,
+    LootRollWinner = 3115,
+    LootMasterAssign = 3120,
+    LootRulesChange = 3121,
+    LootThresholdChange = 3122,
+    PersonalLoot = 3130,
+    BonusRollPrompt = 3131,
+    BonusRollUse = 3132,
+    BonusRollResult = 3133,
+    RewardChoicePrompt = 3140,
+    RewardChoiceSelect = 3141,
+
+    // ═══════════════════════════════════════════════════════════════
+    // COOLDOWNS / TIMERS (3200-3299)
+    // ═══════════════════════════════════════════════════════════════
+    CooldownStart = 3200,
+    CooldownEnd = 3201,
+    CooldownUpdate = 3202,
+    CooldownReset = 3203,
+    CooldownSync = 3204,
+    GlobalCooldownStart = 3210,
+    GlobalCooldownEnd = 3211,
+    CastStart = 3220,
+    CastUpdate = 3221,
+    CastInterrupt = 3222,
+    CastComplete = 3223,
+    CastFailed = 3224,
+    ChannelStart = 3230,
+    ChannelTick = 3231,
+    ChannelInterrupt = 3232,
+    ChannelComplete = 3233,
+    ChargeUpdate = 3240,
+    ChargeRestore = 3241,
+
+    // ═══════════════════════════════════════════════════════════════
+    // INSPECTION / CHARACTER INFO (3300-3399)
+    // ═══════════════════════════════════════════════════════════════
+    InspectRequest = 3300,
+    InspectResponse = 3301,
+    InspectEquipment = 3302,
+    InspectTalents = 3303,
+    InspectAchievements = 3304,
+    InspectPvp = 3305,
+    InspectGuild = 3306,
+    ArmoryRequest = 3310,
+    ArmoryResponse = 3311,
+    GearScoreCalculate = 3320,
+    GearScoreUpdate = 3321,
+    ItemLevelUpdate = 3322,
+    StatisticsRequest = 3330,
+    StatisticsResponse = 3331,
+    StatisticsUpdate = 3332,
+    PlayedTimeRequest = 3340,
+    PlayedTimeResponse = 3341,
+
+    // ═══════════════════════════════════════════════════════════════
+    // MAP / MINIMAP / WAYPOINTS (3400-3499)
+    // ═══════════════════════════════════════════════════════════════
+    MapExplore = 3400,
+    MapExploreUpdate = 3401,
+    MapFogReveal = 3402,
+    WaypointSet = 3410,
+    WaypointClear = 3411,
+    WaypointShare = 3412,
+    WaypointAccept = 3413,
+    PingMap = 3420,
+    PingMapResponse = 3421,
+    FlightpathDiscover = 3430,
+    FlightpathList = 3431,
+    FlightpathRequest = 3432,
+    FlightpathStart = 3433,
+    MapMarkerAdd = 3440,
+    MapMarkerRemove = 3441,
+    MapMarkerUpdate = 3442,
+    WorldMapRequest = 3450,
+    WorldMapResponse = 3451,
+    MinimapUpdate = 3452,
+    AreaDiscovered = 3453,
+
+    // ═══════════════════════════════════════════════════════════════
+    // VOICE CHAT / AUDIO (3500-3599)
+    // ═══════════════════════════════════════════════════════════════
+    VoiceJoinChannel = 3500,
+    VoiceJoinResult = 3501,
+    VoiceLeaveChannel = 3502,
+    VoiceChannelList = 3503,
+    VoiceMute = 3510,
+    VoiceUnmute = 3511,
+    VoiceDeafen = 3512,
+    VoiceUndeafen = 3513,
+    VoiceSpeaking = 3514,
+    VoiceVolume = 3515,
+    VoiceData = 3520,
+    AudioTrigger = 3530,
+    AudioStop = 3531,
+    MusicChange = 3532,
+    AmbienceChange = 3533,
+
+    // ═══════════════════════════════════════════════════════════════
+    // REPORTING / MODERATION (3600-3699)
+    // ═══════════════════════════════════════════════════════════════
+    ReportPlayer = 3600,
+    ReportPlayerResult = 3601,
+    ReportChat = 3602,
+    ReportBug = 3603,
+    ReportBugResult = 3604,
+    ReportSuggestion = 3605,
+    AppealRequest = 3610,
+    AppealResult = 3611,
+    ModerationAction = 3620,
+    ModerationWarning = 3621,
+    ModerationMute = 3622,
+    ModerationBan = 3623,
+    FeedbackPrompt = 3630,
+    FeedbackSubmit = 3631,
+    SurveyShow = 3632,
+    SurveySubmit = 3633,
+    RatingPrompt = 3634,
+    RatingSubmit = 3635,
+
+    // ═══════════════════════════════════════════════════════════════
+    // ECONOMY / CURRENCY (3700-3799)
+    // ═══════════════════════════════════════════════════════════════
+    CurrencyUpdate = 3700,
+    CurrencyListRequest = 3701,
+    CurrencyListResponse = 3702,
+    GoldUpdate = 3703,
+    GoldTransaction = 3704,
+    CurrencyExchange = 3710,
+    CurrencyExchangeResult = 3711,
+    CurrencyCap = 3712,
+    TokenPurchase = 3720,
+    TokenPurchaseResult = 3721,
+    TokenRedeem = 3722,
+    TokenRedeemResult = 3723,
+    PremiumCurrencyUpdate = 3724,
+    BountyPlace = 3730,
+    BountyList = 3731,
+    BountyClaim = 3732,
+    BountyClaimResult = 3733,
+
+    // ═══════════════════════════════════════════════════════════════
+    // SKILLS / TALENTS / ABILITIES (3800-3899)
+    // ═══════════════════════════════════════════════════════════════
+    SkillListRequest = 3800,
+    SkillListResponse = 3801,
+    SkillLearn = 3802,
+    SkillLearnResult = 3803,
+    SkillUnlearn = 3804,
+    SkillUpgrade = 3805,
+    SkillUpgradeResult = 3806,
+    TalentListRequest = 3810,
+    TalentListResponse = 3811,
+    TalentLearn = 3812,
+    TalentLearnResult = 3813,
+    TalentReset = 3814,
+    TalentResetResult = 3815,
+    TalentPreview = 3816,
+    SpecializationList = 3820,
+    SpecializationChange = 3821,
+    SpecializationChangeResult = 3822,
+    AbilityBarUpdate = 3830,
+    AbilityBarSlotSet = 3831,
+    AbilityBarSlotClear = 3832,
+    AbilityBarSwap = 3833,
+    PassiveListRequest = 3840,
+    PassiveListResponse = 3841,
+    PassiveUpdate = 3842,
+    GlyphApply = 3850,
+    GlyphRemove = 3851,
+    GlyphListRequest = 3852,
+    GlyphListResponse = 3853,
+
+    // ═══════════════════════════════════════════════════════════════
+    // EQUIPMENT / GEAR (3900-3999)
+    // ═══════════════════════════════════════════════════════════════
+    EquipItem = 3900,
+    EquipItemResult = 3901,
+    UnequipItem = 3902,
+    UnequipItemResult = 3903,
+    EquipmentSync = 3904,
+    EquipmentSlotUpdate = 3905,
+    DurabilityUpdate = 3910,
+    DurabilityWarning = 3911,
+    ItemBroken = 3912,
+    GemSocket = 3920,
+    GemSocketResult = 3921,
+    GemRemove = 3922,
+    EnchantApply = 3930,
+    EnchantApplyResult = 3931,
+    EnchantRemove = 3932,
+    ReforgeOpen = 3940,
+    ReforgePreview = 3941,
+    ReforgeConfirm = 3942,
+    ReforgeResult = 3943,
+    SetBonusUpdate = 3950,
+    SetBonusActivate = 3951,
+    SetBonusDeactivate = 3952,
+    WeaponSwapRequest = 3960,
+    WeaponSwapResult = 3961,
+    OutfitSave = 3970,
+    OutfitLoad = 3971,
+    OutfitDelete = 3972,
+    OutfitList = 3973,
+
+    // ═══════════════════════════════════════════════════════════════
+    // BANK / STORAGE (4000-4099)
+    // ═══════════════════════════════════════════════════════════════
+    BankOpen = 4000,
+    BankClose = 4001,
+    BankDeposit = 4002,
+    BankDepositResult = 4003,
+    BankWithdraw = 4004,
+    BankWithdrawResult = 4005,
+    BankSlotPurchase = 4006,
+    BankSlotPurchaseResult = 4007,
+    BankTabPurchase = 4008,
+    BankSync = 4009,
+    GuildBankOpenMsg = 4020,
+    GuildBankCloseMsg = 4021,
+    GuildBankDepositMsg = 4022,
+    GuildBankWithdrawMsg = 4023,
+    GuildBankLogMsg = 4024,
+    GuildBankTabInfo = 4025,
+    GuildBankSyncMsg = 4026,
+    VoidStorageOpen = 4040,
+    VoidStorageClose = 4041,
+    VoidStorageDeposit = 4042,
+    VoidStorageWithdraw = 4043,
+    VoidStorageSync = 4044,
+    ReagentBankOpen = 4050,
+    ReagentBankDeposit = 4051,
+    ReagentBankSync = 4052,
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEATH / RESPAWN / GHOST (4100-4199)
+    // ═══════════════════════════════════════════════════════════════
+    DeathNotification = 4100,
+    DeathRecap = 4101,
+    GhostModeStart = 4110,
+    GhostModeEnd = 4111,
+    GhostPosition = 4112,
+    CorpseLocation = 4113,
+    CorpseRevive = 4114,
+    RespawnRequest = 4120,
+    RespawnAtGraveyard = 4121,
+    RespawnAtCheckpoint = 4122,
+    RespawnTimer = 4123,
+    RespawnComplete = 4124,
+    ResurrectOffer = 4130,
+    ResurrectAccept = 4131,
+    ResurrectDecline = 4132,
+    ResurrectComplete = 4133,
+    SoulstoneResurrect = 4134,
+    BattleResurrect = 4135,
+    ReleaseSpirit = 4140,
+    RetrieveCorpse = 4141,
+    SpiritHealerRevive = 4142,
+    ResurrectionSickness = 4143,
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRANSPORTATION (4200-4299)
+    // ═══════════════════════════════════════════════════════════════
+    FlightStart = 4200,
+    FlightEnd = 4201,
+    FlightCancel = 4202,
+    FlightPathUpdate = 4203,
+    PortalUse = 4210,
+    PortalCreate = 4211,
+    PortalExpire = 4212,
+    HearthstoneUse = 4220,
+    HearthstoneSet = 4221,
+    HearthstoneCooldown = 4222,
+    SummonRequest = 4230,
+    SummonAccept = 4231,
+    SummonDecline = 4232,
+    SummonComplete = 4233,
+    SummonFailed = 4234,
+    MeetingStoneQueue = 4235,
+    MeetingStoneResult = 4236,
+    VehicleMount = 4240,
+    VehicleDismount = 4241,
+    VehicleControl = 4242,
+    VehicleAbility = 4243,
+    BoatArrival = 4250,
+    BoatDeparture = 4251,
+    ZeppelinArrival = 4252,
+    ZeppelinDeparture = 4253,
+    TramArrival = 4254,
+    TramDeparture = 4255,
+    TaxiRequest = 4260,
+    TaxiConfirm = 4261,
+
+    // ═══════════════════════════════════════════════════════════════
+    // NOTIFICATIONS / ALERTS (4300-4399)
+    // ═══════════════════════════════════════════════════════════════
+    NotificationShow = 4300,
+    NotificationDismiss = 4301,
+    NotificationQueue = 4302,
+    AlertPopup = 4310,
+    AlertConfirm = 4311,
+    AlertDismiss = 4312,
+    ToastMessage = 4320,
+    ToastAchievement = 4321,
+    ToastLevelUp = 4322,
+    ToastLoot = 4323,
+    BossWarning = 4330,
+    BossAbility = 4331,
+    BossPhase = 4332,
+    CountdownStart = 4340,
+    CountdownUpdate = 4341,
+    CountdownCancel = 4342,
+    ScreenEffect = 4350,
+    ScreenShake = 4351,
+    ScreenFlash = 4352,
+    ScreenFade = 4353,
+
+    // ═══════════════════════════════════════════════════════════════
+    // CUTSCENES / CINEMATICS (4400-4499)
+    // ═══════════════════════════════════════════════════════════════
+    CutsceneStart = 4400,
+    CutsceneEnd = 4401,
+    Cut

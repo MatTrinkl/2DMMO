@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Messages;
 using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
@@ -14,16 +15,10 @@ namespace Mmo.Server.Tests.GameServer;
 
 public class GameServerTests
 {
-    private readonly Mock<ILog> _mockLog;
-    private readonly Mock<INetworkServer> _mockNetworkServer;
+    private readonly Mock<ILog> _mockLog = new();
+    private readonly Mock<INetworkServer> _mockNetworkServer = new();
 
-    public GameServerTests()
-    {
-        _mockLog = new Mock<ILog>();
-
-        // NetworkServer braucht einen echten Constructor, daher anders mocken
-        _mockNetworkServer = new Mock<INetworkServer>();
-    }
+    // NetworkServer braucht einen echten Constructor, daher anders mocken
 
     [Fact]
     public void Constructor_InitializesCorrectly()
@@ -54,7 +49,7 @@ public class GameServerTests
         var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         var mockMessage = new Mock<INetworkMessage>();
 
-        gameServer.QueueBroadcast(mockMessage.Object);
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(mockMessage.Object));
 
         // Wieder:  ohne Reflection schwer zu testen,
         // aber keine Exception = gut

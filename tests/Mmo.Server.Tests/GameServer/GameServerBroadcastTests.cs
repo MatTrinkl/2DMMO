@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Messages;
 using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared;
@@ -14,14 +15,8 @@ namespace Mmo.Server.Tests.GameServer;
 
 public class GameServerBroadcastTests
 {
-    private readonly Mock<ILog> _mockLog;
-    private readonly MockNetworkServer _mockNetworkServer;
-
-    public GameServerBroadcastTests()
-    {
-        _mockLog = new Mock<ILog>();
-        _mockNetworkServer = new MockNetworkServer();
-    }
+    private readonly Mock<ILog> _mockLog = new();
+    private readonly MockNetworkServer _mockNetworkServer = new();
 
     [Fact]
     public async Task OutputPhase_SendsQueuedBroadcasts()
@@ -31,7 +26,7 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Queue a broadcast
-        gameServer.QueueBroadcast(message);
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(message));
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
@@ -120,7 +115,6 @@ public class GameServerBroadcastTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
         await gameServer.StartServerAsync(cts.Token);
 
-        int initialBroadcastCount = _mockNetworkServer.SentMessages.Count;
         _mockNetworkServer.Clear();
 
         // Run more ticks without marking dirty again
@@ -270,9 +264,9 @@ public class GameServerBroadcastTests
         using var cts = new CancellationTokenSource();
 
         // Queue multiple broadcasts
-        gameServer.QueueBroadcast(message1);
-        gameServer.QueueBroadcast(message2);
-        gameServer.QueueBroadcast(message3);
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(message1));
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(message2));
+        gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(message3));
 
         // Run one tick
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
