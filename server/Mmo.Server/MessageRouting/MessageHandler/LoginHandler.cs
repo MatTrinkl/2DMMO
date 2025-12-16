@@ -16,41 +16,84 @@ public class LoginHandler(GameServer gameServer, ILog log)
 
     internal void Handle(ClientConnection connection, LoginRequest request)
     {
-        // TODO: Später durch IAuthenticationService ersetzen
-        // - Async Validierung VOR dem Game Loop (in ClientConnection/AuthState)
-        // - PlayerData aus DB laden (IPlayerDataService. LoadPlayerDataAsync)
-        // - Erst dann LoginSuccessEvent an GameServer senden
+        // TODO: Replace with IAuthenticationService later
+        // - Async validation BEFORE the Game Loop (in ClientConnection/AuthState)
+        // - Load PlayerData from DB (IPlayerDataService.LoadPlayerDataAsync)
+        // - Only then send LoginSuccessEvent to GameServer
         //
-        // Der Game Loop darf KEINE synchronen DB-Calls machen!
-        // DB-Zugriff muss immer async in der Auth-Phase passieren.
-        if (string.IsNullOrWhiteSpace(request.Username) ||
-            request.Username.Length < 3 ||
-            request.Username.Length > 20)
+        // The Game Loop must NEVER make synchronous DB calls!
+        // DB access must always be async in the Auth phase.
+        
+        // ═══════════════════════════════════════════════════
+        // INPUT VALIDATION
+        // ═══════════════════════════════════════════════════
+        
+        if (string.IsNullOrWhiteSpace(request.Username))
         {
-            QueueLoginResponse(connection, false, null, "Invalid username");
+            _log.Warn("Login failed for {ConnectionId}: Username is empty", connection.Id);
+            QueueLoginResponse(connection, false, null, "Username cannot be empty");
             return;
         }
-
-        //Spawns player in his last position or in the start region.
+        
+        if (request.Username.Length < 3)
+        {
+            _log.Warn("Login failed for {ConnectionId}: Username too short (min 3 characters)", connection.Id);
+            QueueLoginResponse(connection, false, null, "Username must be at least 3 characters");
+            return;
+        }
+        
+        if (request.Username.Length > 20)
+        {
+            _log.Warn("Login failed for {ConnectionId}: Username too long (max 20 characters)", connection.Id);
+            QueueLoginResponse(connection, false, null, "Username must be at most 20 characters");
+            return;
+        }
+        
+        // TODO: Validate username characters (alphanumeric + allowed special chars)
+        // TODO: Validate password (currently not checked - security issue!)
+        // TODO: Check for duplicate username/session
+        
+        // ═══════════════════════════════════════════════════
+        // SPAWN PLAYER
+        // ═══════════════════════════════════════════════════
+        
+        // Spawns player in their last position or in the start zone
         PlayerEntity playerEntity = _gameServer.ZoneManager.SpawnPlayer(connection.Id, request.Username);
         var player = new ServerPlayer(playerEntity, connection);
-        //Connect Player Entity with connection
-        _gameServer.ZoneManager.AddPlayer(player /*later with ZoneID*/);
-        //Connect the connectionId to the persistentID of the Player entity
+        
+        // Connect Player Entity with connection
+        _gameServer.ZoneManager.AddPlayer(player); // TODO: Add ZoneID parameter later
+        
+        // Connect the connectionId to the persistentID of the Player entity
         _gameServer.NetworkServer.AssociatePlayer(connection, player.Entity.PersistentId);
-
-        // 4. Queue Response
+        
+        _log.Info("Player {Username} logged in successfully (ConnectionId: {ConnectionId}, PersistentId: {PersistentId})",
+            request.Username, connection.Id, player.Entity.PersistentId);
+        
+        // Queue Response
         QueueLoginResponse(connection, true, player, null);
     }
 
     private void QueueLoginResponse(ClientConnection connection, bool success, ServerPlayer? player, string? error)
     {
-        //Queue Login Response in the GameServer which will be worked of in the Outputphase
-        var clientResponse =
-            OutgoingMessage.ToClient(connection, new LoginResponse(success, connection.Id, (player==null?(ushort)0:player.Entity.ZoneId), error));
+        // Queue Login Response in the GameServer which will be processed in the Output phase
+        ushort zoneId = player?.Entity.ZoneId ?? 0;
+        var clientResponse = OutgoingMessage.ToClient(
+            connection,
+            new LoginResponse(success, connection.Id, zoneId, error)
+        );
         _gameServer.QueueOutgoingMessage(clientResponse);
-        if (!success) return;
-        var broadcastPlayerConnectionToZone = OutgoingMessage.BroadcastToZone(new PlayerJoinedZone(player!.Entity), player!.Entity.ZoneId);
+        
+        if (!success)
+        {
+            return;
+        }
+        
+        // Broadcast player joined to zone
+        var broadcastPlayerConnectionToZone = OutgoingMessage.BroadcastToZone(
+            new PlayerJoinedZone(player!.Entity),
+            player.Entity.ZoneId
+        );
         _gameServer.QueueOutgoingMessage(broadcastPlayerConnectionToZone);
     }
 
