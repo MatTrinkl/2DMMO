@@ -77,7 +77,10 @@ public sealed class IdRegistry : IIdRegistry
             return freedId;
         }
 
-        // Otherwise, get the next ID from the counter (starts at 0)
+        // AddOrUpdate behavior:
+        // - First call (key doesn't exist): returns addValue (0), stores 0
+        // - Subsequent calls: returns current + 1, stores the new value
+        // Result: IDs are 0, 1, 2, 3, ...
         return _localIdCounters.AddOrUpdate(key, 0, (_, current) => current + 1);
     }
 
