@@ -9,7 +9,8 @@ namespace Mmo.Server.Zones;
 
 /// <summary>
 ///     Manages all Zones of the Game aka the world.
-///     Uses IdRegistry for entity and connection tracking.
+///     Handles zone and player management. Entity/connection registration
+///     is handled by the caller through IdRegistry directly.
 /// </summary>
 public class ZoneManager
 {
@@ -17,11 +18,6 @@ public class ZoneManager
     ///     The ID of the default Zone.
     /// </summary>
     private readonly ushort _defaultZoneId;
-
-    /// <summary>
-    ///     The IdRegistry for entity and connection lookups.
-    /// </summary>
-    private readonly IIdRegistry _idRegistry;
 
     /// <summary>
     ///     ConnectionId → ServerPlayer (Session-stabil, ändert sich nie während der Verbindung)
@@ -45,12 +41,10 @@ public class ZoneManager
     /// </summary>
     /// <param name="defaultZoneId">ID of the default Zone.</param>
     /// <param name="defaultZone">The Default Zone object.</param>
-    /// <param name="idRegistry">Optional IdRegistry for lookups. If null, uses IdRegistry.Instance.</param>
-    public ZoneManager(ushort defaultZoneId, Zone defaultZone, IIdRegistry? idRegistry = null)
+    public ZoneManager(ushort defaultZoneId, Zone defaultZone)
     {
         _defaultZoneId = defaultZoneId;
         _zones = new Dictionary<ushort, Zone> { { _defaultZoneId, defaultZone } };
-        _idRegistry = idRegistry ?? IdRegistry.Instance;
     }
 
     /// <summary>
@@ -67,16 +61,6 @@ public class ZoneManager
     ///     The default zone ID.
     /// </summary>
     public ushort DefaultZoneId => _defaultZoneId;
-
-    /// <summary>
-    ///     Number of entities registered in IdRegistry.
-    /// </summary>
-    public int EntityCount => _idRegistry is IdRegistry registry ? registry.EntityCount : 0;
-
-    /// <summary>
-    ///     Number of persistent entities (alias for EntityCount for backwards compatibility).
-    /// </summary>
-    public int PersistentEntityCount => EntityCount;
 
     /// <summary>
     ///     Register a Zone.
@@ -126,8 +110,8 @@ public class ZoneManager
     }
 
     /// <summary>
-    ///     Adds a player to a zone with connection and persistent ID tracking.
-    ///     Registers the entity and connection in IdRegistry.
+    ///     Adds a player to a zone.
+    ///     Note: Caller is responsible for registering entity and connection in IdRegistry.
     /// </summary>
     /// <param name="serverPlayer">The server player wrapper.</param>
     /// <param name="zoneId">The zone to add the player to.  Defaults to the default zone.</param>
@@ -146,10 +130,6 @@ public class ZoneManager
         // Add to Zone (assigns EntityId via IdRegistry)
         zone.AddEntity(serverPlayer.Entity);
 
-        // Register entity and connection in IdRegistry
-        _idRegistry.RegisterEntity(serverPlayer.Entity);
-        _idRegistry.RegisterConnection(serverPlayer.Connection.Id, serverPlayer.Entity.PersistentId);
-
         // Add to server-specific ServerPlayer lookups
         _playersByConnectionId.TryAdd(serverPlayer.Connection.Id, serverPlayer);
         _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer);
@@ -157,7 +137,7 @@ public class ZoneManager
 
     /// <summary>
     ///     Removes a player by connection ID.
-    ///     Unregisters from IdRegistry.
+    ///     Note: Caller is responsible for unregistering from IdRegistry.
     /// </summary>
     /// <param name="connectionId">The connection ID of the player to remove.</param>
     /// <returns>The removed player, or null if not found.</returns>
@@ -174,16 +154,12 @@ public class ZoneManager
         Zone? zone = GetZone(zoneId);
         zone?.RemoveEntity(serverPlayer.Entity.RuntimeId.LocalId);
 
-        // Unregister from IdRegistry
-        _idRegistry.UnregisterConnection(connectionId);
-        _idRegistry.UnregisterEntity(serverPlayer.Entity.PersistentId);
-
         return serverPlayer;
     }
 
     /// <summary>
     ///     Removes a player by persistent ID.
-    ///     Unregisters from IdRegistry.
+    ///     Note: Caller is responsible for unregistering from IdRegistry.
     /// </summary>
     /// <param name="persistentId">The persistent ID of the player to remove.</param>
     /// <returns>The removed player, or null if not found.</returns>
@@ -199,10 +175,6 @@ public class ZoneManager
         ushort zoneId = serverPlayer.Entity.RuntimeId.ZoneId;
         Zone? zone = GetZone(zoneId);
         zone?.RemoveEntity(serverPlayer.Entity.RuntimeId.LocalId);
-
-        // Unregister from IdRegistry
-        _idRegistry.UnregisterConnection(serverPlayer.Connection.Id);
-        _idRegistry.UnregisterEntity(persistentId);
 
         return serverPlayer;
     }
@@ -254,7 +226,7 @@ public class ZoneManager
 
     /// <summary>
     ///     Adds any entity to a zone (Players, NPCs, Mobs, etc.).
-    ///     Registers in IdRegistry.
+    ///     Note: Caller is responsible for registering in IdRegistry.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
     /// <param name="zoneId">The zone to add the entity to.</param>
@@ -268,7 +240,6 @@ public class ZoneManager
             throw new InvalidOperationException($"Zone {zoneId} does not exist.");
 
         zone.AddEntity(entity);
-        _idRegistry.RegisterEntity(entity);
     }
 
     /// <summary>
@@ -291,24 +262,24 @@ public class ZoneManager
 
     /// <summary>
     ///     Removes an entity by its PersistentId.
-    ///     Unregisters from IdRegistry.
+    ///     Note: Caller is responsible for unregistering from IdRegistry.
     /// </summary>
     /// <param name="persistentId">The persistent ID of the entity.</param>
     /// <returns>The removed entity, or null if not found.</returns>
     public IEntity? RemoveEntity(Guid persistentId)
     {
-        if (!_idRegistry.TryGetEntity(persistentId, out IEntity? entity))
-            return null;
+        // Search through all zones for the entity
+        foreach (Zone zone in _zones.Values)
+        {
+            IEntity? entity = zone.Entities.Values.FirstOrDefault(e => e.PersistentId == persistentId);
+            if (entity != null)
+            {
+                zone.RemoveEntity(entity.RuntimeId.LocalId);
+                return entity;
+            }
+        }
 
-        // Remove from zone
-        ushort zoneId = entity.RuntimeId.ZoneId;
-        Zone? zone = GetZone(zoneId);
-        zone?.RemoveEntity(entity.RuntimeId.LocalId);
-
-        // Unregister from IdRegistry
-        _idRegistry.UnregisterEntity(persistentId);
-
-        return entity;
+        return null;
     }
 
     /// <summary>
@@ -321,20 +292,30 @@ public class ZoneManager
     public IEntity? RemovePersistentEntity(Guid persistentId) => RemoveEntity(persistentId);
 
     /// <summary>
-    ///     Gets any entity by PersistentId. O(1) lookup via IdRegistry.
+    ///     Gets any entity by PersistentId. Searches through all zones.
     /// </summary>
     /// <param name="persistentId">The persistent ID to search for.</param>
     /// <param name="entity">The found entity, or null.</param>
     /// <returns>True if the entity was found.</returns>
-    public bool TryGetEntityByPersistentId(Guid persistentId, [NotNullWhen(true)] out IEntity? entity) =>
-        _idRegistry.TryGetEntity(persistentId, out entity);
+    public bool TryGetEntityByPersistentId(Guid persistentId, [NotNullWhen(true)] out IEntity? entity)
+    {
+        foreach (Zone zone in _zones.Values)
+        {
+            entity = zone.Entities.Values.FirstOrDefault(e => e.PersistentId == persistentId);
+            if (entity != null)
+                return true;
+        }
+
+        entity = null;
+        return false;
+    }
 
     /// <summary>
-    ///     Checks if an entity with the given PersistentId exists.
+    ///     Checks if an entity with the given PersistentId exists in any zone.
     /// </summary>
     /// <param name="persistentId">The persistent ID to check.</param>
     public bool HasPersistentEntity(Guid persistentId) =>
-        _idRegistry is IdRegistry registry && registry.HasEntity(persistentId);
+        _zones.Values.Any(zone => zone.Entities.Values.Any(e => e.PersistentId == persistentId));
 
     /// <summary>
     ///     Gets an entity by runtime EntityId from a specific zone.
@@ -385,8 +366,8 @@ public class ZoneManager
 
     /// <summary>
     ///     Transfer an Entity from one zone to another.
-    ///     Updates GlobalKey in IdRegistry.
     ///     Note: EntityId will change, but PersistentId stays the same!
+    ///     Note: Caller is responsible for updating GlobalKey in IdRegistry.
     /// </summary>
     /// <param name="entity">Entity to transfer.</param>
     /// <param name="fromZoneId">ID of the old Zone.</param>
@@ -408,20 +389,11 @@ public class ZoneManager
 
         if (oldZone == newZone) return;
 
-        // Save old GlobalKey for IdRegistry update
-        long oldGlobalKey = entity.RuntimeId.GlobalKey;
-
         // Remove from old zone (releases LocalId via IdRegistry)
         oldZone.RemoveEntity(entity.RuntimeId.LocalId);
 
         // Add to new zone (assigns new LocalId via IdRegistry)
         newZone.AddEntity(entity);
-
-        // Update GlobalKey lookup in IdRegistry
-        if (_idRegistry is IdRegistry registry)
-        {
-            registry.UpdateEntityGlobalKey(entity, oldGlobalKey);
-        }
 
         // Notify entity of zone change
         entity.ChangeZone(toZoneId);

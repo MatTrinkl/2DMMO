@@ -66,6 +66,9 @@ public sealed class IdRegistry : IIdRegistry
     public int ConnectionCount => _connectionToEntity.Count;
 
     /// <inheritdoc />
+    public Guid GeneratePersistentId() => Guid.NewGuid();
+
+    /// <inheritdoc />
     public int GetNextLocalId(ushort zoneId, ushort shardId = 0)
     {
         uint key = GetZoneShardKey(zoneId, shardId);

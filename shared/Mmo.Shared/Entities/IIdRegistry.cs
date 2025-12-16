@@ -9,6 +9,13 @@ namespace Mmo.Shared.Entities;
 public interface IIdRegistry
 {
     /// <summary>
+    ///     Generates a new unique PersistentId (GUID).
+    ///     All GUIDs in the system should be generated through this method.
+    /// </summary>
+    /// <returns>A new unique Guid.</returns>
+    Guid GeneratePersistentId();
+
+    /// <summary>
     ///     Gets the next available LocalId for a zone/shard combination.
     ///     Reuses freed IDs when available.
     /// </summary>

@@ -28,6 +28,21 @@ public class IdRegistryTests : IDisposable
     }
 
     [Fact]
+    public void GeneratePersistentId_ReturnsUniqueGuids()
+    {
+        Guid id1 = IdRegistry.Instance.GeneratePersistentId();
+        Guid id2 = IdRegistry.Instance.GeneratePersistentId();
+        Guid id3 = IdRegistry.Instance.GeneratePersistentId();
+
+        Assert.NotEqual(Guid.Empty, id1);
+        Assert.NotEqual(Guid.Empty, id2);
+        Assert.NotEqual(Guid.Empty, id3);
+        Assert.NotEqual(id1, id2);
+        Assert.NotEqual(id2, id3);
+        Assert.NotEqual(id1, id3);
+    }
+
+    [Fact]
     public void GetNextLocalId_ReturnsIncrementingIds()
     {
         ushort zoneId = 1;
