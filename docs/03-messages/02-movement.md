@@ -1,11 +1,27 @@
 # 🏃 Movement / Position Messages (0200-0299)
 
-**Kategorie:** 02  
+**Kategorie:** 2  
 **Range:** 0200-0299  
 **Phase:** Prototyp  
 **Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
+
+---
+
+## 📋 Übersicht
+
+Diese Kategorie umfasst alle Messages für **Bewegung und Positionierung** im 2DMMO.
+
+Das Movement-System basiert auf **Client-Side Prediction** mit **Server-Authority**:
+- Client sendet Input und predicted Position
+- Server validiert gegen Speed/Collision
+- Server broadcastet authoritative Position
+- Bei Desync: Server sendet Correction
+
+**Tick-Rate**: 25 Hz (40ms pro Tick)  
+**Position-Update-Rate**: Bis zu 20 Hz (optimiert für Bandwidth)  
+**Interpolation-Buffer**: ~100ms für smooth Movement anderer Spieler
 
 ---
 
@@ -42,133 +58,240 @@
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client sendet aktuelle Position, Velocity und Input. Server validiert und broadcastet.
+Client sendet aktuelle Position, Velocity, Rotation und Input-State. Dies ist die wichtigste High-Frequency Message im Spiel und wird bis zu 20x pro Sekunde gesendet.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Position (X, Y) und Höhe (Z)
+- Velocity (VX, VY, VZ) für Server-Prediction
+- Rotation (Yaw) in Grad
+- Input-Flags (Forward, Backward, Left, Right, Jump, Sprint)
+- Sequence Number für Input-Reconciliation
+- Client-Timestamp für Latency-Compensation
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Animation-State → verwende `EntityAnimation` (1410)
+- Mounted-Status → verwende `MountSummon` (2000)
+- Combat-Actions → verwende `ActionRequest` (300)
+- Emotes → verwende `EmoteRequest` (2200)
 
-### Request/Response Payload
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| SequenceNumber | uint | Aufsteigende Input-Sequence | Ja |
+| Timestamp | long | Client Unix Timestamp (ms) | Ja |
+| X | float | Position X-Koordinate | Ja |
+| Y | float | Position Y-Koordinate | Ja |
+| Z | float | Position Z-Koordinate (Höhe) | Ja |
+| VelocityX | float | Velocity X | Ja |
+| VelocityY | float | Velocity Y | Ja |
+| VelocityZ | float | Velocity Z (Fallgeschwindigkeit) | Ja |
+| Yaw | float | Rotation (0-360 Grad) | Ja |
+| InputFlags | byte | Bit-Flags: Forward=1, Back=2, Left=4, Right=8, Jump=16, Sprint=32 | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Bei Erfolg:** `PositionBroadcast` (201) an andere Spieler in Range
+- **Bei Desync:** `MovementCorrection` (202) zurück an Client
+- **Bei Speed-Hack:** `ErrorMessage` (910) mit Code `SPEED_TOO_HIGH` + potentieller Kick
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `PositionBroadcast` | 201 | Server broadcastet validierte Position |
+| `MovementCorrection` | 202 | Korrektur bei Desync oder Cheating-Verdacht |
+| `MovementSpeedUpdate` | 205 | Speed hat sich geändert (Buff/Debuff/Mount) |
+| `CollisionEvent` | 215 | Collision mit Environment während Movement |
+
+### Flow-Diagramm
+```
+Client                    Server                    Other Clients
+  │                          │                          │
+  │  PositionUpdate (200)    │                          │
+  │─────────────────────────►│ Validate:                │
+  │                          │ - Speed Check            │
+  │                          │ - Collision Check        │
+  │                          │ - Bounds Check           │
+  │                          │                          │
+  │                          │  PositionBroadcast (201) │
+  │                          │─────────────────────────►│
+  │                          │                          │ Interpolate
+  │  (Correction if needed)  │                          │ to Position
+  │◄─────────────────────────│                          │
+```
 
 ### Beispiel Payload
 ```csharp
-var message = new PositionUpdate
+var posUpdate = new PositionUpdate
 {
     Type = MessageType.PositionUpdate,
-    // Felder hier
+    SequenceNumber = currentInputSequence++,
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+    X = playerPosition.x,
+    Y = playerPosition.y,
+    Z = playerPosition.z,
+    VelocityX = velocity.x,
+    VelocityY = velocity.y,
+    VelocityZ = velocity.z,
+    Yaw = transform.rotation.eulerAngles.y,
+    InputFlags = (byte)((moveForward ? 1 : 0) | (sprint ? 32 : 0)) // Forward + Sprint
 };
 ```
 
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `SPEED_TOO_HIGH` | Velocity > MAX_SPEED * TOLERANCE | Disconnect bei 3+ Verstößen |
+| `POSITION_OUT_OF_BOUNDS` | Position außerhalb der Zone | Teleport zur letzten gültigen Position |
+| `COLLISION_INVALID` | Position in Wand/Objekt | Correction zur gültigen Position |
+| `SEQUENCE_TOO_OLD` | SequenceNumber < erwartete | Ignorieren (Packet-Loss) |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Bandbreite**: ~60 Bytes pro Update bei 20 Hz = ~1.2 KB/s pro Spieler
+- **Server-Validation**: MAX_SPEED = 7.0 m/s (Sprint), TOLERANCE = 1.1x (Latency)
+- **Anti-Cheat**: 3 aufeinanderfolgende Speed-Violations = Auto-Kick
+- **Optimierung**: Nur senden wenn Position/Velocity sich geändert hat (Delta-Compression)
+- **Dead-Reckoning**: Server nutzt Velocity für Prediction zwischen Updates
+- **Input-Reconciliation**: Client speichert Inputs ab SequenceNumber für Replay nach Correction
 
 ---
 
 ## PositionBroadcast (201)
 
-**Richtung:** 📡 Broadcast  
+**Richtung:** 📡 Broadcast (Server → All Clients in Range)  
 **Frequenz:** ⚡ High-Frequency  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server broadcastet validierte Position eines Spielers an alle in Range.
+Server broadcastet validierte Position eines Spielers an alle anderen Clients in sichtbarer Range. Dies ist die authoritative Position die für Interpolation verwendet wird.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Validierte Position (X, Y, Z) nach Server-Checks
+- Velocity für Client-Interpolation
+- Rotation (Yaw)
+- Server-Timestamp für Synchronisation
+- EntityId (Runtime-ID des Spielers)
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Eigene Position → Client predicted selbst, bei Desync kommt `MovementCorrection` (202)
+- Position-History → Client speichert selbst für Interpolation
+- Animation-State → verwende `EntityAnimation` (1410)
+- Health/Mana → verwende `EntityUpdate` (1404)
 
-### Request/Response Payload
+### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| EntityId | int | Runtime Entity-ID des Spielers | Ja |
+| Timestamp | long | Server Unix Timestamp (ms) | Ja |
+| X | float | Validierte Position X | Ja |
+| Y | float | Validierte Position Y | Ja |
+| Z | float | Validierte Position Z | Ja |
+| VelocityX | float | Velocity X | Ja |
+| VelocityY | float | Velocity Y | Ja |
+| VelocityZ | float | Velocity Z | Ja |
+| Yaw | float | Rotation (0-360 Grad) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Keine** - Client interpoliert zur Position
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `PositionUpdate` | 200 | Client-Request der zu diesem Broadcast führt |
+| `EntityUpdate` | 1404 | Vollständiges Entity-Update inkl. Stats |
+| `PlayerJoinedZone` | 103 | Initiale Position wenn Spieler spawnt |
 
 ### Beispiel Payload
 ```csharp
-var message = new PositionBroadcast
+var posBroadcast = new PositionBroadcast
 {
     Type = MessageType.PositionBroadcast,
-    // Felder hier
+    EntityId = 50001,
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+    X = validatedPos.x,
+    Y = validatedPos.y,
+    Z = validatedPos.z,
+    VelocityX = vel.x,
+    VelocityY = vel.y,
+    VelocityZ = vel.z,
+    Yaw = rotation
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Range**: Nur an Clients in ~50m Range gesendet (Area-of-Interest / AoI)
+- **Interpolation**: Client interpoliert über ~100ms Buffer für smooth Movement
+- **Rate-Limiting**: Server kann auf 10 Hz throttlen wenn >50 Spieler in Zone
+- **Batching**: Server kann mehrere Broadcasts batchen (Optimization Phase 2)
+- **Priority**: High-Priority Message - wird vor Low-Priority Messages gesendet
+- **Packet-Loss**: Bei Verlust: Client extrapoliert kurzzeitig mit letzter Velocity
 
 ---
 
 ## MovementCorrection (202)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Selten (nur bei Desync)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server korrigiert Client-Position bei Desync (Speed-Hack, Collision-Error).
+Server korrigiert Client-Position bei Desync (Speed-Hack, Collision-Fehler, Lag-Spike). Client muss zur Server-Position snappen und alle pending Inputs neu anwenden (Input-Reconciliation).
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Korrekte Server-Position
+- Sequence Number (welcher Input war inkorrekt)
+- Grund für Correction (collision, speed, bounds)
+- Neue Velocity
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Normale Position-Updates → verwende `PositionBroadcast` (201)
+- Admin-Teleport → verwende `ForcePosition` (213) oder `TeleportExecute` (204)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| SequenceNumber | uint | Input-Sequence die korrigiert wird | Ja |
+| Reason | string | "collision", "speed_too_high", "bounds", "stuck" | Ja |
+| X | float | Korrekte Position X | Ja |
+| Y | float | Korrekte Position Y | Ja |
+| Z | float | Korrekte Position Z | Ja |
+| VelocityX | float | Korrekte Velocity X | Ja |
+| VelocityY | float | Korrekte Velocity Y | Ja |
+| VelocityZ | float | Korrekte Velocity Z | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Client:** Snap zur Position, re-apply alle Inputs > SequenceNumber
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `PositionUpdate` | 200 | Client-Input der korrigiert wird |
+| `ForcePosition` | 213 | Hard-Teleport ohne Reconciliation (Admin/Cutscene) |
+| `TeleportExecute` | 204 | Legitimer Teleport (Portal, Spell) |
 
 ### Beispiel Payload
 ```csharp
-var message = new MovementCorrection
+var correction = new MovementCorrection
 {
     Type = MessageType.MovementCorrection,
-    // Felder hier
+    SequenceNumber = invalidSequence,
+    Reason = "collision",
+    X = serverPos.x,
+    Y = serverPos.y,
+    Z = serverPos.z,
+    VelocityX = 0,
+    VelocityY = 0,
+    VelocityZ = 0
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Client-Reconciliation**: Client hat pending Inputs gespeichert ab SequenceNumber
+- **Re-Apply**: Nach Snap werden alle Inputs > SequenceNumber neu simuliert
+- **Smooth Correction**: Optional kann Client über 100-200ms interpolieren statt hart snappen
+- **Häufigkeit**: Sollte selten sein (<1% der Position-Updates), sonst Problem
+- **Debug-Mode**: Im Debug kann Client Corrections visualisieren (rote Line)
+- **Anti-Cheat**: Viele Corrections (>10/min) = Verdacht auf Speed-Hack oder schlechte Connection
 
 ---
 
@@ -180,41 +303,62 @@ var message = new MovementCorrection
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client bittet um Teleport (Hearthstone, Portal, Spell).
+Client bittet um Teleport zu einer Position (Hearthstone, Portal, Spell, Fast-Travel). Server validiert Berechtigung und führt Teleport aus.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Teleport-Ziel (ZoneId + Position)
+- Teleport-Typ (Hearthstone, Portal, Spell, FastTravel)
+- Cooldown-Check
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Admin-Teleport → verwende `AdminTeleport` (2302)
+- Zone-Transfer ohne Teleport → verwende `ZoneTransferRequest` (105)
 
-### Request/Response Payload
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| TargetZoneId | int | Ziel-Zone-ID | Ja |
+| TargetX | float | Ziel-Position X | Ja |
+| TargetY | float | Ziel-Position Y | Ja |
+| TeleportType | string | "hearthstone", "portal", "spell", "fast_travel" | Ja |
+| SourceObjectId | int | Portal/NPC-ID falls relevant | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Bei Erfolg:** `TeleportExecute` (204) → dann `JoinZone` (100) falls andere Zone
+- **Bei Fehler:** `ErrorMessage` (910) mit Code
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `TeleportExecute` | 204 | Server führt Teleport aus |
+| `ZoneTransferRequest` | 105 | Zone-Wechsel ohne Teleport |
+| `HearthstoneUse` | 4220 | Spezifischer Hearthstone-Use |
 
 ### Beispiel Payload
 ```csharp
-var message = new TeleportRequest
+var teleportReq = new TeleportRequest
 {
     Type = MessageType.TeleportRequest,
-    // Felder hier
+    TargetZoneId = 1002,
+    TargetX = 150.0f,
+    TargetY = 200.0f,
+    TeleportType = "hearthstone"
 };
 ```
 
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `COOLDOWN_ACTIVE` | Hearthstone auf Cooldown | Warten (Zeit in Message) |
+| `INVALID_TARGET` | Ziel nicht erreichbar | Anderen Ort wählen |
+| `IN_COMBAT` | Im Kampf | Kampf beenden |
+| `INSUFFICIENT_MANA` | Nicht genug Mana (Spell-Teleport) | Warten bis Mana regen |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Hearthstone-Cooldown**: 30 Minuten (Standard)
+- **Combat-Lock**: Teleport nur möglich wenn nicht im Kampf (außer Admin)
+- **Loading-Screen**: Client zeigt Loading während Teleport
+- **Fade-Out**: 2 Sekunden Casting-Zeit für Hearthstone
 
 ---
 
@@ -226,734 +370,55 @@ var message = new TeleportRequest
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server führt Teleport aus. Client setzt Position sofort.
+Server führt Teleport aus. Client setzt Position sofort (kein Interpolation). Kann innerhalb Zone oder zu anderer Zone sein.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Neue Position (X, Y, Z)
+- Neue Zone (ZoneId) falls Zone-Wechsel
+- Sofortiges Position-Set (kein Movement)
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Zone-Load → bei Zone-Wechsel folgt `JoinZone` (100)
+- Correction → verwende `MovementCorrection` (202)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| ZoneId | int | Ziel-Zone-ID | Ja |
+| X | float | Position X | Ja |
+| Y | float | Position Y | Ja |
+| Z | float | Position Z | Ja |
+| Yaw | float | Neue Rotation | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Client:** Sofortiges Position-Set, bei Zone-Wechsel folgt `JoinZone` (100)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `TeleportRequest` | 203 | Client-Request |
+| `JoinZone` | 100 | Bei Zone-Wechsel |
+| `ForcePosition` | 213 | Ähnlich aber ohne Request |
 
 ### Beispiel Payload
 ```csharp
-var message = new TeleportExecute
+var teleportExec = new TeleportExecute
 {
     Type = MessageType.TeleportExecute,
-    // Felder hier
+    ZoneId = 1002,
+    X = 150.0f,
+    Y = 200.0f,
+    Z = 10.0f,
+    Yaw = 90.0f
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Fade-Effect**: Client kann Fade-Out/In animieren
+- **Sound**: Teleport-Sound abspielen
+- **No Collision**: Position wird nicht validiert (Server-Trust)
 
 ---
-
-## MovementSpeedUpdate (205)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Movement-Speed hat sich geändert (Buff, Debuff, Mount).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new MovementSpeedUpdate
-{
-    Type = MessageType.MovementSpeedUpdate,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## JumpRequest (206)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client initiiert Sprung.
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new JumpRequest
-{
-    Type = MessageType.JumpRequest,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## JumpBroadcast (207)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server broadcastet Sprung eines Spielers.
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new JumpBroadcast
-{
-    Type = MessageType.JumpBroadcast,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## FallDamage (208)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Spieler nimmt Fall-Schaden (Server-berechnet).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new FallDamage
-{
-    Type = MessageType.FallDamage,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## StuckRequest (209)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Spieler meldet 'stuck' Situation (in Wand, unter Terrain).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new StuckRequest
-{
-    Type = MessageType.StuckRequest,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## StuckResponse (210)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server teleportiert Spieler zu sicherer Position.
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new StuckResponse
-{
-    Type = MessageType.StuckResponse,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## PathfindingRequest (211)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Phase 2: Request für Auto-Pathing (Travel to NPC, etc.).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new PathfindingRequest
-{
-    Type = MessageType.PathfindingRequest,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## PathfindingResponse (212)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Phase 2: Server sendet Path-Points.
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new PathfindingResponse
-{
-    Type = MessageType.PathfindingResponse,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## ForcePosition (213)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server forciert Position (Admin, Anti-Cheat, Cutscene).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new ForcePosition
-{
-    Type = MessageType.ForcePosition,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## MovementModeChange (214)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Movement-Mode ändert sich (Walking, Flying, Swimming).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new MovementModeChange
-{
-    Type = MessageType.MovementModeChange,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## CollisionEvent (215)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Collision mit Environment (Wand, Objekt).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new CollisionEvent
-{
-    Type = MessageType.CollisionEvent,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## KnockbackEvent (216)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Entity wird zurückgestoßen (Spell, Explosion).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new KnockbackEvent
-{
-    Type = MessageType.KnockbackEvent,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## PullEvent (217)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Entity wird herangezogen (Spell, Hook).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new PullEvent
-{
-    Type = MessageType.PullEvent,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## RootEvent (218)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Entity wird verwurzelt (Movement disabled).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new RootEvent
-{
-    Type = MessageType.RootEvent,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
-## StunMovement (219)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Entity ist stunned (Movement + Actions disabled).
-
-### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
-
-### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
-
-### Beispiel Payload
-```csharp
-var message = new StunMovement
-{
-    Type = MessageType.StunMovement,
-    // Felder hier
-};
-```
-
-### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
-
----
-
 
 **Letzte Aktualisierung**: 2025-12-17  
 **Version**: 1.0.0
