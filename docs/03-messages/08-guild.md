@@ -682,4 +682,413 @@ var disband = new GuildDisband
 
 ---
 
+## GuildPromote (806)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 GUILD_PROMOTE Permission
+
+### Beschreibung
+
+Der Client sendet diese Message, wenn ein Gilden-Officer einen Member zu einem höheren Rang befördern möchte. Der befördernde Spieler benötigt die `GUILD_PROMOTE` Permission und kann nur zu Rängen befördern, die niedriger als sein eigener sind.
+
+Das System validiert die Rang-Hierarchie: Ein Officer kann niemanden zu seinem eigenen oder höheren Rang befördern. Der Guild Master kann zu jedem Rang befördern außer zum Guild Master selbst (Leadership Transfer nutzen).
+
+Beförderungen sind sofort wirksam und werden über `GuildUpdate` (804) an alle Online-Members der Gilde gebroadcastet.
+
+### Im Scope ✅
+
+- Beförderung eines Members zu höherem Rang
+- Rang-Hierarchie-Validation (nur zu niedrigeren Rängen als eigener)
+- Permission-Check (GUILD_PROMOTE erforderlich)
+- Optional: Beförderungs-Nachricht (max 200 chars)
+- Sofortige Wirkung mit Broadcast
+
+### Nicht im Scope ❌
+
+- Guild Master Transfer → verwende `GuildLeaderChange` (706)
+- Beförderung zu eigenem/höherem Rang → ERROR_INSUFFICIENT_RANK
+- Massen-Beförderungen → mehrere einzelne Promotes senden
+
+### Request Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildPromote` (806) | Ja |
+| TargetPlayerId | int | PlayerId des zu befördernden Members | Ja |
+| NewRankId | int | Ziel-Rang-ID (niedriger als eigener Rang) | Ja |
+| Message | string | Optional Beförderungs-Nachricht (max 200 chars) | Nein |
+
+### Erwartete Response
+
+- **Bei Erfolg:** `GuildUpdate` (804) mit Promote-Event
+- **Bei Fehler:** `ErrorMessage` (910) mit Code
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ERROR_NO_PERMISSION` | Keine GUILD_PROMOTE Permission | Permission von Officer erfragen |
+| `ERROR_PLAYER_NOT_IN_GUILD` | Zielspieler nicht in Gilde | Roster aktualisieren |
+| `ERROR_INSUFFICIENT_RANK` | Ziel-Rang zu hoch (≥ eigener Rang) | Nur zu niedrigeren Rängen |
+| `ERROR_INVALID_RANK` | NewRankId existiert nicht | Valide RankId verwenden |
+| `ERROR_ALREADY_THAT_RANK` | Spieler hat bereits diesen Rang | Status prüfen |
+
+### Notizen
+
+- **Hierarchie**: Officer Rang 3 kann nur zu Rank 4+ befördern, nicht zu Rang 1-3
+- **Guild Master Exception**: GM kann zu allen Rängen befördern (außer GM selbst)
+- **Instant Effect**: Neue Permissions sofort aktiv
+- **Bank Access**: Bei Beförderung neue Bank-Tabs verfügbar basierend auf Rank-Permissions
+- **No Cooldown**: Keine Cooldown-Periode zwischen Beförderungen
+
+---
+
+## GuildDemote (807)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 GUILD_DEMOTE Permission
+
+### Beschreibung
+
+Der Client sendet diese Message, wenn ein Gilden-Officer einen Member zu einem niedrigeren Rang degradieren möchte. Der demotion-initiator benötigt die `GUILD_DEMOTE` Permission und kann nur Members degradieren, deren Rang niedriger ist als der eigene.
+
+Guild Master können nicht degradiert werden. Falls ein Guild Master degradiert werden soll, muss erst ein Leadership Transfer zu einem anderen Member erfolgen.
+
+Degradierungen entziehen sofort alle Permissions des höheren Rangs und limitieren Bank-Zugriff entsprechend dem neuen Rang.
+
+### Im Scope ✅
+
+- Degradierung eines Members zu niedrigerem Rang
+- Rang-Hierarchie-Validation (nur Members mit niedrigerem Rang)
+- Permission-Check (GUILD_DEMOTE erforderlich)
+- Optional: Degradierungs-Grund (max 200 chars)
+- Sofortiger Permission-Entzug
+
+### Nicht im Scope ❌
+
+- Guild Master degradieren → erst `GuildLeaderChange` (706) durchführen
+- Degradierung von gleichrangigen/höherrangigen → ERROR_INSUFFICIENT_RANK
+- Kick statt Demote → verwende `GuildKick` (803)
+
+### Request Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildDemote` (807) | Ja |
+| TargetPlayerId | int | PlayerId des zu degradierenden Members | Ja |
+| NewRankId | int | Ziel-Rang-ID (höhere Nummer = niedrigerer Rang) | Ja |
+| Reason | string | Optional Degradierungs-Grund (max 200 chars) | Nein |
+
+### Erwartete Response
+
+- **Bei Erfolg:** `GuildUpdate` (804) mit Demote-Event
+- **Bei Fehler:** `ErrorMessage` (910) mit Code
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ERROR_NO_PERMISSION` | Keine GUILD_DEMOTE Permission | Permission von Officer erfragen |
+| `ERROR_PLAYER_NOT_IN_GUILD` | Zielspieler nicht in Gilde | Roster aktualisieren |
+| `ERROR_INSUFFICIENT_RANK` | Ziel hat gleichen/höheren Rang | Nur niedrigere Ränge degradieren |
+| `ERROR_INVALID_RANK` | NewRankId existiert nicht | Valide niedrigere RankId |
+| `ERROR_CANNOT_DEMOTE_GM` | Guild Master kann nicht degradiert werden | Leadership Transfer erst |
+
+### Notizen
+
+- **Instant Permission Loss**: Bank-Zugriff, Officer-Chat, Invite-Rechte sofort entzogen
+- **Bank Withdrawal Interrupt**: Aktive Bank-Transaktionen abgebrochen wenn Permissions verloren
+- **Officer Chat Kick**: Bei Degradierung von Officer automatisch aus Officer-Chat entfernt
+- **Event Permissions**: Verliert Zugriff auf Guild-Event-Management
+- **Protection**: Guild Master absolut geschützt vor Demotions
+
+---
+
+## GuildMOTD (808)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+
+Der Server sendet diese Message an einen Client, um die Guild Message-of-the-Day zu übermitteln. Die MOTD wird automatisch gesendet beim Guild-Beitritt, beim Login (falls in Gilde) und wenn die MOTD von einem Officer geändert wird.
+
+Die MOTD ist für alle Guild-Members sichtbar und dient zur Kommunikation wichtiger Guild-Infos (Raid-Zeiten, Events, Regel-Änderungen, etc.).
+
+### Im Scope ✅
+
+- Übermittlung der aktuellen Guild MOTD
+- Automatischer Versand bei Login/Join
+- Update-Broadcast bei MOTD-Änderung
+- Timestamps für letzte Änderung
+- Author-Info (wer hat MOTD gesetzt)
+
+### Nicht im Scope ❌
+
+- MOTD setzen → verwende `GuildMOTDSet` (809)
+- Personalisierte Nachrichten → verwende `ChatWhisper` (402)
+- Permanent Announcements → verwende `GuildInfoEdit` (817)
+
+### Response Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildMOTD` (808) | Ja |
+| MOTD | string | Message-of-the-Day Text (max 500 chars) | Ja |
+| SetByPlayerName | string | Name des Setters (max 32 chars) | Ja |
+| SetTimestamp | long | Unix-Timestamp wann gesetzt | Ja |
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `GuildMOTDSet` | 809 | Officer setzt neue MOTD |
+| `GuildUpdate` | 804 | Benachrichtigung über MOTD-Change |
+| `ChatGuild` | 405 | Guild Chat für Diskussionen |
+
+### Beispiel Payload
+
+```csharp
+var motd = new GuildMOTD
+{
+    Type = MessageType.GuildMOTD,
+    MOTD = "Raid tonight 20:00 ST! Sign up in calendar. New members: read /ginfo for rules.",
+    SetByPlayerName = "Guildmaster",
+    SetTimestamp = 1700000000
+};
+```
+
+### Notizen
+
+- **Display**: Client sollte MOTD prominent anzeigen (Guild-Tab, Login-Popup)
+- **Update Frequency**: Nur bei tatsächlicher Änderung gesendet (nicht bei jedem Login nochmal)
+- **Formatting**: Supports basic formatting codes (colors, bold via [[b]], etc.)
+- **Empty MOTD**: Leerer String = keine MOTD gesetzt
+- **History**: Server speichert letzte 10 MOTDs mit Timestamps (Admin-Tool)
+
+---
+
+## GuildMOTDSet (809)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 GUILD_SET_MOTD Permission (Officer+)
+
+### Beschreibung
+
+Der Client sendet diese Message, wenn ein Officer die Guild Message-of-the-Day ändern möchte. Nur Members mit der `GUILD_SET_MOTD` Permission (typischerweise Officer und höher) können die MOTD ändern.
+
+Die neue MOTD wird sofort gespeichert und über `GuildMOTD` (808) an alle online Guild-Members gebroadcastet. Offline-Members erhalten sie beim nächsten Login.
+
+Eine MOTD kann bis zu 500 Zeichen lang sein und unterstützt Basic Formatting Codes für Farben und Text-Styles.
+
+### Im Scope ✅
+
+- Setzen einer neuen Guild MOTD (max 500 chars)
+- Permission-Check (GUILD_SET_MOTD erforderlich)
+- Basic Formatting-Codes (Farben, Bold, etc.)
+- Broadcast an alle Online-Members
+- Persistierung für Offline-Members
+
+### Nicht im Scope ❌
+
+- MOTD lesen → verwende `GuildMOTD` (808) vom Server
+- MOTD-History ansehen → Officer-Tool im Web-Interface
+- Automatische MOTD-Rotation → manuelle Änderung erforderlich
+
+### Request Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildMOTDSet` (809) | Ja |
+| NewMOTD | string | Neue MOTD (max 500 chars, formatting erlaubt) | Ja |
+
+### Erwartete Response
+
+- **Bei Erfolg:** `GuildMOTD` (808) Broadcast an alle Members
+- **Bei Fehler:** `ErrorMessage` (910) mit Code
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ERROR_NO_PERMISSION` | Keine GUILD_SET_MOTD Permission | Officer-Rang erforderlich |
+| `ERROR_MOTD_TOO_LONG` | MOTD >500 chars | Text kürzen |
+| `ERROR_INVALID_FORMATTING` | Ungültige Formatting-Codes | Codes korrigieren |
+| `ERROR_RATE_LIMIT` | Zu häufige MOTD-Änderungen (>1/min) | 60s warten |
+
+### Beispiel Payload
+
+```csharp
+var setMOTD = new GuildMOTDSet
+{
+    Type = MessageType.GuildMOTDSet,
+    NewMOTD = "[[c:gold]]RAID TONIGHT 20:00 ST[[/c]]!\nSign up in calendar.\n\n[[b]]New members:[[/b]] Read /ginfo for guild rules!"
+};
+```
+
+### Notizen
+
+- **Formatting Codes**: `[[c:color]]text[[/c]]` für Farben, `[[b]]bold[[/b]]`, `[[i]]italic[[/i]]`
+- **Rate Limit**: Max 1 MOTD-Änderung pro Minute (Anti-Spam)
+- **Profanity Filter**: Server filtert anstößige Wörter
+- **Newlines**: `\n` erlaubt für Multi-Line MOTDs
+- **Empty MOTD**: Leerer String löscht MOTD
+- **Changelog**: Jede MOTD-Änderung wird in Guild-Log geschrieben mit Author und Timestamp
+
+---
+
+## GuildRosterRequest (810)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+
+Der Client sendet diese Message, um die vollständige Guild-Roster (Member-Liste) anzufordern. Die Roster enthält alle Members mit Status (Online/Offline), Rang, Level, Class, Zone und Last-Seen Timestamp.
+
+Die Roster wird automatisch beim Guild-Beitritt gesendet und sollte vom Client gecacht werden. Inkrementelle Updates erfolgen über `GuildUpdate` (804). Diese Message dient zum manuellen Refresh (z.B. nach Reconnect) oder wenn der Guild-Tab geöffnet wird.
+
+### Im Scope ✅
+
+- Anforderung der vollständigen Member-Liste
+- Alle Members mit Status-Info
+- Sortierung nach Rang und Name
+- Online/Offline-Status mit Last-Seen
+- Level, Class, Zone-Info
+
+### Nicht im Scope ❌
+
+- Inkrementelle Updates → automatisch über `GuildUpdate` (804)
+- Andere Gilden ansehen → verwende `GuildSearch` (832)
+- Member-Details → verwende `CharacterInfo` (606)
+
+### Request Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildRosterRequest` (810) | Ja |
+
+### Erwartete Response
+
+- **Bei Erfolg:** `GuildRosterResponse` (811) mit vollständiger Liste
+- **Bei Fehler:** `ErrorMessage` (910) mit Code
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ERROR_NOT_IN_GUILD` | Spieler nicht in Gilde | Guild beitreten |
+| `ERROR_RATE_LIMIT` | Zu häufige Requests (>1/10s) | Caching nutzen |
+
+### Notizen
+
+- **Caching**: Client sollte Roster cachen und nur bei Bedarf neu laden
+- **Auto-Updates**: `GuildUpdate` Messages aktualisieren Roster inkrementell
+- **Performance**: Große Gilden (500 Members) = ~50KB Daten
+- **Sorting**: Server sortiert nach Rank (aufsteigend) dann Alphabetisch
+- **Rate Limit**: Max 1 Request per 10 Sekunden
+
+---
+
+## GuildRosterResponse (811)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+
+Der Server sendet diese Message als Antwort auf `GuildRosterRequest` (810) oder automatisch beim Guild-Beitritt. Sie enthält die vollständige Liste aller Guild-Members mit allen relevanten Informationen.
+
+Die Roster-Daten sollten vom Client gecached werden. Änderungen werden inkrementell über `GuildUpdate` (804) übermittelt anstatt die gesamte Roster neu zu senden.
+
+### Im Scope ✅
+
+- Vollständige Member-Liste mit allen Details
+- Online/Offline-Status für jeden Member
+- Rang, Level, Class, Zone, Last-Seen
+- Public Note und Officer Note (falls Permission)
+- Join-Date für jeden Member
+
+### Nicht im Scope ❌
+
+- Real-Time Updates → verwende `GuildUpdate` (804) für Changes
+- Member-Stats (Achievements, etc.) → verwende `CharacterInfo` (606)
+- Inactive-Member-Filter → Client-Side Filtering
+
+### Response Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `GuildRosterResponse` (811) | Ja |
+| Members | MemberInfo[] | Array aller Guild-Members | Ja |
+
+**MemberInfo Structure**:
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| PlayerId | int | Unique PlayerId |
+| CharacterName | string | Character-Name |
+| RankId | int | Rang-ID (0=GM, 9=Niedrigster) |
+| Level | int | Character-Level |
+| Class | string | Class-Name |
+| IsOnline | bool | Online-Status |
+| ZoneName | string | Aktuelle Zone (falls online) |
+| LastSeen | long | Unix-Timestamp letzte Aktivität |
+| JoinDate | long | Unix-Timestamp Beitritt |
+| PublicNote | string | Public Note (max 50 chars) |
+| OfficerNote | string | Officer Note (nur mit Permission, max 50 chars) |
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `GuildRosterRequest` | 810 | Request für diese Response |
+| `GuildUpdate` | 804 | Inkrementelle Roster-Updates |
+| `CharacterInfo` | 606 | Detaillierte Member-Info |
+
+### Beispiel Payload
+
+```csharp
+var roster = new GuildRosterResponse
+{
+    Type = MessageType.GuildRosterResponse,
+    Members = new[]
+    {
+        new MemberInfo
+        {
+            PlayerId = 1001,
+            CharacterName = "Guildmaster",
+            RankId = 0,
+            Level = 60,
+            Class = "Warrior",
+            IsOnline = true,
+            ZoneName = "Stormwind",
+            LastSeen = 1700000000,
+            JoinDate = 1690000000,
+            PublicNote = "Guild Leader",
+            OfficerNote = "Founder"
+        },
+        // ... more members
+    }
+};
+```
+
+### Notizen
+
+- **Large Guilds**: Bei 500 Members = ~50KB Payload (komprimiert ~10KB)
+- **Sorting**: Pre-sorted by Rank (ascending) then Name (alphabetical)
+- **Officer Notes**: Nur sichtbar mit GUILD_VIEW_OFFICER_NOTE Permission
+- **Caching**: Client sollte Response cachen, nur bei Bedarf neu laden
+- **Timestamps**: Unix-Timestamp in Sekunden (nicht Millisekunden)
+
+---
+
 
