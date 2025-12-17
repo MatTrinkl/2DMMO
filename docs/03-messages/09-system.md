@@ -1,11 +1,29 @@
 # ⚙️ Ping / Latency / System Messages (0900-0999)
 
-**Kategorie:** 09  
+**Kategorie:** 9  
 **Range:** 0900-0999  
 **Phase:** Prototyp  
 **Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
+
+---
+
+## 📋 Übersicht
+
+Diese Kategorie umfasst alle Messages für **System-Monitoring, Error-Handling und Server-Management** im 2DMMO.
+
+Das System-Message-System bietet:
+- **Network-Monitoring**: Ping/Pong, Latency-Tracking, Connection-Quality
+- **Error-Handling**: Universelle Error-Messages mit Codes
+- **Server-Management**: Announcements, Kick/Ban, Maintenance, Shutdown
+- **Anti-Cheat**: Warnings und Auto-Kicks
+- **Configuration**: Server/Client-Config-Sync
+
+**Wichtige Konstanten**:
+- **PING_INTERVAL**: 5 Sekunden (parallel zu Heartbeat)
+- **LATENCY_REPORT_INTERVAL**: 30 Sekunden
+- **CONNECTION_QUALITY_UPDATE**: 10 Sekunden
 
 ---
 
@@ -38,46 +56,55 @@
 ## Ping (900)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
+**Frequenz:** Häufig (alle 5 Sekunden)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Manueller Ping-Request (zusätzlich zu Heartbeat).
+Manueller Ping-Test zusätzlich zum Heartbeat (4). Wird für präzise Latency-Messung verwendet, unabhängig vom Keep-Alive-System.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Latency-Messung (RTT - Round-Trip-Time)
+- Network-Performance-Monitoring
+- Separate von Heartbeat für spezifische Tests
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Keep-Alive → verwende `Heartbeat` (4)
+- Detaillierte Network-Stats → verwende `NetworkStats` (903)
 
-### Request/Response Payload
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
+| Timestamp | long | Client Unix Timestamp (Millisekunden) | Ja |
+| SequenceNumber | uint | Ping-Sequence-Number | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
+- **Immer:** `Pong` (901) mit gleichem Timestamp und SequenceNumber
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| `Pong` | 901 | Response auf Ping |
+| `Heartbeat` | 4 | Keep-Alive (parallel) |
+| `LatencyReport` | 902 | Aggregierte Latency-Daten |
 
 ### Beispiel Payload
 ```csharp
-var message = new Ping
+var ping = new Ping
 {
     Type = MessageType.Ping,
-    // Felder hier
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+    SequenceNumber = pingSequence++
 };
+
+// Nach Pong-Empfang: RTT = CurrentTime - Timestamp
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Interval**: 5 Sekunden (kann bei Bedarf höher sein)
+- **RTT-Calculation**: `RTT = CurrentTime - ReceivedTimestamp`
+- **Use-Case**: UI-Latency-Anzeige, Network-Diagnostics
+- **Parallel zu Heartbeat**: Beide laufen gleichzeitig für unterschiedliche Zwecke
 
 ---
 
@@ -89,225 +116,270 @@ var message = new Ping
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Response auf Ping.
+Response auf Ping. Server echo't Timestamp und SequenceNumber zurück. Client berechnet RTT.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Echo von Timestamp und SequenceNumber
+- RTT-Berechnung ermöglichen
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Server-Side-Latency-Berechnung → Server logged selbst
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Timestamp | long | Echo von Ping-Timestamp | Ja |
+| SequenceNumber | uint | Echo von Ping-SequenceNumber | Ja |
+| ServerTime | long | Aktueller Server-Timestamp | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new Pong
+var pong = new Pong
 {
     Type = MessageType.Pong,
-    // Felder hier
+    Timestamp = receivedPing.Timestamp, // Echo
+    SequenceNumber = receivedPing.SequenceNumber, // Echo
+    ServerTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **RTT**: `CurrentTime - Timestamp`
+- **Server-Time-Sync**: Client kann `ServerTime` für Clock-Sync nutzen
+- **Sequence-Tracking**: Fehlende Sequences zeigen Packet-Loss
 
 ---
 
 ## LatencyReport (902)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Selten (alle 30 Sekunden)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Aggregierte Latency-Statistiken.
+Server sendet aggregierte Latency-Statistiken. Hilfreich für Client-UI-Anzeige und Diagnostics.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Average Latency (RTT)
+- Min/Max Latency
+- Packet-Loss-Rate
+- Jitter
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Real-Time-Latency → verwende `Ping/Pong` (900/901)
+- Detaillierte Stats → verwende `NetworkStats` (903)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| AverageLatency | int | Durchschnittliche RTT (Millisekunden) | Ja |
+| MinLatency | int | Niedrigste RTT | Ja |
+| MaxLatency | int | Höchste RTT | Ja |
+| PacketLossRate | float | Packet-Loss (0.0-1.0) | Ja |
+| Jitter | int | Jitter (Millisekunden) | Ja |
+| SampleCount | int | Anzahl Samples für Berechnung | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new LatencyReport
+var latencyReport = new LatencyReport
 {
     Type = MessageType.LatencyReport,
-    // Felder hier
+    AverageLatency = 45, // 45ms
+    MinLatency = 32,
+    MaxLatency = 78,
+    PacketLossRate = 0.02f, // 2%
+    Jitter = 8,
+    SampleCount = 60
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Update-Interval**: 30 Sekunden
+- **Sample-Period**: Basierend auf letzten 60 Sekunden
+- **UI-Indicator**: Client kann Color-Coding verwenden (Green <50ms, Yellow 50-100ms, Red >100ms)
 
 ---
 
 ## NetworkStats (903)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Selten (auf Request oder alle 60 Sekunden)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Detaillierte Network-Metriken (Packet-Loss, Jitter).
+Detaillierte Network-Statistiken für Diagnostics und Monitoring. Enthält Bandwidth, Packet-Stats, Connection-Info.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Bytes Sent/Received
+- Messages Sent/Received
+- Packet-Loss-Details
+- Bandwidth-Usage
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Simplified Latency → verwende `LatencyReport` (902)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| BytesSent | long | Bytes gesendet (seit Connection) | Ja |
+| BytesReceived | long | Bytes empfangen | Ja |
+| MessagesSent | long | Messages gesendet | Ja |
+| MessagesReceived | long | Messages empfangen | Ja |
+| PacketsSent | long | TCP-Packets gesendet | Ja |
+| PacketsReceived | long | TCP-Packets empfangen | Ja |
+| PacketsLost | long | Geschätzte Packet-Loss | Ja |
+| AverageBandwidthOut | int | KB/s Out | Ja |
+| AverageBandwidthIn | int | KB/s In | Ja |
+| ConnectionUptime | long | Sekunden seit Connect | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new NetworkStats
+var netStats = new NetworkStats
 {
     Type = MessageType.NetworkStats,
-    // Felder hier
+    BytesSent = 2_500_000, // 2.5 MB
+    BytesReceived = 3_200_000, // 3.2 MB
+    MessagesSent = 15_000,
+    MessagesReceived = 18_500,
+    PacketsSent = 5_000,
+    PacketsReceived = 6_000,
+    PacketsLost = 50,
+    AverageBandwidthOut = 12, // 12 KB/s
+    AverageBandwidthIn = 18, // 18 KB/s
+    ConnectionUptime = 3600 // 1 Stunde
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Debug-Tool**: Primär für Diagnostics und Support
+- **On-Demand**: Client kann Request senden (Phase 2)
+- **Bandwidth-Monitoring**: Hilfreich für Mobile-Clients
 
 ---
 
 ## ConnectionQuality (904)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
+**Frequenz:** Häufig (alle 10 Sekunden)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-QoS-Indicator (Good, Fair, Poor, Bad).
+QoS (Quality-of-Service) Indicator. Simplified Status für Client-UI-Anzeige (Good/Fair/Poor/Bad).
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Simplified Quality-Rating
+- Latency-Based
+- Packet-Loss-Based
+- UI-freundlich
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Detaillierte Stats → verwende `NetworkStats` (903)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Quality | string | "excellent", "good", "fair", "poor", "bad" | Ja |
+| Latency | int | Current RTT (ms) | Ja |
+| PacketLoss | float | Current Packet-Loss (0.0-1.0) | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ConnectionQuality
+var connQuality = new ConnectionQuality
 {
     Type = MessageType.ConnectionQuality,
-    // Felder hier
+    Quality = "good",
+    Latency = 45,
+    PacketLoss = 0.01f // 1%
 };
 ```
 
+### Quality-Thresholds
+| Quality | Latency | Packet-Loss | UI-Color |
+|---------|---------|-------------|----------|
+| Excellent | <30ms | <0.5% | Green |
+| Good | 30-60ms | 0.5-2% | Light Green |
+| Fair | 60-100ms | 2-5% | Yellow |
+| Poor | 100-200ms | 5-10% | Orange |
+| Bad | >200ms | >10% | Red |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **UI-Indicator**: Client zeigt Connection-Quality-Icon
+- **Auto-Adapt**: Bei Poor/Bad kann Client Quality-Settings reduzieren
+- **Warning**: Bei "Bad" kann Client Warnung anzeigen
 
 ---
 
 ## ErrorMessage (910)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
+**Frequenz:** Selten (bei Errors)  
+**Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Generische Fehlermeldung.
+Universelle Error-Message für alle Fehlerfälle. Enthält Error-Code, Message, Severity.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Alle Server-Errors
+- Standardisierte Error-Codes
+- Severity-Levels (Info, Warning, Error, Fatal)
+- Optional: Context-Data
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Spezifische Error-Messages → verwende ErrorMessage mit passendem Code
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| ErrorCode | string | Error-Code (z.B. "INVALID_CREDENTIALS") | Ja |
+| Message | string | Menschenlesbare Error-Message | Ja |
+| Severity | string | "info", "warning", "error", "fatal" | Ja |
+| Details | string | Optional zusätzliche Details | Nein |
+| Timestamp | long | Server-Timestamp | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ErrorMessage
+// Login-Error
+var loginError = new ErrorMessage
 {
     Type = MessageType.ErrorMessage,
-    // Felder hier
+    ErrorCode = "INVALID_CREDENTIALS",
+    Message = "Username or password incorrect",
+    Severity = "error",
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+
+// Fatal-Error
+var fatalError = new ErrorMessage
+{
+    Type = MessageType.ErrorMessage,
+    ErrorCode = "DATABASE_CONNECTION_LOST",
+    Message = "Server database connection lost. Please try again later.",
+    Severity = "fatal",
+    Details = "Contact support if problem persists",
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
 };
 ```
 
+### Common Error Codes
+| Code | Severity | Beschreibung |
+|------|----------|--------------|
+| `INVALID_CREDENTIALS` | error | Login fehlgeschlagen |
+| `SESSION_EXPIRED` | warning | Session abgelaufen |
+| `RATE_LIMITED` | warning | Zu viele Requests |
+| `INSUFFICIENT_PERMISSIONS` | error | Fehlende Berechtigung |
+| `RESOURCE_NOT_FOUND` | error | Resource nicht gefunden |
+| `SERVER_OVERLOADED` | error | Server überlastet |
+| `DATABASE_ERROR` | fatal | Datenbank-Fehler |
+| `INTERNAL_SERVER_ERROR` | fatal | Unerwarteter Server-Fehler |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **UI-Display**: Client zeigt Error-Dialog basierend auf Severity
+- **Logging**: Client logged alle Errors für Support
+- **Fatal**: Bei Fatal-Errors wird Connection oft geschlossen
 
 ---
 
@@ -316,44 +388,55 @@ var message = new ErrorMessage
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Selten  
 **Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** 👑 Server/Admin
 
 ### Beschreibung
-Server-weite Announcement.
+Server-weite Announcement-Message (Events, Updates, Wichtige Infos). Alle online Spieler empfangen.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Server-weite Announcements
+- Event-Announcements
+- Important Updates
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- System-Messages → verwende `ChatSystem` (410)
+- Personal-Messages → verwende `ChatWhisper` (402)
 
-### Request/Response Payload
+### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Message | string | Announcement-Text | Ja |
+| Type | string | "info", "warning", "event", "update" | Ja |
+| Duration | int | Anzeigedauer (Sekunden, 0=permanent bis dismiss) | Ja |
+| Timestamp | long | Server-Timestamp | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerAnnouncement
+// Event-Announcement
+var eventAnnounce = new ServerAnnouncement
 {
     Type = MessageType.ServerAnnouncement,
-    // Felder hier
+    Message = "Double XP Weekend starts now!",
+    Type = "event",
+    Duration = 0, // Permanent bis dismiss
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+
+// Update-Announcement
+var updateAnnounce = new ServerAnnouncement
+{
+    Type = MessageType.ServerAnnouncement,
+    Message = "New patch 0.3.0 deployed! Check /changelog for details.",
+    Type = "update",
+    Duration = 30, // 30 Sekunden
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **UI-Display**: Client zeigt prominent im UI (z.B. Banner oben)
+- **Sound**: Optional Notification-Sound
+- **History**: Client speichert letzte 10 Announcements
 
 ---
 
@@ -362,44 +445,44 @@ var message = new ServerAnnouncement
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
 **Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** 👑 Admin
 
 ### Beschreibung
-Spieler wurde gekickt.
+Spieler wird gekickt (Admin-Action). Connection wird nach Message geschlossen.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Kick-Grund
+- Admin-Name (optional)
+- Reconnect-Erlaubnis
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Ban → verwende `BanNotification` (916)
+- Normal Disconnect → verwende `Disconnect` (5)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Reason | string | Kick-Grund | Ja |
+| AdminName | string | Kickender Admin | Nein |
+| CanReconnect | bool | Reconnect erlaubt? | Ja |
+| ReconnectDelay | int | Sekunden bis Reconnect erlaubt | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new KickNotification
+var kick = new KickNotification
 {
     Type = MessageType.KickNotification,
-    // Felder hier
+    Reason = "Inappropriate behavior in chat",
+    AdminName = "GM_John",
+    CanReconnect = true,
+    ReconnectDelay = 300 // 5 Minuten
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Auto-Disconnect**: Connection wird 2 Sekunden nach Message geschlossen
+- **UI-Dialog**: Client zeigt Kick-Reason prominent
+- **Reconnect**: Bei CanReconnect=true nach Delay möglich
 
 ---
 
@@ -408,136 +491,149 @@ var message = new KickNotification
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Selten  
 **Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** 👑 Server
 
 ### Beschreibung
-Wartungs-Warnung (X Minuten bis Shutdown).
+Warnung vor anstehender Server-Wartung. Mehrere Warnings in absteigenden Intervallen.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Time-Until-Shutdown
+- Maintenance-Reason
+- Expected-Duration
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Actual-Shutdown → verwende `ServerShutdown` (914)
 
-### Request/Response Payload
+### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| MinutesRemaining | int | Minuten bis Shutdown | Ja |
+| Reason | string | Maintenance-Grund | Ja |
+| ExpectedDuration | int | Erwartete Downtime (Minuten) | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new MaintenanceWarning
+// 10 Minuten Warning
+var warning10 = new MaintenanceWarning
 {
     Type = MessageType.MaintenanceWarning,
-    // Felder hier
+    MinutesRemaining = 10,
+    Reason = "Server update to version 0.3.0",
+    ExpectedDuration = 30
+};
+
+// 1 Minute Warning
+var warning1 = new MaintenanceWarning
+{
+    Type = MessageType.MaintenanceWarning,
+    MinutesRemaining = 1,
+    Reason = "Server update to version 0.3.0",
+    ExpectedDuration = 30
 };
 ```
 
+### Warning-Schedule
+| Time Remaining | Frequency |
+|----------------|-----------|
+| 60 min | Once |
+| 30 min | Once |
+| 15 min | Once |
+| 10 min | Once |
+| 5 min | Once |
+| 1 min | Every 15s |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **UI-Countdown**: Client zeigt Countdown-Timer
+- **Sound**: Alert-Sound bei < 5 Minuten
+- **Auto-Logout**: Spieler sollten rechtzeitig ausloggen
 
 ---
 
 ## ServerShutdown (914)
 
 **Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
+**Frequenz:** Einmalig  
 **Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** 👑 Server
 
 ### Beschreibung
-Server fährt herunter.
+Server fährt herunter. Alle Connections werden geschlossen. Final Message vor Shutdown.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Shutdown-Notification
+- Reason
+- Expected-Restart-Time
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Warnings → verwende `MaintenanceWarning` (913)
 
-### Request/Response Payload
+### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Reason | string | Shutdown-Grund | Ja |
+| ExpectedRestartTime | long | Unix Timestamp (geschätzter Restart) | Nein |
+| Message | string | Additional Info | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerShutdown
+var shutdown = new ServerShutdown
 {
     Type = MessageType.ServerShutdown,
-    // Felder hier
+    Reason = "Scheduled maintenance",
+    ExpectedRestartTime = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds(),
+    Message = "Server will be back online in approximately 30 minutes"
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Grace-Period**: 5 Sekunden nach Message, dann Force-Disconnect
+- **UI-Message**: Client zeigt Shutdown-Screen
+- **Auto-Reconnect**: Client kann Auto-Reconnect nach ExpectedRestartTime versuchen
 
 ---
 
 ## VersionMismatch (915)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Einmalig (bei Login)  
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client-Version passt nicht.
+Client-Version ist inkompatibel mit Server. Connection wird abgelehnt.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Version-Check
+- Required-Version
+- Download-URL
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Auto-Update → Client-Feature
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| ClientVersion | string | Erkannte Client-Version | Ja |
+| RequiredVersion | string | Benötigte Version | Ja |
+| DownloadUrl | string | URL für Update | Nein |
+| Message | string | Info-Text | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new VersionMismatch
+var versionMismatch = new VersionMismatch
 {
     Type = MessageType.VersionMismatch,
-    // Felder hier
+    ClientVersion = "0.2.0",
+    RequiredVersion = "0.3.0",
+    DownloadUrl = "https://2dmmo.com/download",
+    Message = "Your client is outdated. Please update to version 0.3.0."
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Connection-Denied**: Client kann nicht connecten
+- **UI-Dialog**: Client zeigt Update-Required-Dialog
+- **Auto-Redirect**: Optional zu Download-URL
 
 ---
 
@@ -546,366 +642,383 @@ var message = new VersionMismatch
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
 **Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** 👑 Admin
 
 ### Beschreibung
-Account wurde gebannt.
+Account ist gebannt. Connection wird permanent abgelehnt.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Ban-Grund
+- Ban-Duration (Permanent oder Temp)
+- Ban-Expiry (falls Temp-Ban)
+- Appeal-URL
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Kick (Temp) → verwende `KickNotification` (912)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Reason | string | Ban-Grund | Ja |
+| IsPermanent | bool | Permanent-Ban? | Ja |
+| ExpiryTime | long | Unix Timestamp (Ban-Ende, falls Temp) | Nein |
+| AppealUrl | string | URL für Ban-Appeal | Nein |
+| Message | string | Zusätzliche Info | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new BanNotification
+// Permanent-Ban
+var permBan = new BanNotification
 {
     Type = MessageType.BanNotification,
-    // Felder hier
+    Reason = "Cheating / Use of third-party tools",
+    IsPermanent = true,
+    AppealUrl = "https://2dmmo.com/ban-appeal",
+    Message = "If you believe this is a mistake, please submit an appeal."
+};
+
+// Temp-Ban
+var tempBan = new BanNotification
+{
+    Type = MessageType.BanNotification,
+    Reason = "Toxic behavior in chat",
+    IsPermanent = false,
+    ExpiryTime = DateTimeOffset.UtcNow.AddDays(7).ToUnixTimeSeconds(),
+    Message = "Your ban will expire in 7 days."
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Connection-Denied**: Account kann nicht connecten
+- **UI-Dialog**: Client zeigt Ban-Screen mit Details
+- **Appeal**: Link zu Appeal-System falls verfügbar
 
 ---
 
 ## RateLimitWarning (917)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
+**Frequenz:** Häufig (bei Violations)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client sendet zu viele Requests.
+Client sendet zu viele Requests. Rate-Limiting aktiv. Warnung vor Auto-Kick.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Rate-Limit-Violation
+- Cooldown-Time
+- Violation-Count
+- Auto-Kick-Threshold
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Chat-Spam → verwende `ChatSpamWarning` (430)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| LimitType | string | "message", "action", "login", "movement" | Ja |
+| ViolationCount | int | Anzahl Violations | Ja |
+| CooldownSeconds | int | Sekunden warten | Ja |
+| ThresholdUntilKick | int | Noch erlaubte Violations bis Kick | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new RateLimitWarning
+var rateLimitWarn = new RateLimitWarning
 {
     Type = MessageType.RateLimitWarning,
-    // Felder hier
+    LimitType = "action",
+    ViolationCount = 2,
+    CooldownSeconds = 5,
+    ThresholdUntilKick = 1 // Noch 1 Violation erlaubt
 };
 ```
 
+### Rate-Limits
+| Type | Limit | Window | Kick-Threshold |
+|------|-------|--------|----------------|
+| Movement | 25/s | 1s | 5 Violations |
+| Action | 10/s | 1s | 3 Violations |
+| Chat | Siehe ChatSpamWarning | - | - |
+| Login | 3/min | 1min | 5 Violations |
+
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Auto-Throttle**: Client sollte Requests reduzieren
+- **Warning-UI**: Client zeigt Throttle-Warning
+- **Auto-Kick**: Bei Threshold wird Client gekickt
 
 ---
 
 ## ServerStatus (918)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Selten (auf Request)  
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server-Status (Player-Count, Uptime).
+Server-Status-Informationen (Player-Count, Uptime, Version).
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Online-Player-Count
+- Server-Uptime
+- Server-Version
+- Server-Name
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Detaillierte Stats → Admin-Only
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| ServerName | string | Server-Name | Ja |
+| ServerVersion | string | Server-Version | Ja |
+| PlayerCount | int | Aktuell online Spieler | Ja |
+| MaxPlayers | int | Max Kapazität | Ja |
+| UptimeSeconds | long | Uptime in Sekunden | Ja |
+| Timestamp | long | Server-Timestamp | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerStatus
+var serverStatus = new ServerStatus
 {
     Type = MessageType.ServerStatus,
-    // Felder hier
+    ServerName = "2DMMO - EU Central",
+    ServerVersion = "0.3.0",
+    PlayerCount = 487,
+    MaxPlayers = 1000,
+    UptimeSeconds = 86400, // 1 Tag
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Server-Select-Screen**: Anzeige im UI
+- **Capacity-Indicator**: (487/1000) → 48.7% full
 
 ---
 
 ## ServerMOTD (919)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
+**Frequenz:** Einmalig (bei Login)  
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Message of the Day.
+Message-of-the-Day beim Login. Wichtige Infos, Events, Updates.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Server-MOTD
+- HTML-Formatting (optional)
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Channel-MOTD → verwende `ChatMOTD` (428)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Title | string | MOTD-Title | Ja |
+| Message | string | MOTD-Content | Ja |
+| IsHtml | bool | HTML-Formatting? | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerMOTD
+var motd = new ServerMOTD
 {
     Type = MessageType.ServerMOTD,
-    // Felder hier
+    Title = "Welcome to 2DMMO!",
+    Message = "New patch 0.3.0 is live!\n\n- New dungeon: Darkwood Crypt\n- Level cap increased to 20\n- New PvP arena\n\nHave fun!",
+    IsHtml = false
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **UI-Dialog**: Client zeigt MOTD-Dialog beim Login
+- **Cache**: Client kann MOTD cachen (Check täglich)
 
 ---
 
 ## ServerTime (920)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
+**Frequenz:** Häufig (auf Request oder alle 60s)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server-Zeit Sync.
+Server-Zeit-Synchronisation. Client kann Clock-Offset berechnen.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Präziser Server-Timestamp
+- Time-Sync
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Game-Time (Day/Night-Cycle) → Phase 2
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| ServerTime | long | Unix Timestamp (Millisekunden) | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerTime
+var serverTime = new ServerTime
 {
     Type = MessageType.ServerTime,
-    // Felder hier
+    ServerTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Clock-Sync**: Client berechnet Offset: `Offset = ServerTime - ClientTime + RTT/2`
+- **Importance**: Für Timestamp-Based-Events (Cooldowns, Buffs, etc.)
 
 ---
 
 ## ServerConfig (921)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Einmalig  
-**Authentifizierung:** Nein  
+**Frequenz:** Einmalig (bei Login)  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server-Config (Tick-Rate, Limits).
+Server-Configuration für Client. Limits, Rates, Features.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Tick-Rate
+- Max-Speed
+- Rate-Limits
+- Feature-Flags
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Sensitive-Config (DB-Connection, etc.) → nicht senden
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| TickRate | int | Server-Tick-Rate (Hz) | Ja |
+| MaxSpeed | float | Max Movement-Speed | Ja |
+| MaxPlayers | int | Max Spieler pro Zone | Ja |
+| Features | Dictionary<string, bool> | Feature-Toggles | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ServerConfig
+var serverConfig = new ServerConfig
 {
     Type = MessageType.ServerConfig,
-    // Felder hier
+    TickRate = 25,
+    MaxSpeed = 7.0f,
+    MaxPlayers = 100,
+    Features = new Dictionary<string, bool>
+    {
+        { "PvP", true },
+        { "Trading", false },
+        { "Guilds", true },
+        { "Mounts", false }
+    }
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Client-Adaptation**: Client passt Verhalten an Server-Config an
+- **Feature-Toggles**: Dynamische Feature-Aktivierung
 
 ---
 
 ## ClientConfig (922)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Einmalig  
+**Frequenz:** Einmalig (bei Login)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client-Config (Graphics, Settings).
+Client sendet Configuration an Server (Graphics-Settings, Input-Mode, etc.). Server kann Settings speichern.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Graphics-Settings
+- Input-Mode
+- Keybindings (optional)
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Sensitive-Data → nicht senden
 
-### Request/Response Payload
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| GraphicsQuality | string | "low", "medium", "high", "ultra" | Ja |
+| Resolution | string | "1920x1080", etc. | Ja |
+| InputMode | string | "keyboard_mouse", "gamepad" | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new ClientConfig
+var clientConfig = new ClientConfig
 {
     Type = MessageType.ClientConfig,
-    // Felder hier
+    GraphicsQuality = "high",
+    Resolution = "1920x1080",
+    InputMode = "keyboard_mouse"
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Persistence**: Server speichert Settings (Cloud-Sync)
+- **Multi-Device**: Settings sync über Devices
 
 ---
 
 ## FeatureToggle (923)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Frequenz:** Selten (bei Feature-Change)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Server
 
 ### Beschreibung
-Feature An/Aus (A/B Testing).
+Dynamisches An/Ausschalten von Features (A/B-Testing, Rollout, Emergency-Disable).
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Feature-Name
+- Enabled/Disabled
+- Reason (optional)
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Static-Config → verwende `ServerConfig` (921)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| FeatureName | string | Feature-Identifier | Ja |
+| Enabled | bool | Feature an/aus | Ja |
+| Reason | string | Optional Grund | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new FeatureToggle
+// Enable Feature
+var enablePvP = new FeatureToggle
 {
     Type = MessageType.FeatureToggle,
-    // Felder hier
+    FeatureName = "PvP",
+    Enabled = true,
+    Reason = "PvP season started"
+};
+
+// Disable Feature (Emergency)
+var disableTrading = new FeatureToggle
+{
+    Type = MessageType.FeatureToggle,
+    FeatureName = "Trading",
+    Enabled = false,
+    Reason = "Emergency maintenance: dupe bug fix"
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Hot-Toggle**: Ohne Server-Restart
+- **A/B-Testing**: Verschiedene Features für verschiedene Spieler
+- **Emergency-Disable**: Schnell Features deaktivieren bei Bugs
 
 ---
 
@@ -913,45 +1026,43 @@ var message = new FeatureToggle
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Anti-Cheat hat verdächtige Aktivität erkannt.
+Anti-Cheat-System hat verdächtige Aktivität erkannt. Warnung an Spieler.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Warning-Type
+- Detection-Details (vague)
+- Violation-Count
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Detailed-Detection → Security-Risk
+- Auto-Kick → verwende `AntiCheatKick` (925)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| WarningType | string | "speed_anomaly", "position_anomaly", "action_anomaly" | Ja |
+| ViolationCount | int | Anzahl Detections | Ja |
+| Message | string | Warning-Text | Ja |
 
 ### Beispiel Payload
 ```csharp
-var message = new AntiCheatWarning
+var antiCheatWarn = new AntiCheatWarning
 {
     Type = MessageType.AntiCheatWarning,
-    // Felder hier
+    WarningType = "speed_anomaly",
+    ViolationCount = 1,
+    Message = "Unusual movement detected. Please ensure you're not using any third-party tools."
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **First-Warning**: Bei erstem Verdacht
+- **False-Positive**: Kann passieren bei Lag
+- **Threshold**: 3 Warnings → Auto-Kick
 
 ---
 
@@ -963,44 +1074,43 @@ var message = new AntiCheatWarning
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Anti-Cheat Kick.
+Anti-Cheat-System kicked Spieler. Connection wird geschlossen.
 
 ### Im Scope ✅
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Kick-Grund
+- Detection-Type
+- Appeal-Info
 
 ### Nicht im Scope ❌
-- [Zu dokumentieren basierend auf konkreter Implementierung]
+- Permanent-Ban → verwende `BanNotification` (916)
 
-### Request/Response Payload
+### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| [Felder basierend auf Implementation] | type | Beschreibung | Ja/Nein |
-
-### Erwartete Response
-- **Bei Erfolg:** [Response Message]
-- **Bei Fehler:** `ErrorMessage` (910)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| [Related] | ID | Beschreibung |
+| Reason | string | Kick-Grund | Ja |
+| DetectionType | string | Type der Detection | Ja |
+| CanReconnect | bool | Reconnect erlaubt? | Ja |
+| AppealUrl | string | URL für Appeal | Nein |
 
 ### Beispiel Payload
 ```csharp
-var message = new AntiCheatKick
+var antiCheatKick = new AntiCheatKick
 {
     Type = MessageType.AntiCheatKick,
-    // Felder hier
+    Reason = "Cheating detected: Speed hack",
+    DetectionType = "speed_hack",
+    CanReconnect = false,
+    AppealUrl = "https://2dmmo.com/anticheat-appeal"
 };
 ```
 
 ### Notizen
-- [Implementierungs-Hinweise]
-- [Edge Cases]
-- [Performance-Überlegungen]
+- **Auto-Disconnect**: Connection sofort geschlossen
+- **Review**: Alle Anti-Cheat-Kicks werden manuell reviewed
+- **False-Positive**: Appeal-System für Fehler-Fälle
+- **Escalation**: Wiederholte Kicks → Permanent-Ban
 
 ---
-
 
 **Letzte Aktualisierung**: 2025-12-17  
 **Version**: 1.0.0
