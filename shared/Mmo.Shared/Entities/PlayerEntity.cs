@@ -8,7 +8,7 @@ using Mmo.Shared.Records;
 namespace Mmo.Shared.Entities;
 
 /// <summary>
-///     Spieler-Charakter Entity.
+///     Represents a player character entity in the game world.
 /// </summary>
 [MessagePackObject]
 public class PlayerEntity : CombatEntity, ICharacterEntity
