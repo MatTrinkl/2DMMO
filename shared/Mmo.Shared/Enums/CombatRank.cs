@@ -1,15 +1,42 @@
 namespace Mmo.Shared.Enums;
 
 /// <summary>
-///     Kampfstärke einer Entity (beeinflusst HP, Damage, XP, Loot).
+///     Represents the combat strength of an entity (affects HP, damage, XP, loot).
 /// </summary>
 public enum CombatRank : byte
 {
-    Trivial = 0, // Keine XP, keine Bedrohung (Critter, graue Mobs)
-    Normal = 1, // Standard
-    Elite = 2, // ~3x HP/Damage
-    Rare = 3, // Selten, besserer Loot
-    RareElite = 4, // Selten + Elite
-    Boss = 5, // Dungeon-Boss
-    WorldBoss = 6 // Raid/World-Boss
+    /// <summary>
+    ///     Trivial enemy (no XP, no threat - critters, grey mobs).
+    /// </summary>
+    Trivial = 0,
+
+    /// <summary>
+    ///     Normal enemy (standard difficulty).
+    /// </summary>
+    Normal = 1,
+
+    /// <summary>
+    ///     Elite enemy (~3x HP/Damage).
+    /// </summary>
+    Elite = 2,
+
+    /// <summary>
+    ///     Rare enemy (uncommon spawn, better loot).
+    /// </summary>
+    Rare = 3,
+
+    /// <summary>
+    ///     Rare elite enemy (rare + elite bonuses).
+    /// </summary>
+    RareElite = 4,
+
+    /// <summary>
+    ///     Dungeon boss.
+    /// </summary>
+    Boss = 5,
+
+    /// <summary>
+    ///     World/raid boss.
+    /// </summary>
+    WorldBoss = 6
 }

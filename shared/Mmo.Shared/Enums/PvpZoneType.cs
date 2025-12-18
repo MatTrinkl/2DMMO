@@ -1,37 +1,37 @@
 namespace Mmo.Shared.Enums;
 
 /// <summary>
-///     PvP-Regeln einer Zone.
+///     Represents the PvP rules of a zone.
 /// </summary>
 public enum PvpZoneType : byte
 {
     /// <summary>
-    ///     Sicheres Gebiet - kein PvP möglich (Städte, Startgebiete).
+    ///     Safe area - no PvP possible (cities, starting zones).
     /// </summary>
     Sanctuary = 0,
 
     /// <summary>
-    ///     PvP nur wenn beide Spieler geflaggt sind.
+    ///     PvP only when both players are flagged.
     /// </summary>
     Normal = 1,
 
     /// <summary>
-    ///     Freies PvP - jeder kann jeden angreifen.
+    ///     Free-for-all PvP - anyone can attack anyone.
     /// </summary>
     FreeForAll = 2,
 
     /// <summary>
-    ///     Fraktions-PvP - automatisch geflaggt gegen andere Fraktion.
+    ///     Faction PvP - automatically flagged against opposing faction.
     /// </summary>
     FactionWarfare = 3,
 
     /// <summary>
-    ///     Arena/Battleground - organisiertes PvP.
+    ///     Arena/Battleground - organized PvP.
     /// </summary>
     Arena = 4,
 
     /// <summary>
-    ///     Contested Zone - PvP-Flag wird automatisch aktiviert.
+    ///     Contested zone - PvP flag is automatically activated.
     /// </summary>
     Contested = 5
 }
