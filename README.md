@@ -2,32 +2,32 @@
 
 ![CI](https://github.com/MatTrinkl/2DMMO/actions/workflows/ci.yml/badge.svg)
 
-Ein 2D Top-Down MMO in einer High-Fantasy-Welt, entwickelt mit Godot 4 (C#) als Client und .NET 10 als Server.
+A 2D top-down MMO in a high-fantasy world, developed with Godot 4 (C#) as client and .NET 10 as server.
 
-> *Inspiriert von Klassikern wie World of Warcraft und Guild Wars – im charmanten Pixel-Art-Stil.*
+> *Inspired by classics like World of Warcraft and Guild Wars – in charming pixel art style.*
 
-## 🎯 Projektziel
+## 🎯 Project Goal
 
-Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
-- Echtzeit-Spielerbewegung & Synchronisation
-- Klassisches MMO-Gameplay (Tank/Healer/DPS)
-- Vielfältige Rassen und Klassen
-- Persistente Spielwelt
-- Zone-basiertes Sharding für unbegrenzte Spielerzahlen
+Creation of a scalable online multiplayer game with:
+- Real-time player movement & synchronization
+- Classic MMO gameplay (Tank/Healer/DPS)
+- Diverse races and classes
+- Persistent game world
+- Zone-based sharding for unlimited player counts
 
-## 📚 Dokumentation
+## 📚 Documentation
 
-> **Hinweis:** Die Dokumentation wurde neu strukturiert. Siehe [docs/README.md](docs/README.md) für die vollständige Übersicht.
+> **Note:** The documentation has been restructured. See [docs/README.md](docs/README.md) for the complete overview.
 
-### Schnellzugriff
+### Quick Access
 
-| Dokument | Beschreibung |
+| Document | Description |
 |----------|--------------|
-| [📚 Dokumentations-Index](docs/README.md) | Zentrale Übersicht aller Dokumente |
-| [🎮 Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay, Rassen, Klassen, Systeme |
-| [🏗️ Architektur](docs/02-architecture/README.md) | Technische Architektur, Netzwerk, Datenbank |
-| [🛠️ Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen |
-| [🎯 Prototyp-Scope](docs/01-overview/PROTOTYPE_SCOPE.md) | Was der Prototyp können muss |
+| [📚 Documentation Index](docs/README.md) | Central overview of all documents |
+| [🎮 Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay, races, classes, systems |
+| [🏗️ Architecture](docs/02-architecture/README.md) | Technical architecture, network, database |
+| [🛠️ Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) | Detailed technical decisions |
+| [🎯 Prototype Scope](docs/01-overview/PROTOTYPE_SCOPE.md) | What the prototype must be able to do |
 
 ## 🛠️ Tech-Stack
 
@@ -35,159 +35,159 @@ Erstellung eines skalierbaren Online-Multiplayer-Spiels mit:
 |-----------|-------------|---------|-------|
 | **Client** | Godot Engine (.NET Edition) | 4.3 | [Docs](https://docs.godotengine.org/) |
 | **Server** | .NET | 10 | [Docs](https://learn.microsoft.com/en-us/dotnet/) |
-| **Sprache** | C# | 14 | [Docs](https://learn.microsoft.com/en-us/dotnet/csharp/) |
+| **Language** | C# | 14 | [Docs](https://learn.microsoft.com/en-us/dotnet/csharp/) |
 | **Transport** | TCP + TLS | - | - |
-| **Serialisierung** | MessagePack | Latest | [GitHub](https://github.com/MessagePack-CSharp/MessagePack-CSharp) |
+| **Serialization** | MessagePack | Latest | [GitHub](https://github.com/MessagePack-CSharp/MessagePack-CSharp) |
 | **Cache** | Redis | 7+ | [Docs](https://redis.io/docs/) |
-| **Datenbank** | PostgreSQL | 16+ | [Docs](https://www.postgresql.org/docs/) |
+| **Database** | PostgreSQL | 16+ | [Docs](https://www.postgresql.org/docs/) |
 | **Cloud** | Microsoft Azure | - | [Docs](https://learn.microsoft.com/en-us/azure/) |
 | **Logging** | Grafana Cloud | - | [Docs](https://grafana.com/docs/grafana-cloud/) |
 
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```
 2DMMO/
 ├── client/                     # Godot Client
 │   └── GodotProject/
-│       ├── project.godot       # Godot Projektdatei
+│       ├── project.godot       # Godot project file
 │       ├── GodotProject.csproj
 │       ├── assets/             # Game Assets
-│       │   ├── sprites/        # 2D Sprites (64x64 Pixel Art)
-│       │   ├── audio/          # Sound-Effekte und Musik
-│       │   ├── fonts/          # Schriftarten
-│       │   ├── ui/             # UI-Elemente
-│       │   └── shaders/        # Shader-Dateien
-│       ├── scenes/             # Godot Szenen (.tscn)
+│       │   ├── sprites/        # 2D Sprites (64x64 pixel art)
+│       │   ├── audio/          # Sound effects and music
+│       │   ├── fonts/          # Fonts
+│       │   ├── ui/             # UI elements
+│       │   └── shaders/        # Shader files
+│       ├── scenes/             # Godot scenes (.tscn)
 │       └── scripts/            # C# Scripts
-│           └── Networking/     # Client-side Networking
+│           └── Networking/     # Client-side networking
 ├── server/                     # .NET Server
 │   └── Mmo.Server/
 │       ├── Mmo.Server.csproj
 │       ├── Program.cs
-│       ├── Networking/         # TCP Server, Connection Handling
-│       ├── GameLoop/           # 25Hz Game Loop
-│       └── Zones/              # Zone Management
-├── shared/                     # Shared Code Library
+│       ├── Networking/         # TCP Server, connection handling
+│       ├── GameLoop/           # 25Hz game loop
+│       └── Zones/              # Zone management
+├── shared/                     # Shared code library
 │   └── Mmo.Shared/
 │       ├── Mmo.Shared.csproj
-│       ├── Messages/           # Network Messages (MessagePack)
-│       ├── Enums/              # Shared Enums
-│       └── Constants/          # Shared Constants
-├── tests/                      # Unit & Integration Tests
+│       ├── Messages/           # Network messages (MessagePack)
+│       ├── Enums/              # Shared enums
+│       └── Constants/          # Shared constants
+├── tests/                      # Unit & integration tests
 │   ├── Mmo.Shared.Tests/
 │   └── Mmo.Server.Tests/
-├── docs/                       # Dokumentation
-│   ├── README.md               # Dokumentations-Index
-│   ├── 01-overview/            # High-level Projektinformationen
+├── docs/                       # Documentation
+│   ├── README.md               # Documentation index
+│   ├── 01-overview/            # High-level project information
 │   │   ├── GAME_DESIGN_DOCUMENT.md
 │   │   ├── PROTOTYPE_SCOPE.md
 │   │   └── ASSETS.md
-│   ├── 02-architecture/        # Technische Architektur
-│   │   ├── README.md           # Architektur-Übersicht
+│   ├── 02-architecture/        # Technical architecture
+│   │   ├── README.md           # Architecture overview
 │   │   ├── SERVER_COMPONENTS.md
 │   │   ├── NETWORK_PROTOCOL.md
-│   │   └── ...                 # weitere Architektur-Dokumente
-│   ├── 03-technical-details/   # Implementierungs-Details
+│   │   └── ...                 # More architecture documents
+│   ├── 03-technical-details/   # Implementation details
 │   │   └── TECHNICAL_DESIGN.md
-│   └── 04-project-management/  # Issue-Tracking & Planung
+│   └── 04-project-management/  # Issue tracking & planning
 │       ├── ISSUE_HIERARCHY.md
 │       └── ISSUES_ROADMAP.md
 ├── Mmo.sln                     # .NET Solution
 └── .github/workflows/          # CI/CD Pipelines
 ```
 
-## 🚀 Schnellstart
+## 🚀 Quick Start
 
-### Voraussetzungen
+### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Godot 4.3 .NET Edition](https://godotengine.org/download)
-- (Optional) [Redis](https://redis.io/) für Caching
-- (Optional) [PostgreSQL](https://www.postgresql.org/) für Persistenz
+- (Optional) [Redis](https://redis.io/) for caching
+- (Optional) [PostgreSQL](https://www.postgresql.org/) for persistence
 
-### Server starten
+### Start Server
 
 ```bash
-# Repository klonen
+# Clone repository
 git clone https://github.com/MatTrinkl/2DMMO.git
 cd 2DMMO
 
-# Abhängigkeiten wiederherstellen
+# Restore dependencies
 dotnet restore
 
-# Server bauen und starten
+# Build and start server
 dotnet run --project server/Mmo.Server
 ```
 
-### Client starten
+### Start Client
 
-1. Godot 4.3 (.NET Edition) öffnen
-2. Projekt importieren: `client/GodotProject/project.godot`
-3. Build: `Projekt > Build` (oder Ctrl+Shift+B)
-4. Play: F5 oder Play-Button
+1. Open Godot 4.3 (.NET Edition)
+2. Import project: `client/GodotProject/project.godot`
+3. Build: `Project > Build` (or Ctrl+Shift+B)
+4. Play: F5 or Play button
 
-### Tests ausführen
+### Run Tests
 
 ```bash
-# Alle Tests ausführen
+# Run all tests
 dotnet test
 
-# Mit detaillierter Ausgabe
+# With detailed output
 dotnet test --verbosity normal
 ```
 
-## 🔧 Entwicklung
+## 🔧 Development
 
 ### Build
 
 ```bash
-# Debug-Build
+# Debug build
 dotnet build Mmo.sln
 
-# Release-Build
+# Release build
 dotnet build Mmo.sln -c Release
 ```
 
-### Code-Qualität
+### Code Quality
 
 ```bash
-# Code formatieren
+# Format code
 dotnet format
 
-# Code-Analyse
+# Code analysis
 dotnet build -warnaserror
 ```
 
-## 🎮 Aktueller Status
+## 🎮 Current Status
 
-### Phase 1: Prototyp (Aktuell)
+### Phase 1: Prototype (Current)
 
-**Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen
+**Goal:** Two players connect, see each other, can move
 
-- [x] Projekt-Struktur aufsetzen
-- [x] Dokumentation (GDD, Architektur, Technical Design)
-- [ ] TCP Server mit MessagePack
-- [ ] Client-Server Verbindung
-- [ ] Spieler-Bewegung synchronisieren
-- [ ] Einfache Tilemap-Welt
-- [ ] Basis-Chat
+- [x] Set up project structure
+- [x] Documentation (GDD, architecture, technical design)
+- [ ] TCP server with MessagePack
+- [ ] Client-server connection
+- [ ] Synchronize player movement
+- [ ] Simple tilemap world
+- [ ] Basic chat
 
-Siehe [PROTOTYPE_SCOPE.md](docs/01-overview/PROTOTYPE_SCOPE.md) für Details.
+See [PROTOTYPE_SCOPE.md](docs/01-overview/PROTOTYPE_SCOPE.md) for details.
 
 ## 🧪 CI/CD
 
 GitHub Actions Pipeline:
-- ✅ Build-Verifikation
-- ✅ Unit Tests (parallel)
-- ✅ Integration Tests (parallel)
-- ✅ Code-Formatierung
+- ✅ Build verification
+- ✅ Unit tests (parallel)
+- ✅ Integration tests (parallel)
+- ✅ Code formatting
 
-## 🔗 Nützliche Links
+## 🔗 Useful Links
 
-### Entwicklung
-- [.NET Dokumentation](https://learn.microsoft.com/en-us/dotnet/)
-- [Godot 4 Dokumentation](https://docs.godotengine.org/en/stable/)
-- [Godot C# Dokumentation](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html)
+### Development
+- [.NET Documentation](https://learn.microsoft.com/en-us/dotnet/)
+- [Godot 4 Documentation](https://docs.godotengine.org/en/stable/)
+- [Godot C# Documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/index.html)
 - [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
 
 ### Networking
@@ -209,18 +209,18 @@ GitHub Actions Pipeline:
 - [OpenGameArt](https://opengameart.org/)
 - [itch.io Free Assets](https://itch.io/game-assets/free)
 
-## 📋 Issue-Tracking
+## 📋 Issue Tracking
 
-Siehe [Issues](https://github.com/MatTrinkl/2DMMO/issues) für aktuelle Aufgaben.
+See [Issues](https://github.com/MatTrinkl/2DMMO/issues) for current tasks.
 
-## 📄 Lizenz
+## 📄 License
 
-Dieses Projekt ist privat und nicht für die öffentliche Nutzung freigegeben.
+This project is private and not released for public use.
 
-## 📞 Kontakt
+## 📞 Contact
 
 - GitHub: [@MatTrinkl](https://github.com/MatTrinkl)
 
 ---
 
-*Entwickelt mit ❤️ und viel Kaffee*
+*Developed with ❤️ and lots of coffee*
