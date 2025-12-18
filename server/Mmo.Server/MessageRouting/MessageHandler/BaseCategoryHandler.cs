@@ -1,8 +1,9 @@
+using Mmo.Server.Handlers.Base;
 using Mmo.Server.Networking;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
-namespace Mmo.Server.Handlers.Base;
+namespace Mmo.Server.MessageRouting.MessageHandler;
 
 /// <summary>
 ///     Basisklasse für alle Category-Handler.

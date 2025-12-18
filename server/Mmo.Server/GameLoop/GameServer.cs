@@ -5,6 +5,7 @@ using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Networking;
 using Mmo.Server.Zones;
+using Mmo.Shared;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
@@ -32,7 +33,7 @@ public class GameServer : IDisposable
     // ═══════════════════════════════════════════════════════════════
     // CONSTANTS
     // ═══════════════════════════════════════════════════════════════
-    
+
     private const float _heartbeatInterval = 5.0f;
     private const float _deadConnectionCheckInterval = 10.0f;
     private static readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(30);
@@ -46,7 +47,7 @@ public class GameServer : IDisposable
     private readonly NetworkServer _networkServer;
     private readonly IServiceProvider _services;
     private readonly ZoneManager _zoneManager;
-    
+
     /// <summary>
     ///     Incoming messages from clients.
     ///     Populated by NetworkServer event, processed in ProcessInputQueue().
@@ -58,7 +59,7 @@ public class GameServer : IDisposable
     ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
     /// </summary>
     private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
-    
+
     /// <summary>
     ///     Callbacks from completed async tasks.
     ///     Populated by ctx.RunAsync(), processed in ProcessCompletionQueue().
@@ -72,7 +73,7 @@ public class GameServer : IDisposable
     private readonly ConcurrentQueue<(Guid ConnectionId, string? Reason)> _disconnectQueue = new();
 
     private readonly CancellationTokenSource _cts = new();
-    
+
     private float _deadConnectionTimer;
     private bool _disposed;
     private Thread? _gameLoopThread;
@@ -84,7 +85,7 @@ public class GameServer : IDisposable
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Target tick rate (ticks per second).</summary>
-    public int TargetTickRate { get; set; } = 20;
+    public int TargetTickRate { get; set; } = SharedConstants.TickRate;
 
     /// <summary>Target tick time in milliseconds.</summary>
     private double TargetTickTimeMs => 1000.0 / TargetTickRate;

@@ -60,16 +60,16 @@ public class ServerPlayerCharacter(PlayerEntity entity, ClientConnection connect
     public bool IsAuthenticated => AccountId != null;
 
     /// <summary>The ID of the party (null when character is not in a party).</summary>
-    public Guid? PartyId { get; set; }
+    public Guid? PartyId { get; set; } = null;
 
     /// <summary>The ID of the guild (null when character is not in a guild).</summary>
-    public Guid? GuildId { get; set; }
+    public Guid? GuildId { get; set; } = null;
 
     /// <summary>When true then the Player has set "Do not disturb".</summary>
     public bool IsDnd { get; set; }
 
     /// <summary>When true then the Player is muted.</summary>
-    public bool IsMuted { get; set; }
+    public bool IsMuted { get; set; } = false;
 
     /// <summary>Account-Flags (Premium, GM, etc.).</summary>
     public AccountFlags AccountFlags { get; set; } = AccountFlags.None;

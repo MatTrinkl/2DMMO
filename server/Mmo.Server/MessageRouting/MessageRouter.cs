@@ -9,23 +9,17 @@ namespace Mmo.Server.MessageRouting;
 ///     Routes incoming messages to the appropriate CategoryHandler.
 ///     Uses O(1) array lookup based on MessageCategory.
 /// </summary>
-public sealed class MessageRouter
+public sealed class MessageRouter(ILog log)
 {
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
-    
+
     private readonly ICategoryHandler?[] _handlers = new ICategoryHandler?[50];
-    private readonly ILog _log;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════
-
-    public MessageRouter(ILog log)
-    {
-        _log = log;
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // PUBLIC METHODS
@@ -46,7 +40,7 @@ public sealed class MessageRouter
                 $"Handler for category {handler.Category} already registered.");
 
         _handlers[index] = handler;
-        _log.Debug("Registered handler for category {Category}", handler.Category);
+        log.Debug("Registered handler for category {Category}", handler.Category);
     }
 
     /// <summary>
@@ -65,7 +59,7 @@ public sealed class MessageRouter
 
         if (categoryIndex >= _handlers.Length)
         {
-            _log.Warn("Invalid message category index: {Index} for type {Type}", categoryIndex, type);
+            log.Warn("Invalid message category index: {Index} for type {Type}", categoryIndex, type);
             return;
         }
 
@@ -73,14 +67,14 @@ public sealed class MessageRouter
 
         if (handler == null)
         {
-            _log.Warn("No handler registered for category {Category} (type:  {Type})",
+            log.Warn("No handler registered for category {Category} (type:  {Type})",
                 (MessageCategory)categoryIndex, type);
             return;
         }
 
         if (!handler.CanHandle(type))
         {
-            _log.Warn("Handler {Handler} cannot handle message type {Type}",
+            log.Warn("Handler {Handler} cannot handle message type {Type}",
                 handler.GetType().Name, type);
             return;
         }
@@ -91,7 +85,7 @@ public sealed class MessageRouter
         }
         catch (Exception ex)
         {
-            _log.Error(ex, "Error handling message {Type} in {Handler}",
+            log.Error(ex, "Error handling message {Type} in {Handler}",
                 type, handler.GetType().Name);
 
             ctx.SendError("INTERNAL_ERROR", "An error occurred processing your request.");
