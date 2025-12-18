@@ -6,22 +6,37 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.MessageRouting;
 
 /// <summary>
-///     Routet eingehende Messages an den zuständigen CategoryHandler.
-///     Verwendet O(1) Array-Lookup basierend auf der MessageCategory.
+///     Routes incoming messages to the appropriate CategoryHandler.
+///     Uses O(1) array lookup based on MessageCategory.
 /// </summary>
 public sealed class MessageRouter
 {
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+    
     private readonly ICategoryHandler?[] _handlers = new ICategoryHandler?[50];
     private readonly ILog _log;
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
 
     public MessageRouter(ILog log)
     {
         _log = log;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS
+    // ═══════════════════════════════════════════════════════════════
+
     /// <summary>
-    ///     Registriert einen Handler für seine Kategorie.
+    ///     Registers a handler for its category.
+    ///     Each category can only have one handler.
     /// </summary>
+    /// <param name="handler">The category handler to register.</param>
+    /// <exception cref="InvalidOperationException">If a handler is already registered for this category.</exception>
     public void RegisterHandler(ICategoryHandler handler)
     {
         int index = (int)handler.Category;
@@ -35,12 +50,17 @@ public sealed class MessageRouter
     }
 
     /// <summary>
-    ///     Routet eine Message an den zuständigen Handler.
-    ///     SYNCHRON - kein async/await!
+    ///     Routes a message to the appropriate handler based on its type.
+    ///     SYNCHRONOUS - no async/await!
+    ///     The handler is determined by calculating the category from the message type
+    ///     using integer division (MessageType / 100).
     /// </summary>
+    /// <param name="ctx">The message context containing connection and player information.</param>
+    /// <param name="type">The message type.</param>
+    /// <param name="message">The message to route.</param>
     public void Route(MessageContext ctx, MessageType type, INetworkMessage message)
     {
-        // O(1) Kategorie-Berechnung
+        // O(1) category calculation
         int categoryIndex = (ushort)type / 100;
 
         if (categoryIndex >= _handlers.Length)
