@@ -1,113 +1,92 @@
-using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
-using Moq;
 
 namespace Mmo.Server.Tests.GameServer;
 
 public class GameServerTickTests
 {
     private readonly MockLog _mockLog = new();
-    private readonly Mock<INetworkServer> _mockNetworkServer;
-
-    public GameServerTickTests()
-    {
-        _mockNetworkServer = new Mock<INetworkServer>();
-    }
+    private readonly MockNetworkServer _mockNetworkServer = new();
 
     [Fact]
-    public async Task SlowTick_LogsWarning_WhenTickOverruns()
+    public void SlowTick_LogsWarning_WhenTickOverruns()
     {
-        // Arrange:  Input phase takes longer than tick budget (40ms)
-        var slowDuration = TimeSpan.FromMilliseconds(60);
-        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, slowDuration);
-        using var cts = new CancellationTokenSource();
+        // Arrange: Tick takes longer than tick budget (50ms at 20Hz)
+        var slowDuration = TimeSpan.FromMilliseconds(80);
+        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, slowDuration);
 
-        // Run for enough time to get at least 2 slow ticks
-        cts.CancelAfter(TimeSpan.FromMilliseconds(250));
+        // Act: Run for enough time to get at least 2 slow ticks
+        gameServer.Start();
+        Thread.Sleep(250);
+        gameServer.Stop();
 
-        // Act
-        await gameServer.StartServerAsync(cts.Token);
-
-        // Assert:  Should have logged a warning about tick overrun
+        // Assert: Should have logged a warning about tick overrun
         Assert.True(
-            _mockLog.HasMessageContaining("WARN", "overrun"),
-            $"Expected overrun warning.  Messages: {string.Join(Environment.NewLine, _mockLog.Messages)}"
+            _mockLog.HasMessageContaining("WARN", "took"),
+            $"Expected overrun warning. Messages: {string.Join(Environment.NewLine, _mockLog.Messages)}"
         );
     }
 
     [Fact]
-    public async Task NormalTick_NoWarning_WhenWithinBudget()
+    public void NormalTick_NoWarning_WhenWithinBudget()
     {
-        // Arrange: Input phase is fast (well within 40ms budget)
+        // Arrange: Tick is fast (well within 50ms budget at 20Hz)
         var fastDuration = TimeSpan.FromMilliseconds(5);
-        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, fastDuration);
-        using var cts = new CancellationTokenSource();
+        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, fastDuration);
 
-        // Run for ~3-4 ticks then cancel (increased to 300ms for CI stability)
-        cts.CancelAfter(TimeSpan.FromMilliseconds(300));
-
-        // Act
-        await gameServer.StartServerAsync(cts.Token);
+        // Act: Run for ~3-4 ticks then stop
+        gameServer.Start();
+        Thread.Sleep(300);
+        gameServer.Stop();
 
         // Assert: Should NOT have logged any warnings about overrun
         Assert.False(
-            _mockLog.HasMessageContaining("WARN", "overrun"),
+            _mockLog.HasMessageContaining("WARN", "took"),
             $"Unexpected overrun warning. Messages: {string.Join(Environment.NewLine, _mockLog.Messages)}"
         );
     }
 
     [Fact]
-    public async Task SlowTick_StillIncrementsTick_EvenWhenOverrun()
+    public void SlowTick_StillIncrementsTick_EvenWhenOverrun()
     {
         // Arrange
-        var slowDuration = TimeSpan.FromMilliseconds(50);
-        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, slowDuration);
-        using var cts = new CancellationTokenSource();
+        var slowDuration = TimeSpan.FromMilliseconds(70);
+        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, slowDuration);
 
-        // Run for ~3 slow ticks (3 x 50ms = 150ms, plus some buffer)
-        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
+        // Act: Run for ~3 slow ticks (3 x 70ms = 210ms, plus some buffer)
+        gameServer.Start();
+        Thread.Sleep(250);
+        gameServer.Stop();
 
-        // Act
-        await gameServer.StartServerAsync(cts.Token);
-
-        // Assert:  Ticks should still have been processed
+        // Assert: Ticks should still have been processed
         Assert.True(
-            gameServer.CurrentTick >= 2,
-            $"Expected at least 2 ticks, got {gameServer.CurrentTick}"
+            gameServer.TickCount >= 2,
+            $"Expected at least 2 ticks, got {gameServer.TickCount}"
         );
     }
 
     [Fact]
-    public async Task GameServer_StartsAndStops_Gracefully()
+    public void GameServer_StartsAndStops_Gracefully()
     {
         // Arrange
-        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, TimeSpan.FromMilliseconds(1));
-        using var cts = new CancellationTokenSource();
+        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, TimeSpan.FromMilliseconds(1));
 
-        // Act
-        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+        // Act: Start and stop
+        gameServer.Start();
+        Thread.Sleep(100);
+        gameServer.Stop();
 
-        // Should not throw
-        Exception? exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
-
-        // Assert
-        Assert.Null(exception);
-        Assert.False(gameServer.IsRunning);
+        // Assert: Should have processed some ticks
+        Assert.True(gameServer.TickCount > 0);
     }
 
     [Fact]
-    public async Task GameServer_CancelledImmediately_DoesNotThrow()
+    public void GameServer_StopWithoutStart_DoesNotThrow()
     {
         // Arrange
-        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer.Object, TimeSpan.Zero);
-        using var cts = new CancellationTokenSource();
-        cts.Cancel(); // Cancel immediately
+        var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, TimeSpan.Zero);
 
-        // Act
-        Exception? exception = await Record.ExceptionAsync(() => gameServer.StartServerAsync(cts.Token));
-
-        // Assert
+        // Act & Assert: Should not throw
+        var exception = Record.Exception(() => gameServer.Stop());
         Assert.Null(exception);
-        Assert.False(gameServer.IsRunning);
     }
 }
