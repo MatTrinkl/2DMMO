@@ -1,167 +1,167 @@
 # Copilot Code Review Instructions
 
-## Über dieses Dokument
+## About This Document
 
-Diese Anweisungen gelten für Copilot bei Code Reviews in Pull Requests. 
-Copilot soll den Code gegen unsere Projekt-Dokumentation prüfen und Abweichungen melden.
+These instructions apply to Copilot during code reviews in Pull Requests.
+Copilot should review the code against our project documentation and report deviations.
 
-**Relevante Dokumentation:**
-- `docs/02-architecture/README.md` - Technische Architektur
-- `docs/03-technical-details/TECHNICAL_DESIGN.md` - Detaillierte technische Entscheidungen
-- `docs/01-overview/PROTOTYPE_SCOPE.md` - Scope des Prototyps
-- `docs/01-overview/GAME_DESIGN_DOCUMENT.md` - Gameplay-Design
+**Relevant Documentation:**
+- `docs/02-architecture/README.md` - Technical Architecture
+- `docs/03-technical-details/TECHNICAL_DESIGN.md` - Detailed Technical Decisions
+- `docs/01-overview/PROTOTYPE_SCOPE.md` - Prototype Scope
+- `docs/01-overview/GAME_DESIGN_DOCUMENT.md` - Gameplay Design
 
 ---
 
 ## 🔗 Pull Request & Issue Linking
 
-### Issue-Referenz Prüfung
+### Issue Reference Check
 
-Bei JEDEM Pull Request Review:
+For EVERY Pull Request Review:
 
-1. **Prüfe ob Issues verlinkt sind:**
-   - Suche nach `Closes #`, `Fixes #`, `Resolves #` in PR-Beschreibung
-   - Suche nach Issue-Referenzen in Commit Messages
-   - Wenn KEINE Issue-Referenz gefunden:
+1. **Check if issues are linked:**
+   - Search for `Closes #`, `Fixes #`, `Resolves #` in PR description
+   - Search for issue references in commit messages
+   - If NO issue reference found:
    
-   > ❓ **Fehlende Issue-Referenz**
+   > ❓ **Missing Issue Reference**
    > 
-   > Dieser PR referenziert kein Issue. Bitte gib an, welche Issues dieser PR schließt:
-   > - Füge `Closes #XX` zur PR-Beschreibung hinzu
-   > - Oder erkläre, warum kein Issue existiert
+   > This PR does not reference an issue. Please specify which issues this PR closes:
+   > - Add `Closes #XX` to the PR description
+   > - Or explain why no issue exists
    > 
-   > **Offene Issues die relevant sein könnten:**
-   > _(Liste hier passende offene Issues basierend auf dem PR-Inhalt)_
+   > **Open issues that could be relevant:**
+   > _(List relevant open issues based on PR content)_
 
-2. **Prüfe Issue-Vollständigkeit:**
-   - Hole das verlinkte Issue
-   - Prüfe ALLE Aufgaben (Checkboxen `- [ ]`) im Issue
-   - Prüfe ALLE Akzeptanzkriterien im Issue
-   - Vergleiche mit dem Code im PR
+2. **Check issue completeness:**
+   - Fetch the linked issue
+   - Check ALL tasks (checkboxes `- [ ]`) in the issue
+   - Check ALL acceptance criteria in the issue
+   - Compare with the code in the PR
 
-3. **Bei fehlenden Implementierungen:**
+3. **For missing implementations:**
 
-   > ⚠️ **Unvollständige Implementierung**
+   > ⚠️ **Incomplete Implementation**
    > 
-   > Das Issue #XX hat folgende Aufgaben/Akzeptanzkriterien die im PR nicht implementiert sind:
+   > Issue #XX has the following tasks/acceptance criteria that are not implemented in the PR:
    > 
-   > **Fehlende Aufgaben:**
-   > - [ ] Aufgabe 1 aus dem Issue
-   > - [ ] Aufgabe 2 aus dem Issue
+   > **Missing Tasks:**
+   > - [ ] Task 1 from the issue
+   > - [ ] Task 2 from the issue
    > 
-   > **Fehlende Akzeptanzkriterien:**
-   > - [ ] Kriterium 1
-   > - [ ] Kriterium 2
+   > **Missing Acceptance Criteria:**
+   > - [ ] Criterion 1
+   > - [ ] Criterion 2
    > 
-   > **Optionen:**
-   > 1. Implementiere die fehlenden Punkte in diesem PR
-   > 2. Erstelle Follow-up Issues für die offenen Punkte
-   > 3. Erkläre warum diese Punkte nicht mehr relevant sind
+   > **Options:**
+   > 1. Implement the missing points in this PR
+   > 2. Create follow-up issues for the open points
+   > 3. Explain why these points are no longer relevant
 
-### Issue-Checkliste für Reviews
+### Issue Checklist for Reviews
 
-Bei jedem PR mit verlinktem Issue:
+For every PR with linked issue:
 
-- [ ] PR-Beschreibung enthält `Closes #XX` oder ähnlich?
-- [ ] Alle `- [ ]` Aufgaben im Issue sind im Code umgesetzt?
-- [ ] Alle Akzeptanzkriterien im Issue sind erfüllt?
-- [ ] Tests für die Akzeptanzkriterien vorhanden?
-- [ ] Dokumentation aktualisiert (falls im Issue erwähnt)?
+- [ ] PR description contains `Closes #XX` or similar?
+- [ ] All `- [ ]` tasks in the issue are implemented in the code?
+- [ ] All acceptance criteria in the issue are met?
+- [ ] Tests for the acceptance criteria exist?
+- [ ] Documentation updated (if mentioned in the issue)?
 
-### Automatische Issue-Suche
+### Automatic Issue Search
 
-Wenn ein PR kein Issue referenziert, suche nach passenden Issues basierend auf:
-- Dateinamen im PR (z.B. `NetworkManager.cs` → Issues mit "NetworkManager")
-- Ordnerstruktur (z.B. `server/` → Issues mit Label `area:server`)
-- Commit Messages (Keywords)
-- PR-Titel
+If a PR does not reference an issue, search for matching issues based on:
+- Filenames in the PR (e.g., `NetworkManager.cs` → Issues with "NetworkManager")
+- Folder structure (e.g., `server/` → Issues with label `area:server`)
+- Commit messages (keywords)
+- PR title
 
-Schlage dann passende Issues vor:
+Then suggest matching issues:
 
-> 💡 **Mögliche zugehörige Issues:**
+> 💡 **Possible Related Issues:**
 > - #42 - NetworkManager Autoload (Godot Singleton)
-> - #38 - TCP Server mit TcpListener
+> - #38 - TCP Server with TcpListener
 > 
-> Bitte verlinke das passende Issue mit `Closes #XX` in der PR-Beschreibung.
+> Please link the appropriate issue with `Closes #XX` in the PR description.
 
 ---
 
-## 🏗️ Architektur-Konformität
+## 🏗️ Architecture Conformity
 
-### Server-Client-Trennung
-- [ ] Code ist im richtigen Projekt (Server/Client/Shared)?
-- [ ] Shared Library enthält NUR Messages, Enums, Constants, Interfaces
-- [ ] Keine Server-Logik im Client und umgekehrt
-- [ ] Game-Logik gehört auf den Server (authoritative)
+### Server-Client Separation
+- [ ] Code is in the correct project (Server/Client/Shared)?
+- [ ] Shared Library contains ONLY Messages, Enums, Constants, Interfaces
+- [ ] No server logic in client and vice versa
+- [ ] Game logic belongs on the server (authoritative)
 
-### Komponenten-Struktur
-- [ ] Gateway Server: Nur Connection-Handling, Auth, Routing
+### Component Structure
+- [ ] Gateway Server: Only Connection-Handling, Auth, Routing
 - [ ] Zone Server: Game Loop, Validation, Broadcasting
 - [ ] Client: Rendering, Input, Prediction
 
-### Kommunikation
-- [ ] Client kommuniziert nur mit Gateway (nie direkt mit Zone Server)
-- [ ] Cross-Zone Events über Redis Pub/Sub (nicht direkt)
+### Communication
+- [ ] Client communicates only with Gateway (never directly with Zone Server)
+- [ ] Cross-Zone Events via Redis Pub/Sub (not directly)
 
 ---
 
-## 📡 Netzwerk-Protokoll
+## 📡 Network Protocol
 
-### Message-Format
-- [ ] Frame-Format eingehalten: `[1 Byte Type][4 Bytes Length][N Bytes Payload]`
-- [ ] Length ist Little-Endian uint32
-- [ ] Payload ist MessagePack-serialisiert
+### Message Format
+- [ ] Frame format adhered to: `[1 Byte Type][4 Bytes Length][N Bytes Payload]`
+- [ ] Length is Little-Endian uint32
+- [ ] Payload is MessagePack-serialized
 
-### Message-Types
-- [ ] Neue Message-Types im `MessageType` Enum registriert?
-- [ ] Enum-Werte in korrektem Bereich? (Connection: 1-9, Zone: 10-19, Movement: 20-29, etc.)
-- [ ] Keine Duplikate oder Lücken ohne Grund
+### Message Types
+- [ ] New Message-Types registered in `MessageType` enum?
+- [ ] Enum values in correct range? (Connection: 1-9, Zone: 10-19, Movement: 20-29, etc.)
+- [ ] No duplicates or gaps without reason
 
 ### DTOs (Data Transfer Objects)
-- [ ] `[MessagePackObject]` Attribut vorhanden?
-- [ ] Alle Properties haben `[Key(n)]` Attribute mit aufsteigenden Indizes?
-- [ ] **WICHTIG:** `MessageType Type` Property hat `[Key(0)]` (NICHT IgnoreMember!)
-- [ ] DTOs sind in der Shared Library?
-- [ ] DTOs implementieren `INetworkMessage` Interface?
+- [ ] `[MessagePackObject]` attribute present?
+- [ ] All properties have `[Key(n)]` attributes with ascending indices?
+- [ ] **IMPORTANT:** `MessageType Type` property has `[Key(0)]` (NOT IgnoreMember!)
+- [ ] DTOs are in the Shared Library?
+- [ ] DTOs implement `INetworkMessage` interface?
 
-### MessagePackObject Validierung (KRITISCH)
+### MessagePackObject Validation (CRITICAL)
 
-Bei JEDER Klasse mit `[MessagePackObject]` Attribut prüfen:
+For EVERY class with `[MessagePackObject]` attribute, check:
 
-1. **MessageType Property MUSS vorhanden sein:**
+1. **MessageType Property MUST be present:**
    ```csharp
    [Key(0)]
    public MessageType Type => MessageType.XXX;
    ```
 
-2. **Type MUSS Key(0) sein:**
-   - ❌ FALSCH: `[IgnoreMember]` auf Type
-   - ❌ FALSCH: Type ohne `[Key(0)]`
-   - ❌ FALSCH: Type ist nicht Key(0) sondern Key(1) oder höher
-   - ✅ RICHTIG: `[Key(0)] public MessageType Type => MessageType.XXX;`
+2. **Type MUST be Key(0):**
+   - ❌ WRONG: `[IgnoreMember]` on Type
+   - ❌ WRONG: Type without `[Key(0)]`
+   - ❌ WRONG: Type is not Key(0) but Key(1) or higher
+   - ✅ CORRECT: `[Key(0)] public MessageType Type => MessageType.XXX;`
 
-3. **Alle anderen Properties mit aufsteigenden Keys:**
+3. **All other properties with ascending keys:**
    ```csharp
    [Key(1)] public string Username { get; set; }
    [Key(2)] public int PlayerId { get; set; }
-   // usw.
+   // etc.
    ```
 
-4. **Warum nicht auf Interface/Basisklasse?**
-   - MessagePack ignoriert `[Key]` Attribute auf Interfaces
-   - Auch bei Vererbung muss `[Key(0)]` in jeder konkreten Klasse stehen
-   - Das Interface `INetworkMessage` dient nur der Typsicherheit, nicht der Serialisierung
+4. **Why not on Interface/Base class?**
+   - MessagePack ignores `[Key]` attributes on interfaces
+   - Even with inheritance, `[Key(0)]` must be in each concrete class
+   - The `INetworkMessage` interface serves only for type safety, not serialization
 
-5. **Fehlermeldung bei Verstoß:**
+5. **Error message for violation:**
 
-   > ⚠️ **MessagePack Konvention verletzt**
+   > ⚠️ **MessagePack Convention Violated**
    > 
-   > Die Klasse `{ClassName}` hat `[MessagePackObject]` aber:
-   > - ❌ Kein `MessageType Type` Property gefunden
-   > - ODER: ❌ `Type` hat `[IgnoreMember]` statt `[Key(0)]`
-   > - ODER: ❌ `Type` ist nicht `[Key(0)]`
+   > The class `{ClassName}` has `[MessagePackObject]` but:
+   > - ❌ No `MessageType Type` property found
+   > - OR: ❌ `Type` has `[IgnoreMember]` instead of `[Key(0)]`
+   > - OR: ❌ `Type` is not `[Key(0)]`
    > 
-   > **Korrektur:**
+   > **Correction:**
    > ```csharp
    > [MessagePackObject]
    > public class {ClassName} : INetworkMessage
@@ -175,173 +175,173 @@ Bei JEDER Klasse mit `[MessagePackObject]` Attribut prüfen:
    > }
    > ```
 
-6. **Enum braucht KEIN MessagePackObject:**
-   - `enum MessageType : byte` wird automatisch als byte serialisiert
-   - ❌ FALSCH: `[MessagePackObject]` auf enum
-   - ✅ RICHTIG: Nur `public enum MessageType : byte { ... }`
+6. **Enum does NOT need MessagePackObject:**
+   - `enum MessageType : byte` is automatically serialized as byte
+   - ❌ WRONG: `[MessagePackObject]` on enum
+   - ✅ CORRECT: Only `public enum MessageType : byte { ... }`
 
-### MessagePack Vererbung
+### MessagePack Inheritance
 
-Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
+For classes that inherit from a `[MessagePackObject]` class, check:
 
-1. **Elternklasse analysieren:**
-   - Hat `[MessagePackObject]`?
-   - Welcher ist der höchste Key? (z.B. `[Key(3)]` → höchster = 3)
+1. **Analyze parent class:**
+   - Has `[MessagePackObject]`?
+   - What is the highest key? (e.g., `[Key(3)]` → highest = 3)
 
-2. **Kindklasse prüfen:**
-   - [ ] Hat auch `[MessagePackObject]`?
-   - [ ] Erster Key startet bei **höchster Eltern-Key + 1**?
-   - [ ] Keine Key-Kollisionen mit Elternklasse?
+2. **Check child class:**
+   - [ ] Also has `[MessagePackObject]`?
+   - [ ] First key starts at **highest parent key + 1**?
+   - [ ] No key collisions with parent class?
 
-3. **Beispiel - RICHTIG:**
+3. **Example - CORRECT:**
    ```csharp
    [MessagePackObject]
-   public class EntityData  // Eltern
+   public class EntityData  // Parent
    {
        [Key(0)] public int Id { get; set; }
        [Key(1)] public float X { get; set; }
        [Key(2)] public float Y { get; set; }
        [Key(3)] public EntityType Type { get; set; }
-       // Höchster Key: 3
+       // Highest key: 3
    }
 
    [MessagePackObject]
-   public class PlayerData : EntityData  // Kind
+   public class PlayerData : EntityData  // Child
    {
-       // ✅ Startet bei Key(4) = höchster Eltern-Key (3) + 1
+       // ✅ Starts at Key(4) = highest parent key (3) + 1
        [Key(4)] public string Username { get; set; }
        [Key(5)] public float VelocityX { get; set; }
        [Key(6)] public float VelocityY { get; set; }
    }
    ```
 
-4. **Beispiel - FALSCH:**
+4. **Example - WRONG:**
    ```csharp
    [MessagePackObject]
    public class PlayerData : EntityData
    {
-       // ❌ FALSCH - Key(0) kollidiert mit EntityData.Id!
+       // ❌ WRONG - Key(0) collides with EntityData.Id!
        [Key(0)] public string Username { get; set; }
    }
    ```
 
-5. **Fehlermeldung bei Verstoß:**
+5. **Error message for violation:**
 
-   > ⚠️ **MessagePack Vererbung - Key-Kollision**
+   > ⚠️ **MessagePack Inheritance - Key Collision**
    > 
-   > Die Klasse `{ClassName}` erbt von `{BaseClassName}`:
-   > - `{BaseClassName}` verwendet Keys 0 bis {höchsterKey}
-   > - `{ClassName}` muss bei Key({höchsterKey + 1}) starten
-   > - Gefunden: Key({tatsächlicherErsterKey}) ❌
+   > The class `{ClassName}` inherits from `{BaseClassName}`:
+   > - `{BaseClassName}` uses keys 0 to {highestKey}
+   > - `{ClassName}` must start at Key({highestKey + 1})
+   > - Found: Key({actualFirstKey}) ❌
    > 
-   > **Korrektur:** Ersten Key auf `[Key({höchsterKey + 1})]` ändern.
+   > **Correction:** Change first key to `[Key({highestKey + 1})]`.
 
-6. **Mehrstufige Vererbung:**
+6. **Multi-level inheritance:**
    ```
    EntityData:     [Key(0-3)]
         ↓
-   PlayerData:     [Key(4-6)]  ← startet bei 4
+   PlayerData:     [Key(4-6)]  ← starts at 4
         ↓
-   AdminPlayer:    [Key(7-8)]  ← startet bei 7
+   AdminPlayer:    [Key(7-8)]  ← starts at 7
    ```
 
 ### Serialization
-- [ ] MessagePack für alle Netzwerk-Nachrichten verwendet?
-- [ ] Keine JSON/XML für Game-Traffic
-- [ ] MessageSerializer Helper verwendet?
+- [ ] MessagePack used for all network messages?
+- [ ] No JSON/XML for game traffic
+- [ ] MessageSerializer helper used?
 
 ---
 
 ## 🔄 Game Loop & Timing
 
-### Tick-Rate
-- [ ] Server Tick-Rate ist 25 Hz (40ms pro Tick)
-- [ ] Keine Annahmen über höhere/niedrigere Tick-Rate
-- [ ] `TICK_RATE` Konstante aus Shared Library verwendet?
+### Tick Rate
+- [ ] Server tick rate is 25 Hz (40ms per tick)
+- [ ] No assumptions about higher/lower tick rate
+- [ ] `TICK_RATE` constant from Shared Library used?
 
-### Tick-Phasen
-- [ ] Korrekte Reihenfolge: Input → Update → Output → Wait
-- [ ] Keine I/O-Blocking-Operationen im Tick
-- [ ] Tick-Overrun wird geloggt (> 40ms)
+### Tick Phases
+- [ ] Correct order: Input → Update → Output → Wait
+- [ ] No I/O blocking operations in tick
+- [ ] Tick overrun is logged (> 40ms)
 
 ### Timing
-- [ ] Fixed Timestep verwendet (nicht variable)
-- [ ] Timestamps für Nachrichten sind Server-Zeit
-- [ ] Sequence Numbers für Input-Ordering
+- [ ] Fixed timestep used (not variable)
+- [ ] Timestamps for messages are server time
+- [ ] Sequence numbers for input ordering
 
 ---
 
 ## 🎮 Client-Side Prediction & Sync
 
-### Prediction (eigener Spieler)
-- [ ] Client bewegt sofort lokal (Prediction)
-- [ ] Input wird mit Sequence Number an Server gesendet
-- [ ] Pending Inputs werden gespeichert bis Server bestätigt
+### Prediction (own player)
+- [ ] Client moves immediately locally (Prediction)
+- [ ] Input is sent to server with sequence number
+- [ ] Pending inputs are stored until server confirms
 
 ### Reconciliation
-- [ ] Bei Server-Korrektur: Snap oder Interpolation zur Server-Position
-- [ ] Pending Inputs nach Korrektur neu anwenden
-- [ ] Keine harten Teleports (smooth correction)
+- [ ] On server correction: Snap or interpolation to server position
+- [ ] Re-apply pending inputs after correction
+- [ ] No hard teleports (smooth correction)
 
-### Interpolation (andere Spieler)
-- [ ] Andere Spieler werden interpoliert (nicht predicted)
-- [ ] Buffer von ~100ms für Jitter-Ausgleich
-- [ ] Extrapolation nur kurzzeitig bei Packet-Loss
+### Interpolation (other players)
+- [ ] Other players are interpolated (not predicted)
+- [ ] Buffer of ~100ms for jitter compensation
+- [ ] Extrapolation only briefly on packet loss
 
 ### Server Authority
-- [ ] Server ist IMMER authoritative
-- [ ] Client kann nichts erzwingen
-- [ ] Alle Validierung auf dem Server
+- [ ] Server is ALWAYS authoritative
+- [ ] Client cannot force anything
+- [ ] All validation on the server
 
 ---
 
-## 💥 Kollision
+## 💥 Collision
 
 ### Shared Collision Data
-- [ ] Kollisionsdaten sind in Shared Library?
-- [ ] Client und Server nutzen gleiche Daten
-- [ ] `CollisionData` Klasse verwendet?
+- [ ] Collision data is in Shared Library?
+- [ ] Client and server use the same data
+- [ ] `CollisionData` class used?
 
 ### Validation
-- [ ] Server validiert alle Bewegungen
-- [ ] Speed-Check (MAX_SPEED * deltaTime * TOLERANCE)
-- [ ] Bounds-Check (innerhalb der Welt)
-- [ ] Collision-Check (keine Wände/Hindernisse)
+- [ ] Server validates all movements
+- [ ] Speed check (MAX_SPEED * deltaTime * TOLERANCE)
+- [ ] Bounds check (within the world)
+- [ ] Collision check (no walls/obstacles)
 
 ---
 
-## 👾 Entity-System
+## 👾 Entity System
 
 ### IEntity Interface
-- [ ] Neue Entities implementieren `IEntity`?
-- [ ] Properties: Id, Type, X, Y vorhanden?
+- [ ] New entities implement `IEntity`?
+- [ ] Properties: Id, Type, X, Y present?
 
 ### EntityType Enum
-- [ ] Neuer Entity-Typ im Enum registriert?
-- [ ] Korrekter Wertebereich? (Player: 1, NPCs: 10+, Interactive: 20+)
+- [ ] New entity type registered in enum?
+- [ ] Correct value range? (Player: 1, NPCs: 10+, Interactive: 20+)
 
-### Interaktionen
-- [ ] InteractRequest/Response Pattern verwendet?
-- [ ] Server validiert: Distanz, Entity existiert, Berechtigung
+### Interactions
+- [ ] InteractRequest/Response pattern used?
+- [ ] Server validates: Distance, entity exists, permission
 
 ---
 
-## 🔒 Sicherheit
+## 🔒 Security
 
 ### Input Validation
-- [ ] ALLE Client-Inputs werden validiert
-- [ ] PlayerId aus Session, nicht aus Message vertrauen
-- [ ] Plausibilitäts-Checks (Damage, Speed, Position)
+- [ ] ALL client inputs are validated
+- [ ] PlayerId from session, not from message trust
+- [ ] Plausibility checks (Damage, Speed, Position)
 
 ### Rate Limiting
-- [ ] Aktionen sind rate-limited? (z.B. Chat: 10/min)
-- [ ] Keine Möglichkeit für DoS durch Message-Spam
+- [ ] Actions are rate-limited? (e.g., Chat: 10/min)
+- [ ] No possibility for DoS through message spam
 
-### Sensible Daten
-- [ ] Keine Passwörter im Klartext
-- [ ] Keine sensiblen Daten in Logs
-- [ ] Keine Server-Secrets im Client-Code
-- [ ] Session-Tokens sind UUIDs, nicht vorhersagbar
+### Sensitive Data
+- [ ] No passwords in plaintext
+- [ ] No sensitive data in logs
+- [ ] No server secrets in client code
+- [ ] Session tokens are UUIDs, not predictable
 
 ### Anti-Cheat
 - [ ] Speed-Hack Detection
@@ -354,193 +354,193 @@ Bei Klassen die von einer `[MessagePackObject]` Klasse erben, prüfe:
 ## 🌐 Connection Handling
 
 ### Timeouts
-- [ ] CONNECTION_TIMEOUT: 10s für Login
+- [ ] CONNECTION_TIMEOUT: 10s for login
 - [ ] HEARTBEAT_INTERVAL: 5s Client → Server
 - [ ] HEARTBEAT_TIMEOUT: 15s → Disconnect
-- [ ] RECONNECT_WINDOW: 30s State behalten
+- [ ] RECONNECT_WINDOW: 30s keep state
 
 ### Disconnect
-- [ ] Graceful Disconnect handling
-- [ ] PlayerLeft wird gebroadcastet
-- [ ] Resources werden aufgeräumt (Dispose)
+- [ ] Graceful disconnect handling
+- [ ] PlayerLeft is broadcast
+- [ ] Resources are cleaned up (Dispose)
 
 ### Reconnect
-- [ ] ReconnectToken System verwendet?
-- [ ] Exponential Backoff für Retries
-- [ ] Max 10 Versuche, dann aufgeben
+- [ ] ReconnectToken system used?
+- [ ] Exponential backoff for retries
+- [ ] Max 10 attempts, then give up
 
 ### Error Codes
-- [ ] ErrorCode Enum aus Dokumentation verwendet?
-- [ ] Passender Error Code für jeden Fehlerfall
-- [ ] Error Messages sind nicht zu detailliert (Security)
+- [ ] ErrorCode enum from documentation used?
+- [ ] Appropriate error code for each error case
+- [ ] Error messages are not too detailed (Security)
 
 ---
 
 ## 📝 Logging
 
 ### Log Levels
-- [ ] TRACE: Nur für Debugging (jeden Tick, jede Message)
-- [ ] DEBUG: State Changes, Flow
-- [ ] INFO: Login, Disconnect, wichtige Events (Production Standard)
-- [ ] WARNING: Timeouts, Retries, Anomalien
-- [ ] ERROR: Fehler, Server läuft weiter
-- [ ] FATAL: Kritisch, Server stoppt
+- [ ] TRACE: Only for debugging (every tick, every message)
+- [ ] DEBUG: State changes, flow
+- [ ] INFO: Login, disconnect, important events (production standard)
+- [ ] WARNING: Timeouts, retries, anomalies
+- [ ] ERROR: Errors, server continues
+- [ ] FATAL: Critical, server stops
 
-### Was loggen?
-- [ ] Strukturiertes Logging (Serilog)
-- [ ] Keine sensiblen Daten (Passwörter, Tokens)
-- [ ] Player-IDs und Session-IDs für Debugging
-- [ ] Timestamps für alle Einträge
+### What to log?
+- [ ] Structured logging (Serilog)
+- [ ] No sensitive data (passwords, tokens)
+- [ ] Player IDs and session IDs for debugging
+- [ ] Timestamps for all entries
 
 ### Performance
-- [ ] Keine String-Interpolation in Hot Paths wenn Log-Level aus
-- [ ] Log-Level ist konfigurierbar
+- [ ] No string interpolation in hot paths when log level is off
+- [ ] Log level is configurable
 
 ---
 
 ## ⚡ Performance
 
 ### Game Loop
-- [ ] Keine Allokationen im Game Loop (Object Pooling)
-- [ ] Tick-Budget von 40ms beachten
-- [ ] Keine Blocking-I/O im Tick
+- [ ] No allocations in game loop (object pooling)
+- [ ] Observe tick budget of 40ms
+- [ ] No blocking I/O in tick
 
 ### Async/Await
-- [ ] async/await korrekt verwendet (kein .Result oder .Wait())
-- [ ] ConfigureAwait(false) in Library-Code
-- [ ] CancellationToken wird durchgereicht
+- [ ] async/await used correctly (no .Result or .Wait())
+- [ ] ConfigureAwait(false) in library code
+- [ ] CancellationToken is passed through
 
 ### Memory
-- [ ] Große Objekte werden gepoolt
-- [ ] Keine Memory Leaks (Event Handler abmelden)
-- [ ] Span<T> für Buffer-Operationen wo möglich
+- [ ] Large objects are pooled
+- [ ] No memory leaks (unsubscribe event handlers)
+- [ ] Span<T> for buffer operations where possible
 
 ---
 
 ## 🎮 Godot Client (C#)
 
-### Szenen-Struktur
-- [ ] Szenen-Hierarchie aus TECHNICAL_DESIGN.md eingehalten?
-- [ ] Main.tscn → Login.tscn → Game.tscn Flow
-- [ ] Player.tscn als Prefab für Spieler
+### Scene Structure
+- [ ] Scene hierarchy from TECHNICAL_DESIGN.md followed?
+- [ ] Main.tscn → Login.tscn → Game.tscn flow
+- [ ] Player.tscn as prefab for players
 
 ### Autoloads (Singletons)
-- [ ] NetworkManager für alle Netzwerk-Operationen
-- [ ] GameManager für Game State
-- [ ] Keine anderen globalen Singletons ohne Grund
+- [ ] NetworkManager for all network operations
+- [ ] GameManager for game state
+- [ ] No other global singletons without reason
 
-### Signale
-- [ ] Godot Signale statt direkter Methodenaufrufe
-- [ ] Events für UI-Updates
-- [ ] Lose Kopplung zwischen Komponenten
+### Signals
+- [ ] Godot signals instead of direct method calls
+- [ ] Events for UI updates
+- [ ] Loose coupling between components
 
 ### Layers
-- [ ] Layer 0: Ground (keine Collision)
-- [ ] Layer 1: Collision (Wasser, Bäume, Wände)
-- [ ] Layer 2: Entities (NPCs, Interactives)
+- [ ] Layer 0: Ground (no collision)
+- [ ] Layer 1: Collision (water, trees, walls)
+- [ ] Layer 2: Entities (NPCs, interactives)
 - [ ] Layer 3: Players
 - [ ] Layer 4: UI (CanvasLayer)
 
 ### Input
-- [ ] Input Actions definiert (nicht hardcoded Keys)
-- [ ] _Process für Rendering, _PhysicsProcess für Bewegung
-- [ ] Input wird an Server gesendet, nicht lokal verarbeitet (außer Prediction)
+- [ ] Input actions defined (not hardcoded keys)
+- [ ] _Process for rendering, _PhysicsProcess for movement
+- [ ] Input is sent to server, not processed locally (except prediction)
 
 ---
 
 ## 🗄️ Redis (Phase 2+)
 
 ### Key Schema
-- [ ] Key-Naming aus Dokumentation eingehalten?
+- [ ] Key naming from documentation followed?
 - [ ] `session:{sessionId}`, `player:{playerId}`, etc.
-- [ ] TTL für Sessions (30 min)
+- [ ] TTL for sessions (30 min)
 
 ### Pub/Sub
-- [ ] Channels korrekt: `channel:zone:{zoneId}`, `channel:player:{playerId}`
-- [ ] Keine großen Payloads über Pub/Sub
+- [ ] Channels correct: `channel:zone:{zoneId}`, `channel:player:{playerId}`
+- [ ] No large payloads over Pub/Sub
 
 ---
 
-## 🗃️ Datenbank (Phase 2+)
+## 🗃️ Database (Phase 2+)
 
-### Write-Strategien
-- [ ] IMMEDIATE: Charakter-Erstellung, Item-Transaktionen, Gold, Level-Up
-- [ ] BATCHED (10-30s): Positionen, HP/Mana, Quest-Fortschritt
-- [ ] LOGOUT: Kompletter State
+### Write Strategies
+- [ ] IMMEDIATE: Character creation, item transactions, gold, level-up
+- [ ] BATCHED (10-30s): Positions, HP/Mana, quest progress
+- [ ] LOGOUT: Complete state
 
 ### Connection Pooling
-- [ ] Npgsql Connection Pooling aktiviert
+- [ ] Npgsql connection pooling enabled
 - [ ] MinPoolSize: 5, MaxPoolSize: 100
 
 ---
 
 ## 🎯 Prototype Scope
 
-### Im Scope
-- [ ] Ist das Feature im Prototyp-Scope (`docs/01-overview/PROTOTYPE_SCOPE.md`)?
-- [ ] TCP Server/Client, MessagePack, Game Loop, Bewegung, Chat
+### In Scope
+- [ ] Is the feature in the prototype scope (`docs/01-overview/PROTOTYPE_SCOPE.md`)?
+- [ ] TCP Server/Client, MessagePack, game loop, movement, chat
 
-### Außerhalb Scope
-- [ ] Kampfsystem, NPCs, Quests, Inventar → Phase 2+
-- [ ] Echte Auth, Datenbank, Redis, Azure → Phase 2+
-- [ ] Wenn außerhalb: Ist es als "später" markiert?
+### Out of Scope
+- [ ] Combat system, NPCs, quests, inventory → Phase 2+
+- [ ] Real auth, database, Redis, Azure → Phase 2+
+- [ ] If out of scope: Is it marked as "later"?
 
 ---
 
 ## 📊 Tests
 
 ### Unit Tests
-- [ ] Neue Logik hat Unit Tests?
-- [ ] xUnit + Moq + FluentAssertions verwendet?
-- [ ] Tests sind im richtigen Test-Projekt?
+- [ ] New logic has unit tests?
+- [ ] xUnit + Moq + FluentAssertions used?
+- [ ] Tests are in the correct test project?
 
-### Was testen?
-- [ ] Message Serialization/Deserialization
-- [ ] Validation Logic (Movement, Actions)
-- [ ] Game Loop Logic (ohne I/O)
+### What to test?
+- [ ] Message serialization/deserialization
+- [ ] Validation logic (movement, actions)
+- [ ] Game loop logic (without I/O)
 
 ### Godot Tests
-- [ ] GdUnit4 für Client-Tests
-- [ ] NetworkManager Tests (mit Mocks)
+- [ ] GdUnit4 for client tests
+- [ ] NetworkManager tests (with mocks)
 
 ---
 
-## 📝 Feedback-Format
+## 📝 Feedback Format
 
-Bei Abweichungen von der Dokumentation:
+For deviations from documentation:
 
-1. **Zitiere** die relevante Stelle aus der Dokumentation
-2. **Erkläre** die Abweichung klar und präzise
-3. **Schlage** eine konkrete Korrektur vor
-4. **Verweise** auf das relevante Dokument mit Pfad
+1. **Quote** the relevant section from the documentation
+2. **Explain** the deviation clearly and precisely
+3. **Suggest** a concrete correction
+4. **Reference** the relevant document with path
 
-### Beispiel:
+### Example:
 
-> ⚠️ **Architektur-Abweichung**
+> ⚠️ **Architecture Deviation**
 > 
-> Laut `docs/03-technical-details/TECHNICAL_DESIGN.md` soll MessagePack für Serialisierung verwendet werden:
+> According to `docs/03-technical-details/TECHNICAL_DESIGN.md`, MessagePack should be used for serialization:
 > > "Serialization: MessagePack"
 > 
-> Dieser Code verwendet jedoch JSON:
+> However, this code uses JSON:
 > ```csharp
 > var json = JsonSerializer.Serialize(message);
 > ```
 > 
-> **Vorschlag:** Verwende stattdessen:
+> **Suggestion:** Use instead:
 > ```csharp
 > var bytes = MessagePackSerializer.Serialize(message);
 > ```
 
 ---
 
-## 🔗 Relevante Dokumentation
+## 🔗 Relevant Documentation
 
-- [Dokumentations-Index](docs/README.md) - Zentrale Übersicht
-- [Architektur-Übersicht](docs/02-architecture/README.md) - Technische Architektur
-- [Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) - Detaillierte technische Entscheidungen
-- [Prototyp-Scope](docs/01-overview/PROTOTYPE_SCOPE.md) - Was ist im Prototyp
-- [Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) - Gameplay Design
-- [Assets](docs/01-overview/ASSETS.md) - Asset-Spezifikationen
+- [Documentation Index](docs/README.md) - Central overview
+- [Architecture Overview](docs/02-architecture/README.md) - Technical architecture
+- [Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) - Detailed technical decisions
+- [Prototype Scope](docs/01-overview/PROTOTYPE_SCOPE.md) - What is in the prototype
+- [Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) - Gameplay design
+- [Assets](docs/01-overview/ASSETS.md) - Asset specifications
 
 ---
 
