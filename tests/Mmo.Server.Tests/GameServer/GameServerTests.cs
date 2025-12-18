@@ -146,11 +146,15 @@ public class GameServerTests
 
         // Run to process messages
         gameServer.Start();
-        Thread.Sleep(100);
+        Thread.Sleep(150); // Give more time for messages to be processed
         gameServer.Stop();
 
+        // Debug: Output all messages
+        var allMessages = string.Join(Environment.NewLine, _mockLog.Messages);
+        
         // Verify warnings were logged for invalid usernames
-        Assert.True(_mockLog.HasMessageContaining("WARN", "Username"));
+        Assert.True(_mockLog.HasMessageContaining("WARN", "Username"), 
+            $"Expected warning with 'Username'. All messages:{Environment.NewLine}{allMessages}");
     }
 
     [Fact]

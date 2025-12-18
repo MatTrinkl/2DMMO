@@ -32,8 +32,8 @@ public static class TestHelpers
         log ??= new MockLog();
         networkServer ??= new MockNetworkServer(log, true);
         zoneManager ??= CreateDefaultZoneManager();
-        messageRouter ??= CreateMessageRouter(log);
-        services ??= CreateTestServices(log);
+        messageRouter ??= CreateMessageRouter(log, zoneManager);
+        services ??= CreateTestServices(log, zoneManager);
 
         var gameServer = new GameLoop.GameServer(
             networkServer,
@@ -74,24 +74,22 @@ public static class TestHelpers
     }
 
     /// <summary>
-    ///     Creates a MessageRouter for testing.
-    ///     Note: ConnectionHandler is not registered due to production code compilation errors.
+    ///     Creates a MessageRouter for testing with ConnectionHandler registered.
     /// </summary>
-    public static MessageRouter CreateMessageRouter(ILog log)
+    public static MessageRouter CreateMessageRouter(ILog log, ZoneManager? zoneManager = null)
     {
         var router = new MessageRouter(log);
 
-        // Note: We would register ConnectionHandler here, but it has compilation errors
-        // in the production code (missing message types like ReconnectRequest, etc.)
-        // This is NOT a test issue - the production code needs to be fixed separately.
-        //
-        // var services = CreateTestServices(log);
-        // var connectionHandler = new ConnectionHandler(
-        //     services.GetRequiredService<IAuthenticationService>(),
-        //     services.GetRequiredService<IPlayerService>(),
-        //     log
-        // );
-        // router.RegisterHandler(connectionHandler);
+        // Register ConnectionHandler to handle login and connection messages
+        zoneManager ??= CreateDefaultZoneManager();
+        var services = CreateTestServices(log, zoneManager);
+        var connectionHandler = new ConnectionHandler(
+            services.GetRequiredService<IAuthenticationService>(),
+            services.GetRequiredService<IPlayerService>(),
+            zoneManager,
+            log
+        );
+        router.RegisterHandler(connectionHandler);
 
         return router;
     }
@@ -99,11 +97,12 @@ public static class TestHelpers
     /// <summary>
     ///     Creates a test ServiceProvider with all required services.
     /// </summary>
-    public static IServiceProvider CreateTestServices(ILog log)
+    public static IServiceProvider CreateTestServices(ILog log, ZoneManager? zoneManager = null)
     {
         var services = new ServiceCollection();
 
         services.AddSingleton(log);
+        services.AddSingleton(zoneManager ?? CreateDefaultZoneManager());
         services.AddSingleton<IAuthenticationService, AuthenticationService>();
         services.AddSingleton<IPlayerService, PlayerService>();
 

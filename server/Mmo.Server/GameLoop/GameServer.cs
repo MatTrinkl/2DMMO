@@ -255,7 +255,7 @@ public class GameServer : IDisposable
     /// <summary>
     ///     Führt einen Tick aus.
     /// </summary>
-    public void Tick(float deltaTime)
+    public virtual void Tick(float deltaTime)
     {
         // 1. COMPLETION PHASE - Fertige async Tasks
         ProcessCompletionQueue();
