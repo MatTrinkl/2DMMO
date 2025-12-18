@@ -1,56 +1,220 @@
 using Mmo.Server.Networking;
-using Mmo.Shared.Interfaces;
+using Mmo. Shared. Interfaces;
+using Mmo. Shared.Records;
 
 namespace Mmo.Server.Messages;
 
 /// <summary>
-///     Represents an outgoing network message with its destination information.
-///     Used by the GameServer to queue messages for the Output phase.
+///     Repräsentiert eine ausgehende Nachricht die in der Output-Phase gesendet wird.
+///
+///     Wird vom MessageContext erstellt und vom GameServer in der Output-Phase verarbeitet.
 /// </summary>
-/// <remarks>
-///     This unified structure replaces separate queues for different message types.
-///     Messages can be targeted to a specific client, broadcast to all clients, or broadcast to a specific zone.
-/// </remarks>
 public readonly struct OutgoingMessage
 {
-    /// <summary>
-    ///     The network message to be sent.
-    /// </summary>
-    public INetworkMessage Message { get; private init; }
+    /// <summary>Art der Nachricht (ToClient, Broadcast, etc.).</summary>
+    public OutgoingMessageType Type { get; init; }
+
+    /// <summary>Die zu sendende Nachricht.</summary>
+    public INetworkMessage Message { get; init; }
+
+    // ═══ Für ToClient ═══
+
+    /// <summary>Ziel-Connection (nur bei ToClient).</summary>
+    public ClientConnection?  TargetConnection { get; init; }
+
+    // ═══ Für Broadcasts ═══
+
+    /// <summary>Ziel-Zone (für Zone-Broadcasts).</summary>
+    public ushort?  ZoneId { get; init; }
+
+    /// <summary>Ziel-Party (für Party-Broadcasts).</summary>
+    public Guid?  PartyId { get; init; }
+
+    /// <summary>Ziel-Guild (für Guild-Broadcasts).</summary>
+    public Guid? GuildId { get; init; }
+
+    /// <summary>Connection die ausgeschlossen werden soll.</summary>
+    public Guid? ExcludeConnectionId { get; init; }
+
+    // ═══ Für BroadcastToNearby ═══
+
+    /// <summary>Ursprungsposition (für Radius-Broadcasts).</summary>
+    public Position? Origin { get; init; }
+
+    /// <summary>Radius (für Radius-Broadcasts).</summary>
+    public float?  Radius { get; init; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FACTORY METHODS
+    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     The target client connection. If null, the message will be broadcast.
+    ///     Erstellt eine Nachricht für einen einzelnen Client.
     /// </summary>
-    public ClientConnection? TargetClient { get; private init; }
+    public static OutgoingMessage ToClient(ClientConnection connection, INetworkMessage message)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType. ToClient,
+            Message = message,
+            TargetConnection = connection
+        };
+    }
 
     /// <summary>
-    ///     The target zone ID for zone-specific broadcasts. If null, broadcasts to all zones.
+    ///     Erstellt einen Broadcast für alle Spieler in einer Zone.
     /// </summary>
-    public ushort? ZoneId { get; private init; }
+    public static OutgoingMessage BroadcastToZone(INetworkMessage message, ushort zoneId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToZone,
+            Message = message,
+            ZoneId = zoneId
+        };
+    }
 
     /// <summary>
-    ///     Creates an outgoing message that broadcasts to all clients on the server.
+    ///     Erstellt einen Broadcast für alle Spieler in einer Zone, außer einem.
     /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    /// <returns>An OutgoingMessage configured for server-wide broadcast.</returns>
-    public static OutgoingMessage BroadcastToServer(INetworkMessage message)
-        => new() { Message = message, TargetClient = null, ZoneId = null };
+    public static OutgoingMessage BroadcastToZoneExcept(
+        INetworkMessage message,
+        ushort zoneId,
+        Guid excludeConnectionId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToZoneExcept,
+            Message = message,
+            ZoneId = zoneId,
+            ExcludeConnectionId = excludeConnectionId
+        };
+    }
 
     /// <summary>
-    ///     Creates an outgoing message that broadcasts to all clients in a specific zone.
+    ///     Erstellt einen Broadcast für alle Spieler in Reichweite.
     /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    /// <param name="zoneId">The zone ID to broadcast to.</param>
-    /// <returns>An OutgoingMessage configured for zone-specific broadcast.</returns>
-    public static OutgoingMessage BroadcastToZone(INetworkMessage message, ushort zoneId) =>
-        new() { Message = message, TargetClient = null, ZoneId = zoneId };
+    public static OutgoingMessage BroadcastToNearby(
+        INetworkMessage message,
+        ushort zoneId,
+        Position origin,
+        float radius,
+        Guid?  excludeConnectionId = null)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToNearby,
+            Message = message,
+            ZoneId = zoneId,
+            Origin = origin,
+            Radius = radius,
+            ExcludeConnectionId = excludeConnectionId
+        };
+    }
 
     /// <summary>
-    ///     Creates an outgoing message targeted to a specific client.
+    ///     Erstellt einen Broadcast für alle Party-Mitglieder.
     /// </summary>
-    /// <param name="client">The target client connection.</param>
-    /// <param name="message">The message to send.</param>
-    /// <returns>An OutgoingMessage configured for single-client delivery.</returns>
-    public static OutgoingMessage ToClient(ClientConnection client, INetworkMessage message)
-        => new() { Message = message, TargetClient = client, ZoneId = null };
+    public static OutgoingMessage BroadcastToParty(INetworkMessage message, Guid partyId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToParty,
+            Message = message,
+            PartyId = partyId
+        };
+    }
+
+    /// <summary>
+    ///     Erstellt einen Broadcast für alle Party-Mitglieder, außer einem.
+    /// </summary>
+    public static OutgoingMessage BroadcastToPartyExcept(
+        INetworkMessage message,
+        Guid partyId,
+        Guid excludeConnectionId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType. BroadcastToPartyExcept,
+            Message = message,
+            PartyId = partyId,
+            ExcludeConnectionId = excludeConnectionId
+        };
+    }
+
+    /// <summary>
+    ///     Erstellt einen Broadcast für alle Guild-Mitglieder.
+    /// </summary>
+    public static OutgoingMessage BroadcastToGuild(INetworkMessage message, Guid guildId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToGuild,
+            Message = message,
+            GuildId = guildId
+        };
+    }
+
+    /// <summary>
+    ///     Erstellt einen Broadcast für alle Guild-Mitglieder, außer einem.
+    /// </summary>
+    public static OutgoingMessage BroadcastToGuildExcept(
+        INetworkMessage message,
+        Guid guildId,
+        Guid excludeConnectionId)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToGuildExcept,
+            Message = message,
+            GuildId = guildId,
+            ExcludeConnectionId = excludeConnectionId
+        };
+    }
+
+    /// <summary>
+    ///     Erstellt einen Broadcast für ALLE Spieler auf dem Server.
+    /// </summary>
+    public static OutgoingMessage BroadcastToAll(INetworkMessage message)
+    {
+        return new OutgoingMessage
+        {
+            Type = OutgoingMessageType.BroadcastToAll,
+            Message = message
+        };
+    }
+}
+
+/// <summary>
+///     Typ der ausgehenden Nachricht.
+///     Bestimmt wie der GameServer die Nachricht in der Output-Phase verarbeitet.
+/// </summary>
+public enum OutgoingMessageType :  byte
+{
+    /// <summary>An einen einzelnen Client. </summary>
+    ToClient = 0,
+
+    /// <summary>An alle Spieler in einer Zone. </summary>
+    BroadcastToZone = 1,
+
+    /// <summary>An alle Spieler in einer Zone, außer einem.</summary>
+    BroadcastToZoneExcept = 2,
+
+    /// <summary>An alle Spieler in Reichweite.</summary>
+    BroadcastToNearby = 3,
+
+    /// <summary>An alle Party-Mitglieder.</summary>
+    BroadcastToParty = 4,
+
+    /// <summary>An alle Party-Mitglieder, außer einem. </summary>
+    BroadcastToPartyExcept = 5,
+
+    /// <summary>An alle Guild-Mitglieder.</summary>
+    BroadcastToGuild = 6,
+
+    /// <summary>An alle Guild-Mitglieder, außer einem.</summary>
+    BroadcastToGuildExcept = 7,
+
+    /// <summary>An ALLE Spieler auf dem Server. </summary>
+    BroadcastToAll = 8,
 }

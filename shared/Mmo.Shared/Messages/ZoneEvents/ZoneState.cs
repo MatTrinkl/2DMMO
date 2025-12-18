@@ -1,6 +1,7 @@
 using MessagePack;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Shared.Messages.ZoneEvents;
@@ -25,7 +26,7 @@ public class ZoneState : ITimestampedMessage
     /// <param name="timestamp">The timestamp of the message.</param>
     /// <param name="zoneId">The ID of the zone. (Later we need to see how shards work with that).</param>
     /// <param name="entities">All Entities in this Zone.</param>
-    public ZoneState(long timestamp, ushort zoneId, List<Entity> entities)
+    public ZoneState(long timestamp, ushort zoneId, List<IEntity> entities)
     {
         Timestamp = timestamp;
         ZoneId = zoneId;
@@ -42,7 +43,7 @@ public class ZoneState : ITimestampedMessage
     ///     List of all Entities in this zone.
     /// </summary>
     [Key(3)]
-    public List<Entity> Entities { get; set; } = new();
+    public List<IEntity> Entities { get; set; } = new();
 
     /// <summary>
     ///     The Message Type of this Message.

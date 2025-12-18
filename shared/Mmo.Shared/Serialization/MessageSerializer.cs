@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Exceptions;
 using Mmo.Shared.Helper;
 using Mmo.Shared.Interfaces;

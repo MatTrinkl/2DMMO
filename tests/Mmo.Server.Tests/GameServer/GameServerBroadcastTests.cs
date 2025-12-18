@@ -34,7 +34,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task OutputPhase_SendsQueuedBroadcasts()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var message = new ChatMessage(Guid.NewGuid(), "Test broadcast");
         using var cts = new CancellationTokenSource();
 
@@ -52,7 +52,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task OutputPhase_SendsFullZoneState_EveryNTicks()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -83,7 +83,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task OutputPhase_SendsDeltaUpdates_ForDirtyEntities()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -112,7 +112,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task OutputPhase_ClearsDirtyEntities_AfterFullStateOrDelta()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -150,7 +150,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task BroadcastFullZoneStates_SendsToAllPlayersInZone()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId1 = Guid.NewGuid();
         var clientId2 = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
@@ -190,7 +190,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task BroadcastDirtyEntities_OnlyBroadcastsToPlayersInSameZone()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
 
         var clientId1 = Guid.NewGuid();
         var clientId2 = Guid.NewGuid();
@@ -232,7 +232,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task OutputPhase_DoesNotBroadcastToEmptyZone()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         using var cts = new CancellationTokenSource();
 
         // Add a mob but no players
@@ -251,7 +251,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void MarkEntityDirty_WithGuid_MarksForDeltaBroadcast()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var persistentId = Guid.NewGuid();
 
         // Should not throw
@@ -263,7 +263,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void MarkEntityDirty_WithEntity_MarksForDeltaBroadcast()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var entity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 10));
 
         // Should not throw
@@ -275,7 +275,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public async Task QueueBroadcast_MultiplMessages_AllSentInOrder()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var message1 = new ChatMessage(Guid.NewGuid(), "Message 1");
         var message2 = new ChatMessage(Guid.NewGuid(), "Message 2");
         var message3 = new ChatMessage(Guid.NewGuid(), "Message 3");

@@ -13,7 +13,7 @@ internal sealed class SlowGameServer(
     TimeSpan? inputPhaseDuration = null,
     TimeSpan? updatePhaseDuration = null,
     TimeSpan? outputPhaseDuration = null)
-    : Server.GameLoop.GameServer(log, networkServer)
+    : GameLoop.GameServer(log, networkServer)
 {
     private readonly TimeSpan _inputPhaseDuration = inputPhaseDuration ?? TimeSpan.Zero;
     private readonly TimeSpan _outputPhaseDuration = outputPhaseDuration ?? TimeSpan.Zero;

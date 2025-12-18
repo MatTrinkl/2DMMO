@@ -2,6 +2,7 @@ using System.Diagnostics;
 using MessagePack;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;

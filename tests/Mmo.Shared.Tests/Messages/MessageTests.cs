@@ -1,4 +1,11 @@
 using FluentAssertions;
+using Mmo.Shared.Entities;
+using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
+using Mmo.Shared.Messages.Chat;
+using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messages.Movement;
+using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Tests.Messages;
 
@@ -32,22 +39,22 @@ public class MessageTests
     public void LoginRequest_HasCorrectMessageType()
     {
         // Arrange
-        var loginRequest = new Mmo.Shared.Messages.Connection.LoginRequest("testuser", "testpass");
+        var loginRequest = new LoginRequest("testuser", "testpass");
 
         // Assert
-        loginRequest.Type.Should().Be(Mmo.Shared.Enums.MessageType.LoginRequest);
+        loginRequest.Type.Should().Be(MessageType.LoginRequest);
     }
 
     [Fact]
     public void PositionUpdate_HasCorrectMessageType()
     {
         // Arrange
-        var entity = new Mmo.Shared.Entities.PlayerEntity(Guid.NewGuid(), "Player", new Mmo.Shared.Records.Position(10, 20));
-        var newPosition = new Mmo.Shared.Records.Position(30, 40);
-        var positionUpdate = new Mmo.Shared.Messages.Movement.PositionUpdate(12345, entity, newPosition);
+        var entity = new PlayerEntity(Guid.NewGuid(), "Player", new Position(10, 20));
+        var newPosition = new Position(30, 40);
+        var positionUpdate = new PositionUpdate(12345, entity, newPosition);
 
         // Assert
-        positionUpdate.Type.Should().Be(Mmo.Shared.Enums.MessageType.PositionUpdate);
+        positionUpdate.Type.Should().Be(MessageType.PositionUpdate);
     }
 
     [Fact]
@@ -55,10 +62,10 @@ public class MessageTests
     {
         // Arrange
         var entityId = Guid.NewGuid();
-        var chatMessage = new Mmo.Shared.Messages.Chat.ChatMessage(entityId, "Hello World");
+        var chatMessage = new ChatMessage(entityId, "Hello World");
 
         // Assert
-        chatMessage.Type.Should().Be(Mmo.Shared.Enums.MessageType.ChatMessage);
+        chatMessage.Type.Should().Be(MessageType.ChatMessage);
         chatMessage.EntityId.Should().Be(entityId);
         chatMessage.Message.Should().Be("Hello World");
     }

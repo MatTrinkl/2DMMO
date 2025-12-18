@@ -1,6 +1,7 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
@@ -26,7 +27,6 @@ public interface IEntity
     bool IsTrulyPersistent { get; }
 
     EntityType Type { get; }
-    EntityRole Role { get; }
     Position Position { get; set; }
 
     /// <summary>

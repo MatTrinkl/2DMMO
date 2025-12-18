@@ -4,6 +4,7 @@ using Mmo.Server.Networking;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
@@ -24,7 +25,7 @@ public class GameServerTests
     [Fact]
     public void Constructor_InitializesCorrectly()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
 
         Assert.False(gameServer.IsRunning);
         Assert.Equal(0, gameServer.CurrentTick);
@@ -34,7 +35,7 @@ public class GameServerTests
     [Fact]
     public void MarkEntityDirty_WithGuid_AddsToDirtySet()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         var persistentId = Guid.NewGuid();
 
         gameServer.MarkEntityDirty(persistentId);
@@ -47,7 +48,7 @@ public class GameServerTests
     [Fact]
     public void QueueBroadcast_AddsMessageToQueue()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         var mockMessage = new Mock<INetworkMessage>();
 
         gameServer.QueueOutgoingMessage(OutgoingMessage.BroadcastToServer(mockMessage.Object));
@@ -60,7 +61,7 @@ public class GameServerTests
     [Fact]
     public async Task StartServerAsync_CancelledImmediately_StopsGracefully()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         using var cts = new CancellationTokenSource();
         cts.Cancel(); // Sofort canceln
 
@@ -72,7 +73,7 @@ public class GameServerTests
     [Fact]
     public async Task StartServerAsync_RunsForFewTicks_IncrementsTickCounter()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer.Object);
         using var cts = new CancellationTokenSource();
 
         // Nach 100ms canceln (ca. 2-3 Ticks bei 25Hz)
@@ -88,7 +89,7 @@ public class GameServerTests
     public void OnClientConnected_LogsConnection()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         mockNetworkServer.SimulateClientConnected(clientId, "192.168.1.1:5000");
@@ -104,7 +105,7 @@ public class GameServerTests
     public void OnClientDisconnected_WithoutPlayer_LogsDisconnection()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         mockNetworkServer.SimulateClientDisconnected(clientId, DisconnectReason.ClientDisconnected);
@@ -120,7 +121,7 @@ public class GameServerTests
     public void OnClientDisconnected_WithPlayer_RemovesPlayerAndQueuesBroadcast()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Add a player to the zone first
@@ -149,7 +150,7 @@ public class GameServerTests
     public void OnNetworkError_WithClientId_LogsClientError()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
         var exception = new Exception("Test error");
 
@@ -167,7 +168,7 @@ public class GameServerTests
     public void OnNetworkError_WithoutClientId_LogsServerError()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var exception = new Exception("Server error");
 
         mockNetworkServer.SimulateNetworkError(null, exception, "ServerContext");
@@ -183,7 +184,7 @@ public class GameServerTests
     public async Task OnMessageReceived_QueuesMessageForProcessing()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
         var message = new ChatMessage(Guid.NewGuid(), "Hello");
         using var cts = new CancellationTokenSource();
@@ -206,7 +207,7 @@ public class GameServerTests
     public async Task ProcessMessageAsync_LogsDifferentMessageTypes()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -249,7 +250,7 @@ public class GameServerTests
     public async Task PlayerLoginFails()
     {
         var mockNetworkServer = new MockNetworkServer();
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 

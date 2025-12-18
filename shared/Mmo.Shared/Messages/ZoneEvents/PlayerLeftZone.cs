@@ -1,6 +1,7 @@
 using MessagePack;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Shared.Messages.ZoneEvents;

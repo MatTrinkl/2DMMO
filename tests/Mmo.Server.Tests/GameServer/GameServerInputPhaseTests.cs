@@ -1,6 +1,7 @@
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
@@ -26,7 +27,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_ProcessesAllQueuedMessages()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -49,7 +50,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_ProcessesMessagesFromMultipleClients()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId1 = Guid.NewGuid();
         var clientId2 = Guid.NewGuid();
         var clientId3 = Guid.NewGuid();
@@ -84,7 +85,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesLoginRequest()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -110,7 +111,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesPositionUpdate()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -133,7 +134,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesChatMessage()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -154,7 +155,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesPingMessage()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -175,7 +176,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesHeartbeat()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -201,7 +202,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_ProcessesMessagesInOrder()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         var receivedMessages = new List<string>();
         using var cts = new CancellationTokenSource();
@@ -243,7 +244,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesEmptyQueue()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         using var cts = new CancellationTokenSource();
 
         // Don't send any messages
@@ -265,7 +266,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_ProcessesMessagesAcrossMultipleTicks()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 
@@ -297,7 +298,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public async Task InputPhase_HandlesMixedMessageTypes()
     {
-        var gameServer = new Server.GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
+        var gameServer = new GameLoop.GameServer(_mockLog.Object, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         using var cts = new CancellationTokenSource();
 

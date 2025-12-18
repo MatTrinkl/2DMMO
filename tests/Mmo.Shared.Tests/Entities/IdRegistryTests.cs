@@ -1,5 +1,6 @@
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Tests.Entities;

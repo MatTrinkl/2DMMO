@@ -102,11 +102,11 @@ public class ZoneManager
     /// </summary>
     public IEnumerable<Zone> GetAllZones() => _zones.Values;
 
-    public PlayerEntity SpawnPlayer(Guid connectionId, string username)
+    public PlayerEntity SpawnPlayer(Guid connectionId,Guid accountId, string username)
     {
         ArgumentNullException.ThrowIfNull(username);
         //TODO: CharacterId and Position read from DB, currently its the connectionId and always spawn at 0,0
-        return new PlayerEntity(connectionId, username, new Position(0, 0));
+        return new PlayerEntity(connectionId,accountId, username, new Position(0, 0));
     }
 
     /// <summary>
@@ -360,17 +360,17 @@ public class ZoneManager
     /// </summary>
     /// <param name="zoneId">The zone ID.</param>
     /// <returns>List of entities, or empty list if zone not found.</returns>
-    public List<Entity> GetAllEntities(ushort zoneId)
+    public List<IEntity> GetAllEntities(ushort zoneId)
     {
         Zone? zone = GetZone(zoneId);
-        return zone?.Entities.Values.OfType<Entity>().ToList() ?? [];
+        return zone?.Entities.Values.ToList() ?? [];
     }
 
     /// <summary>
     ///     Gets all entities from the default zone.
     /// </summary>
     /// <returns>List of entities. </returns>
-    public List<Entity> GetAllEntitiesFromDefaultZone() => GetAllEntities(_defaultZoneId);
+    public List<IEntity> GetAllEntitiesFromDefaultZone() => GetAllEntities(_defaultZoneId);
 
     /// <summary>
     ///     Gets all player entities from a specific zone (shared PlayerEntity, not ServerPlayer).

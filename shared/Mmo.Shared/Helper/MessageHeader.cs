@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 
 namespace Mmo.Shared.Helper;
 

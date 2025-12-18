@@ -89,4 +89,5 @@ public interface IIdRegistry
     /// </summary>
     /// <param name="connectionId">The connection ID to unregister.</param>
     void UnregisterConnection(Guid connectionId);
+
 }
