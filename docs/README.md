@@ -36,11 +36,12 @@ Diese Dokumentation ist modular aufgebaut und in thematische Bereiche unterteilt
 | [Skalierung](02-architecture/SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
 | [Azure Deployment](02-architecture/AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
 
-### 03 - Technische Details
-> **Detaillierte Implementierungs-Entscheidungen und technische Spezifikationen**
+### 03 - Messages & Technische Details
+> **Message-Referenz und detaillierte Implementierungs-Entscheidungen**
 
 | Dokument | Beschreibung |
 |----------|--------------|
+| **[📨 Message-Referenz](03-messages/README.md)** | **Vollständige Dokumentation aller 1100+ Network-Messages** |
 | [Technical Design Document](03-technical-details/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen, Thread-Modell, Collision System |
 
 ### 04 - Projekt-Management

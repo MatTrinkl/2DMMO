@@ -1354,6 +1354,7 @@ public enum MessageType : ushort
 
 ## 🔗 Verwandte Dokumentation
 
+- **[📨 Message-Referenz](../03-messages/README.md)** - **Detaillierte Dokumentation für ALLE Messages**
 - [ID-System](ID_SYSTEM.md) - Entity Identity, PersistentId, RuntimeId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden
