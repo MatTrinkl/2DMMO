@@ -11,22 +11,32 @@ using Mmo.Shared.Messages.Connection;
 namespace Mmo.Server.MessageRouting.MessageHandler;
 
 /// <summary>
-///     Handler für Connection-Kategorie (0000-0099).
-///     Verarbeitet:
+///     Handler for Connection category (0000-0099).
+///     Processes:
 ///     - Login / Logout / Reconnect
 ///     - Character Selection (List, Select, Create, Delete)
 ///     - Heartbeat
-///     WICHTIG:
-///     - Auth und DB-Zugriffe laufen async via ctx.RunAsync()
-///     - Handler-Methoden selbst sind synchron (void)
-///     - Responses werden gequeued und in Output-Phase gesendet
+///     IMPORTANT:
+///     - Authentication and DB access run async via ctx.RunAsync()
+///     - Handler methods themselves are synchronous (void)
+///     - Responses are queued and sent in Output phase
 /// </summary>
 public class ConnectionHandler : BaseCategoryHandler
 {
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+    
     private readonly IAuthenticationService _authService;
     private readonly ILog _log;
     private readonly IPlayerService _playerService;
     private readonly ZoneManager _zoneManager;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
+    public override MessageCategory Category => MessageCategory.Connection;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -45,13 +55,7 @@ public class ConnectionHandler : BaseCategoryHandler
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CATEGORY
-    // ═══════════════════════════════════════════════════════════════
-
-    public override MessageCategory Category => MessageCategory.Connection;
-
-    // ═══════════════════════════════════════════════════════════════
-    // REGISTRATION
+    // PROTECTED METHODS
     // ═══════════════════════════════════════════════════════════════
 
     protected override void RegisterHandlers()
@@ -76,25 +80,25 @@ public class ConnectionHandler : BaseCategoryHandler
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // LOGIN / LOGOUT / RECONNECT
+    // PRIVATE METHODS - Login / Logout / Reconnect
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Verarbeitet einen Login-Request.
-    ///     Auth läuft async im Hintergrund.
+    ///     Processes a login request.
+    ///     Authentication runs asynchronously in the background.
     /// </summary>
     private void HandleLoginRequest(MessageContext ctx, LoginRequest request)
     {
         _log.Debug("Login request from {ConnectionId}:  {Username}", ctx.ConnectionId, request.Username);
 
-        // ─── Bereits eingeloggt? ───
+        // Already logged in?
         if (ctx.IsAuthenticated)
         {
             ctx.SendError("ALREADY_AUTHENTICATED", "You are already logged in");
             return;
         }
 
-        // ─── Input-Validierung (synchron, schnell) ───
+        // Input validation (synchronous, fast)
         string? validationError = ValidateLoginInput(request);
         if (validationError != null)
         {
@@ -103,7 +107,7 @@ public class ConnectionHandler : BaseCategoryHandler
             return;
         }
 
-        // ─── Async Auth starten ───
+        // Start async authentication
         Task<AuthResult> authTask = _authService.AuthenticateAsync(request.Username, request.Password);
 
         ctx.RunAsync(authTask,
@@ -114,7 +118,7 @@ public class ConnectionHandler : BaseCategoryHandler
 
     private void OnLoginAuthCompleted(MessageContext ctx, AuthResult authResult, string username)
     {
-        // Auth fehlgeschlagen
+        // Authentication failed
         if (!authResult.Success)
         {
             _log.Warn("Auth failed for {ConnectionId}: {Error}", ctx.ConnectionId, authResult.Error!);
@@ -122,7 +126,7 @@ public class ConnectionHandler : BaseCategoryHandler
             return;
         }
 
-        // Auth erfolgreich - Connection-State updaten
+        // Authentication successful - Update connection state
         Guid sessionToken = IdRegistry.Instance.GeneratePersistentId();
         ctx.Connection.SetAuthenticated(
             authResult.AccountId!.Value,
@@ -134,7 +138,7 @@ public class ConnectionHandler : BaseCategoryHandler
         _log.Info("Login successful for {ConnectionId}: {Username} (AccountId: {AccountId})",
             ctx.ConnectionId, authResult.Username!, authResult.AccountId);
 
-        // Response senden Todo: Response richtig schreiben
+        // Send response TODO: Write response correctly
         ctx.Send(new LoginResponse(true, ctx.ConnectionId, 0, null));
     }
 
