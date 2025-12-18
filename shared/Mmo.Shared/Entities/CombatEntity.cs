@@ -17,12 +17,24 @@ public abstract class CombatEntity : ICombatEntity
     // IEntity Implementation
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    ///     Runtime identity - Public setter required for MessagePack deserialization.
+    ///     Should only be modified via SetEntityId() or ChangeZone() in production code.
+    /// </summary>
     [Key(0)] public EntityIdentity RuntimeId { get; set; }
 
+    /// <summary>
+    ///     Persistent GUID - Public setter required for MessagePack deserialization.
+    ///     Should be immutable after creation in production code.
+    /// </summary>
     [Key(1)] public Guid PersistentId { get; set; }
 
     [Key(2)] public Position Position { get; set; }
 
+    /// <summary>
+    ///     Prefab type identifier - Public setter required for MessagePack deserialization.
+    ///     Should be immutable after creation in production code.
+    /// </summary>
     [Key(3)] public ushort PrefabId { get; set; }
 
     [IgnoreMember] public abstract EntityType Type { get; }
