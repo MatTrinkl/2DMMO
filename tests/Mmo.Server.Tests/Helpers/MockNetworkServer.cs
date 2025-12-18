@@ -94,7 +94,13 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     {
         var eventField = typeof(NetworkServer).GetField("OnMessageReceived", 
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        var eventDelegate = eventField?.GetValue(this) as MulticastDelegate;
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnMessageReceived event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
         eventDelegate?.DynamicInvoke(connection, messageType, message);
     }
 
@@ -105,7 +111,13 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     {
         var eventField = typeof(NetworkServer).GetField("OnClientConnected",
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        var eventDelegate = eventField?.GetValue(this) as MulticastDelegate;
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnClientConnected event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
         eventDelegate?.DynamicInvoke(connection);
     }
 
@@ -116,7 +128,13 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     {
         var eventField = typeof(NetworkServer).GetField("OnClientDisconnected",
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        var eventDelegate = eventField?.GetValue(this) as MulticastDelegate;
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnClientDisconnected event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
         eventDelegate?.DynamicInvoke(connection, reason);
     }
 
