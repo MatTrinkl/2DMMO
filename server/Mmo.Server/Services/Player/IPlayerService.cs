@@ -5,12 +5,12 @@ using Mmo.Shared.Enums;
 namespace Mmo.Server.Services.Player;
 
 /// <summary>
-///     Service für Spieler-Operationen (Spawn, Load, Save).
+///     Service for player operations (Spawn, Load, Save).
 /// </summary>
 public interface IPlayerService
 {
     /// <summary>
-    ///     Spawnt einen neuen Spieler oder lädt existierenden.
+    ///     Spawns a new player or loads an existing one.
     /// </summary>
     Task<ServerPlayerCharacter> SpawnPlayerAsync(
         Guid accountId,
@@ -18,12 +18,12 @@ public interface IPlayerService
         ClientConnection connection);
 
     /// <summary>
-    ///     Lädt Charakter-Liste für Account.
+    ///     Loads character list for account.
     /// </summary>
     Task<List<CharacterInfo>> GetCharacterListAsync(Guid accountId);
 
     /// <summary>
-    ///     Erstellt neuen Charakter.
+    ///     Creates a new character.
     /// </summary>
     Task<CharacterCreateResult> CreateCharacterAsync(
         Guid accountId,
@@ -33,12 +33,12 @@ public interface IPlayerService
         Gender gender);
 
     /// <summary>
-    ///     Entfernt Spieler (Logout/Disconnect).
+    ///     Removes player (logout/disconnect).
     /// </summary>
     Task RemovePlayerAsync(Guid connectionId);
 
     /// <summary>
-    ///     Speichert Spieler-Daten.
+    ///     Saves player data.
     /// </summary>
     Task SavePlayerAsync(ServerPlayerCharacter playerCharacter);
 }

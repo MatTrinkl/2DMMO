@@ -26,8 +26,8 @@ public class ZoneManager
     private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByConnectionId = new();
 
     /// <summary>
-    ///     PersistentId → ServerPlayer (Permanent-stabil, ändert sich nie - auch nicht bei Zonenwechsel)
-    ///     Note: This is server-specific (ServerPlayer wraps PlayerEntity with Connection info)
+    ///     PersistentId → ServerPlayer (permanent and stable, never changes - even during zone transfer).
+    ///     Note: This is server-specific (ServerPlayer wraps PlayerEntity with Connection info).
     /// </summary>
     private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByPersistentId = new();
 
