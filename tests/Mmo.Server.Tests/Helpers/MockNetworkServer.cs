@@ -18,22 +18,13 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
 
     public List<(ClientConnection Client, INetworkMessage Message)> SentMessages { get; } = new();
 
-    public int ConnectionCount => _connections.Count;
-
-    /// <summary>Event that fires when a message is received from a client.</summary>
-    public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
-
-    /// <summary>Event that fires when a client connects.</summary>
-    public event Action<ClientConnection>? OnClientConnected;
-
-    /// <summary>Event that fires when a client disconnects.</summary>
-    public event Action<ClientConnection, string?>? OnClientDisconnected;
+    public new int ConnectionCount => _connections.Count;
 
     // ══════════════════════════════════════════════════════════
     // METHODS CALLED BY GAMESERVER
     // ══════════════════════════════════════════════════════════
 
-    public void Send(ClientConnection connection, INetworkMessage message)
+    public new void Send(ClientConnection connection, INetworkMessage message)
     {
         if (_isDisposed)
             throw new ObjectDisposedException(nameof(MockNetworkServer));
@@ -41,21 +32,21 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
         SentMessages.Add((connection, message));
     }
 
-    public bool TryGetConnection(Guid connectionId, out ClientConnection? connection)
+    public new bool TryGetConnection(Guid connectionId, out ClientConnection? connection)
     {
         return _connections.TryGetValue(connectionId, out connection);
     }
 
-    public void RemoveConnection(Guid connectionId, string? reason)
+    public new void RemoveConnection(Guid connectionId, string? reason)
     {
         if (_connections.Remove(connectionId, out var connection))
         {
             // Trigger disconnect event
-            OnClientDisconnected?.Invoke(connection, reason);
+            RaiseOnClientDisconnected(connection, reason);
         }
     }
 
-    public void Dispose()
+    public new void Dispose()
     {
         _isDisposed = true;
         _connections.Clear();
@@ -71,7 +62,7 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     public void SimulateClientConnected(Guid clientId, string remoteEndPoint = "127.0.0.1:12345")
     {
         var connection = GetOrCreateMockConnection(clientId);
-        OnClientConnected?.Invoke(connection);
+        RaiseOnClientConnected(connection);
     }
 
     /// <summary>
@@ -81,7 +72,7 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     {
         if (_connections.TryGetValue(clientId, out var connection))
         {
-            OnClientDisconnected?.Invoke(connection, reason);
+            RaiseOnClientDisconnected(connection, reason);
             _connections.Remove(clientId);
         }
     }
@@ -93,7 +84,58 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :Netw
     {
         var connection = GetOrCreateMockConnection(clientId);
         var messageType = message.Type;
-        OnMessageReceived?.Invoke(connection, messageType, message);
+        RaiseOnMessageReceived(connection, messageType, message);
+    }
+
+    /// <summary>
+    ///     Raises the OnMessageReceived event using reflection to access the base class event.
+    /// </summary>
+    private void RaiseOnMessageReceived(ClientConnection connection, MessageType messageType, INetworkMessage message)
+    {
+        var eventField = typeof(NetworkServer).GetField("OnMessageReceived", 
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnMessageReceived event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection, messageType, message);
+    }
+
+    /// <summary>
+    ///     Raises the OnClientConnected event using reflection to access the base class event.
+    /// </summary>
+    private void RaiseOnClientConnected(ClientConnection connection)
+    {
+        var eventField = typeof(NetworkServer).GetField("OnClientConnected",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnClientConnected event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection);
+    }
+
+    /// <summary>
+    ///     Raises the OnClientDisconnected event using reflection to access the base class event.
+    /// </summary>
+    private void RaiseOnClientDisconnected(ClientConnection connection, string? reason)
+    {
+        var eventField = typeof(NetworkServer).GetField("OnClientDisconnected",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        
+        if (eventField == null)
+        {
+            throw new InvalidOperationException("Could not find OnClientDisconnected event field via reflection");
+        }
+        
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection, reason);
     }
 
     /// <summary>

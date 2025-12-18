@@ -26,9 +26,9 @@ internal sealed class SlowGameServer : GameLoop.GameServer
         IServiceProvider? services = null)
         : base(
             networkServer,
-            messageRouter ?? TestHelpers.CreateMessageRouter(log),
+            messageRouter ?? TestHelpers.CreateMessageRouter(log, zoneManager ?? TestHelpers.CreateDefaultZoneManager()),
             zoneManager ?? TestHelpers.CreateDefaultZoneManager(),
-            services ?? TestHelpers.CreateTestServices(log),
+            services ?? TestHelpers.CreateTestServices(log, zoneManager ?? TestHelpers.CreateDefaultZoneManager()),
             log)
     {
         _tickDelay = tickDelay;
@@ -37,7 +37,7 @@ internal sealed class SlowGameServer : GameLoop.GameServer
     /// <summary>
     ///     Overrides Tick to add artificial delay for testing tick overruns.
     /// </summary>
-    public new void Tick(float deltaTime)
+    public override void Tick(float deltaTime)
     {
         if (_tickDelay > TimeSpan.Zero)
         {
