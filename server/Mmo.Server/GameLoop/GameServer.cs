@@ -16,71 +16,93 @@ using Mmo.Shared.Records;
 namespace Mmo.Server.GameLoop;
 
 /// <summary>
-///     Der zentrale Game-Server.
-///     Verantwortlichkeiten:
-///     - Game-Loop (Tick) verwalten
-///     - Input/Output/Completion Queues verarbeiten
-///     - Messages an Handler routen
-///     - Broadcasts ausführen
-///     WICHTIG:
-///     - NetworkServer kennt GameServer NICHT (nur Events)
-///     - GameServer registriert sich auf NetworkServer-Events
-///     - Alle Send-Operationen sind gequeued (Output-Phase)
+///     The central Game Server.
+///     Responsibilities:
+///     - Manage the Game Loop (Tick)
+///     - Process Input/Output/Completion Queues
+///     - Route messages to handlers
+///     - Execute broadcasts
+///     IMPORTANT:
+///     - NetworkServer does NOT know about GameServer (only events)
+///     - GameServer registers for NetworkServer events
+///     - All send operations are queued (Output phase)
 /// </summary>
 public class GameServer : IDisposable
 {
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTANTS
+    // ═══════════════════════════════════════════════════════════════
+    
     private const float _heartbeatInterval = 5.0f;
     private const float _deadConnectionCheckInterval = 10.0f;
     private static readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(30);
 
-    /// <summary>
-    ///     Callbacks von fertigen async Tasks.
-    ///     Gefüllt von ctx.RunAsync(), verarbeitet in ProcessCompletionQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<(Guid ConnectionId, Action<MessageContext> Callback)> _completionQueue = new();
-
-    private readonly CancellationTokenSource _cts = new();
-
-    /// <summary>
-    ///     Connections die getrennt werden sollen.
-    ///     Verarbeitet in ProcessDisconnectQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<(Guid ConnectionId, string? Reason)> _disconnectQueue = new();
-
     // ═══════════════════════════════════════════════════════════════
-    // QUEUES
+    // FIELDS
     // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Eingehende Messages von Clients.
-    ///     Gefüllt vom NetworkServer-Event, verarbeitet in ProcessInputQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<IncomingMessage> _inputQueue = new();
 
     private readonly ILog _log;
     private readonly MessageRouter _messageRouter;
     private readonly NetworkServer _networkServer;
-
-    /// <summary>
-    ///     Ausgehende Messages an Clients.
-    ///     Gefüllt von Handlern via ctx.Send(), verarbeitet in ProcessOutputQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
-
     private readonly IServiceProvider _services;
     private readonly ZoneManager _zoneManager;
+    
+    /// <summary>
+    ///     Incoming messages from clients.
+    ///     Populated by NetworkServer event, processed in ProcessInputQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<IncomingMessage> _inputQueue = new();
 
+    /// <summary>
+    ///     Outgoing messages to clients.
+    ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
+    
+    /// <summary>
+    ///     Callbacks from completed async tasks.
+    ///     Populated by ctx.RunAsync(), processed in ProcessCompletionQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<(Guid ConnectionId, Action<MessageContext> Callback)> _completionQueue = new();
+
+    /// <summary>
+    ///     Connections that should be disconnected.
+    ///     Processed in ProcessDisconnectQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<(Guid ConnectionId, string? Reason)> _disconnectQueue = new();
+
+    private readonly CancellationTokenSource _cts = new();
+    
     private float _deadConnectionTimer;
     private bool _disposed;
     private Thread? _gameLoopThread;
-
     private float _heartbeatTimer;
-
-    // ═══════════════════════════════════════════════════════════════
-    // STATE
-    // ═══════════════════════════════════════════════════════════════
-
     private bool _isRunning;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Target tick rate (ticks per second).</summary>
+    public int TargetTickRate { get; set; } = 20;
+
+    /// <summary>Target tick time in milliseconds.</summary>
+    private double TargetTickTimeMs => 1000.0 / TargetTickRate;
+
+    /// <summary>Current tick counter.</summary>
+    public long TickCount { get; private set; }
+
+    /// <summary>Duration of the last tick in milliseconds.</summary>
+    public double LastTickDurationMs { get; private set; }
+
+    /// <summary>Average tick duration in milliseconds.</summary>
+    public double AverageTickDurationMs { get; private set; }
+
+    /// <summary>Server start time.</summary>
+    public DateTimeOffset StartedAt { get; private set; }
+
+    /// <summary>Server uptime.</summary>
+    public TimeSpan Uptime => DateTimeOffset.UtcNow - StartedAt;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -100,8 +122,8 @@ public class GameServer : IDisposable
         _log = log ?? throw new ArgumentNullException(nameof(log));
 
         // ════════════════════════════════════════════════════════════
-        // Auf NetworkServer-Events registrieren
-        // NetworkServer weiß NICHT dass GameServer existiert!
+        // Register for NetworkServer events
+        // NetworkServer does NOT know that GameServer exists!
         // ════════════════════════════════════════════════════════════
         _networkServer.OnMessageReceived += HandleNetworkMessage;
         _networkServer.OnClientConnected += HandleClientConnected;
@@ -109,55 +131,11 @@ public class GameServer : IDisposable
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CONFIGURATION
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>Target Tick-Rate (Ticks pro Sekunde).</summary>
-    public int TargetTickRate { get; set; } = 20;
-
-    /// <summary>Target Tick-Zeit in Millisekunden.</summary>
-    private double TargetTickTimeMs => 1000.0 / TargetTickRate;
-
-    // ═══════════════════════════════════════════════════════════════
-    // METRICS
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>Aktueller Tick-Counter.</summary>
-    public long TickCount { get; private set; }
-
-    /// <summary>Letzte Tick-Dauer in Millisekunden.</summary>
-    public double LastTickDurationMs { get; private set; }
-
-    /// <summary>Durchschnittliche Tick-Dauer in Millisekunden. </summary>
-    public double AverageTickDurationMs { get; private set; }
-
-    /// <summary>Server-Startzeit.</summary>
-    public DateTimeOffset StartedAt { get; private set; }
-
-    /// <summary>Server-Uptime.</summary>
-    public TimeSpan Uptime => DateTimeOffset.UtcNow - StartedAt;
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        Stop();
-
-        // Events abmelden
-        _networkServer.OnMessageReceived -= HandleNetworkMessage;
-        _networkServer.OnClientConnected -= HandleClientConnected;
-        _networkServer.OnClientDisconnected -= HandleClientDisconnected;
-
-        _cts.Dispose();
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // LIFECYCLE
+    // PUBLIC METHODS
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Startet den Game-Server.
+    ///     Starts the Game Server.
     /// </summary>
     public void Start()
     {
@@ -170,7 +148,7 @@ public class GameServer : IDisposable
         _isRunning = true;
         StartedAt = DateTimeOffset.UtcNow;
 
-        // Game-Loop in eigenem Thread starten
+        // Start Game Loop in separate thread
         _gameLoopThread = new Thread(GameLoopThread)
         {
             Name = "GameLoop",
@@ -183,7 +161,7 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Stoppt den Game-Server.
+    ///     Stops the Game Server.
     /// </summary>
     public void Stop()
     {
@@ -194,17 +172,32 @@ public class GameServer : IDisposable
         _isRunning = false;
         _cts.Cancel();
 
-        // Auf Game-Loop-Thread warten
+        // Wait for Game Loop thread
         _gameLoopThread?.Join(TimeSpan.FromSeconds(5));
 
-        // Alle Spieler disconnecten
+        // Disconnect all players
         DisconnectAllPlayers("Server shutting down");
 
         _log.Info("GameServer stopped after {TickCount} ticks", TickCount);
     }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        Stop();
+
+        // Unregister events
+        _networkServer.OnMessageReceived -= HandleNetworkMessage;
+        _networkServer.OnClientConnected -= HandleClientConnected;
+        _networkServer.OnClientDisconnected -= HandleClientDisconnected;
+
+        _cts.Dispose();
+    }
+
     // ═══════════════════════════════════════════════════════════════
-    // GAME LOOP
+    // PRIVATE METHODS - GAME LOOP
     // ═══════════════════════════════════════════════════════════════
 
     private void GameLoopThread()
@@ -220,10 +213,10 @@ public class GameServer : IDisposable
 
             try
             {
-                // Delta-Time berechnen (in Sekunden)
+                // Calculate delta time (in seconds)
                 float deltaTime = (float)(TargetTickTimeMs / 1000.0);
 
-                // Tick ausführen
+                // Execute tick
                 Tick(deltaTime);
 
                 TickCount++;
@@ -236,17 +229,17 @@ public class GameServer : IDisposable
             stopwatch.Stop();
             LastTickDurationMs = stopwatch.Elapsed.TotalMilliseconds;
 
-            // Durchschnitt berechnen
+            // Calculate average
             tickTimes.Enqueue(LastTickDurationMs);
             if (tickTimes.Count > 100) tickTimes.Dequeue();
             AverageTickDurationMs = tickTimes.Average();
 
-            // Warnung wenn Tick zu lange dauert
+            // Warn if tick takes too long
             if (LastTickDurationMs > TargetTickTimeMs * 1.5)
                 _log.Warn("Tick {TickCount} took {Duration: F2}ms (target: {Target:F2}ms)",
                     TickCount, LastTickDurationMs, TargetTickTimeMs);
 
-            // Sleep bis zum nächsten Tick
+            // Sleep until next tick
             double sleepTime = TargetTickTimeMs - LastTickDurationMs;
             if (sleepTime > 0) Thread.Sleep((int)sleepTime);
         }
@@ -255,33 +248,40 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Führt einen Tick aus.
+    ///     Executes one tick of the Game Loop.
+    ///     The Game Loop consists of five phases that run sequentially:
+    ///     1. COMPLETION - Process callbacks from completed async operations
+    ///     2. INPUT - Process incoming messages from clients
+    ///     3. UPDATE - Execute game logic and system updates
+    ///     4. OUTPUT - Send outgoing messages to clients
+    ///     5. CLEANUP - Process connection disconnects
     /// </summary>
+    /// <param name="deltaTime">Time elapsed since last tick in seconds.</param>
     protected virtual void Tick(float deltaTime)
     {
-        // 1. COMPLETION PHASE - Fertige async Tasks
+        // 1. COMPLETION PHASE - Completed async tasks
         ProcessCompletionQueue();
 
-        // 2. INPUT PHASE - Neue Messages verarbeiten
+        // 2. INPUT PHASE - Process new messages
         ProcessInputQueue();
 
-        // 3. UPDATE PHASE - Game-Logik
+        // 3. UPDATE PHASE - Game logic
         UpdateGameSystems(deltaTime);
 
-        // 4. OUTPUT PHASE - Messages senden
+        // 4. OUTPUT PHASE - Send messages
         ProcessOutputQueue();
 
-        // 5. CLEANUP PHASE - Disconnects verarbeiten
+        // 5. CLEANUP PHASE - Process disconnects
         ProcessDisconnectQueue();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // NETWORK EVENT HANDLERS (vom Network-Thread aufgerufen!)
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
+    // Network Event Handlers (called from Network thread!)
+    // ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    ///     Wird vom NetworkServer aufgerufen wenn eine Message empfangen wird.
-    ///     Läuft auf dem Network-Thread - nur in Queue packen!
+    ///     Called by NetworkServer when a message is received.
+    ///     Runs on Network thread - only add to queue!
     /// </summary>
     private void HandleNetworkMessage(ClientConnection connection, MessageType type, INetworkMessage message)
     {
@@ -290,7 +290,7 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Wird vom NetworkServer aufgerufen wenn ein Client sich verbindet.
+    ///     Called by NetworkServer when a client connects.
     /// </summary>
     private void HandleClientConnected(ClientConnection connection)
     {
@@ -299,55 +299,55 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Wird vom NetworkServer aufgerufen wenn ein Client disconnected.
+    ///     Called by NetworkServer when a client disconnects.
     /// </summary>
     private void HandleClientDisconnected(ClientConnection connection, string? reason)
     {
         _log.Debug("Client disconnected event: {ConnectionId} - {Reason}",
             connection.Id, reason ?? "No reason logged.");
 
-        // Cleanup in Queue für Game-Loop
+        // Queue cleanup for Game Loop
         _disconnectQueue.Enqueue((connection.Id, reason));
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PUBLIC API (Thread-Safe, von Handlern aufgerufen)
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
+    // Public API (Thread-safe, called by handlers)
+    // ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    ///     Fügt eine ausgehende Message zur Queue hinzu.
-    ///     Wird vom MessageContext aufgerufen.
+    ///     Adds an outgoing message to the queue.
+    ///     Called by MessageContext.
     /// </summary>
     public void QueueOutgoingMessage(OutgoingMessage message) => _outputQueue.Enqueue(message);
 
     /// <summary>
-    ///     Queued einen Callback der im nächsten Tick ausgeführt wird.
-    ///     Wird von ctx.RunAsync() aufgerufen wenn ein async Task fertig ist.
+    ///     Queues a callback to be executed in the next tick.
+    ///     Called by ctx.RunAsync() when an async task completes.
     /// </summary>
     public void QueueCompletion(Guid connectionId, Action<MessageContext> callback) =>
         _completionQueue.Enqueue((connectionId, callback));
 
     /// <summary>
-    ///     Markiert eine Connection zum Trennen.
+    ///     Marks a connection for disconnection.
     /// </summary>
     public void QueueDisconnect(Guid connectionId, string? reason = null) =>
         _disconnectQueue.Enqueue((connectionId, reason));
 
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
     // COMPLETION PHASE
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
 
     private void ProcessCompletionQueue()
     {
         int processed = 0;
-        const int maxPerTick = 100; // Limit um einzelnen Tick nicht zu überlasten
+        const int maxPerTick = 100; // Limit to avoid overloading a single tick
 
         while (processed < maxPerTick &&
                _completionQueue.TryDequeue(out (Guid ConnectionId, Action<MessageContext> Callback) completion))
         {
             try
             {
-                // Connection noch da?
+                // Connection still exists?
                 if (_networkServer.TryGetConnection(completion.ConnectionId, out ClientConnection? connection) &&
                     connection != null)
                 {
@@ -372,9 +372,9 @@ public class GameServer : IDisposable
             _log.Debug("Completion queue has {Count} remaining items", _completionQueue.Count);
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
     // INPUT PHASE
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
 
     private void ProcessInputQueue()
     {
@@ -400,30 +400,31 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Verarbeitet eine einzelne eingehende Message.
+    ///     Processes a single incoming message by creating a context and routing it to the appropriate handler.
     /// </summary>
     private void ProcessMessage(IncomingMessage incoming)
     {
-        // MessageContext erstellen
+        // Create MessageContext
         MessageContext ctx = CreateMessageContext(incoming.Connection);
 
-        // An Router übergeben
+        // Route to handler
         _messageRouter.Route(ctx, incoming.MessageType, incoming.Message);
     }
 
     /// <summary>
-    ///     Erstellt einen MessageContext für eine Connection.
+    ///     Creates a MessageContext for a connection.
+    ///     The context provides access to game services and enables handlers to send responses.
     /// </summary>
     private MessageContext CreateMessageContext(ClientConnection connection) =>
         new(connection, this, _zoneManager, _services);
 
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
     // UPDATE PHASE
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
 
     private void UpdateGameSystems(float deltaTime)
     {
-        // TODO: Hier kommen die Game-Systeme rein:
+        // TODO: Game systems will be added here:
         // - AI Update
         // - Combat Update
         // - Buff/Debuff Timers
@@ -433,10 +434,10 @@ public class GameServer : IDisposable
         // - AFK Detection
         // - etc.
 
-        // Beispiel:  Heartbeat alle 5 Sekunden
+        // Example: Heartbeat every 5 seconds
         UpdateHeartbeat(deltaTime);
 
-        // Beispiel: AFK/Dead Connection Check
+        // Example: AFK/Dead Connection Check
         CheckDeadConnections(deltaTime);
     }
 
@@ -447,7 +448,7 @@ public class GameServer : IDisposable
         if (!(_heartbeatTimer >= _heartbeatInterval)) return;
         _heartbeatTimer = 0;
 
-        // Heartbeat an alle authentication Spieler
+        // Send heartbeat to all authenticated players
         var heartbeat = new Heartbeat
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
@@ -480,9 +481,9 @@ public class GameServer : IDisposable
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
     // OUTPUT PHASE
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
 
     private void ProcessOutputQueue()
     {
@@ -641,9 +642,9 @@ public class GameServer : IDisposable
                 _networkServer.Send(player.Connection, outgoing.Message);
     }
 
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
     // DISCONNECT PHASE
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
 
     private void ProcessDisconnectQueue()
     {
@@ -660,7 +661,7 @@ public class GameServer : IDisposable
 
     private void ProcessDisconnect(Guid connectionId, string? reason)
     {
-        // Spieler aus ZoneManager entfernen
+        // Remove player from ZoneManager
         ServerPlayerCharacter? player = _zoneManager.RemovePlayerByConnectionId(connectionId);
 
         if (player != null)
@@ -668,7 +669,7 @@ public class GameServer : IDisposable
             _log.Info("Player {Name} removed from zone {ZoneId}:  {Reason}",
                 player.Name, player.RuntimeId.ZoneId, reason ?? "Unknown");
 
-            // Broadcast an Zone:  Spieler hat verlassen
+            // Broadcast to zone: Player has left
             var leftMessage = new PlayerLeftZone(player.Entity);
             var outgoing = OutgoingMessage.BroadcastToZoneExcept(
                 leftMessage,
@@ -678,7 +679,7 @@ public class GameServer : IDisposable
             _outputQueue.Enqueue(outgoing);
         }
 
-        // Connection im NetworkServer schließen
+        // Close connection in NetworkServer
         _networkServer.RemoveConnection(connectionId, reason);
     }
 
@@ -689,7 +690,7 @@ public class GameServer : IDisposable
         foreach (ServerPlayerCharacter player in allPlayers)
             try
             {
-                // Disconnect-Nachricht senden
+                // Send disconnect message
                 var disconnectMsg = new Disconnect
                 {
                     Reason = DisconnectReason.ServerShutdown,
@@ -697,10 +698,10 @@ public class GameServer : IDisposable
                 };
                 _networkServer.Send(player.Connection, disconnectMsg);
 
-                // Aus ZoneManager entfernen
+                // Remove from ZoneManager
                 _zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
 
-                // Connection schließen
+                // Close connection
                 _networkServer.RemoveConnection(player.Connection.Id, reason);
             }
             catch (Exception ex)
@@ -711,13 +712,15 @@ public class GameServer : IDisposable
         _log.Info("Disconnected {Count} players:  {Reason}", allPlayers.Count, reason);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PUBLIC UTILITIES
-    // ═══════════════════════════════════════════════════════════════
+    // ───────────────────────────────────────────────────────────────
+    // Public Utilities
+    // ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    ///     Sendet eine Server-Ankündigung an alle Spieler.
+    ///     Sends a server announcement to all players.
     /// </summary>
+    /// <param name="message">The announcement message text.</param>
+    /// <param name="type">The type/severity of the announcement (Info, Warning, etc.).</param>
     public void BroadcastAnnouncement(string message, AnnouncementType type = AnnouncementType.Info)
     {
         var announcement = new ServerAnnouncement
@@ -732,8 +735,9 @@ public class GameServer : IDisposable
     }
 
     /// <summary>
-    ///     Holt Server-Statistiken.
+    ///     Gets current server statistics including tick performance and queue sizes.
     /// </summary>
+    /// <returns>A ServerStats object containing current metrics.</returns>
     public ServerStats GetStats()
     {
         return new ServerStats

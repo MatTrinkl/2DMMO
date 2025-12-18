@@ -7,49 +7,48 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.Networking;
 
 /// <summary>
-///     Verwaltet alle Client-Connections.
-///     WICHTIG:
-///     - Kennt KEINE Game-Logik!
-///     - Erstellt ClientConnections und hört auf deren Events
-///     - Leitet Events nach außen weiter
+///     Manages all client connections.
+///     IMPORTANT:
+///     - Contains NO game logic!
+///     - Creates ClientConnections and listens for their events
+///     - Forwards events to the game layer
 /// </summary>
 public class NetworkServer(
     ILog log,
     int port = 7777) : IDisposable
 {
-    // ═══ CONNECTIONS ═══
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+    
     private readonly ConcurrentDictionary<Guid, ClientConnection> _connections = new();
     private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener = new(IPAddress.Any, port);
 
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
     /// <summary>
-    ///     Anzahl aktiver Connections.
+    ///     Number of active connections.
     /// </summary>
     public int ConnectionCount => _connections.Count;
 
-    public void Dispose()
-    {
-        Stop();
-        _cts.Dispose();
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS
+    // ═══════════════════════════════════════════════════════════════
 
-    // ═══ EVENTS (für Game-Layer) ═══
-
-    /// <summary>Wird gefeuert wenn eine Message empfangen wurde.</summary>
+    /// <summary>Fired when a message is received from a client.</summary>
     public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
 
-    /// <summary>Wird gefeuert wenn ein Client sich verbindet.</summary>
+    /// <summary>Fired when a client connects.</summary>
     public event Action<ClientConnection>? OnClientConnected;
 
-    /// <summary>Wird gefeuert wenn ein Client die Verbindung trennt.</summary>
+    /// <summary>Fired when a client disconnects.</summary>
     public event Action<ClientConnection, string?>? OnClientDisconnected;
 
     // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    // ═══════════════════════════════════════════════════════════════
-    // LIFECYCLE
+    // PUBLIC METHODS
     // ═══════════════════════════════════════════════════════════════
 
     public void Start()
@@ -58,7 +57,7 @@ public class NetworkServer(
         log.Info("NetworkServer started on port {Port}",
             ((IPEndPoint)_listener.LocalEndpoint).Port);
 
-        // Accept-Loop starten
+        // Start accept loop
         _ = AcceptClientsAsync();
     }
 
@@ -73,8 +72,14 @@ public class NetworkServer(
         log.Info("NetworkServer stopped");
     }
 
+    public void Dispose()
+    {
+        Stop();
+        _cts.Dispose();
+    }
+
     // ═══════════════════════════════════════════════════════════════
-    // ACCEPT LOOP
+    // PRIVATE METHODS
     // ═══════════════════════════════════════════════════════════════
 
     private async Task AcceptClientsAsync()
@@ -84,7 +89,7 @@ public class NetworkServer(
             {
                 TcpClient tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
 
-                // Connection erstellen
+                // Create connection
                 var connection = new ClientConnection(tcpClient, log);
 
                 if (_connections.TryAdd(connection.Id, connection))
@@ -92,14 +97,14 @@ public class NetworkServer(
                     log.Info("Client connected: {ConnectionId} from {Endpoint}",
                         connection.Id, connection.RemoteEndPoint);
 
-                    // Auf Connection-Events hören
+                    // Listen for connection events
                     connection.OnMessageReceived += HandleConnectionMessage;
                     connection.OnDisconnected += HandleConnectionDisconnected;
 
-                    // Event nach außen feuern
+                    // Fire event to game layer
                     OnClientConnected?.Invoke(connection);
 
-                    // Connection startet selbst das Empfangen!
+                    // Connection starts receiving on its own!
                     connection.StartReceivingAsync();
                 }
                 else
@@ -109,12 +114,12 @@ public class NetworkServer(
             }
             catch (OperationCanceledException)
             {
-                // Server wurde gestoppt
+                // Server was stopped
                 break;
             }
             catch (ObjectDisposedException)
             {
-                // Server wurde gestoppt
+                // Server was stopped
                 break;
             }
             catch (Exception ex)
@@ -123,87 +128,75 @@ public class NetworkServer(
             }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // CONNECTION EVENT HANDLERS
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
-    ///     Wird von ClientConnection aufgerufen wenn Message empfangen.
+    ///     Called by ClientConnection when a message is received.
     /// </summary>
     private void HandleConnectionMessage(
         ClientConnection connection,
         MessageType type,
         INetworkMessage message)
     {
-        // Event nach außen weiterleiten (an GameServer)
+        // Forward event to game layer (GameServer)
         OnMessageReceived?.Invoke(connection, type, message);
     }
 
     /// <summary>
-    ///     Wird von ClientConnection aufgerufen wenn Verbindung getrennt.
+    ///     Called by ClientConnection when the connection is disconnected.
     /// </summary>
     private void HandleConnectionDisconnected(ClientConnection connection, string? reason)
     {
-        // Events abmelden
+        // Unregister events
         connection.OnMessageReceived -= HandleConnectionMessage;
         connection.OnDisconnected -= HandleConnectionDisconnected;
 
-        // Aus Dictionary entfernen
+        // Remove from dictionary
         _connections.TryRemove(connection.Id, out _);
 
         log.Info("Client disconnected: {ConnectionId} - {Reason}",
             connection.Id, reason ?? "Unknown");
 
-        // Event nach außen feuern
+        // Fire event to game layer
         OnClientDisconnected?.Invoke(connection, reason);
 
-        // Connection aufräumen
+        // Cleanup connection
         connection.Dispose();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // CONNECTION MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
-    ///     Entfernt und trennt eine Connection.
+    ///     Removes and disconnects a connection.
     /// </summary>
     public void RemoveConnection(Guid connectionId, string? reason = null)
     {
         if (_connections.TryRemove(connectionId, out ClientConnection? connection))
         {
-            // Events abmelden
+            // Unregister events
             connection.OnMessageReceived -= HandleConnectionMessage;
             connection.OnDisconnected -= HandleConnectionDisconnected;
 
             log.Info("Removing connection: {ConnectionId} - {Reason}",
                 connectionId, reason ?? "Unknown");
 
-            // Event feuern BEVOR dispose
+            // Fire event BEFORE dispose
             OnClientDisconnected?.Invoke(connection, reason);
 
-            // Aufräumen
+            // Cleanup
             connection.Dispose();
         }
     }
 
     /// <summary>
-    ///     Holt eine Connection by ID.
+    ///     Gets a connection by ID.
     /// </summary>
     public bool TryGetConnection(Guid connectionId, out ClientConnection? connection) =>
         _connections.TryGetValue(connectionId, out connection);
 
     /// <summary>
-    ///     Alle aktiven Connections.
+    ///     Gets all active connections.
     /// </summary>
     public IEnumerable<ClientConnection> GetAllConnections() => _connections.Values;
 
-    // ═══════════════════════════════════════════════════════════════
-    // SEND (delegiert an Connection)
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
-    ///     Sendet eine Message an eine Connection.
+    ///     Sends a message to a connection.
     /// </summary>
     public void Send(ClientConnection connection, INetworkMessage message)
     {
@@ -221,7 +214,7 @@ public class NetworkServer(
     }
 
     /// <summary>
-    ///     Sendet eine Message an eine Connection by ID.
+    ///     Sends a message to a connection by ID.
     /// </summary>
     public bool Send(Guid connectionId, INetworkMessage message)
     {

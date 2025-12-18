@@ -8,16 +8,20 @@ using Mmo.Shared.Serialization;
 namespace Mmo.Server.Networking;
 
 /// <summary>
-///     Repräsentiert eine Verbindung zu einem Client.
-///     Verantwortlichkeiten:
-///     - TCP-Stream verwalten
-///     - Messages empfangen und Events feuern
-///     - Messages senden
-///     - Connection-State tracken
-///     KEINE Game-Logik hier! Alles geht über Events zum GameServer.
+///     Represents a connection to a client.
+///     Responsibilities:
+///     - Manage TCP stream
+///     - Receive messages and fire events
+///     - Send messages
+///     - Track connection state
+///     NO game logic here! Everything goes through events to GameServer.
 /// </summary>
 public sealed class ClientConnection : IDisposable
 {
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+    
     private readonly CancellationTokenSource _cts = new();
     private readonly ILog _log;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -25,6 +29,45 @@ public sealed class ClientConnection : IDisposable
     private readonly TcpClient _tcpClient;
 
     private bool _disposed;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Identity
+    // ═══════════════════════════════════════════════════════════════
+
+    public Guid Id { get; } = Guid.NewGuid();
+    public string RemoteEndPoint { get; }
+    public DateTimeOffset ConnectedAt { get; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset LastActivity { get; private set; } = DateTimeOffset.UtcNow;
+    public bool IsConnected => !_disposed && _tcpClient.Connected;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Auth State (set by handler)
+    // ═══════════════════════════════════════════════════════════════
+
+    public ConnectionState State { get; private set; } = ConnectionState.Connected;
+    public Guid? AccountId { get; private set; }
+    public AccountFlags AccountFlags { get; private set; } = AccountFlags.None;
+    public string? Username { get; private set; }
+    public Guid? SessionToken { get; private set; }
+
+    public bool IsAuthenticated => State >= ConnectionState.Authenticated;
+    public bool IsInGame => State == ConnectionState.InGame;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Metrics
+    // ═══════════════════════════════════════════════════════════════
+
+    public int LatencyMs { get; set; }
+    public int SmoothedLatencyMs { get; set; }
+    public long MessagesReceived { get; private set; }
+    public long MessagesSent { get; private set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS
+    // ═══════════════════════════════════════════════════════════════
+
+    public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
+    public event Action<ClientConnection, string?>? OnDisconnected;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -46,40 +89,99 @@ public sealed class ClientConnection : IDisposable
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // IDENTITY
+    // PUBLIC METHODS
     // ═══════════════════════════════════════════════════════════════
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string RemoteEndPoint { get; }
-    public DateTimeOffset ConnectedAt { get; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset LastActivity { get; private set; } = DateTimeOffset.UtcNow;
-    public bool IsConnected => !_disposed && _tcpClient.Connected;
+    public void StartReceivingAsync() => _ = ReceiveLoopAsync();
 
-    // ═══════════════════════════════════════════════════════════════
-    // AUTH STATE (wird vom Handler gesetzt)
-    // ═══════════════════════════════════════════════════════════════
+    /// <summary>
+    ///     Sends a message to this client.
+    /// </summary>
+    public void Send(INetworkMessage message)
+    {
+        if (_disposed || !IsConnected) return;
 
-    public ConnectionState State { get; private set; } = ConnectionState.Connected;
-    public Guid? AccountId { get; private set; }
-    public AccountFlags AccountFlags { get; private set; } = AccountFlags.None;
-    public string? Username { get; private set; }
-    public Guid? SessionToken { get; private set; }
+        try
+        {
+            byte[] data = MessageSerializer.Serialize(message);
+            byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
 
-    public bool IsAuthenticated => State >= ConnectionState.Authenticated;
-    public bool IsInGame => State == ConnectionState.InGame;
+            _sendLock.Wait();
+            try
+            {
+                _stream.Write(lengthPrefix, 0, 4);
+                _stream.Write(data, 0, data.Length);
+                MessagesSent++;
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Error sending to {ConnectionId}", Id);
+            Dispose();
+        }
+    }
 
-    // ═══════════════════════════════════════════════════════════════
-    // METRICS
-    // ═══════════════════════════════════════════════════════════════
+    /// <summary>
+    ///     Sets the authentication state. Called by ConnectionHandler after successful authentication.
+    /// </summary>
+    public void SetAuthenticated(Guid accountId, string username, AccountFlags flags, Guid sessionToken)
+    {
+        AccountId = accountId;
+        Username = username;
+        AccountFlags = flags;
+        SessionToken = sessionToken;
+        State = ConnectionState.Authenticated;
 
-    public int LatencyMs { get; set; }
-    public int SmoothedLatencyMs { get; set; }
-    public long MessagesReceived { get; private set; }
-    public long MessagesSent { get; private set; }
+        _log.Debug("Connection {ConnectionId} authenticated as {Username}", Id, username);
+    }
 
-    // ═══════════════════════════════════════════════════════════════
-    // DISPOSE
-    // ═══════════════════════════════════════════════════════════════
+    /// <summary>
+    ///     Sets state to InGame. Called by ConnectionHandler when player enters game world.
+    /// </summary>
+    public void SetInGame()
+    {
+        if (State == ConnectionState.Authenticated)
+        {
+            State = ConnectionState.InGame;
+            _log.Debug("Connection {ConnectionId} is now InGame", Id);
+        }
+    }
+
+    /// <summary>
+    ///     Resets to unauthenticated state (logout).
+    /// </summary>
+    public void ResetAuth()
+    {
+        AccountId = null;
+        Username = null;
+        AccountFlags = AccountFlags.None;
+        SessionToken = null;
+        State = ConnectionState.Connected;
+    }
+
+    /// <summary>
+    ///     Updates the latency measurement using exponential smoothing.
+    /// </summary>
+    public void UpdateLatency(int latencyMs)
+    {
+        if (latencyMs < 0 || latencyMs > 10000) return;
+
+        LatencyMs = latencyMs;
+        SmoothedLatencyMs = SmoothedLatencyMs == 0
+            ? latencyMs
+            : (int)(SmoothedLatencyMs * 0.8f + latencyMs * 0.2f);
+
+        LastActivity = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    ///     Checks if the connection is "dead" (no activity for timeout period).
+    /// </summary>
+    public bool IsConnectionDead(TimeSpan timeout) => DateTimeOffset.UtcNow - LastActivity > timeout;
 
     public void Dispose()
     {
@@ -94,24 +196,19 @@ public sealed class ClientConnection : IDisposable
             _sendLock.Dispose();
             _cts.Dispose();
         }
-        catch
+        catch (ObjectDisposedException)
         {
-            // ignore errors in cleanup for now
+            // Expected if already disposed
+        }
+        catch (Exception)
+        {
+            // Suppress exceptions during cleanup to avoid masking the original issue
         }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // EVENTS
+    // PRIVATE METHODS
     // ═══════════════════════════════════════════════════════════════
-
-    public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
-    public event Action<ClientConnection, string?>? OnDisconnected;
-
-    // ═══════════════════════════════════════════════════════════════
-    // RECEIVE LOOP
-    // ═══════════════════════════════════════════════════════════════
-
-    public void StartReceivingAsync() => _ = ReceiveLoopAsync();
 
     private async Task ReceiveLoopAsync()
     {
@@ -121,7 +218,7 @@ public sealed class ClientConnection : IDisposable
         {
             while (!_cts.Token.IsCancellationRequested && IsConnected)
             {
-                // Header lesen
+                // Read header (4-byte message length)
                 int bytesRead = await ReadExactAsync(headerBuffer, 4);
                 if (bytesRead == 0) break;
 
@@ -133,21 +230,21 @@ public sealed class ClientConnection : IDisposable
                     break;
                 }
 
-                // Body lesen
+                // Read body
                 byte[] bodyBuffer = ArrayPool<byte>.Shared.Rent(messageLength);
                 try
                 {
                     bytesRead = await ReadExactAsync(bodyBuffer, messageLength);
                     if (bytesRead == 0) break;
 
-                    // Deserialisieren
+                    // Deserialize message
                     INetworkMessage message = MessageSerializer.Deserialize(
                         new ReadOnlyMemory<byte>(bodyBuffer, 0, messageLength));
 
                     LastActivity = DateTimeOffset.UtcNow;
                     MessagesReceived++;
 
-                    // ALLE Messages gehen zum GameServer!
+                    // ALL messages go to GameServer!
                     OnMessageReceived?.Invoke(this, message.Type, message);
                 }
                 finally
@@ -188,98 +285,4 @@ public sealed class ClientConnection : IDisposable
 
         return totalRead;
     }
-
-    // ═══════════════════════════════════════════════════════════════
-    // SEND
-    // ═══════════════════════════════════════════════════════════════
-
-    public void Send(INetworkMessage message)
-    {
-        if (_disposed || !IsConnected) return;
-
-        try
-        {
-            byte[] data = MessageSerializer.Serialize(message);
-            byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
-
-            _sendLock.Wait();
-            try
-            {
-                _stream.Write(lengthPrefix, 0, 4);
-                _stream.Write(data, 0, data.Length);
-                MessagesSent++;
-            }
-            finally
-            {
-                _sendLock.Release();
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, "Error sending to {ConnectionId}", Id);
-            Dispose();
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // STATE MANAGEMENT (vom Handler aufgerufen)
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Setzt den Auth-State.  Wird vom ConnectionHandler aufgerufen.
-    /// </summary>
-    public void SetAuthenticated(Guid accountId, string username, AccountFlags flags, Guid sessionToken)
-    {
-        AccountId = accountId;
-        Username = username;
-        AccountFlags = flags;
-        SessionToken = sessionToken;
-        State = ConnectionState.Authenticated;
-
-        _log.Debug("Connection {ConnectionId} authenticated as {Username}", Id, username);
-    }
-
-    /// <summary>
-    ///     Setzt State auf InGame.  Wird vom ConnectionHandler aufgerufen.
-    /// </summary>
-    public void SetInGame()
-    {
-        if (State == ConnectionState.Authenticated)
-        {
-            State = ConnectionState.InGame;
-            _log.Debug("Connection {ConnectionId} is now InGame", Id);
-        }
-    }
-
-    /// <summary>
-    ///     Reset auf unauthenticated (Logout).
-    /// </summary>
-    public void ResetAuth()
-    {
-        AccountId = null;
-        Username = null;
-        AccountFlags = AccountFlags.None;
-        SessionToken = null;
-        State = ConnectionState.Connected;
-    }
-
-    /// <summary>
-    ///     Aktualisiert die Latenz.
-    /// </summary>
-    public void UpdateLatency(int latencyMs)
-    {
-        if (latencyMs < 0 || latencyMs > 10000) return;
-
-        LatencyMs = latencyMs;
-        SmoothedLatencyMs = SmoothedLatencyMs == 0
-            ? latencyMs
-            : (int)(SmoothedLatencyMs * 0.8f + latencyMs * 0.2f);
-
-        LastActivity = DateTimeOffset.UtcNow;
-    }
-
-    /// <summary>
-    ///     Prüft ob Connection "tot" ist.
-    /// </summary>
-    public bool IsConnectionDead(TimeSpan timeout) => DateTimeOffset.UtcNow - LastActivity > timeout;
 }

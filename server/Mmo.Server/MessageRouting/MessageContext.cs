@@ -13,68 +13,50 @@ using Mmo.Shared.Records;
 namespace Mmo.Server.Networking;
 
 /// <summary>
-///     Server-Implementation von IMessageContext.
-///     Wraps ServerPlayer und ClientConnection und stellt alle Informationen
-///     bereit die ein Handler braucht.
-///     WICHTIG:
-///     - Send-Methoden queuen Messages für die Output-Phase
-///     - Es wird NICHTS sofort gesendet!
-///     - Das tatsächliche Senden passiert im GameServer während der Output-Phase
-///     Zusätzlich bietet diese Klasse Server-only Erweiterungen wie
-///     Broadcast-Methoden die nicht im Shared-Interface sind.
+///     Server implementation of IMessageContext.
+///     Wraps ServerPlayer and ClientConnection and provides all information
+///     that a handler needs.
+///     IMPORTANT:
+///     - Send methods queue messages for the Output phase
+///     - Nothing is sent immediately!
+///     - Actual sending happens in GameServer during the Output phase
+///     Additionally, this class provides server-only extensions like
+///     broadcast methods that are not in the Shared interface.
 /// </summary>
 public sealed class MessageContext : IMessageContext
 {
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+
     private readonly GameServer _gameServer;
     private readonly ServerPlayerCharacter? _serverPlayer;
 
     // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public MessageContext(
-        ClientConnection connection,
-        GameServer gameServer,
-        ZoneManager zoneManager,
-        IServiceProvider services)
-    {
-        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _gameServer = gameServer ?? throw new ArgumentNullException(nameof(gameServer));
-        ZoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
-        Services = services ?? throw new ArgumentNullException(nameof(services));
-
-        // Hole ServerPlayer aus ZoneManager (falls bereits eingeloggt)
-        ZoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
-
-        // Wrap ServerPlayer in IPlayerInfo (Shared-kompatibel)
-        if (_serverPlayer != null) PlayerInfo = new ServerPlayerInfo(_serverPlayer);
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // SERVER-ONLY:  Direct Access (nicht in IMessageContext!)
+    // PROPERTIES - Server-only (not in IMessageContext!)
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Direkter Zugriff auf den ServerPlayer.
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
-    ///     Nicht über IMessageContext exponiert.
+    ///     Direct access to the ServerPlayer.
+    ///     FOR SERVER-INTERNAL USE ONLY!
+    ///     Not exposed via IMessageContext.
     /// </summary>
     internal ServerPlayerCharacter? ServerPlayer => _serverPlayer;
 
     /// <summary>
-    ///     Direkter Zugriff auf die ClientConnection.
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
+    ///     Direct access to the ClientConnection.
+    ///     FOR SERVER-INTERNAL USE ONLY!
     /// </summary>
     internal ClientConnection Connection { get; }
 
     /// <summary>
-    ///     Direkter Zugriff auf den ZoneManager.
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
+    ///     Direct access to the ZoneManager.
+    ///     FOR SERVER-INTERNAL USE ONLY!
     /// </summary>
     internal ZoneManager ZoneManager { get; }
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - CONNECTION
+    // PROPERTIES - IMessageContext - Connection
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -93,7 +75,7 @@ public sealed class MessageContext : IMessageContext
     public int LatencyMs => _serverPlayer?.LatencyMs ?? 0;
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - AUTHENTICATION STATE
+    // IMessageContext - Authentication State
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -103,14 +85,14 @@ public sealed class MessageContext : IMessageContext
     public bool HasCharacter => _serverPlayer?.Entity != null;
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - PLAYER INFO
+    // IMessageContext - Player Info
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
     public IPlayerInfo? PlayerInfo { get; }
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - PERMISSIONS
+    // IMessageContext - Permissions
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -126,7 +108,7 @@ public sealed class MessageContext : IMessageContext
     public bool IsPremium => _serverPlayer?.AccountFlags.HasFlag(AccountFlags.Premium) ?? false;
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - SOCIAL STATE
+    // IMessageContext - Social State
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -136,7 +118,7 @@ public sealed class MessageContext : IMessageContext
     public bool IsAfk => _serverPlayer?.IsAfk ?? false;
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - SERVICES
+    // IMessageContext - Services
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -149,7 +131,29 @@ public sealed class MessageContext : IMessageContext
     public T? GetOptionalService<T>() where T : class => Services.GetService<T>();
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - SEND METHODS (QUEUED!)
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public MessageContext(
+        ClientConnection connection,
+        GameServer gameServer,
+        ZoneManager zoneManager,
+        IServiceProvider services)
+    {
+        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _gameServer = gameServer ?? throw new ArgumentNullException(nameof(gameServer));
+        ZoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        Services = services ?? throw new ArgumentNullException(nameof(services));
+
+        // Get ServerPlayer from ZoneManager (if already logged in)
+        ZoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
+
+        // Wrap ServerPlayer in IPlayerInfo (Shared-compatible)
+        if (_serverPlayer != null) PlayerInfo = new ServerPlayerInfo(_serverPlayer);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS - IMessageContext - Send Methods (Queued)
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -174,7 +178,7 @@ public sealed class MessageContext : IMessageContext
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // IMessageContext - CONNECTION CONTROL
+    // IMessageContext - Connection CONTROL
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
@@ -195,9 +199,9 @@ public sealed class MessageContext : IMessageContext
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler in der aktuellen Zone.
+    ///     Queues a message for all players in the current zone.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToZone(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -208,10 +212,10 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler in einer bestimmten Zone.
+    ///     Queues a message for all players in a specific zone.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
-    /// <param name="zoneId">Die Ziel-Zone. </param>
+    /// <param name="message">The message to send.</param>
+    /// <param name="zoneId">The target zone. </param>
     public void BroadcastToZone(INetworkMessage message, ushort zoneId)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -221,10 +225,10 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler in der aktuellen Zone,
-    ///     außer an den Sender selbst.
+    ///     Queues a message for all players in the current zone,
+    ///     except the sender.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToZoneExceptSelf(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -239,10 +243,10 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler in Reichweite.
+    ///     Queues a message for all players in range.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
-    /// <param name="radius">Maximale Distanz. </param>
+    /// <param name="message">The message to send.</param>
+    /// <param name="radius">Maximum distance. </param>
     public void BroadcastToNearby(INetworkMessage message, float radius)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -259,10 +263,10 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler in Reichweite (inklusive sich selbst).
+    ///     Queues a message for all players in range (including self).
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
-    /// <param name="radius">Maximale Distanz.</param>
+    /// <param name="message">The message to send.</param>
+    /// <param name="radius">Maximum distance.</param>
     public void BroadcastToNearbyIncludingSelf(INetworkMessage message, float radius)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -273,15 +277,15 @@ public sealed class MessageContext : IMessageContext
             _serverPlayer.RuntimeId.ZoneId,
             _serverPlayer.Entity.Position,
             radius,
-            null // Keinen ausschließen
+            null // Don't exclude anyone
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Party-Mitglieder.
+    ///     Queues a message for all party members.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToParty(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -292,9 +296,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Party-Mitglieder außer dem Sender.
+    ///     Queues a message for all party members except the sender.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToPartyExceptSelf(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -309,9 +313,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Guild-Mitglieder.
+    ///     Queues a message for all guild members.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToGuild(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -322,9 +326,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Guild-Mitglieder außer dem Sender.
+    ///     Queues a message for all guild members except the sender.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToGuildExceptSelf(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -339,9 +343,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für alle Spieler auf dem Server.
+    ///     Queues a message for all players on the server.
     /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
+    /// <param name="message">The message to send.</param>
     public void BroadcastToAll(INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -351,11 +355,11 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für einen bestimmten Spieler (by PersistentId).
+    ///     Queues a message for a specific player (by PersistentId).
     /// </summary>
-    /// <param name="targetId">PersistentId des Ziel-Spielers.</param>
-    /// <param name="message">Die zu sendende Nachricht. </param>
-    /// <returns>True wenn der Spieler gefunden wurde. </returns>
+    /// <param name="targetId">PersistentId of the target player.</param>
+    /// <param name="message">The message to send. </param>
+    /// <returns>True if the player was found. </returns>
     public bool SendToPlayer(Guid targetId, INetworkMessage message)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -371,11 +375,11 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Queued eine Nachricht für einen bestimmten Spieler (by Name).
+    ///     Queues a message for a specific player (by name).
     /// </summary>
-    /// <param name="targetName">Name des Ziel-Spielers.</param>
-    /// <param name="message">Die zu sendende Nachricht.</param>
-    /// <returns>True wenn der Spieler gefunden wurde. </returns>
+    /// <param name="targetName">Name of the target player.</param>
+    /// <param name="message">The message to send.</param>
+    /// <returns>True if the player was found. </returns>
     public bool SendToPlayer(string targetName, INetworkMessage message)
     {
         if (string.IsNullOrEmpty(targetName)) return false;
@@ -400,12 +404,12 @@ public sealed class MessageContext : IMessageContext
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Prüft ob ein Spieler online ist (by PersistentId).
+    ///     Checks if a player is online (by PersistentId).
     /// </summary>
     public bool IsPlayerOnline(Guid playerId) => ZoneManager.TryGetPlayerByPersistentId(playerId, out _);
 
     /// <summary>
-    ///     Prüft ob ein Spieler online ist (by Name).
+    ///     Checks if a player is online (by name).
     /// </summary>
     public bool IsPlayerOnline(string playerName)
     {
@@ -417,9 +421,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Holt die Zone-ID eines Spielers (by PersistentId).
+    ///     Gets the zone ID of a player (by PersistentId).
     /// </summary>
-    /// <returns>Zone-ID oder null wenn nicht gefunden.</returns>
+    /// <returns>Zone ID or null if not found.</returns>
     public ushort? GetPlayerZone(Guid playerId)
     {
         if (ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player))
@@ -429,7 +433,7 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Prüft ob der aktuelle Spieler in der gleichen Zone wie ein anderer ist.
+    ///     Checks if the current player is in the same zone as another.
     /// </summary>
     public bool IsInSameZone(Guid otherPlayerId)
     {
@@ -440,9 +444,9 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Berechnet die Distanz zu einem anderen Spieler.
+    ///     Calculates the distance to another player.
     /// </summary>
-    /// <returns>Distanz oder null wenn nicht in gleicher Zone.</returns>
+    /// <returns>Distance or null if not in the same zone.</returns>
     public float? GetDistanceToPlayer(Guid otherPlayerId)
     {
         if (_serverPlayer == null) return null;
@@ -459,7 +463,7 @@ public sealed class MessageContext : IMessageContext
     }
 
     /// <summary>
-    ///     Prüft ob ein Spieler in Reichweite ist.
+    ///     Checks if a player is in range.
     /// </summary>
     public bool IsPlayerInRange(Guid otherPlayerId, float range)
     {
@@ -472,14 +476,14 @@ public sealed class MessageContext : IMessageContext
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Startet einen async Task und queued das Result für den nächsten Tick.
-    ///     Der Task läuft im Hintergrund, blockiert NICHT den Game-Loop.
-    ///     Wenn der Task fertig ist, wird der Callback im Game-Loop ausgeführt.
+    ///     Starts an async task and queues the result for the next tick.
+    ///     The task runs in the background and does NOT block the Game Loop.
+    ///     When the task completes, the callback is executed in the Game Loop.
     /// </summary>
-    /// <typeparam name="T">Result-Type des Tasks</typeparam>
-    /// <param name="task">Der async Task</param>
-    /// <param name="onCompleted">Callback wenn Task fertig (wird im Game-Loop ausgeführt)</param>
-    /// <param name="onError">Optional:  Callback bei Fehler</param>
+    /// <typeparam name="T">Result type of the task</typeparam>
+    /// <param name="task">The async task</param>
+    /// <param name="onCompleted">Callback when task completes (executed in Game Loop)</param>
+    /// <param name="onError">Optional: Callback on error</param>
     public void RunAsync<T>(
         Task<T> task,
         Action<MessageContext, T> onCompleted,
@@ -491,25 +495,25 @@ public sealed class MessageContext : IMessageContext
         {
             if (t.IsFaulted)
             {
-                // Fehler-Callback queuen
+                // Queue error callback
                 if (onError != null)
                     _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
                 else
-                    // Default:  Error-Message senden
+                    // Default: Send error message
                     _gameServer.QueueCompletion(connectionId, ctx =>
                         ctx.SendError("INTERNAL_ERROR", "An error occurred"));
             }
             else if (t.IsCompletedSuccessfully)
             {
-                // Success-Callback queuen
+                // Queue success callback
                 _gameServer.QueueCompletion(connectionId, ctx => onCompleted(ctx, t.Result));
             }
-            // Cancelled wird ignoriert
+            // Cancelled is ignored
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
 
     /// <summary>
-    ///     Vereinfachte Version ohne Result.
+    ///     Simplified version without result.
     /// </summary>
     public void RunAsync(
         Task task,
