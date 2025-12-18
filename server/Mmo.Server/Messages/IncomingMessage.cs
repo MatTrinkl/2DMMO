@@ -5,20 +5,20 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.Messages;
 
 /// <summary>
-///     Repräsentiert eine eingehende Message in der Input-Queue.
+///     Represents an incoming message in the input queue.
 /// </summary>
 public readonly struct IncomingMessage
 {
-    /// <summary>Die Connection von der die Message kam.</summary>
+    /// <summary>The connection from which the message came.</summary>
     public ClientConnection Connection { get; init; }
 
-    /// <summary>Der Typ der Message. </summary>
+    /// <summary>The type of the message.</summary>
     public MessageType MessageType { get; init; }
 
-    /// <summary>Die deserialisierte Message.</summary>
+    /// <summary>The deserialized message.</summary>
     public INetworkMessage Message { get; init; }
 
-    /// <summary>Zeitpunkt wann die Message empfangen wurde. </summary>
+    /// <summary>Timestamp when the message was received.</summary>
     public DateTimeOffset ReceivedAt { get; init; }
 
     public IncomingMessage(
