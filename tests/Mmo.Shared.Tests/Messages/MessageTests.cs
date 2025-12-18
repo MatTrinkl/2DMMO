@@ -49,7 +49,7 @@ public class MessageTests
     public void PositionUpdate_HasCorrectMessageType()
     {
         // Arrange
-        var entity = new PlayerEntity(Guid.NewGuid(), "Player", new Position(10, 20));
+        var entity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Player", new Position(10, 20));
         var newPosition = new Position(30, 40);
         var positionUpdate = new PositionUpdate(12345, entity, newPosition);
 

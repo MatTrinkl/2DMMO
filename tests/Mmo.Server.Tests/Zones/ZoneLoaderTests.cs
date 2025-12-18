@@ -50,8 +50,8 @@ public class ZoneLoaderTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal((ushort)1, result.ZoneId);
-        Assert.Equal("Startzone", result.ZoneName);
-        Assert.True(result.IsDefault);
+        Assert.Equal("Startzone", result.DisplayName);
+        Assert.True(result.ZoneId==0);
 
         // Bounds
         Assert.NotNull(result.Bounds);
@@ -61,11 +61,11 @@ public class ZoneLoaderTests
         Assert.Equal(1600, result.Bounds.MaxY);
 
         // SpawnPoints
-        Assert.Single(result.SpawnPoints);
-        Assert.Equal(800, result.SpawnPoints[0].X);
-        Assert.Equal(800, result.SpawnPoints[0].Y);
-        Assert.Equal(50, result.SpawnPoints[0].Radius);
-        Assert.True(result.SpawnPoints[0].IsDefault);
+        Assert.Single(result.PlayerSpawnPoints);
+        Assert.Equal(800, result.PlayerSpawnPoints[0].X);
+        Assert.Equal(800, result.PlayerSpawnPoints[0].Y);
+        Assert.Equal(50, result.PlayerSpawnPoints[0].Radius);
+        Assert.True(result.PlayerSpawnPoints[0].IsDefault);
     }
 
     [Fact]
@@ -91,8 +91,8 @@ public class ZoneLoaderTests
         ZoneConfig result = ZoneLoader.LoadZoneConfig(filePath);
 
         // Assert
-        Assert.Equal(3, result.SpawnPoints.Length);
-        Assert.Single(result.SpawnPoints, sp => sp.IsDefault);
+        Assert.Equal(3, result.PlayerSpawnPoints.Count);
+        Assert.Single(result.PlayerSpawnPoints, sp => sp.IsDefault);
     }
 
     [Fact]
@@ -159,8 +159,8 @@ public class ZoneLoaderTests
 
         // Assert
         Assert.Equal(2, results.Count);
-        Assert.Contains(results, z => z.ZoneName == "Zone 1");
-        Assert.Contains(results, z => z.ZoneName == "Zone 2");
+        Assert.Contains(results, z => z.DisplayName == "Zone 1");
+        Assert.Contains(results, z => z.DisplayName == "Zone 2");
     }
 
     [Fact]
@@ -213,7 +213,7 @@ public class ZoneLoaderTests
         var results = ZoneLoader.LoadAllZones(_testDirectory).ToList();
 
         // Assert
-        Assert.Single(results, z => z.IsDefault);
+        Assert.Single(results, z => z.ZoneId==0);
     }
 
     #endregion

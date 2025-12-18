@@ -1,6 +1,7 @@
 using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared;
+using Mmo.Shared.Entities;
 using Mmo.Shared.Messages.Chat;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -9,12 +10,13 @@ namespace Mmo.Server.Tests.GameServer;
 public class GameServerBroadcastTests : IDisposable
 {
     private readonly MockLog _mockLog = new();
-    private readonly MockNetworkServer _mockNetworkServer = new();
+    private readonly MockNetworkServer _mockNetworkServer;
 
     public GameServerBroadcastTests()
     {
         // Clear IdRegistry before each test
         IdRegistry.Instance.Clear();
+        _mockNetworkServer = new(_mockLog, true);
     }
 
     public void Dispose()

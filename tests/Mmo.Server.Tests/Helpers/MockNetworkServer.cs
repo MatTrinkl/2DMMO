@@ -11,10 +11,10 @@ namespace Mmo.Server.Tests.Helpers;
 ///     Tracks sent messages and allows simulation of network events.
 ///     Uses the new event-based pattern from the refactored architecture.
 /// </summary>
-public class MockNetworkServer
+public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) :NetworkServer(log, port)
 {
     private readonly Dictionary<Guid, ClientConnection> _connections = new();
-    private bool _isDisposed;
+    private bool _isDisposed = isDisposed;
 
     public List<(ClientConnection Client, INetworkMessage Message)> SentMessages { get; } = new();
 

@@ -13,7 +13,12 @@ namespace Mmo.Server.Tests.GameServer;
 public class GameServerTests
 {
     private readonly MockLog _mockLog = new();
-    private readonly MockNetworkServer _mockNetworkServer = new();
+    private readonly MockNetworkServer _mockNetworkServer;
+
+    public GameServerTests()
+    {
+        _mockNetworkServer= new MockNetworkServer(_mockLog, true);
+    }
 
     [Fact]
     public void Constructor_InitializesCorrectly()
@@ -106,7 +111,7 @@ public class GameServerTests
 
         // Simulate different message types
         var loginRequest = new LoginRequest("TestUser", "password123");
-        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         var positionUpdate =
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
         var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");

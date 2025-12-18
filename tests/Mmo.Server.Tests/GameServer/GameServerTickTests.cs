@@ -5,7 +5,12 @@ namespace Mmo.Server.Tests.GameServer;
 public class GameServerTickTests
 {
     private readonly MockLog _mockLog = new();
-    private readonly MockNetworkServer _mockNetworkServer = new();
+    private readonly MockNetworkServer _mockNetworkServer;
+
+    public GameServerTickTests()
+    {
+        _mockNetworkServer = new MockNetworkServer(_mockLog, true);
+    }
 
     [Fact]
     public void SlowTick_LogsWarning_WhenTickOverruns()

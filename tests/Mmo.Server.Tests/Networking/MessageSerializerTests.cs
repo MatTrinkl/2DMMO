@@ -59,7 +59,7 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_PlayerJoined_RoundTrip()
     {
         var original = new PlayerJoinedZone
-            (new PlayerEntity(Guid.Empty, "Player1", new Position(100f, 200f)));
+            (new PlayerEntity(Guid.Empty,Guid.NewGuid(), "Player1", new Position(100f, 200f)));
 
 
         byte[] bytes = MessageSerializer.Serialize(original);
@@ -97,7 +97,7 @@ public class MessageSerializerTests
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var original = new PositionUpdate(timestamp,
-            new PlayerEntity(Guid.Empty, "Player1", new Position(100f, 200f)),
+            new PlayerEntity(Guid.Empty,Guid.NewGuid(), "Player1", new Position(100f, 200f)),
             new Position(123.456f, 789.012f));
 
         byte[] bytes = MessageSerializer.Serialize(original);
@@ -120,8 +120,8 @@ public class MessageSerializerTests
         ushort zoneId = 0;
         var original = new ZoneState(12345, zoneId,
         [
-            new PlayerEntity(Guid.Empty, "Player1", new Position(0, 0)),
-            new PlayerEntity(Guid.Empty, "Player2", new Position(0, 0))
+            new PlayerEntity(Guid.Empty,Guid.NewGuid(), "Player1", new Position(0, 0)),
+            new PlayerEntity(Guid.Empty,Guid.NewGuid(), "Player2", new Position(0, 0))
         ]);
 
         byte[] bytes = MessageSerializer.Serialize(original);

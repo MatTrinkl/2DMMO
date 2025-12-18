@@ -19,7 +19,7 @@ public class GameServerInputPhaseTests
     public GameServerInputPhaseTests()
     {
         _mockLog = new MockLog();
-        _mockNetworkServer = new MockNetworkServer();
+        _mockNetworkServer = new MockNetworkServer(_mockLog,true);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send PositionUpdate
-        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(5, 5));
+        var testEntity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "TestPlayer", new Position(5, 5));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(10, 20)));
 
@@ -167,7 +167,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Queue messages in specific order
-        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5)));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Hi"));
@@ -204,7 +204,7 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send various message types
-        var testEntity = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("Player1", "password123"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Test"));

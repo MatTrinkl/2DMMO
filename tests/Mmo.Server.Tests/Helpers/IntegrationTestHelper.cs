@@ -16,7 +16,7 @@ namespace Mmo.Server.Tests.Helpers;
 
 public static class TestHelpers
 {
-    private static readonly MockNetworkServer _mockNetworkServer = new();
+    private static readonly MockNetworkServer _mockNetworkServer;
 
     /// <summary>
     ///     Creates a GameServer instance for testing with all required dependencies.
@@ -30,7 +30,7 @@ public static class TestHelpers
     {
         // Use provided or create defaults
         log ??= new MockLog();
-        networkServer ??= new MockNetworkServer();
+        networkServer ??= new MockNetworkServer(log, true);
         zoneManager ??= CreateDefaultZoneManager();
         messageRouter ??= CreateMessageRouter(log);
         services ??= CreateTestServices(log);
@@ -80,7 +80,7 @@ public static class TestHelpers
     public static MessageRouter CreateMessageRouter(ILog log)
     {
         var router = new MessageRouter(log);
-        
+
         // Note: We would register ConnectionHandler here, but it has compilation errors
         // in the production code (missing message types like ReconnectRequest, etc.)
         // This is NOT a test issue - the production code needs to be fixed separately.
@@ -122,6 +122,7 @@ public static class TestHelpers
     {
         var entity = new PlayerEntity(
             persistentId ?? Guid.NewGuid(),
+            Guid.NewGuid(),
             name,
             new Position(x, y)
         );

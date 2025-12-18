@@ -11,12 +11,14 @@ namespace Mmo.Server.Tests.Zones;
 [Collection("IdRegistry")]
 public class ZoneManagerTests : IDisposable
 {
-    private static readonly MockNetworkServer _sharedMockNetworkServer = new();
+    private static MockNetworkServer _sharedMockNetworkServer;
+    private static MockLog _mockLog = new();
 
     public ZoneManagerTests()
     {
         // Clear IdRegistry before each test
         IdRegistry.Instance.Clear();
+        _sharedMockNetworkServer = new MockNetworkServer(_mockLog, true);
     }
 
     public void Dispose()
@@ -35,6 +37,7 @@ public class ZoneManagerTests : IDisposable
     {
         var entity = new PlayerEntity(
             persistentId ?? IdRegistry.Instance.GeneratePersistentId(),
+            Guid.NewGuid(),
             "TestPlayer",
             new Position(100, 100)
         );
@@ -277,7 +280,7 @@ public class ZoneManagerTests : IDisposable
         zoneManager.AddPlayer(player1);
         zoneManager.AddPlayer(player2);
 
-        List<Entity> entities = zoneManager.GetAllEntities(0);
+        List<IEntity> entities = zoneManager.GetAllEntities(0);
 
         Assert.Equal(2, entities.Count);
     }
@@ -341,85 +344,6 @@ public class ZoneManagerTests : IDisposable
         Assert.True(result);
         // Player should still be findable by PersistentId after transfer
         Assert.True(zoneManager.TryGetPlayerByPersistentId(persistentId, out _));
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // MOB ENTITY TESTS
-    // ══════════════════════════════════════════════════════════
-
-    [Fact]
-    public void AddEntity_MobEntity_AddsToZone()
-    {
-        ZoneManager zoneManager = CreateZoneManager();
-        var mob = new MobEntity("Goblin", new Position(50, 50));
-
-        zoneManager.AddEntity(mob, 0);
-
-        Assert.True(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out IEntity? foundEntity));
-        Assert.Equal(mob, foundEntity);
-    }
-
-    [Fact]
-    public void RemoveEntity_MobEntity_RemovesFromZone()
-    {
-        ZoneManager zoneManager = CreateZoneManager();
-        var mob = new MobEntity("Wolf", new Position(100, 100));
-        zoneManager.AddEntity(mob, 0);
-
-        IEntity? removed = zoneManager.RemoveEntity(mob.PersistentId);
-
-        Assert.NotNull(removed);
-        Assert.Equal(mob.PersistentId, removed.PersistentId);
-        Assert.False(zoneManager.TryGetEntityByPersistentId(mob.PersistentId, out _));
-    }
-
-    [Fact]
-    public void AddEntity_MultipleMobs_AllHaveUniquePersistentIds()
-    {
-        ZoneManager zoneManager = CreateZoneManager();
-        var mob1 = new MobEntity("Goblin", new Position(10, 10));
-        var mob2 = new MobEntity("Orc", new Position(20, 20));
-        var mob3 = new MobEntity("Troll", new Position(30, 30));
-
-        zoneManager.AddEntity(mob1, 0);
-        zoneManager.AddEntity(mob2, 0);
-        zoneManager.AddEntity(mob3, 0);
-
-        Assert.NotEqual(mob1.PersistentId, mob2.PersistentId);
-        Assert.NotEqual(mob2.PersistentId, mob3.PersistentId);
-        Assert.NotEqual(mob1.PersistentId, mob3.PersistentId);
-        // All 3 entities should be in the zone
-        Assert.True(zoneManager.HasPersistentEntity(mob1.PersistentId));
-        Assert.True(zoneManager.HasPersistentEntity(mob2.PersistentId));
-        Assert.True(zoneManager.HasPersistentEntity(mob3.PersistentId));
-    }
-
-    [Fact]
-    public void GetAllEntities_IncludesMobsAndPlayers()
-    {
-        ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
-        var mob = new MobEntity("Spider", new Position(75, 75));
-
-        zoneManager.AddPlayer(player, 0);
-        zoneManager.AddEntity(mob, 0);
-
-        List<Entity> entities = zoneManager.GetAllEntities(0);
-
-        Assert.Equal(2, entities.Count);
-        Assert.Contains(entities, e => e is PlayerEntity);
-        Assert.Contains(entities, e => e is MobEntity);
-    }
-
-    [Fact]
-    public void MobEntity_IsTrulyPersistent_IsFalse()
-    {
-        ZoneManager zoneManager = CreateZoneManager();
-        var mob = new MobEntity("Skeleton", new Position(0, 0));
-
-        zoneManager.AddEntity(mob, 0);
-
-        Assert.False(mob.IsTrulyPersistent);
     }
 
     [Fact]

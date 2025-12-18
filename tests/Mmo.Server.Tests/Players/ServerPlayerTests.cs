@@ -8,14 +8,20 @@ namespace Mmo.Server.Tests.Players;
 
 public class ServerPlayerTests
 {
-    private static readonly MockNetworkServer _mockNetworkServer = new();
+    private static MockNetworkServer _mockNetworkServer;
+    private static readonly MockLog _mockLog = new();
+
+    public ServerPlayerTests()
+    {
+        _mockNetworkServer= new MockNetworkServer(_mockLog,true);
+    }
 
     [Fact]
     public void Constructor_SetsAllProperties()
     {
         var persistentId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
-        var entity = new PlayerEntity(persistentId, "TestPlayer", new Position(100, 200));
+        var entity = new PlayerEntity(persistentId, Guid.NewGuid(),"TestPlayer", new Position(100, 200));
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connectionId);
 
         var serverPlayer = new ServerPlayer(entity, connection);
@@ -29,7 +35,7 @@ public class ServerPlayerTests
     [Fact]
     public void ConnectedAt_IsSetToCurrentTime()
     {
-        var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
+        var entity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Test", new Position(0, 0));
         DateTimeOffset before = DateTimeOffset.UtcNow;
 
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
@@ -43,7 +49,7 @@ public class ServerPlayerTests
     [Fact]
     public void LastActivity_CanBeUpdated()
     {
-        var entity = new PlayerEntity(Guid.NewGuid(), "Test", new Position(0, 0));
+        var entity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Test", new Position(0, 0));
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var serverPlayer = new ServerPlayer(entity, connection);
         DateTimeOffset originalActivity = serverPlayer.LastActivity;
