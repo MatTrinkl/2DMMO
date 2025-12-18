@@ -1,11 +1,14 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
+using MessagePack;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
 
+[Union(0, typeof(PlayerEntity))]
+[Union(1, typeof(NpcEntity))]
 public interface IEntity
 {
     /// <summary>

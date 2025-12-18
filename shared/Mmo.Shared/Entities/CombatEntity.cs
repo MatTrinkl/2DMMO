@@ -11,21 +11,19 @@ namespace Mmo.Shared.Entities;
 ///     Implementiert die gemeinsame Combat-Logik.
 /// </summary>
 [MessagePackObject]
-[Union(0, typeof(PlayerEntity))]
-[Union(1, typeof(NpcEntity))]
 public abstract class CombatEntity : ICombatEntity
 {
     // ═══════════════════════════════════════════════════════════════
     // IEntity Implementation
     // ═══════════════════════════════════════════════════════════════
 
-    [Key(0)] public EntityIdentity RuntimeId { get; protected set; }
+    [Key(0)] public EntityIdentity RuntimeId { get; set; }
 
-    [Key(1)] public Guid PersistentId { get; protected set; }
+    [Key(1)] public Guid PersistentId { get; set; }
 
     [Key(2)] public Position Position { get; set; }
 
-    [Key(3)] public ushort PrefabId { get; protected set; }
+    [Key(3)] public ushort PrefabId { get; set; }
 
     [IgnoreMember] public abstract EntityType Type { get; }
 
