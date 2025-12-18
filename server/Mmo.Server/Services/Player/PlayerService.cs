@@ -63,6 +63,29 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         return new List<CharacterInfo>();
     }
 
+    public async Task<CharacterData?> LoadCharacterAsync(Guid accountId, Guid characterId)
+    {
+        // TODO: Charakter aus DB laden
+        await Task.Delay(1);
+
+        // PROTOTYPE: Dummy-Charakter zurückgeben
+        return new CharacterData(
+            characterId,
+            "TestCharacter",
+            1,
+            Race.Human,
+            CharacterClass.Warrior,
+            Gender.Male,
+            Faction.Player,
+            1, // ZoneId
+            new Position(100, 100),
+            100, // MaxHealth
+            100, // CurrentHealth
+            100, // MaxResource
+            100  // CurrentResource
+        );
+    }
+
     public async Task<CharacterCreateResult> CreateCharacterAsync(
         Guid accountId,
         string name,
@@ -80,6 +103,16 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         );
     }
 
+    public async Task<bool> DeleteCharacterAsync(Guid accountId, Guid characterId)
+    {
+        // TODO: Charakter aus DB löschen
+        await Task.Delay(1);
+
+        // PROTOTYPE: Immer erfolgreich
+        log.Info("Character deleted: {CharacterId} for account {AccountId}", characterId, accountId);
+        return true;
+    }
+
     public async Task RemovePlayerAsync(Guid connectionId)
     {
         ServerPlayerCharacter? player = zoneManager.RemovePlayerByConnectionId(connectionId);
@@ -92,6 +125,11 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
             log.Info("Player removed: {Name} (ConnectionId: {ConnectionId})",
                 player.Name, connectionId);
         }
+    }
+
+    public async Task SaveAndRemovePlayerAsync(Guid connectionId)
+    {
+        await RemovePlayerAsync(connectionId);
     }
 
     public async Task SavePlayerAsync(ServerPlayerCharacter playerCharacter)

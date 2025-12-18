@@ -23,6 +23,11 @@ public interface IPlayerService
     Task<List<CharacterInfo>> GetCharacterListAsync(Guid accountId);
 
     /// <summary>
+    ///     Lädt einen einzelnen Charakter.
+    /// </summary>
+    Task<CharacterData?> LoadCharacterAsync(Guid accountId, Guid characterId);
+
+    /// <summary>
     ///     Erstellt neuen Charakter.
     /// </summary>
     Task<CharacterCreateResult> CreateCharacterAsync(
@@ -33,9 +38,19 @@ public interface IPlayerService
         Gender gender);
 
     /// <summary>
+    ///     Löscht einen Charakter.
+    /// </summary>
+    Task<bool> DeleteCharacterAsync(Guid accountId, Guid characterId);
+
+    /// <summary>
     ///     Entfernt Spieler (Logout/Disconnect).
     /// </summary>
     Task RemovePlayerAsync(Guid connectionId);
+
+    /// <summary>
+    ///     Speichert Spieler-Daten und entfernt ihn aus dem Manager.
+    /// </summary>
+    Task SaveAndRemovePlayerAsync(Guid connectionId);
 
     /// <summary>
     ///     Speichert Spieler-Daten.

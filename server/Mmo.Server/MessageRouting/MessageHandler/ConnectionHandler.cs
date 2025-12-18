@@ -1,3 +1,4 @@
+using Mmo.Server.Entities;
 using Mmo.Server.Handlers.Base;
 using Mmo.Server.Networking;
 using Mmo.Server.Services.Authentication;
@@ -7,6 +8,7 @@ using Mmo.Shared.Entities;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messages.ZoneEvents;
 
 namespace Mmo.Server.MessageRouting.MessageHandler;
 
@@ -62,21 +64,20 @@ public class ConnectionHandler : BaseCategoryHandler
     {
         // Login / Logout
         Register<LoginRequest>(MessageType.LoginRequest, HandleLoginRequest);
-        //Register<LogoutRequest>(MessageType.LogoutRequest, HandleLogoutRequest);
-        //Register<ReconnectRequest>(MessageType.ReconnectRequest, HandleReconnectRequest);
+        Register<LogoutRequest>(MessageType.LogoutRequest, HandleLogoutRequest);
+        Register<ReconnectRequest>(MessageType.ReconnectRequest, HandleReconnectRequest);
 
         // Heartbeat
-        //Register<Heartbeat>(MessageType.Heartbeat, HandleHeartbeat);
-        //Register<HeartbeatResponse>(MessageType.HeartbeatResponse, HandleHeartbeatResponse);
+        Register<Heartbeat>(MessageType.Heartbeat, HandleHeartbeat);
 
         // Character Selection
-        //Register<CharacterListRequest>(MessageType.CharacterListRequest, HandleCharacterListRequest);
-        //Register<CharacterSelect>(MessageType.CharacterSelect, HandleCharacterSelect);
-        //Register<CharacterCreate>(MessageType.CharacterCreate, HandleCharacterCreate);
-        //Register<CharacterDelete>(MessageType.CharacterDelete, HandleCharacterDelete);
+        Register<CharacterListRequest>(MessageType.CharacterListRequest, HandleCharacterListRequest);
+        Register<CharacterSelect>(MessageType.CharacterSelect, HandleCharacterSelect);
+        Register<CharacterCreate>(MessageType.CharacterCreate, HandleCharacterCreate);
+        Register<CharacterDelete>(MessageType.CharacterDelete, HandleCharacterDelete);
 
         // Disconnect
-        // Register<Disconnect>(MessageType.Disconnect, HandleDisconnect);
+        Register<Disconnect>(MessageType.Disconnect, HandleDisconnect);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -152,17 +153,17 @@ public class ConnectionHandler : BaseCategoryHandler
     /// <summary>
     ///     Verarbeitet einen Logout-Request.
     /// </summary>
-    /* private void HandleLogoutRequest(MessageContext ctx, LogoutRequest request)
+    private void HandleLogoutRequest(MessageContext ctx, LogoutRequest request)
      {
          if (!RequireAuthenticated(ctx)) return;
 
          _log.Info("Logout request from {ConnectionId}:  {Username}", ctx.ConnectionId, ctx.Connection.Username);
 
          // ─── Spieler aus Welt entfernen (falls InGame) ───
-         if (ctx.HasCharacter && ctx.PlayerInfo != null)
+         if (ctx.HasCharacter && ctx.ServerPlayer != null)
          {
              // Broadcast an Zone
-             ctx.BroadcastToZoneExceptSelf(new PlayerLeftZone(ctx.PlayerId!.Value));
+             ctx.BroadcastToZoneExceptSelf(new PlayerLeftZone(ctx.ServerPlayer.Entity));
 
              // Spieler-Daten speichern (async, Fire-and-Forget)
              var saveTask = _playerService.SaveAndRemovePlayerAsync(ctx.ConnectionId);
@@ -189,10 +190,10 @@ public class ConnectionHandler : BaseCategoryHandler
          ctx.Send(new LogoutResponse(true));
      }
 
-     /// <summary>
-     ///     Verarbeitet einen Reconnect-Request.
-     /// </summary>
-     private void HandleReconnectRequest(MessageContext ctx, ReconnectRequest request)
+    /// <summary>
+    ///     Verarbeitet einen Reconnect-Request.
+    /// </summary>
+    private void HandleReconnectRequest(MessageContext ctx, ReconnectRequest request)
      {
          if (ctx.IsAuthenticated)
          {
@@ -246,28 +247,14 @@ public class ConnectionHandler : BaseCategoryHandler
      // ═══════════════════════════════════════════════════════════════
 
      /// <summary>
-     ///     Server sendet Heartbeat an Client (für Keep-Alive).
-     ///     Wird vom HeartbeatService aufgerufen, nicht vom Client.
+     ///     Client sends Heartbeat to server for keep-alive and latency measurement.
      /// </summary>
      private void HandleHeartbeat(MessageContext ctx, Heartbeat request)
      {
-         // Client sollte eigentlich keinen Heartbeat senden, aber wir antworten trotzdem
-         ctx.Send(new HeartbeatResponse
-         {
-             ServerTimestamp = request.ServerTimestamp,
-             ClientTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-         });
-     }
-
-     /// <summary>
-     ///     Client antwortet auf Heartbeat (für Latenz-Messung).
-     /// </summary>
-     private void HandleHeartbeatResponse(MessageContext ctx, HeartbeatResponse response)
-     {
-         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-         var latencyMs = (int)(now - response.ServerTimestamp);
-
-         ctx.Connection.UpdateLatency(latencyMs);
+         // Client sends heartbeat with their timestamp
+         // We respond immediately so they can calculate latency
+         // For now, we just acknowledge receipt
+         // TODO: Implement latency calculation if needed
      }
 
      // ═══════════════════════════════════════════════════════════════
@@ -289,7 +276,21 @@ public class ConnectionHandler : BaseCategoryHandler
              onCompleted: (ctx, characters) =>
              {
                  _log.Debug("Loaded {Count} characters for {ConnectionId}", characters.Count, ctx.ConnectionId);
-                 ctx.Send(new CharacterListResponse(characters));
+                 
+                 // Convert CharacterInfo to CharacterListItem
+                 var characterList = characters.Select(c => new CharacterListItem
+                 {
+                     CharacterId = c.CharacterId,
+                     Name = c.Name,
+                     Level = c.Level,
+                     Race = c.Race,
+                     Class = c.Class,
+                     Gender = Mmo.Shared.Enums.Gender.Male, // TODO: Add Gender to CharacterInfo
+                     ZoneId = c.ZoneId,
+                     LastPosition = c.LastPosition
+                 }).ToList();
+                 
+                 ctx.Send(new CharacterListResponse(characterList));
              },
              onError: (ctx, ex) =>
              {
@@ -357,7 +358,7 @@ public class ConnectionHandler : BaseCategoryHandler
              Faction = characterData.Faction
          };
 
-         var serverPlayer = new ServerPlayer(playerEntity, ctx.Connection)
+         var serverPlayer = new ServerPlayerCharacter(playerEntity, ctx.Connection)
          {
              AccountId = ctx.Connection.AccountId,
              AccountFlags = ctx.Connection.AccountFlags
@@ -389,7 +390,7 @@ public class ConnectionHandler : BaseCategoryHandler
          SendExistingPlayersToNewPlayer(ctx, serverPlayer);
      }
 
-     private void SendExistingPlayersToNewPlayer(MessageContext ctx, ServerPlayer newPlayer)
+     private void SendExistingPlayersToNewPlayer(MessageContext ctx, ServerPlayerCharacter newPlayer)
      {
          var playersInZone = _zoneManager.GetServerPlayersInZone(newPlayer.RuntimeId.ZoneId);
 
@@ -466,7 +467,7 @@ public class ConnectionHandler : BaseCategoryHandler
      {
          if (!RequireAuthenticated(ctx)) return;
 
-         if (ctx.HasCharacter && ctx.PlayerId == request.CharacterId)
+         if (ctx.HasCharacter && ctx.PlayerInfo != null && ctx.PlayerInfo.PersistentId == request.CharacterId)
          {
              ctx.SendError("CANNOT_DELETE", "You cannot delete your currently active character");
              return;
@@ -515,9 +516,9 @@ public class ConnectionHandler : BaseCategoryHandler
          _log.Info("Disconnect from {ConnectionId}: {Reason}", ctx.ConnectionId, request.Reason);
 
          // Cleanup wie bei Logout
-         if (ctx.HasCharacter && ctx.PlayerInfo != null)
+         if (ctx.HasCharacter && ctx.ServerPlayer != null)
          {
-             ctx.BroadcastToZoneExceptSelf(new PlayerLeftZone(ctx.PlayerId!.Value));
+             ctx.BroadcastToZoneExceptSelf(new PlayerLeftZone(ctx.ServerPlayer.Entity));
 
              var saveTask = _playerService.SaveAndRemovePlayerAsync(ctx.ConnectionId);
              ctx.RunAsync(saveTask,
@@ -528,7 +529,7 @@ public class ConnectionHandler : BaseCategoryHandler
 
          // Connection trennen
          ctx.Disconnect(request.Message);
-     }*/
+     }
 
     // ═══════════════════════════════════════════════════════════════
     // VALIDATION HELPERS
