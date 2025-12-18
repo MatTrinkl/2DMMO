@@ -30,6 +30,25 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
         DisplayName = displayName;
     }
 
+    [IgnoreMember]
+    public float LevelProgress => ExperienceToNextLevel > 0
+        ? (float)Experience / ExperienceToNextLevel
+        : 0f;
+
+    [Key(27)] public DateTime? PvpFlagExpires { get; set; }
+
+    [Key(29)] public int PvpKills { get; set; }
+
+    [Key(30)] public int PvpDeaths { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Locations
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(34)] public BindLocation? HearthstoneLocation { get; set; }
+
+    [Key(35)] public Position? LastSafePosition { get; set; }
+
     // ═══════════════════════════════════════════════════════════════
     // IEntity Overrides
     // ═══════════════════════════════════════════════════════════════
@@ -50,9 +69,9 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     // ICharacterEntity - Identity
     // ═══════════════════════════════════════════════════════════════
 
-    [Key(19)] public Guid CharacterId { get; private set; }
+    [Key(19)] public Guid CharacterId { get; }
 
-    [Key(20)] public Guid AccountId { get; private set; }
+    [Key(20)] public Guid AccountId { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - Character Info
@@ -70,14 +89,9 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     // ICharacterEntity - Progression
     // ═══════════════════════════════════════════════════════════════
 
-    [Key(25)] public long Experience { get; set; } = 0;
+    [Key(25)] public long Experience { get; set; }
 
     [IgnoreMember] public long ExperienceToNextLevel => CalculateXpForLevel(Level + 1);
-
-    [IgnoreMember]
-    public float LevelProgress => ExperienceToNextLevel > 0
-        ? (float)Experience / ExperienceToNextLevel
-        : 0f;
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - PvP
@@ -85,13 +99,7 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
 
     [Key(26)] public bool IsPvpFlagged { get; set; }
 
-    [Key(27)] public DateTime? PvpFlagExpires { get; set; }
-
     [Key(28)] public int HonorPoints { get; set; }
-
-    [Key(29)] public int PvpKills { get; set; }
-
-    [Key(30)] public int PvpDeaths { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - State
@@ -108,14 +116,6 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     [Key(33)] public long Gold { get; set; } = 0;
 
     // ═══════════════════════════════════════════════════════════════
-    // ICharacterEntity - Locations
-    // ═══════════════════════════════════════════════════════════════
-
-    [Key(34)] public BindLocation? HearthstoneLocation { get; set; }
-
-    [Key(35)] public Position? LastSafePosition { get; set; }
-
-    // ═══════════════════════════════════════════════════════════════
     // OVERRIDES
     // ═══════════════════════════════════════════════════════════════
 
@@ -127,10 +127,8 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
 
         // PvP-Check für andere Spieler
         if (other is ICharacterEntity otherPlayer)
-        {
             // Beide müssen PvP-flagged sein
             return IsPvpFlagged && otherPlayer.IsPvpFlagged;
-        }
 
         return false;
     }
@@ -139,17 +137,6 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     {
         LastSafePosition = Position;
         base.ChangeZone(newZoneId);
-    }
-
-    protected override void OnDeath(ICombatEntity? killer)
-    {
-        State = CharacterState.Dead;
-
-        // PvP Death tracking
-        if (killer is ICharacterEntity killerPlayer)
-        {
-            PvpDeaths++;
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -177,7 +164,7 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
         Level++;
 
         // Stats erhöhen
-        int healthGain = 10 + (Level * 2);
+        int healthGain = 10 + Level * 2;
         int resourceGain = 5 + Level;
 
         MaxHealth += healthGain;
@@ -198,6 +185,14 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
         CurrentResource = MaxResource / 2;
         IsInCombat = false;
         TargetEntityId = null;
+    }
+
+    protected override void OnDeath(ICombatEntity? killer)
+    {
+        State = CharacterState.Dead;
+
+        // PvP Death tracking
+        if (killer is ICharacterEntity killerPlayer) PvpDeaths++;
     }
 
     public void EnablePvpFlag(int durationSeconds = 300)

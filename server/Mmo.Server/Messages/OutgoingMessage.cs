@@ -1,12 +1,11 @@
 using Mmo.Server.Networking;
-using Mmo. Shared. Interfaces;
-using Mmo. Shared.Records;
+using Mmo.Shared.Interfaces;
+using Mmo.Shared.Records;
 
 namespace Mmo.Server.Messages;
 
 /// <summary>
 ///     Repräsentiert eine ausgehende Nachricht die in der Output-Phase gesendet wird.
-///
 ///     Wird vom MessageContext erstellt und vom GameServer in der Output-Phase verarbeitet.
 /// </summary>
 public readonly struct OutgoingMessage
@@ -20,15 +19,15 @@ public readonly struct OutgoingMessage
     // ═══ Für ToClient ═══
 
     /// <summary>Ziel-Connection (nur bei ToClient).</summary>
-    public ClientConnection?  TargetConnection { get; init; }
+    public ClientConnection? TargetConnection { get; init; }
 
     // ═══ Für Broadcasts ═══
 
     /// <summary>Ziel-Zone (für Zone-Broadcasts).</summary>
-    public ushort?  ZoneId { get; init; }
+    public ushort? ZoneId { get; init; }
 
     /// <summary>Ziel-Party (für Party-Broadcasts).</summary>
-    public Guid?  PartyId { get; init; }
+    public Guid? PartyId { get; init; }
 
     /// <summary>Ziel-Guild (für Guild-Broadcasts).</summary>
     public Guid? GuildId { get; init; }
@@ -42,7 +41,7 @@ public readonly struct OutgoingMessage
     public Position? Origin { get; init; }
 
     /// <summary>Radius (für Radius-Broadcasts).</summary>
-    public float?  Radius { get; init; }
+    public float? Radius { get; init; }
 
     // ═══════════════════════════════════════════════════════════════
     // FACTORY METHODS
@@ -55,7 +54,7 @@ public readonly struct OutgoingMessage
     {
         return new OutgoingMessage
         {
-            Type = OutgoingMessageType. ToClient,
+            Type = OutgoingMessageType.ToClient,
             Message = message,
             TargetConnection = connection
         };
@@ -99,7 +98,7 @@ public readonly struct OutgoingMessage
         ushort zoneId,
         Position origin,
         float radius,
-        Guid?  excludeConnectionId = null)
+        Guid? excludeConnectionId = null)
     {
         return new OutgoingMessage
         {
@@ -135,7 +134,7 @@ public readonly struct OutgoingMessage
     {
         return new OutgoingMessage
         {
-            Type = OutgoingMessageType. BroadcastToPartyExcept,
+            Type = OutgoingMessageType.BroadcastToPartyExcept,
             Message = message,
             PartyId = partyId,
             ExcludeConnectionId = excludeConnectionId
@@ -189,7 +188,7 @@ public readonly struct OutgoingMessage
 ///     Typ der ausgehenden Nachricht.
 ///     Bestimmt wie der GameServer die Nachricht in der Output-Phase verarbeitet.
 /// </summary>
-public enum OutgoingMessageType :  byte
+public enum OutgoingMessageType : byte
 {
     /// <summary>An einen einzelnen Client. </summary>
     ToClient = 0,
@@ -216,5 +215,5 @@ public enum OutgoingMessageType :  byte
     BroadcastToGuildExcept = 7,
 
     /// <summary>An ALLE Spieler auf dem Server. </summary>
-    BroadcastToAll = 8,
+    BroadcastToAll = 8
 }

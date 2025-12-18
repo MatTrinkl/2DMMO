@@ -1,8 +1,5 @@
-using MessagePack;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Mmo.Server.GameLoop;
-using Mmo.Server.Handlers;
 using Mmo.Server.Handlers.Base;
 using Mmo.Server.Logging;
 using Mmo.Server.MessageRouting;
@@ -12,7 +9,6 @@ using Mmo.Server.Services.Authentication;
 using Mmo.Server.Services.Player;
 using Mmo.Server.Zones;
 using Mmo.Shared.Interfaces;
-using Mmo.Shared.Serialization;
 
 namespace Mmo.Server;
 
@@ -27,16 +23,16 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // 1. DI-Container konfigurieren
         // ════════════════════════════════════════════════════════════
-        var services = ConfigureServices();
-        var serviceProvider = services.BuildServiceProvider();
+        ServiceCollection services = ConfigureServices();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         // ════════════════════════════════════════════════════════════
         // 2. Services aus DI holen
         // ════════════════════════════════════════════════════════════
-        var log = serviceProvider.GetRequiredService<ILog>();
-        var networkServer = serviceProvider.GetRequiredService<NetworkServer>();
-        var gameServer = serviceProvider.GetRequiredService<GameServer>();
-        var messageRouter = serviceProvider.GetRequiredService<MessageRouter>();
+        ILog log = serviceProvider.GetRequiredService<ILog>();
+        NetworkServer networkServer = serviceProvider.GetRequiredService<NetworkServer>();
+        GameServer gameServer = serviceProvider.GetRequiredService<GameServer>();
+        MessageRouter messageRouter = serviceProvider.GetRequiredService<MessageRouter>();
 
         // ════════════════════════════════════════════════════════════
         // 3. Handler registrieren
@@ -82,10 +78,7 @@ public class Program
         networkServer.Stop();
 
         // Dispose ServiceProvider (ruft Dispose auf allen Services auf)
-        if (serviceProvider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        if (serviceProvider is IDisposable disposable) disposable.Dispose();
 
         log.Info("Server stopped.  Goodbye!");
     }
@@ -121,8 +114,8 @@ public class Program
         // ════════════════════════════════════════════════════════════
         services.AddSingleton<NetworkServer>(sp =>
         {
-            var config = sp.GetRequiredService<ServerConfiguration>();
-            var log = sp.GetRequiredService<ILog>();
+            ServerConfiguration config = sp.GetRequiredService<ServerConfiguration>();
+            ILog log = sp.GetRequiredService<ILog>();
 
             return new NetworkServer(log, config.Port);
         });
@@ -135,11 +128,11 @@ public class Program
 
         services.AddSingleton<GameServer>(sp =>
         {
-            var networkServer = sp.GetRequiredService<NetworkServer>();
-            var messageRouter = sp.GetRequiredService<MessageRouter>();
-            var zoneManager = sp.GetRequiredService<ZoneManager>();
-            var log = sp.GetRequiredService<ILog>();
-            var config = sp.GetRequiredService<ServerConfiguration>();
+            NetworkServer networkServer = sp.GetRequiredService<NetworkServer>();
+            MessageRouter messageRouter = sp.GetRequiredService<MessageRouter>();
+            ZoneManager zoneManager = sp.GetRequiredService<ZoneManager>();
+            ILog log = sp.GetRequiredService<ILog>();
+            ServerConfiguration config = sp.GetRequiredService<ServerConfiguration>();
 
             var gameServer = new GameServer(networkServer, messageRouter, zoneManager, sp, log)
             {
@@ -187,12 +180,12 @@ public class Program
     /// </summary>
     private static void RegisterHandlers(IServiceProvider serviceProvider, MessageRouter router)
     {
-        var log = serviceProvider.GetRequiredService<ILog>();
+        ILog log = serviceProvider.GetRequiredService<ILog>();
 
         // Alle Handler aus DI holen und registrieren
-        var handlerTypes = new[]
+        Type[] handlerTypes = new[]
         {
-            typeof(ConnectionHandler),
+            typeof(ConnectionHandler)
             // typeof(MovementHandler),
             // typeof(CombatHandler),
             // typeof(ChatHandler),
@@ -201,7 +194,7 @@ public class Program
             // typeof(AdminHandler),
         };
 
-        foreach (var handlerType in handlerTypes)
+        foreach (Type handlerType in handlerTypes)
         {
             var handler = (ICategoryHandler)serviceProvider.GetRequiredService(handlerType);
             router.RegisterHandler(handler);

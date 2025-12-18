@@ -11,5 +11,5 @@ public enum CreatureType : byte
     Mechanical = 6,
     Dragonkin = 7,
     Aberration = 8,
-    Critter = 9,      // Hasen, Ratten, etc.
+    Critter = 9 // Hasen, Ratten, etc.
 }

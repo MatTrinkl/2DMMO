@@ -7,5 +7,5 @@ public enum ResourceType : byte
     Energy = 2,
     Rage = 3,
     Focus = 4,
-    RunicPower = 5,
+    RunicPower = 5
 }

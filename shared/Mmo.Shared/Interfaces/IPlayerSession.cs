@@ -1,6 +1,6 @@
 using Mmo.Shared.Enums;
 
-namespace Mmo.Shared. Interfaces;
+namespace Mmo.Shared.Interfaces;
 
 /// <summary>
 ///     Die Session eines eingeloggten Spielers.
@@ -26,11 +26,6 @@ public interface IPlayerSession
     ///     Zeitpunkt der letzten Aktivität (für Timeout).
     /// </summary>
     DateTime LastActivityAt { get; }
-
-    /// <summary>
-    ///     Aktualisiert den LastActivityAt Timestamp.
-    /// </summary>
-    void UpdateLastActivity();
 
     // ════════════════════════════════════════════════════════════════
     // ACCOUNT INFO
@@ -80,16 +75,6 @@ public interface IPlayerSession
     /// </summary>
     bool HasCharacter => Character != null;
 
-    /// <summary>
-    ///     Setzt den aktiven Charakter.
-    /// </summary>
-    void SetCharacter(ICharacterEntity character);
-
-    /// <summary>
-    ///     Entfernt den aktiven Charakter (Logout to Character Select).
-    /// </summary>
-    void ClearCharacter();
-
     // ════════════════════════════════════════════════════════════════
     // SOCIAL INFO
     // ════════════════════════════════════════════════════════════════
@@ -136,7 +121,7 @@ public interface IPlayerSession
     /// <summary>
     ///     AFK-Nachricht.
     /// </summary>
-    string?  AfkMessage { get; set; }
+    string? AfkMessage { get; set; }
 
     /// <summary>
     ///     Ist der Spieler auf DND (Do Not Disturb)?
@@ -158,6 +143,21 @@ public interface IPlayerSession
     /// </summary>
     DateTime? MutedUntil { get; set; }
 
+    /// <summary>
+    ///     Aktualisiert den LastActivityAt Timestamp.
+    /// </summary>
+    void UpdateLastActivity();
+
+    /// <summary>
+    ///     Setzt den aktiven Charakter.
+    /// </summary>
+    void SetCharacter(ICharacterEntity character);
+
+    /// <summary>
+    ///     Entfernt den aktiven Charakter (Logout to Character Select).
+    /// </summary>
+    void ClearCharacter();
+
     // ════════════════════════════════════════════════════════════════
     // SESSION DATA (Key-Value Store)
     // ════════════════════════════════════════════════════════════════
@@ -170,7 +170,7 @@ public interface IPlayerSession
     /// <summary>
     ///     Holt einen Wert aus der Session.
     /// </summary>
-    T?  Get<T>(string key);
+    T? Get<T>(string key);
 
     /// <summary>
     ///     Prüft ob ein Wert existiert.

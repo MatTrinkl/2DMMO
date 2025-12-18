@@ -4,7 +4,6 @@ namespace Mmo.Shared.Interfaces;
 
 /// <summary>
 ///     Abstrakte Spieler-Informationen für Message-Handling.
-///
 ///     WICHTIG: Enthält keine Server-spezifischen Typen!
 ///     Ist ein Read-Only View auf die Spieler-Daten.
 /// </summary>

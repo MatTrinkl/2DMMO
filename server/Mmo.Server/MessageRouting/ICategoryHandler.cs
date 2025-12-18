@@ -1,9 +1,8 @@
 using Mmo.Server.Networking;
-using Mmo.Shared. Enums;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
-namespace Mmo.Server. Handlers.Base;
+namespace Mmo.Server.Handlers.Base;
 
 /// <summary>
 ///     Interface für Category-Handler.

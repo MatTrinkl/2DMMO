@@ -14,6 +14,39 @@ namespace Mmo.Shared.Entities;
 public abstract class CombatEntity : ICombatEntity
 {
     // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTORS
+    // ═══════════════════════════════════════════════════════════════
+
+    [SerializationConstructor]
+    protected CombatEntity()
+    {
+    }
+
+    protected CombatEntity(Guid persistentId, Position position, ushort prefabId)
+    {
+        PersistentId = persistentId;
+        Position = position;
+        PrefabId = prefabId;
+        RuntimeId = new EntityIdentity(1, 0, 0, 0, prefabId);
+    }
+
+    /// <summary>
+    ///     Prefab type identifier - Public setter required for MessagePack deserialization.
+    ///     Should be immutable after creation in production code.
+    /// </summary>
+    [Key(3)]
+    public ushort PrefabId { get; set; }
+
+    [Key(17)] public float BaseMovementSpeed { get; set; } = 5.0f;
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMPUTED PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
+    [IgnoreMember] public float HealthPercent => MaxHealth > 0 ? (float)CurrentHealth / MaxHealth : 0f;
+
+    [IgnoreMember] public float ResourcePercent => MaxResource > 0 ? (float)CurrentResource / MaxResource : 0f;
+    // ═══════════════════════════════════════════════════════════════
     // IEntity Implementation
     // ═══════════════════════════════════════════════════════════════
 
@@ -21,21 +54,17 @@ public abstract class CombatEntity : ICombatEntity
     ///     Runtime identity - Public setter required for MessagePack deserialization.
     ///     Should only be modified via SetEntityId() or ChangeZone() in production code.
     /// </summary>
-    [Key(0)] public EntityIdentity RuntimeId { get; set; }
+    [Key(0)]
+    public EntityIdentity RuntimeId { get; set; }
 
     /// <summary>
     ///     Persistent GUID - Public setter required for MessagePack deserialization.
     ///     Should be immutable after creation in production code.
     /// </summary>
-    [Key(1)] public Guid PersistentId { get; set; }
+    [Key(1)]
+    public Guid PersistentId { get; set; }
 
     [Key(2)] public Position Position { get; set; }
-
-    /// <summary>
-    ///     Prefab type identifier - Public setter required for MessagePack deserialization.
-    ///     Should be immutable after creation in production code.
-    /// </summary>
-    [Key(3)] public ushort PrefabId { get; set; }
 
     [IgnoreMember] public abstract EntityType Type { get; }
 
@@ -87,33 +116,6 @@ public abstract class CombatEntity : ICombatEntity
 
     [Key(16)] public float MovementSpeed { get; set; } = 5.0f;
 
-    [Key(17)] public float BaseMovementSpeed { get; set; } = 5.0f;
-
-    // ═══════════════════════════════════════════════════════════════
-    // COMPUTED PROPERTIES
-    // ═══════════════════════════════════════════════════════════════
-
-    [IgnoreMember] public float HealthPercent => MaxHealth > 0 ? (float)CurrentHealth / MaxHealth : 0f;
-
-    [IgnoreMember] public float ResourcePercent => MaxResource > 0 ? (float)CurrentResource / MaxResource : 0f;
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTORS
-    // ═══════════════════════════════════════════════════════════════
-
-    [SerializationConstructor]
-    protected CombatEntity()
-    {
-    }
-
-    protected CombatEntity(Guid persistentId, Position position, ushort prefabId)
-    {
-        PersistentId = persistentId;
-        Position = position;
-        PrefabId = prefabId;
-        RuntimeId = new EntityIdentity(1, 0, 0, 0, prefabId);
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // IEntity METHODS
     // ═══════════════════════════════════════════════════════════════
@@ -159,22 +161,20 @@ public abstract class CombatEntity : ICombatEntity
     public virtual DamageResult TakeDamage(int damage, DamageType damageType, ICombatEntity? source)
     {
         if (IsDead)
-        {
             return new DamageResult(
-                RawDamage: damage,
-                MitigatedDamage: 0,
-                AbsorbedDamage: 0,
-                ActualDamage: 0,
-                Overkill: 0,
-                IsCritical: false,
-                IsBlocked: false,
-                IsDodged: false,
-                IsParried: false,
-                IsMiss: false,
-                IsImmune: true,
-                DamageType: damageType
+                damage,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false,
+                false,
+                false,
+                true,
+                damageType
             );
-        }
 
         // Armor Mitigation (nur für Physical)
         int mitigated = damageType == DamageType.Physical
@@ -188,10 +188,7 @@ public abstract class CombatEntity : ICombatEntity
         CurrentHealth -= actualDamage;
 
         // Enter combat
-        if (source != null)
-        {
-            EnterCombat(source);
-        }
+        if (source != null) EnterCombat(source);
 
         // Check death
         if (CurrentHealth <= 0)
@@ -201,32 +198,30 @@ public abstract class CombatEntity : ICombatEntity
         }
 
         return new DamageResult(
-            RawDamage: damage,
-            MitigatedDamage: mitigated,
-            AbsorbedDamage: 0,
-            ActualDamage: actualDamage,
-            Overkill: overkill,
-            IsCritical: false,
-            IsBlocked: false,
-            IsDodged: false,
-            IsParried: false,
-            IsMiss: false,
-            IsImmune: false,
-            DamageType: damageType
+            damage,
+            mitigated,
+            0,
+            actualDamage,
+            overkill,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            damageType
         );
     }
 
     public virtual HealResult ReceiveHeal(int amount, ICombatEntity? source)
     {
         if (IsDead)
-        {
             return new HealResult(
-                RawHeal: amount,
-                ActualHeal: 0,
-                Overheal: amount,
-                IsCritical: false
+                amount,
+                0,
+                amount,
+                false
             );
-        }
 
         int actualHeal = Math.Min(amount, MaxHealth - CurrentHealth);
         int overheal = amount - actualHeal;
@@ -234,10 +229,10 @@ public abstract class CombatEntity : ICombatEntity
         CurrentHealth += actualHeal;
 
         return new HealResult(
-            RawHeal: amount,
-            ActualHeal: actualHeal,
-            Overheal: overheal,
-            IsCritical: false
+            amount,
+            actualHeal,
+            overheal,
+            false
         );
     }
 

@@ -12,7 +12,7 @@ namespace Mmo.Server.Tests.Zones;
 public class ZoneManagerTests : IDisposable
 {
     private static MockNetworkServer _sharedMockNetworkServer;
-    private static MockLog _mockLog = new();
+    private static readonly MockLog _mockLog = new();
 
     public ZoneManagerTests()
     {
@@ -33,7 +33,7 @@ public class ZoneManagerTests : IDisposable
         return new ZoneManager(0, defaultZone);
     }
 
-    private ServerPlayer CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
+    private ServerPlayerCharacter CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
     {
         var entity = new PlayerEntity(
             persistentId ?? IdRegistry.Instance.GeneratePersistentId(),
@@ -43,7 +43,7 @@ public class ZoneManagerTests : IDisposable
         );
         Guid connId = connectionId ?? IdRegistry.Instance.GeneratePersistentId();
         ClientConnection connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
-        return new ServerPlayer(entity, connection);
+        return new ServerPlayerCharacter(entity, connection);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -111,12 +111,12 @@ public class ZoneManagerTests : IDisposable
     public void AddPlayer_AddsToDefaultZone()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player);
+        zoneManager.AddPlayer(playerCharacter);
 
         Assert.Equal(1, zoneManager.PlayerCount);
-        Assert.True(zoneManager.HasPlayerWithConnectionId(player.Connection.Id));
+        Assert.True(zoneManager.HasPlayerWithConnectionId(playerCharacter.Connection.Id));
     }
 
     [Fact]
@@ -125,23 +125,23 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "other", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, newZone);
-        ServerPlayer player = CreateServerPlayer();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player, 1);
+        zoneManager.AddPlayer(playerCharacter, 1);
 
         Assert.Equal(1, zoneManager.PlayerCount);
         var playersInZone = zoneManager.GetServerPlayersInZone(1).ToList();
         Assert.Single(playersInZone);
-        Assert.Equal(player.Connection.Id, playersInZone[0].Connection.Id);
+        Assert.Equal(playerCharacter.Connection.Id, playersInZone[0].Connection.Id);
     }
 
     [Fact]
     public void AddPlayer_NonExistentZone_ThrowsInvalidOperationException()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
 
-        Assert.Throws<InvalidOperationException>(() => zoneManager.AddPlayer(player, 999));
+        Assert.Throws<InvalidOperationException>(() => zoneManager.AddPlayer(playerCharacter, 999));
     }
 
     [Fact]
@@ -156,14 +156,16 @@ public class ZoneManagerTests : IDisposable
     public void TryGetPlayerByConnectionId_ExistingPlayer_ReturnsTrue()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
-        zoneManager.AddPlayer(player);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter);
 
-        bool found = zoneManager.TryGetPlayerByConnectionId(player.Connection.Id, out ServerPlayer? foundPlayer);
+        bool found =
+            zoneManager.TryGetPlayerByConnectionId(playerCharacter.Connection.Id,
+                out ServerPlayerCharacter? foundPlayer);
 
         Assert.True(found);
         Assert.NotNull(foundPlayer);
-        Assert.Equal(player.Connection.Id, foundPlayer.Connection.Id);
+        Assert.Equal(playerCharacter.Connection.Id, foundPlayer.Connection.Id);
     }
 
     [Fact]
@@ -171,7 +173,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
 
-        bool found = zoneManager.TryGetPlayerByConnectionId(Guid.NewGuid(), out ServerPlayer? foundPlayer);
+        bool found = zoneManager.TryGetPlayerByConnectionId(Guid.NewGuid(), out ServerPlayerCharacter? foundPlayer);
 
         Assert.False(found);
         Assert.Null(foundPlayer);
@@ -182,10 +184,10 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        ServerPlayer player = CreateServerPlayer(persistentId);
-        zoneManager.AddPlayer(player);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter);
 
-        bool found = zoneManager.TryGetPlayerByPersistentId(persistentId, out ServerPlayer? foundPlayer);
+        bool found = zoneManager.TryGetPlayerByPersistentId(persistentId, out ServerPlayerCharacter? foundPlayer);
 
         Assert.True(found);
         Assert.NotNull(foundPlayer);
@@ -196,15 +198,15 @@ public class ZoneManagerTests : IDisposable
     public void RemovePlayerByConnectionId_ExistingPlayer_RemovesAndReturnsPlayer()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
-        zoneManager.AddPlayer(player);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter);
 
-        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
+        ServerPlayerCharacter? removedPlayer = zoneManager.RemovePlayerByConnectionId(playerCharacter.Connection.Id);
 
         Assert.NotNull(removedPlayer);
-        Assert.Equal(player.Connection.Id, removedPlayer.Connection.Id);
+        Assert.Equal(playerCharacter.Connection.Id, removedPlayer.Connection.Id);
         Assert.Equal(0, zoneManager.PlayerCount);
-        Assert.False(zoneManager.HasPlayerWithConnectionId(player.Connection.Id));
+        Assert.False(zoneManager.HasPlayerWithConnectionId(playerCharacter.Connection.Id));
     }
 
     [Fact]
@@ -212,7 +214,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
 
-        ServerPlayer? removedPlayer = zoneManager.RemovePlayerByConnectionId(Guid.NewGuid());
+        ServerPlayerCharacter? removedPlayer = zoneManager.RemovePlayerByConnectionId(Guid.NewGuid());
 
         Assert.Null(removedPlayer);
     }
@@ -222,10 +224,10 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        ServerPlayer player = CreateServerPlayer(persistentId);
-        zoneManager.AddPlayer(player);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter);
 
-        zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
+        zoneManager.RemovePlayerByConnectionId(playerCharacter.Connection.Id);
 
         Assert.False(zoneManager.HasPlayerWithPersistentId(persistentId));
     }
@@ -237,9 +239,9 @@ public class ZoneManagerTests : IDisposable
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
 
-        ServerPlayer player1 = CreateServerPlayer();
-        ServerPlayer player2 = CreateServerPlayer();
-        ServerPlayer player3 = CreateServerPlayer();
+        ServerPlayerCharacter player1 = CreateServerPlayer();
+        ServerPlayerCharacter player2 = CreateServerPlayer();
+        ServerPlayerCharacter player3 = CreateServerPlayer();
 
         zoneManager.AddPlayer(player1, 0);
         zoneManager.AddPlayer(player2, 0);
@@ -261,8 +263,8 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var persistentId = Guid.NewGuid();
-        ServerPlayer player = CreateServerPlayer(persistentId);
-        zoneManager.AddPlayer(player);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter);
 
         bool found = zoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity);
 
@@ -275,8 +277,8 @@ public class ZoneManagerTests : IDisposable
     public void GetAllEntities_ReturnsAllEntitiesInZone()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player1 = CreateServerPlayer();
-        ServerPlayer player2 = CreateServerPlayer();
+        ServerPlayerCharacter player1 = CreateServerPlayer();
+        ServerPlayerCharacter player2 = CreateServerPlayer();
         zoneManager.AddPlayer(player1);
         zoneManager.AddPlayer(player2);
 
@@ -295,10 +297,10 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
-        ServerPlayer player = CreateServerPlayer();
-        zoneManager.AddPlayer(player, 0);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
 
-        bool result = zoneManager.TransferPlayerByConnectionId(player.Connection.Id, 1);
+        bool result = zoneManager.TransferPlayerByConnectionId(playerCharacter.Connection.Id, 1);
 
         Assert.True(result);
         var playersInZone0 = zoneManager.GetServerPlayersInZone(0).ToList();
@@ -311,10 +313,10 @@ public class ZoneManagerTests : IDisposable
     public void TransferPlayerByConnectionId_SameZone_ReturnsTrue()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
-        zoneManager.AddPlayer(player, 0);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
 
-        bool result = zoneManager.TransferPlayerByConnectionId(player.Connection.Id, 0);
+        bool result = zoneManager.TransferPlayerByConnectionId(playerCharacter.Connection.Id, 0);
 
         Assert.True(result);
     }
@@ -336,8 +338,8 @@ public class ZoneManagerTests : IDisposable
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         zoneManager.RegisterZone(1, zone1);
         var persistentId = Guid.NewGuid();
-        ServerPlayer player = CreateServerPlayer(persistentId);
-        zoneManager.AddPlayer(player, 0);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter, 0);
 
         bool result = zoneManager.TransferPlayerByPersistentId(persistentId, 1);
 
@@ -350,10 +352,10 @@ public class ZoneManagerTests : IDisposable
     public void PlayerEntity_IsTrulyPersistent_IsTrue()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        ServerPlayer player = CreateServerPlayer();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
 
-        zoneManager.AddPlayer(player, 0);
+        zoneManager.AddPlayer(playerCharacter, 0);
 
-        Assert.True(player.Entity.IsTrulyPersistent);
+        Assert.True(playerCharacter.Entity.IsTrulyPersistent);
     }
 }

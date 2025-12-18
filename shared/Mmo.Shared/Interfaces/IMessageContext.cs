@@ -1,12 +1,10 @@
-using Mmo.Shared. Interfaces;
+using Mmo.Shared.Interfaces;
 
-namespace Mmo. Shared.Network;
+namespace Mmo.Shared.Network;
 
 /// <summary>
 ///     Kontext für Message-Handling.
-///
 ///     Enthält alle Informationen die ein Handler braucht um eine Message zu verarbeiten.
-///
 ///     WICHTIG:
 ///     - Keine Server-spezifischen Typen (ServerPlayer, ClientConnection, etc.)!
 ///     - Send-Methoden sind NICHT async!  Sie queuen nur für die Output-Phase.
@@ -74,19 +72,19 @@ public interface IMessageContext
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Spieler-ID (PersistentId des Charakters).</summary>
-    Guid?  PlayerId => PlayerInfo?.PersistentId;
+    Guid? PlayerId => PlayerInfo?.PersistentId;
 
     /// <summary>Account-ID. </summary>
     Guid? AccountId => PlayerInfo?.AccountId;
 
     /// <summary>Charakter-Name.</summary>
-    string? PlayerName => PlayerInfo?. Name;
+    string? PlayerName => PlayerInfo?.Name;
 
     /// <summary>Aktuelle Zone-ID.</summary>
     ushort? ZoneId => PlayerInfo?.ZoneId;
 
     /// <summary>Aktueller Shard-ID.</summary>
-    ushort? ShardId => PlayerInfo?. ShardId;
+    ushort? ShardId => PlayerInfo?.ShardId;
 
     /// <summary>Spieler-Level.</summary>
     int? PlayerLevel => PlayerInfo?.Level;
@@ -115,13 +113,22 @@ public interface IMessageContext
     bool IsInParty => PlayerInfo?.PartyId != null;
 
     /// <summary>Ist der Spieler in einer Guild?</summary>
-    bool IsInGuild => PlayerInfo?. GuildId != null;
+    bool IsInGuild => PlayerInfo?.GuildId != null;
 
     /// <summary>Ist der Spieler gemutet?</summary>
     bool IsMuted { get; }
 
     /// <summary>Ist der Spieler AFK?</summary>
     bool IsAfk { get; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SERVICES
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    ///     Zugriff auf den DI-Container.
+    /// </summary>
+    IServiceProvider Services { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // SEND METHODS (QUEUED - nicht async!)
@@ -156,15 +163,6 @@ public interface IMessageContext
     /// <param name="reason">Optionaler Grund (wird an Client gesendet).</param>
     void Disconnect(string? reason = null);
 
-    // ═══════════════════════════════════════════════════════════════
-    // SERVICES
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Zugriff auf den DI-Container.
-    /// </summary>
-    IServiceProvider Services { get; }
-
     /// <summary>
     ///     Holt einen Service aus dem DI-Container.
     /// </summary>
@@ -173,5 +171,5 @@ public interface IMessageContext
     /// <summary>
     ///     Holt einen optionalen Service aus dem DI-Container.
     /// </summary>
-    T?  GetOptionalService<T>() where T : class;
+    T? GetOptionalService<T>() where T : class;
 }

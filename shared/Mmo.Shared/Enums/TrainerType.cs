@@ -6,5 +6,5 @@ public enum TrainerType : byte
     Profession = 1,
     Weapon = 2,
     Pet = 3,
-    Mount = 4,
+    Mount = 4
 }

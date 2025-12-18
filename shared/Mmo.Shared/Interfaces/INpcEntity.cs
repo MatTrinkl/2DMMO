@@ -1,6 +1,5 @@
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
-using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Interfaces;
@@ -8,11 +7,13 @@ namespace Mmo.Shared.Interfaces;
 /// <summary>
 ///     Interface für NPCs und Monster.
 /// </summary>
-public interface INpcEntity :  ICombatEntity
+public interface INpcEntity : ICombatEntity
 {
     // NPC Identity
     int NpcTemplateId { get; }
+
     int SpawnId { get; }
+
     // WAS ist der NPC?
     CreatureType CreatureType { get; }
 
@@ -32,11 +33,11 @@ public interface INpcEntity :  ICombatEntity
     int RespawnTimeSeconds { get; }
 
     // Loot
-    int?  LootTableId { get; }
+    int? LootTableId { get; }
     int ExperienceReward { get; }
 
     // Threat
-    Guid?  HighestThreatEntityId { get; }
+    Guid? HighestThreatEntityId { get; }
     void AddThreat(Guid entityId, int amount);
     void ClearThreat();
 

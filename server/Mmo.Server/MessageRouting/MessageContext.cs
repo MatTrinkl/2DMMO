@@ -14,24 +14,19 @@ namespace Mmo.Server.Networking;
 
 /// <summary>
 ///     Server-Implementation von IMessageContext.
-///
 ///     Wraps ServerPlayer und ClientConnection und stellt alle Informationen
 ///     bereit die ein Handler braucht.
-///
 ///     WICHTIG:
 ///     - Send-Methoden queuen Messages für die Output-Phase
 ///     - Es wird NICHTS sofort gesendet!
 ///     - Das tatsächliche Senden passiert im GameServer während der Output-Phase
-///
 ///     Zusätzlich bietet diese Klasse Server-only Erweiterungen wie
 ///     Broadcast-Methoden die nicht im Shared-Interface sind.
 /// </summary>
 public sealed class MessageContext : IMessageContext
 {
-    private readonly ClientConnection _connection;
     private readonly GameServer _gameServer;
-    private readonly ZoneManager _zoneManager;
-    private readonly ServerPlayer? _serverPlayer;
+    private readonly ServerPlayerCharacter? _serverPlayer;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -43,33 +38,53 @@ public sealed class MessageContext : IMessageContext
         ZoneManager zoneManager,
         IServiceProvider services)
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _gameServer = gameServer ?? throw new ArgumentNullException(nameof(gameServer));
-        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        ZoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
         Services = services ?? throw new ArgumentNullException(nameof(services));
 
         // Hole ServerPlayer aus ZoneManager (falls bereits eingeloggt)
-        _zoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
+        ZoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
 
         // Wrap ServerPlayer in IPlayerInfo (Shared-kompatibel)
-        if (_serverPlayer != null)
-        {
-            PlayerInfo = new ServerPlayerInfo(_serverPlayer);
-        }
+        if (_serverPlayer != null) PlayerInfo = new ServerPlayerInfo(_serverPlayer);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SERVER-ONLY:  Direct Access (nicht in IMessageContext!)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    ///     Direkter Zugriff auf den ServerPlayer.
+    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
+    ///     Nicht über IMessageContext exponiert.
+    /// </summary>
+    internal ServerPlayerCharacter? ServerPlayer => _serverPlayer;
+
+    /// <summary>
+    ///     Direkter Zugriff auf die ClientConnection.
+    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
+    /// </summary>
+    internal ClientConnection Connection { get; }
+
+    /// <summary>
+    ///     Direkter Zugriff auf den ZoneManager.
+    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
+    /// </summary>
+    internal ZoneManager ZoneManager { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // IMessageContext - CONNECTION
     // ═══════════════════════════════════════════════════════════════
 
     /// <inheritdoc />
-    public Guid ConnectionId => _connection.Id;
+    public Guid ConnectionId => Connection.Id;
 
     /// <inheritdoc />
-    public string RemoteEndPoint => _connection.RemoteEndPoint;
+    public string RemoteEndPoint => Connection.RemoteEndPoint;
 
     /// <inheritdoc />
-    public DateTimeOffset ConnectedAt => _serverPlayer?.ConnectedAt ?? _connection.ConnectedAt;
+    public DateTimeOffset ConnectedAt => _serverPlayer?.ConnectedAt ?? Connection.ConnectedAt;
 
     /// <inheritdoc />
     public DateTimeOffset LastActivity => _serverPlayer?.LastActivity ?? DateTimeOffset.UtcNow;
@@ -128,16 +143,10 @@ public sealed class MessageContext : IMessageContext
     public IServiceProvider Services { get; }
 
     /// <inheritdoc />
-    public T GetService<T>() where T : notnull
-    {
-        return Services.GetRequiredService<T>();
-    }
+    public T GetService<T>() where T : notnull => Services.GetRequiredService<T>();
 
     /// <inheritdoc />
-    public T? GetOptionalService<T>() where T : class
-    {
-        return Services.GetService<T>();
-    }
+    public T? GetOptionalService<T>() where T : class => Services.GetService<T>();
 
     // ═══════════════════════════════════════════════════════════════
     // IMessageContext - SEND METHODS (QUEUED!)
@@ -148,7 +157,7 @@ public sealed class MessageContext : IMessageContext
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        var outgoing = OutgoingMessage.ToClient(_connection, message);
+        var outgoing = OutgoingMessage.ToClient(Connection, message);
         _gameServer.QueueOutgoingMessage(outgoing);
     }
 
@@ -177,32 +186,6 @@ public sealed class MessageContext : IMessageContext
             Message = reason
         });
     }
-
-    // ═══════════════════════════════════════════════════════════════
-    // SERVER-ONLY:  Direct Access (nicht in IMessageContext!)
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Direkter Zugriff auf den ServerPlayer.
-    ///
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
-    ///     Nicht über IMessageContext exponiert.
-    /// </summary>
-    internal ServerPlayer? ServerPlayer => _serverPlayer;
-
-    /// <summary>
-    ///     Direkter Zugriff auf die ClientConnection.
-    ///
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
-    /// </summary>
-    internal ClientConnection Connection => _connection;
-
-    /// <summary>
-    ///     Direkter Zugriff auf den ZoneManager.
-    ///
-    ///     NUR FÜR SERVER-INTERNE VERWENDUNG!
-    /// </summary>
-    internal ZoneManager ZoneManager => _zoneManager;
 
     // ═══════════════════════════════════════════════════════════════
     // SERVER-ONLY: BROADCAST METHODS (QUEUED!)
@@ -250,7 +233,7 @@ public sealed class MessageContext : IMessageContext
         var outgoing = OutgoingMessage.BroadcastToZoneExcept(
             message,
             _serverPlayer.RuntimeId.ZoneId,
-            excludeConnectionId: _connection.Id
+            Connection.Id
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
@@ -270,7 +253,7 @@ public sealed class MessageContext : IMessageContext
             _serverPlayer.RuntimeId.ZoneId,
             _serverPlayer.Entity.Position,
             radius,
-            excludeConnectionId: _connection.Id
+            Connection.Id
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
@@ -290,7 +273,7 @@ public sealed class MessageContext : IMessageContext
             _serverPlayer.RuntimeId.ZoneId,
             _serverPlayer.Entity.Position,
             radius,
-            excludeConnectionId: null // Keinen ausschließen
+            null // Keinen ausschließen
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
@@ -320,7 +303,7 @@ public sealed class MessageContext : IMessageContext
         var outgoing = OutgoingMessage.BroadcastToPartyExcept(
             message,
             _serverPlayer.PartyId.Value,
-            excludeConnectionId: _connection.Id
+            Connection.Id
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
@@ -350,7 +333,7 @@ public sealed class MessageContext : IMessageContext
         var outgoing = OutgoingMessage.BroadcastToGuildExcept(
             message,
             _serverPlayer.GuildId.Value,
-            excludeConnectionId: _connection.Id
+            Connection.Id
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }
@@ -377,7 +360,7 @@ public sealed class MessageContext : IMessageContext
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        if (_zoneManager.TryGetPlayerByPersistentId(targetId, out var targetPlayer))
+        if (ZoneManager.TryGetPlayerByPersistentId(targetId, out ServerPlayerCharacter? targetPlayer))
         {
             var outgoing = OutgoingMessage.ToClient(targetPlayer.Connection, message);
             _gameServer.QueueOutgoingMessage(outgoing);
@@ -398,7 +381,7 @@ public sealed class MessageContext : IMessageContext
         if (string.IsNullOrEmpty(targetName)) return false;
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        var targetPlayer = _zoneManager
+        ServerPlayerCharacter? targetPlayer = ZoneManager
             .GetAllServerPlayers()
             .FirstOrDefault(p => p.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase));
 
@@ -419,10 +402,7 @@ public sealed class MessageContext : IMessageContext
     /// <summary>
     ///     Prüft ob ein Spieler online ist (by PersistentId).
     /// </summary>
-    public bool IsPlayerOnline(Guid playerId)
-    {
-        return _zoneManager.TryGetPlayerByPersistentId(playerId, out _);
-    }
+    public bool IsPlayerOnline(Guid playerId) => ZoneManager.TryGetPlayerByPersistentId(playerId, out _);
 
     /// <summary>
     ///     Prüft ob ein Spieler online ist (by Name).
@@ -431,7 +411,7 @@ public sealed class MessageContext : IMessageContext
     {
         if (string.IsNullOrEmpty(playerName)) return false;
 
-        return _zoneManager
+        return ZoneManager
             .GetAllServerPlayers()
             .Any(p => p.Name.Equals(playerName, StringComparison.OrdinalIgnoreCase));
     }
@@ -442,10 +422,8 @@ public sealed class MessageContext : IMessageContext
     /// <returns>Zone-ID oder null wenn nicht gefunden.</returns>
     public ushort? GetPlayerZone(Guid playerId)
     {
-        if (_zoneManager.TryGetPlayerByPersistentId(playerId, out var player))
-        {
+        if (ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player))
             return player.RuntimeId.ZoneId;
-        }
 
         return null;
     }
@@ -457,7 +435,7 @@ public sealed class MessageContext : IMessageContext
     {
         if (_serverPlayer == null) return false;
 
-        var otherZone = GetPlayerZone(otherPlayerId);
+        ushort? otherZone = GetPlayerZone(otherPlayerId);
         return otherZone.HasValue && otherZone.Value == _serverPlayer.RuntimeId.ZoneId;
     }
 
@@ -469,7 +447,7 @@ public sealed class MessageContext : IMessageContext
     {
         if (_serverPlayer == null) return null;
 
-        if (_zoneManager.TryGetPlayerByPersistentId(otherPlayerId, out var otherPlayer))
+        if (ZoneManager.TryGetPlayerByPersistentId(otherPlayerId, out ServerPlayerCharacter? otherPlayer))
         {
             if (otherPlayer.RuntimeId.ZoneId != _serverPlayer.RuntimeId.ZoneId)
                 return null;
@@ -485,17 +463,16 @@ public sealed class MessageContext : IMessageContext
     /// </summary>
     public bool IsPlayerInRange(Guid otherPlayerId, float range)
     {
-        var distance = GetDistanceToPlayer(otherPlayerId);
+        float? distance = GetDistanceToPlayer(otherPlayerId);
         return distance.HasValue && distance.Value <= range;
     }
 
-     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // ASYNC TASK SUPPORT
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     ///     Startet einen async Task und queued das Result für den nächsten Tick.
-    ///
     ///     Der Task läuft im Hintergrund, blockiert NICHT den Game-Loop.
     ///     Wenn der Task fertig ist, wird der Callback im Game-Loop ausgeführt.
     /// </summary>
@@ -508,7 +485,7 @@ public sealed class MessageContext : IMessageContext
         Action<MessageContext, T> onCompleted,
         Action<MessageContext, Exception>? onError = null)
     {
-        var connectionId = ConnectionId;
+        Guid connectionId = ConnectionId;
 
         task.ContinueWith(t =>
         {
@@ -516,15 +493,11 @@ public sealed class MessageContext : IMessageContext
             {
                 // Fehler-Callback queuen
                 if (onError != null)
-                {
-                    _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception! . InnerException! ));
-                }
+                    _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
                 else
-                {
                     // Default:  Error-Message senden
                     _gameServer.QueueCompletion(connectionId, ctx =>
                         ctx.SendError("INTERNAL_ERROR", "An error occurred"));
-                }
             }
             else if (t.IsCompletedSuccessfully)
             {
@@ -532,7 +505,6 @@ public sealed class MessageContext : IMessageContext
                 _gameServer.QueueCompletion(connectionId, ctx => onCompleted(ctx, t.Result));
             }
             // Cancelled wird ignoriert
-
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
 
@@ -544,27 +516,22 @@ public sealed class MessageContext : IMessageContext
         Action<MessageContext> onCompleted,
         Action<MessageContext, Exception>? onError = null)
     {
-        var connectionId = ConnectionId;
+        Guid connectionId = ConnectionId;
 
         task.ContinueWith(t =>
         {
             if (t.IsFaulted)
             {
                 if (onError != null)
-                {
-                    _gameServer. QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
-                }
+                    _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
                 else
-                {
                     _gameServer.QueueCompletion(connectionId, ctx =>
                         ctx.SendError("INTERNAL_ERROR", "An error occurred"));
-                }
             }
             else if (t.IsCompletedSuccessfully)
             {
                 _gameServer.QueueCompletion(connectionId, ctx => onCompleted(ctx));
             }
-
         }, TaskContinuationOptions.ExecuteSynchronously);
     }
 
@@ -574,8 +541,8 @@ public sealed class MessageContext : IMessageContext
 
     private static float CalculateDistance(Position a, Position b)
     {
-        var dx = a.X - b.X;
-        var dy = a.Y - b.Y;
+        float dx = a.X - b.X;
+        float dy = a.Y - b.Y;
         return MathF.Sqrt(dx * dx + dy * dy);
     }
 }

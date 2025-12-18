@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.Entities;
-using Mmo.Server.GameLoop;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.MessageRouting.MessageHandler;
 using Mmo.Server.Networking;
@@ -82,7 +81,7 @@ public static class TestHelpers
 
         // Register ConnectionHandler to handle login and connection messages
         zoneManager ??= CreateDefaultZoneManager();
-        var services = CreateTestServices(log, zoneManager);
+        IServiceProvider services = CreateTestServices(log, zoneManager);
         var connectionHandler = new ConnectionHandler(
             services.GetRequiredService<IAuthenticationService>(),
             services.GetRequiredService<IPlayerService>(),
@@ -112,7 +111,7 @@ public static class TestHelpers
     /// <summary>
     ///     Creates a ServerPlayer for testing.
     /// </summary>
-    public static ServerPlayer CreateServerPlayer(
+    public static ServerPlayerCharacter CreateServerPlayer(
         string name = "TestPlayer",
         Guid? persistentId = null,
         Guid? connectionId = null,
@@ -125,15 +124,15 @@ public static class TestHelpers
             name,
             new Position(x, y)
         );
-        var connId = connectionId ?? Guid.NewGuid();
-        var connection = _mockNetworkServer.GetOrCreateMockConnection(connId);
-        return new ServerPlayer(entity, connection);
+        Guid connId = connectionId ?? Guid.NewGuid();
+        ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connId);
+        return new ServerPlayerCharacter(entity, connection);
     }
 
     /// <summary>
     ///     Creates multiple ServerPlayers for testing.
     /// </summary>
-    public static List<ServerPlayer> CreateMultiplePlayers(int count)
+    public static List<ServerPlayerCharacter> CreateMultiplePlayers(int count)
     {
         return Enumerable.Range(0, count)
             .Select(i => CreateServerPlayer($"Player{i}"))

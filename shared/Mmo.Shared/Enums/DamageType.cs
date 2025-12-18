@@ -10,5 +10,5 @@ public enum DamageType : byte
     Holy = 5,
     Shadow = 6,
     Nature = 7,
-    True = 8, // Ignoriert Armor/Resistances
+    True = 8 // Ignoriert Armor/Resistances
 }

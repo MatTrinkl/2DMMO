@@ -1,4 +1,3 @@
-using Mmo.Server.Entities;
 using Mmo.Server.Handlers.Base;
 using Mmo.Server.Networking;
 using Mmo.Server.Services.Authentication;
@@ -8,18 +7,15 @@ using Mmo.Shared.Entities;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Messages.ZoneEvents;
 
 namespace Mmo.Server.MessageRouting.MessageHandler;
 
 /// <summary>
 ///     Handler für Connection-Kategorie (0000-0099).
-///
 ///     Verarbeitet:
 ///     - Login / Logout / Reconnect
 ///     - Character Selection (List, Select, Create, Delete)
 ///     - Heartbeat
-///
 ///     WICHTIG:
 ///     - Auth und DB-Zugriffe laufen async via ctx.RunAsync()
 ///     - Handler-Methoden selbst sind synchron (void)
@@ -28,9 +24,9 @@ namespace Mmo.Server.MessageRouting.MessageHandler;
 public class ConnectionHandler : BaseCategoryHandler
 {
     private readonly IAuthenticationService _authService;
+    private readonly ILog _log;
     private readonly IPlayerService _playerService;
     private readonly ZoneManager _zoneManager;
-    private readonly ILog _log;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -99,7 +95,7 @@ public class ConnectionHandler : BaseCategoryHandler
         }
 
         // ─── Input-Validierung (synchron, schnell) ───
-        var validationError = ValidateLoginInput(request);
+        string? validationError = ValidateLoginInput(request);
         if (validationError != null)
         {
             _log.Warn("Login validation failed for {ConnectionId}: {Error}", ctx.ConnectionId, validationError);
@@ -108,11 +104,11 @@ public class ConnectionHandler : BaseCategoryHandler
         }
 
         // ─── Async Auth starten ───
-        var authTask = _authService.AuthenticateAsync(request.Username, request.Password);
+        Task<AuthResult> authTask = _authService.AuthenticateAsync(request.Username, request.Password);
 
         ctx.RunAsync(authTask,
-            onCompleted: (ctx, authResult) => OnLoginAuthCompleted(ctx, authResult, request.Username),
-            onError: (ctx, ex) => OnLoginAuthError(ctx, ex)
+            (ctx, authResult) => OnLoginAuthCompleted(ctx, authResult, request.Username),
+            (ctx, ex) => OnLoginAuthError(ctx, ex)
         );
     }
 

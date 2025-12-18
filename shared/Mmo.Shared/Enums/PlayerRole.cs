@@ -10,5 +10,5 @@ public enum PlayerRole : byte
     Tank = 1,
     Healer = 2,
     MeleeDps = 3,
-    RangedDps = 4,
+    RangedDps = 4
 }

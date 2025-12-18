@@ -1,9 +1,8 @@
 using Mmo.Shared.Configurations.Zones;
-using Mmo.Shared. Enums;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Enums;
 using Mmo.Shared.Zones;
 
-namespace Mmo.Server. Zones;
+namespace Mmo.Server.Zones;
 
 /// <summary>
 ///     Konkrete Implementation von IZoneContext.
@@ -23,7 +22,7 @@ public class ZoneContext(Zone zone, ZoneConfig config, ushort shardId = 0) : IZo
     public string? LockReason { get; set; }
 
     // ═══ Instanz ═══
-    public Guid?  InstanceId { get; set; }
+    public Guid? InstanceId { get; set; }
     public Guid? InstanceOwnerId { get; set; }
     public DateTime? InstanceCreatedAt { get; set; }
     public DateTime? InstanceExpiresAt { get; set; }

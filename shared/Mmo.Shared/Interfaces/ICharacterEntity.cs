@@ -8,7 +8,7 @@ namespace Mmo.Shared.Interfaces;
 /// <summary>
 ///     Interface für Spieler-Charaktere.
 /// </summary>
-public interface ICharacterEntity :  ICombatEntity
+public interface ICharacterEntity : ICombatEntity
 {
     // Character Identity
     Guid CharacterId { get; }

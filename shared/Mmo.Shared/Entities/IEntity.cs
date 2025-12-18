@@ -1,7 +1,6 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
 using MessagePack;
-using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 

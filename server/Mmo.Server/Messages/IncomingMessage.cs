@@ -1,7 +1,6 @@
 using Mmo.Server.Networking;
-using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Messages;
-using Mmo.Shared. Interfaces;
+using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Messages;
 

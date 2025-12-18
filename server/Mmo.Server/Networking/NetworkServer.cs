@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
@@ -9,7 +8,6 @@ namespace Mmo.Server.Networking;
 
 /// <summary>
 ///     Verwaltet alle Client-Connections.
-///
 ///     WICHTIG:
 ///     - Kennt KEINE Game-Logik!
 ///     - Erstellt ClientConnections und hört auf deren Events
@@ -19,11 +17,21 @@ public class NetworkServer(
     ILog log,
     int port = 7777) : IDisposable
 {
-    private readonly TcpListener _listener = new(IPAddress.Any, port);
-    private readonly CancellationTokenSource _cts = new();
-
     // ═══ CONNECTIONS ═══
     private readonly ConcurrentDictionary<Guid, ClientConnection> _connections = new();
+    private readonly CancellationTokenSource _cts = new();
+    private readonly TcpListener _listener = new(IPAddress.Any, port);
+
+    /// <summary>
+    ///     Anzahl aktiver Connections.
+    /// </summary>
+    public int ConnectionCount => _connections.Count;
+
+    public void Dispose()
+    {
+        Stop();
+        _cts.Dispose();
+    }
 
     // ═══ EVENTS (für Game-Layer) ═══
 
@@ -59,19 +67,10 @@ public class NetworkServer(
         _cts.Cancel();
         _listener.Stop();
 
-        foreach (var connection in _connections.Values)
-        {
-            connection.Dispose();
-        }
+        foreach (ClientConnection connection in _connections.Values) connection.Dispose();
 
         _connections.Clear();
         log.Info("NetworkServer stopped");
-    }
-
-    public void Dispose()
-    {
-        Stop();
-        _cts.Dispose();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -81,10 +80,9 @@ public class NetworkServer(
     private async Task AcceptClientsAsync()
     {
         while (!_cts.Token.IsCancellationRequested)
-        {
             try
             {
-                var tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
+                TcpClient tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
 
                 // Connection erstellen
                 var connection = new ClientConnection(tcpClient, log);
@@ -123,7 +121,6 @@ public class NetworkServer(
             {
                 log.Error(ex, "Error accepting client");
             }
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -173,7 +170,7 @@ public class NetworkServer(
     /// </summary>
     public void RemoveConnection(Guid connectionId, string? reason = null)
     {
-        if (_connections.TryRemove(connectionId, out var connection))
+        if (_connections.TryRemove(connectionId, out ClientConnection? connection))
         {
             // Events abmelden
             connection.OnMessageReceived -= HandleConnectionMessage;
@@ -193,23 +190,13 @@ public class NetworkServer(
     /// <summary>
     ///     Holt eine Connection by ID.
     /// </summary>
-    public bool TryGetConnection(Guid connectionId, out ClientConnection? connection)
-    {
-        return _connections.TryGetValue(connectionId, out connection);
-    }
+    public bool TryGetConnection(Guid connectionId, out ClientConnection? connection) =>
+        _connections.TryGetValue(connectionId, out connection);
 
     /// <summary>
     ///     Alle aktiven Connections.
     /// </summary>
-    public IEnumerable<ClientConnection> GetAllConnections()
-    {
-        return _connections.Values;
-    }
-
-    /// <summary>
-    ///     Anzahl aktiver Connections.
-    /// </summary>
-    public int ConnectionCount => _connections.Count;
+    public IEnumerable<ClientConnection> GetAllConnections() => _connections.Values;
 
     // ═══════════════════════════════════════════════════════════════
     // SEND (delegiert an Connection)
@@ -238,7 +225,7 @@ public class NetworkServer(
     /// </summary>
     public bool Send(Guid connectionId, INetworkMessage message)
     {
-        if (_connections.TryGetValue(connectionId, out var connection))
+        if (_connections.TryGetValue(connectionId, out ClientConnection? connection))
         {
             Send(connection, message);
             return true;

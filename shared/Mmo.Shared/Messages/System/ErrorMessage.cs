@@ -33,8 +33,6 @@ public class ErrorMessage : INetworkMessage
         Field = field;
     }
 
-    [Key(0)] public MessageType Type => MessageType.ErrorMessage;
-
     /// <summary>
     ///     Fehler-Code (maschinenlesbar).
     ///     Z.B. "AUTH_FAILED", "INVALID_INPUT", "NOT_FOUND", "RATE_LIMITED".
@@ -59,4 +57,6 @@ public class ErrorMessage : INetworkMessage
     /// </summary>
     [Key(4)]
     public string? Field { get; set; }
+
+    [Key(0)] public MessageType Type => MessageType.ErrorMessage;
 }

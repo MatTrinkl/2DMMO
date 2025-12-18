@@ -42,7 +42,7 @@ public class Zone(ushort id, string zoneName, ZoneBounds bounds, IIdRegistry? id
     /// </summary>
     public Dictionary<int, IEntity> Entities { get; } = new();
 
-    public int PlayerCount()  => GetPlayers().Count();
+    public int PlayerCount() => GetPlayers().Count();
 
     /// <summary>
     ///     Add a new Entity to this zone.

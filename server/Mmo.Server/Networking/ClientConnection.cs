@@ -9,24 +9,41 @@ namespace Mmo.Server.Networking;
 
 /// <summary>
 ///     Repräsentiert eine Verbindung zu einem Client.
-///
 ///     Verantwortlichkeiten:
 ///     - TCP-Stream verwalten
 ///     - Messages empfangen und Events feuern
 ///     - Messages senden
 ///     - Connection-State tracken
-///
 ///     KEINE Game-Logik hier! Alles geht über Events zum GameServer.
 /// </summary>
 public sealed class ClientConnection : IDisposable
 {
-    private readonly TcpClient _tcpClient;
-    private readonly NetworkStream _stream;
-    private readonly ILog _log;
     private readonly CancellationTokenSource _cts = new();
+    private readonly ILog _log;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private readonly NetworkStream _stream;
+    private readonly TcpClient _tcpClient;
 
     private bool _disposed;
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public ClientConnection(
+        TcpClient tcpClient,
+        ILog log)
+    {
+        _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+
+        _stream = tcpClient.GetStream();
+        RemoteEndPoint = tcpClient.Client.RemoteEndPoint?.ToString() ?? "Unknown";
+
+        _tcpClient.NoDelay = true;
+        _tcpClient.ReceiveTimeout = 30000;
+        _tcpClient.SendTimeout = 10000;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // IDENTITY
@@ -61,6 +78,29 @@ public sealed class ClientConnection : IDisposable
     public long MessagesSent { get; private set; }
 
     // ═══════════════════════════════════════════════════════════════
+    // DISPOSE
+    // ═══════════════════════════════════════════════════════════════
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        try
+        {
+            _cts.Cancel();
+            _stream.Dispose();
+            _tcpClient.Dispose();
+            _sendLock.Dispose();
+            _cts.Dispose();
+        }
+        catch
+        {
+            // ignore errors in cleanup for now
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // EVENTS
     // ═══════════════════════════════════════════════════════════════
 
@@ -68,46 +108,24 @@ public sealed class ClientConnection : IDisposable
     public event Action<ClientConnection, string?>? OnDisconnected;
 
     // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public ClientConnection(
-        TcpClient tcpClient,
-        ILog log)
-    {
-        _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
-
-        _stream = tcpClient.GetStream();
-        RemoteEndPoint = tcpClient.Client.RemoteEndPoint?.ToString() ?? "Unknown";
-
-        _tcpClient.NoDelay = true;
-        _tcpClient.ReceiveTimeout = 30000;
-        _tcpClient.SendTimeout = 10000;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
     // RECEIVE LOOP
     // ═══════════════════════════════════════════════════════════════
 
-    public void StartReceivingAsync()
-    {
-        _ = ReceiveLoopAsync();
-    }
+    public void StartReceivingAsync() => _ = ReceiveLoopAsync();
 
     private async Task ReceiveLoopAsync()
     {
-        var headerBuffer = new byte[4];
+        byte[] headerBuffer = new byte[4];
 
         try
         {
             while (!_cts.Token.IsCancellationRequested && IsConnected)
             {
                 // Header lesen
-                var bytesRead = await ReadExactAsync(headerBuffer, 4);
+                int bytesRead = await ReadExactAsync(headerBuffer, 4);
                 if (bytesRead == 0) break;
 
-                var messageLength = BitConverter.ToInt32(headerBuffer, 0);
+                int messageLength = BitConverter.ToInt32(headerBuffer, 0);
 
                 if (messageLength <= 0 || messageLength > 1024 * 1024)
                 {
@@ -116,14 +134,14 @@ public sealed class ClientConnection : IDisposable
                 }
 
                 // Body lesen
-                var bodyBuffer = ArrayPool<byte>.Shared.Rent(messageLength);
+                byte[] bodyBuffer = ArrayPool<byte>.Shared.Rent(messageLength);
                 try
                 {
                     bytesRead = await ReadExactAsync(bodyBuffer, messageLength);
                     if (bytesRead == 0) break;
 
                     // Deserialisieren
-                     INetworkMessage message = MessageSerializer.Deserialize(
+                    INetworkMessage message = MessageSerializer.Deserialize(
                         new ReadOnlyMemory<byte>(bodyBuffer, 0, messageLength));
 
                     LastActivity = DateTimeOffset.UtcNow;
@@ -160,7 +178,7 @@ public sealed class ClientConnection : IDisposable
         int totalRead = 0;
         while (totalRead < count)
         {
-            var bytesRead = await _stream.ReadAsync(
+            int bytesRead = await _stream.ReadAsync(
                 buffer.AsMemory(totalRead, count - totalRead),
                 _cts.Token);
 
@@ -263,32 +281,5 @@ public sealed class ClientConnection : IDisposable
     /// <summary>
     ///     Prüft ob Connection "tot" ist.
     /// </summary>
-    public bool IsConnectionDead(TimeSpan timeout)
-    {
-        return DateTimeOffset.UtcNow - LastActivity > timeout;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // DISPOSE
-    // ═══════════════════════════════════════════════════════════════
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        try
-        {
-            _cts.Cancel();
-            _stream.Dispose();
-            _tcpClient.Dispose();
-            _sendLock.Dispose();
-            _cts.Dispose();
-        }
-        catch
-        {
-            // ignore errors in cleanup for now
-        }
-
-    }
+    public bool IsConnectionDead(TimeSpan timeout) => DateTimeOffset.UtcNow - LastActivity > timeout;
 }

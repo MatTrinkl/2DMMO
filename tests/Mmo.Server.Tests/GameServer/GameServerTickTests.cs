@@ -91,7 +91,7 @@ public class GameServerTickTests
         var gameServer = new SlowGameServer(_mockLog, _mockNetworkServer, TimeSpan.Zero);
 
         // Act & Assert: Should not throw
-        var exception = Record.Exception(() => gameServer.Stop());
+        Exception? exception = Record.Exception(() => gameServer.Stop());
         Assert.Null(exception);
     }
 }

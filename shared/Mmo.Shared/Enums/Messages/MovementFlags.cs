@@ -11,5 +11,5 @@ public enum MovementFlags : byte
     Jumping = 16,
     Falling = 32,
     Swimming = 64,
-    Mounted = 128,
+    Mounted = 128
 }

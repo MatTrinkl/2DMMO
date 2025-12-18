@@ -7,7 +7,7 @@ namespace Mmo.Server.Services.Authentication;
 /// </summary>
 public record AuthResult(
     bool Success,
-    Guid?  AccountId = null,
+    Guid? AccountId = null,
     string? Username = null,
     AccountFlags Flags = AccountFlags.None,
     string? Error = null

@@ -6,7 +6,7 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Shared.Messages.System;
 
 [MessagePackObject]
-public class ServerAnnouncement :ITimestampedMessage
+public class ServerAnnouncement : ITimestampedMessage
 {
     /// <summary>
     ///     The constructor used bei <see cref="MessagePackSerializer" />.
@@ -30,14 +30,14 @@ public class ServerAnnouncement :ITimestampedMessage
         Details = details;
         AnnouncementType = announcementType;
     }
-    [Key(0)]
-    public MessageType Type => MessageType.ServerAnnouncement;
-    [Key(1)]
-    public long Timestamp { get; set; }
-    [Key(2)]
-    public string Message { get; set; }
-    [Key(3)]
-    public string? Details { get; set; }
-    [Key(4)]
-    public AnnouncementType AnnouncementType { get; set; }
+
+    [Key(2)] public string Message { get; set; }
+
+    [Key(3)] public string? Details { get; set; }
+
+    [Key(4)] public AnnouncementType AnnouncementType { get; set; }
+
+    [Key(0)] public MessageType Type => MessageType.ServerAnnouncement;
+
+    [Key(1)] public long Timestamp { get; set; }
 }

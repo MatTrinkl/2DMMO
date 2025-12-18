@@ -1,6 +1,5 @@
 using MessagePack;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
@@ -98,7 +97,7 @@ public class PlayerEntityTests
         originalPlayer.SetEntityId(42, 100);
 
         byte[] serialized = MessagePackSerializer.Serialize<PlayerEntity>(originalPlayer);
-        var deserializedPlayer = MessagePackSerializer.Deserialize<PlayerEntity>(serialized) as PlayerEntity;
+        var deserializedPlayer = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
 
         Assert.NotNull(deserializedPlayer);
         // Note: PersistentId, EntityId, and IsTrulyPersistent are not serialized due to 'protected init/set' - known limitations
@@ -114,8 +113,8 @@ public class PlayerEntityTests
     {
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
 
-        byte[] serialized = MessagePackSerializer.Serialize<PlayerEntity>(player);
-        var deserialized = MessagePackSerializer.Deserialize<PlayerEntity>(serialized) as PlayerEntity;
+        byte[] serialized = MessagePackSerializer.Serialize(player);
+        var deserialized = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
 
         // Deserialization works, even if PersistentId is not preserved
         Assert.NotNull(deserialized);
@@ -144,8 +143,8 @@ public class PlayerEntityTests
     [Fact]
     public void Type_AlwaysReturnsPlayer()
     {
-        var player1 = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Player1", new Position(0, 0));
-        var player2 = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Player2", new Position(100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(0, 0));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(100, 100));
 
         Assert.Equal(EntityType.Player, player1.Type);
         Assert.Equal(EntityType.Player, player2.Type);
@@ -155,8 +154,8 @@ public class PlayerEntityTests
     [Fact]
     public void TwoPlayers_WithDifferentGuids_HaveDifferentPersistentIds()
     {
-        var player1 = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Player1", new Position(0, 0));
-        var player2 = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "Player2", new Position(0, 0));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(0, 0));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(0, 0));
 
         Assert.NotEqual(player1.PersistentId, player2.PersistentId);
     }
@@ -165,8 +164,8 @@ public class PlayerEntityTests
     public void TwoPlayers_WithSameGuid_HaveSamePersistentIds()
     {
         var sharedGuid = Guid.NewGuid();
-        var player1 = new PlayerEntity(sharedGuid,Guid.NewGuid(), "Player1", new Position(0, 0));
-        var player2 = new PlayerEntity(sharedGuid,Guid.NewGuid(), "Player2", new Position(0, 0));
+        var player1 = new PlayerEntity(sharedGuid, Guid.NewGuid(), "Player1", new Position(0, 0));
+        var player2 = new PlayerEntity(sharedGuid, Guid.NewGuid(), "Player2", new Position(0, 0));
 
         Assert.Equal(player1.PersistentId, player2.PersistentId);
     }

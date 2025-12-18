@@ -1,4 +1,4 @@
-using Mmo. Shared.Enums;
+using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Services.Authentication;
@@ -16,16 +16,16 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         // - Account-Status prüfen (banned, suspended, etc.)
         // - Last-Login aktualisieren
 
-        await Task. Delay(1); // Simulate async DB call
+        await Task.Delay(1); // Simulate async DB call
 
         // PROTOTYPE: Akzeptiere jeden Login
         log.Info("Authentication successful for user: {Username}", username);
 
         return new AuthResult(
-            Success: true,
-            AccountId:  Guid.NewGuid(),  // TODO:  Echte Account-ID aus DB
-            Username: username,
-            Flags: AccountFlags.None
+            true,
+            Guid.NewGuid(), // TODO:  Echte Account-ID aus DB
+            username,
+            AccountFlags.None
         );
     }
 
@@ -34,7 +34,7 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         // TODO: Session aus Redis/DB validieren
         await Task.Delay(1);
 
-        return new AuthResult(Success: false, Error: "Session validation not implemented");
+        return new AuthResult(false, Error: "Session validation not implemented");
     }
 
     public async Task InvalidateSessionAsync(Guid sessionToken)

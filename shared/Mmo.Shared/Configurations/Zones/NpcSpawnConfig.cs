@@ -11,5 +11,5 @@ public class NpcSpawnConfig
     public int NpcTemplateId { get; set; }
     public Position Position { get; set; }
     public int RespawnSeconds { get; set; } = 60;
-    public int?  PatrolPathId { get; set; }
+    public int? PatrolPathId { get; set; }
 }

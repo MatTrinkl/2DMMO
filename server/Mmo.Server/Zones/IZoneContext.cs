@@ -30,7 +30,7 @@ public interface IZoneContext
     PvpZoneType PvpType => Config.PvpType;
 
     /// <summary>Ist Sanctuary?</summary>
-    bool IsSanctuary => Config. IsSanctuary;
+    bool IsSanctuary => Config.IsSanctuary;
 
     // ═══════════════════════════════════════════════════════════════
     // RUNTIME STATE (dynamisch)
@@ -61,14 +61,14 @@ public interface IZoneContext
     bool IsLocked { get; }
 
     /// <summary>Grund für Sperre.</summary>
-    string?  LockReason { get; }
+    string? LockReason { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // INSTANZ-SPEZIFISCH (nur wenn IsInstance)
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Instanz-ID (nur bei Instanzen).</summary>
-    Guid?  InstanceId { get; }
+    Guid? InstanceId { get; }
 
     /// <summary>Instanz-Besitzer (Gruppe/Raid-Leader).</summary>
     Guid? InstanceOwnerId { get; }

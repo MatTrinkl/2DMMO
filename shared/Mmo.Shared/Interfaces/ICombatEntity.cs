@@ -1,7 +1,7 @@
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
 
-namespace Mmo. Shared.Entities;
+namespace Mmo.Shared.Entities;
 
 /// <summary>
 ///     Interface für alles was kämpfen kann.

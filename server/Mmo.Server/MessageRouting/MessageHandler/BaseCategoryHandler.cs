@@ -1,16 +1,13 @@
-using Mmo. Server.Networking;
-using Mmo. Shared.Enums;
+using Mmo.Server.Networking;
 using Mmo.Shared.Enums.Messages;
-using Mmo.Shared. Interfaces;
+using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Handlers.Base;
 
 /// <summary>
 ///     Basisklasse für alle Category-Handler.
-///
 ///     Jeder Handler verarbeitet eine MessageCategory (100er-Block).
 ///     Verwendet O(1) Array-Lookup für Sub-Routing.
-///
 ///     WICHTIG:
 ///     - Handler-Methoden sind SYNCHRON (void, nicht async)
 ///     - Für async Operations:  ctx.RunAsync() verwenden
@@ -18,24 +15,10 @@ namespace Mmo.Server.Handlers.Base;
 /// </summary>
 public abstract class BaseCategoryHandler : ICategoryHandler
 {
-    private readonly Action<MessageContext, INetworkMessage>? [] _handlers
+    private readonly Action<MessageContext, INetworkMessage>?[] _handlers
         = new Action<MessageContext, INetworkMessage>? [100];
 
     private readonly ILog _log;
-
-    // ═══════════════════════════════════════════════════════════════
-    // ABSTRACT MEMBERS
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Die Kategorie die dieser Handler verarbeitet.
-    /// </summary>
-    public abstract MessageCategory Category { get; }
-
-    /// <summary>
-    ///     Wird von Subklassen überschrieben um Handler zu registrieren.
-    /// </summary>
-    protected abstract void RegisterHandlers();
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -48,41 +31,13 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // REGISTRATION
+    // ABSTRACT MEMBERS
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Registriert einen Handler für einen bestimmten MessageType.
+    ///     Die Kategorie die dieser Handler verarbeitet.
     /// </summary>
-    /// <typeparam name="TMessage">Der Message-Typ. </typeparam>
-    /// <param name="type">Der MessageType (muss in dieser Kategorie sein!).</param>
-    /// <param name="handler">Die Handler-Methode.</param>
-    protected void Register<TMessage>(MessageType type, Action<MessageContext, TMessage> handler)
-        where TMessage : INetworkMessage
-    {
-        // Validierung: MessageType muss zu dieser Kategorie gehören
-        var expectedCategory = (int)Category;
-        var actualCategory = (ushort)type / 100;
-
-        if (actualCategory != expectedCategory)
-        {
-            throw new InvalidOperationException(
-                $"MessageType {type} ({(ushort)type}) belongs to category {actualCategory}, " +
-                $"but this handler is for category {expectedCategory} ({Category})");
-        }
-
-        int index = (ushort)type % 100;
-
-        if (_handlers[index] != null)
-        {
-            throw new InvalidOperationException(
-                $"Handler for MessageType {type} already registered in {GetType().Name}");
-        }
-
-        _handlers[index] = (ctx, msg) => handler(ctx, (TMessage)msg);
-
-        _log.Debug("Registered handler for {MessageType} in {Handler}", type, GetType().Name);
-    }
+    public abstract MessageCategory Category { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICategoryHandler IMPLEMENTATION
@@ -103,7 +58,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     public void Handle(MessageContext ctx, MessageType type, INetworkMessage message)
     {
         int index = (ushort)type % 100;
-        var handler = _handlers[index];
+        Action<MessageContext, INetworkMessage>? handler = _handlers[index];
 
         if (handler == null)
         {
@@ -122,6 +77,44 @@ public abstract class BaseCategoryHandler : ICategoryHandler
         }
     }
 
+    /// <summary>
+    ///     Wird von Subklassen überschrieben um Handler zu registrieren.
+    /// </summary>
+    protected abstract void RegisterHandlers();
+
+    // ═══════════════════════════════════════════════════════════════
+    // REGISTRATION
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    ///     Registriert einen Handler für einen bestimmten MessageType.
+    /// </summary>
+    /// <typeparam name="TMessage">Der Message-Typ. </typeparam>
+    /// <param name="type">Der MessageType (muss in dieser Kategorie sein!).</param>
+    /// <param name="handler">Die Handler-Methode.</param>
+    protected void Register<TMessage>(MessageType type, Action<MessageContext, TMessage> handler)
+        where TMessage : INetworkMessage
+    {
+        // Validierung: MessageType muss zu dieser Kategorie gehören
+        int expectedCategory = (int)Category;
+        int actualCategory = (ushort)type / 100;
+
+        if (actualCategory != expectedCategory)
+            throw new InvalidOperationException(
+                $"MessageType {type} ({(ushort)type}) belongs to category {actualCategory}, " +
+                $"but this handler is for category {expectedCategory} ({Category})");
+
+        int index = (ushort)type % 100;
+
+        if (_handlers[index] != null)
+            throw new InvalidOperationException(
+                $"Handler for MessageType {type} already registered in {GetType().Name}");
+
+        _handlers[index] = (ctx, msg) => handler(ctx, (TMessage)msg);
+
+        _log.Debug("Registered handler for {MessageType} in {Handler}", type, GetType().Name);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // HELPER METHODS
     // ═══════════════════════════════════════════════════════════════
@@ -137,6 +130,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
             ctx.SendError("NOT_AUTHENTICATED", "You must be logged in");
             return false;
         }
+
         return true;
     }
 
@@ -151,6 +145,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
             ctx.SendError("NO_CHARACTER", "You must select a character first");
             return false;
         }
+
         return true;
     }
 
@@ -158,10 +153,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     ///     Prüft ob der Spieler authentifiziert ist UND einen Charakter hat.
     ///     Sendet automatisch Error wenn nicht.
     /// </summary>
-    protected bool RequireInGame(MessageContext ctx)
-    {
-        return RequireAuthenticated(ctx) && RequireCharacter(ctx);
-    }
+    protected bool RequireInGame(MessageContext ctx) => RequireAuthenticated(ctx) && RequireCharacter(ctx);
 
     /// <summary>
     ///     Prüft ob der Spieler Game Master ist.
@@ -174,6 +166,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
             ctx.SendError("PERMISSION_DENIED", "This action requires Game Master privileges");
             return false;
         }
+
         return true;
     }
 
@@ -188,6 +181,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
             ctx.SendError("PERMISSION_DENIED", "This action requires Admin privileges");
             return false;
         }
+
         return true;
     }
 
@@ -197,11 +191,12 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireNotMuted(MessageContext ctx)
     {
-        if (ctx. IsMuted)
+        if (ctx.IsMuted)
         {
             ctx.SendError("MUTED", "You are muted and cannot perform this action");
             return false;
         }
+
         return true;
     }
 }

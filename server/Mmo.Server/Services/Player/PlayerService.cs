@@ -1,19 +1,19 @@
-using Mmo.Server. Entities;
+using Mmo.Server.Entities;
 using Mmo.Server.Networking;
-using Mmo.Server. Zones;
-using Mmo. Shared. Entities;
-using Mmo. Shared. Enums;
+using Mmo.Server.Zones;
+using Mmo.Shared.Entities;
+using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 
-namespace Mmo.Server.Services. Player;
+namespace Mmo.Server.Services.Player;
 
 /// <summary>
 ///     Konkrete Implementation des Player-Service.
 /// </summary>
 public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 {
-    public async Task<ServerPlayer> SpawnPlayerAsync(
+    public async Task<ServerPlayerCharacter> SpawnPlayerAsync(
         Guid accountId,
         string characterName,
         ClientConnection connection)
@@ -39,7 +39,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
             Faction = Faction.Player
         };
 
-        var serverPlayer = new ServerPlayer(playerEntity, connection)
+        var serverPlayer = new ServerPlayerCharacter(playerEntity, connection)
         {
             AccountId = accountId
         };
@@ -75,14 +75,14 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 
         // PROTOTYPE: Immer erfolgreich
         return new CharacterCreateResult(
-            Success: true,
-            CharacterId:  Guid.NewGuid()
+            true,
+            Guid.NewGuid()
         );
     }
 
     public async Task RemovePlayerAsync(Guid connectionId)
     {
-        var player = zoneManager.RemovePlayerByConnectionId(connectionId);
+        ServerPlayerCharacter? player = zoneManager.RemovePlayerByConnectionId(connectionId);
 
         if (player != null)
         {
@@ -94,11 +94,11 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         }
     }
 
-    public async Task SavePlayerAsync(ServerPlayer player)
+    public async Task SavePlayerAsync(ServerPlayerCharacter playerCharacter)
     {
         // TODO: In DB speichern
         await Task.Delay(1);
 
-        log.Debug("Player saved: {Name}", player.Name);
+        log.Debug("Player saved: {Name}", playerCharacter.Name);
     }
 }

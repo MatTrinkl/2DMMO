@@ -1,5 +1,5 @@
-using Mmo.Server. Entities;
-using Mmo. Server.Networking;
+using Mmo.Server.Entities;
+using Mmo.Server.Networking;
 using Mmo.Shared.Enums;
 
 namespace Mmo.Server.Services.Player;
@@ -12,7 +12,7 @@ public interface IPlayerService
     /// <summary>
     ///     Spawnt einen neuen Spieler oder lädt existierenden.
     /// </summary>
-    Task<ServerPlayer> SpawnPlayerAsync(
+    Task<ServerPlayerCharacter> SpawnPlayerAsync(
         Guid accountId,
         string characterName,
         ClientConnection connection);
@@ -40,9 +40,5 @@ public interface IPlayerService
     /// <summary>
     ///     Speichert Spieler-Daten.
     /// </summary>
-    Task SavePlayerAsync(ServerPlayer player);
+    Task SavePlayerAsync(ServerPlayerCharacter playerCharacter);
 }
-
-
-
-

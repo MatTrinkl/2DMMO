@@ -13,5 +13,5 @@ public enum WeatherType : byte
     Snow = 5,
     Blizzard = 6,
     Fog = 7,
-    Sandstorm = 8,
+    Sandstorm = 8
 }

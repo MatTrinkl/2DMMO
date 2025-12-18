@@ -1,6 +1,5 @@
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
-using Mmo.Shared.Zones;
 
 namespace Mmo.Shared.Configurations.Zones;
 
@@ -76,7 +75,7 @@ public class ZoneConfig
     public WeatherType DefaultWeather { get; set; } = WeatherType.Clear;
 
     /// <summary>Musik-ID.</summary>
-    public int?  MusicId { get; set; }
+    public int? MusicId { get; set; }
 
     /// <summary>Ambiente-Sound-ID.</summary>
     public int? AmbienceId { get; set; }
@@ -86,11 +85,11 @@ public class ZoneConfig
     // ═══════════════════════════════════════════════════════════════
 
     public bool IsPvpEnabled => PvpType != PvpZoneType.Sanctuary;
-    public bool IsSanctuary => PvpType == PvpZoneType. Sanctuary;
+    public bool IsSanctuary => PvpType == PvpZoneType.Sanctuary;
     public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
     public bool IsRaid => Flags.HasFlag(ZoneFlags.IsRaid);
     public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
     public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
-    public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
+    public bool AllowsMounting => !Flags.HasFlag(ZoneFlags.NoMounting);
     public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
 }

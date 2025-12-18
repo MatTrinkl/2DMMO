@@ -1231,5 +1231,5 @@ public enum MessageType : ushort
     DebugResponse = 4901,
     DebugLog = 4902,
     DebugTeleport = 4903,
-    DebugSpawn = 4904,
+    DebugSpawn = 4904
 }

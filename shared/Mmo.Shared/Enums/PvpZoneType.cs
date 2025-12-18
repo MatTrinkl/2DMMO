@@ -1,6 +1,5 @@
 namespace Mmo.Shared.Enums;
 
-
 /// <summary>
 ///     PvP-Regeln einer Zone.
 /// </summary>
@@ -34,9 +33,5 @@ public enum PvpZoneType : byte
     /// <summary>
     ///     Contested Zone - PvP-Flag wird automatisch aktiviert.
     /// </summary>
-    Contested = 5,
+    Contested = 5
 }
-
-
-
-

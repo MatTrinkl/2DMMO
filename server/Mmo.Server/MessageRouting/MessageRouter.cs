@@ -7,12 +7,11 @@ namespace Mmo.Server.MessageRouting;
 
 /// <summary>
 ///     Routet eingehende Messages an den zuständigen CategoryHandler.
-///
 ///     Verwendet O(1) Array-Lookup basierend auf der MessageCategory.
 /// </summary>
 public sealed class MessageRouter
 {
-    private readonly ICategoryHandler? [] _handlers = new ICategoryHandler?[50];
+    private readonly ICategoryHandler?[] _handlers = new ICategoryHandler?[50];
     private readonly ILog _log;
 
     public MessageRouter(ILog log)
@@ -28,10 +27,8 @@ public sealed class MessageRouter
         int index = (int)handler.Category;
 
         if (_handlers[index] != null)
-        {
             throw new InvalidOperationException(
                 $"Handler for category {handler.Category} already registered.");
-        }
 
         _handlers[index] = handler;
         _log.Debug("Registered handler for category {Category}", handler.Category);
@@ -48,23 +45,23 @@ public sealed class MessageRouter
 
         if (categoryIndex >= _handlers.Length)
         {
-            _log. Warn("Invalid message category index: {Index} for type {Type}", categoryIndex, type);
+            _log.Warn("Invalid message category index: {Index} for type {Type}", categoryIndex, type);
             return;
         }
 
-        var handler = _handlers[categoryIndex];
+        ICategoryHandler? handler = _handlers[categoryIndex];
 
         if (handler == null)
         {
-            _log. Warn("No handler registered for category {Category} (type:  {Type})",
+            _log.Warn("No handler registered for category {Category} (type:  {Type})",
                 (MessageCategory)categoryIndex, type);
             return;
         }
 
-        if (! handler. CanHandle(type))
+        if (!handler.CanHandle(type))
         {
             _log.Warn("Handler {Handler} cannot handle message type {Type}",
-                handler. GetType().Name, type);
+                handler.GetType().Name, type);
             return;
         }
 
@@ -75,7 +72,7 @@ public sealed class MessageRouter
         catch (Exception ex)
         {
             _log.Error(ex, "Error handling message {Type} in {Handler}",
-                type, handler. GetType().Name);
+                type, handler.GetType().Name);
 
             ctx.SendError("INTERNAL_ERROR", "An error occurred processing your request.");
         }

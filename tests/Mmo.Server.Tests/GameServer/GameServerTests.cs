@@ -1,7 +1,7 @@
+using Mmo.Server.GameLoop;
 using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
@@ -17,13 +17,13 @@ public class GameServerTests
 
     public GameServerTests()
     {
-        _mockNetworkServer= new MockNetworkServer(_mockLog, true);
+        _mockNetworkServer = new MockNetworkServer(_mockLog, true);
     }
 
     [Fact]
     public void Constructor_InitializesCorrectly()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         Assert.Equal(0, gameServer.TickCount);
     }
@@ -31,7 +31,7 @@ public class GameServerTests
     [Fact]
     public void QueueOutgoingMessage_AddsMessageToQueue()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var message = new ChatMessage(Guid.NewGuid(), "Test");
 
         // Should not throw
@@ -43,7 +43,7 @@ public class GameServerTests
     [Fact]
     public void Start_AndStop_WorksGracefully()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         gameServer.Start();
         Thread.Sleep(100);
@@ -56,7 +56,7 @@ public class GameServerTests
     [Fact]
     public void OnClientConnected_LogsConnection()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         gameServer.Start();
@@ -71,7 +71,7 @@ public class GameServerTests
     [Fact]
     public void OnClientDisconnected_LogsDisconnection()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         gameServer.Start();
@@ -87,7 +87,7 @@ public class GameServerTests
     [Fact]
     public void OnMessageReceived_QueuesMessageForProcessing()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         var message = new ChatMessage(Guid.NewGuid(), "Hello");
 
@@ -106,12 +106,12 @@ public class GameServerTests
     [Fact]
     public void ProcessMessage_HandlesDifferentMessageTypes()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Simulate different message types
         var loginRequest = new LoginRequest("TestUser", "password123");
-        var testEntity = new PlayerEntity(Guid.NewGuid(),Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
         var positionUpdate =
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
         var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");
@@ -132,7 +132,7 @@ public class GameServerTests
     [Fact]
     public void PlayerLogin_ValidatesUsername()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Simulate login with invalid usernames
@@ -150,23 +150,23 @@ public class GameServerTests
         gameServer.Stop();
 
         // Debug: Output all messages
-        var allMessages = string.Join(Environment.NewLine, _mockLog.Messages);
-        
+        string allMessages = string.Join(Environment.NewLine, _mockLog.Messages);
+
         // Verify warnings were logged for invalid usernames
-        Assert.True(_mockLog.HasMessageContaining("WARN", "Username"), 
+        Assert.True(_mockLog.HasMessageContaining("WARN", "Username"),
             $"Expected warning with 'Username'. All messages:{Environment.NewLine}{allMessages}");
     }
 
     [Fact]
     public void GetStats_ReturnsValidStats()
     {
-        var gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         gameServer.Start();
         Thread.Sleep(100);
         gameServer.Stop();
 
-        var stats = gameServer.GetStats();
+        ServerStats stats = gameServer.GetStats();
 
         Assert.NotNull(stats);
         Assert.True(stats.TickCount > 0);
