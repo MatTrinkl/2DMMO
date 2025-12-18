@@ -197,7 +197,6 @@ public class NetworkServer(
 
     /// <summary>
     ///     Sends a message to a connection.
-    ///     Delegates to the ClientConnection.Send() method.
     /// </summary>
     public void Send(ClientConnection connection, INetworkMessage message)
     {

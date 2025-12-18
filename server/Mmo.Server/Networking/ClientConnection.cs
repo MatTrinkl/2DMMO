@@ -96,8 +96,6 @@ public sealed class ClientConnection : IDisposable
 
     /// <summary>
     ///     Sends a message to this client.
-    ///     The message is serialized and prefixed with a 4-byte length header.
-    ///     Thread-safe via SemaphoreSlim.
     /// </summary>
     public void Send(INetworkMessage message)
     {
@@ -198,9 +196,13 @@ public sealed class ClientConnection : IDisposable
             _sendLock.Dispose();
             _cts.Dispose();
         }
-        catch
+        catch (ObjectDisposedException)
         {
-            // ignore errors in cleanup for now
+            // Expected if already disposed
+        }
+        catch (Exception)
+        {
+            // Suppress exceptions during cleanup to avoid masking the original issue
         }
     }
 

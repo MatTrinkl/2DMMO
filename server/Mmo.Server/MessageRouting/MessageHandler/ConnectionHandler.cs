@@ -138,7 +138,8 @@ public class ConnectionHandler : BaseCategoryHandler
         _log.Info("Login successful for {ConnectionId}: {Username} (AccountId: {AccountId})",
             ctx.ConnectionId, authResult.Username!, authResult.AccountId);
 
-        // Send response TODO: Write response correctly
+        // Send response
+        // TODO: Add session token, character list, and server info to response
         ctx.Send(new LoginResponse(true, ctx.ConnectionId, 0, null));
     }
 
