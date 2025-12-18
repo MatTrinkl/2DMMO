@@ -5,16 +5,16 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.Handlers.Base;
 
 /// <summary>
-///     Interface für Category-Handler.
+///     Interface for category handlers.
 /// </summary>
 public interface ICategoryHandler
 {
-    /// <summary>Die Kategorie die dieser Handler verarbeitet.</summary>
+    /// <summary>The category that this handler processes.</summary>
     MessageCategory Category { get; }
 
-    /// <summary>Prüft ob dieser Handler einen bestimmten MessageType verarbeiten kann. </summary>
+    /// <summary>Checks if this handler can process a specific MessageType.</summary>
     bool CanHandle(MessageType type);
 
-    /// <summary>Verarbeitet eine Message (SYNCHRON!).</summary>
+    /// <summary>Processes a message (SYNCHRONOUS!).</summary>
     void Handle(MessageContext ctx, MessageType type, INetworkMessage message);
 }

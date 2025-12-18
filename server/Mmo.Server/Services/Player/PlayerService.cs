@@ -9,7 +9,7 @@ using Mmo.Shared.Records;
 namespace Mmo.Server.Services.Player;
 
 /// <summary>
-///     Konkrete Implementation des Player-Service.
+///     Concrete implementation of the Player service.
 /// </summary>
 public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 {
@@ -18,12 +18,12 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         string characterName,
         ClientConnection connection)
     {
-        // TODO: Charakter aus DB laden
+        // TODO: Load character from DB
         // var characterData = await _characterRepository.GetByNameAsync(characterName);
 
         await Task.Delay(1); // Simulate async DB call
 
-        // PROTOTYPE: Erstelle neuen Spieler
+        // PROTOTYPE: Create new player
         var characterId = Guid.NewGuid();
         var startPosition = new Position(100, 100);
 
@@ -44,7 +44,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
             AccountId = accountId
         };
 
-        // Zum ZoneManager hinzufügen
+        // Add to ZoneManager
         zoneManager.AddPlayer(serverPlayer);
 
         log.Info(
@@ -56,10 +56,10 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 
     public async Task<List<CharacterInfo>> GetCharacterListAsync(Guid accountId)
     {
-        // TODO: Aus DB laden
+        // TODO: Load from DB
         await Task.Delay(1);
 
-        // PROTOTYPE: Leere Liste
+        // PROTOTYPE: Empty list
         return new List<CharacterInfo>();
     }
 
@@ -70,10 +70,10 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         CharacterClass characterClass,
         Gender gender)
     {
-        // TODO: Validierung, DB-Insert
+        // TODO: Validation, DB insert
         await Task.Delay(1);
 
-        // PROTOTYPE: Immer erfolgreich
+        // PROTOTYPE: Always successful
         return new CharacterCreateResult(
             true,
             Guid.NewGuid()
@@ -86,7 +86,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 
         if (player != null)
         {
-            // TODO: Spieler-Daten speichern
+            // TODO: Save player data
             await SavePlayerAsync(player);
 
             log.Info("Player removed: {Name} (ConnectionId: {ConnectionId})",
@@ -96,7 +96,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 
     public async Task SavePlayerAsync(ServerPlayerCharacter playerCharacter)
     {
-        // TODO: In DB speichern
+        // TODO: Save to DB
         await Task.Delay(1);
 
         log.Debug("Player saved: {Name}", playerCharacter.Name);

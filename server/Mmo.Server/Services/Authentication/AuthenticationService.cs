@@ -4,17 +4,17 @@ using Mmo.Shared.Interfaces;
 namespace Mmo.Server.Services.Authentication;
 
 /// <summary>
-///     Konkrete Implementation des Authentication-Service.
-///     TODO: Später mit echtem DB-Zugriff ersetzen.
+///     Concrete implementation of the Authentication service.
+///     TODO: Replace with real DB access later.
 /// </summary>
 public class AuthenticationService(ILog log) : IAuthenticationService
 {
     public async Task<AuthResult> AuthenticateAsync(string username, string password)
     {
-        // TODO: Echte DB-Validierung implementieren
-        // - Password-Hash vergleichen
-        // - Account-Status prüfen (banned, suspended, etc.)
-        // - Last-Login aktualisieren
+        // TODO: Implement real DB validation
+        // - Compare password hash
+        // - Check account status (banned, suspended, etc.)
+        // - Update last login
 
         await Task.Delay(1); // Simulate async DB call
 

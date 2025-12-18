@@ -1,22 +1,22 @@
 namespace Mmo.Server.Services.Authentication;
 
 /// <summary>
-///     Service für Authentifizierung und Account-Validierung.
+///     Service for authentication and account validation.
 /// </summary>
 public interface IAuthenticationService
 {
     /// <summary>
-    ///     Validiert Login-Credentials.
+    ///     Validates login credentials.
     /// </summary>
     Task<AuthResult> AuthenticateAsync(string username, string password);
 
     /// <summary>
-    ///     Validiert einen Session-Token (für Reconnect).
+    ///     Validates a session token (for reconnection).
     /// </summary>
     Task<AuthResult> ValidateSessionAsync(Guid sessionToken);
 
     /// <summary>
-    ///     Invalidiert eine Session (Logout).
+    ///     Invalidates a session (logout).
     /// </summary>
     Task InvalidateSessionAsync(Guid sessionToken);
 }

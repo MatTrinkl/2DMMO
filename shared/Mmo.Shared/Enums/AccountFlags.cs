@@ -1,31 +1,82 @@
 namespace Mmo.Shared.Enums;
 
 /// <summary>
-///     Flags für Account-Berechtigungen und -Status.
+///     Flags for account permissions and status.
 /// </summary>
 [Flags]
 public enum AccountFlags : uint
 {
+    /// <summary>
+    ///     No special flags set.
+    /// </summary>
     None = 0,
 
     // Status
-    Verified = 1 << 0, // Email verifiziert
-    Premium = 1 << 1, // Premium/VIP Account
-    Founder = 1 << 2, // Founder-Status
+    /// <summary>
+    ///     Email has been verified.
+    /// </summary>
+    Verified = 1 << 0,
+
+    /// <summary>
+    ///     Premium/VIP account status.
+    /// </summary>
+    Premium = 1 << 1,
+
+    /// <summary>
+    ///     Founder status.
+    /// </summary>
+    Founder = 1 << 2,
 
     // Moderation
-    Muted = 1 << 4, // Account ist gemutet
-    Banned = 1 << 5, // Account ist gebannt
-    Suspended = 1 << 6, // Account temporär gesperrt
+    /// <summary>
+    ///     Account is muted (cannot chat).
+    /// </summary>
+    Muted = 1 << 4,
+
+    /// <summary>
+    ///     Account is permanently banned.
+    /// </summary>
+    Banned = 1 << 5,
+
+    /// <summary>
+    ///     Account is temporarily suspended.
+    /// </summary>
+    Suspended = 1 << 6,
 
     // Staff
-    Moderator = 1 << 8, // Moderator-Rechte
-    GameMaster = 1 << 9, // GM-Rechte
-    Admin = 1 << 10, // Admin-Rechte
-    Developer = 1 << 11, // Developer-Rechte
+    /// <summary>
+    ///     Has moderator privileges.
+    /// </summary>
+    Moderator = 1 << 8,
+
+    /// <summary>
+    ///     Has Game Master (GM) privileges.
+    /// </summary>
+    GameMaster = 1 << 9,
+
+    /// <summary>
+    ///     Has administrator privileges.
+    /// </summary>
+    Admin = 1 << 10,
+
+    /// <summary>
+    ///     Has developer privileges.
+    /// </summary>
+    Developer = 1 << 11,
 
     // Special
-    Streamer = 1 << 16, // Streamer-Modus (Name verstecken etc.)
-    ContentCreator = 1 << 17, // Content Creator
-    BetaTester = 1 << 18 // Beta-Tester
+    /// <summary>
+    ///     Streamer mode (hide name, etc.).
+    /// </summary>
+    Streamer = 1 << 16,
+
+    /// <summary>
+    ///     Content creator status.
+    /// </summary>
+    ContentCreator = 1 << 17,
+
+    /// <summary>
+    ///     Beta tester status.
+    /// </summary>
+    BetaTester = 1 << 18
 }

@@ -4,9 +4,9 @@ using Mmo.Shared.Records;
 namespace Mmo.Server.Entities;
 
 /// <summary>
-///     Wrapper um ServerPlayer der IPlayerInfo implementiert.
-///     Erlaubt Zugriff auf Spieler-Daten ohne Server-spezifische Typen
-///     in das Shared-Projekt zu exponieren.
+///     Wrapper around ServerPlayer that implements IPlayerInfo.
+///     Allows access to player data without exposing server-specific types
+///     to the Shared project.
 /// </summary>
 internal sealed class ServerPlayerInfo(ServerPlayerCharacter playerCharacter) : IPlayerInfo
 {

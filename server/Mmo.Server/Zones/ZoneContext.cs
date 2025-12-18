@@ -32,7 +32,7 @@ public class ZoneContext(Zone zone, ZoneConfig config, ushort shardId = 0) : IZo
     public void SetWeather(WeatherType weather)
     {
         CurrentWeather = weather;
-        // TODO: Broadcast WeatherChange an alle Spieler
+        // TODO: Broadcast WeatherChange to all players
     }
 
     public void Lock(string reason)
