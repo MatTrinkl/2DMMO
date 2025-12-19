@@ -16,8 +16,8 @@ namespace Mmo.Server.MessageRouting.MessageHandler;
 /// </summary>
 public abstract class BaseCategoryHandler : ICategoryHandler
 {
-    private readonly Action<MessageContext, INetworkMessage>?[] _handlers
-        = new Action<MessageContext, INetworkMessage>? [100];
+    private readonly Action<MessageContext, INetworkMessage>?[] _handlers =
+        new Action<MessageContext, INetworkMessage>?[100];
 
     private readonly ILog _log;
 
