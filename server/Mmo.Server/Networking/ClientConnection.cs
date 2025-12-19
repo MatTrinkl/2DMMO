@@ -21,7 +21,7 @@ public sealed class ClientConnection : IDisposable
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
-    
+
     private readonly CancellationTokenSource _cts = new();
     private readonly ILog _log;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -29,6 +29,25 @@ public sealed class ClientConnection : IDisposable
     private readonly TcpClient _tcpClient;
 
     private bool _disposed;
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public ClientConnection(
+        TcpClient tcpClient,
+        ILog log)
+    {
+        _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+
+        _stream = tcpClient.GetStream();
+        RemoteEndPoint = tcpClient.Client.RemoteEndPoint?.ToString() ?? "Unknown";
+
+        _tcpClient.NoDelay = true;
+        _tcpClient.ReceiveTimeout = 30000;
+        _tcpClient.SendTimeout = 10000;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // PROPERTIES - Identity
@@ -62,31 +81,35 @@ public sealed class ClientConnection : IDisposable
     public long MessagesReceived { get; private set; }
     public long MessagesSent { get; private set; }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        try
+        {
+            _cts.Cancel();
+            _stream.Dispose();
+            _tcpClient.Dispose();
+            _sendLock.Dispose();
+            _cts.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected if already disposed
+        }
+        catch (Exception)
+        {
+            // Suppress exceptions during cleanup to avoid masking the original issue
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // EVENTS
     // ═══════════════════════════════════════════════════════════════
 
     public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
     public event Action<ClientConnection, string?>? OnDisconnected;
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public ClientConnection(
-        TcpClient tcpClient,
-        ILog log)
-    {
-        _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
-
-        _stream = tcpClient.GetStream();
-        RemoteEndPoint = tcpClient.Client.RemoteEndPoint?.ToString() ?? "Unknown";
-
-        _tcpClient.NoDelay = true;
-        _tcpClient.ReceiveTimeout = 30000;
-        _tcpClient.SendTimeout = 10000;
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // PUBLIC METHODS
@@ -182,29 +205,6 @@ public sealed class ClientConnection : IDisposable
     ///     Checks if the connection is "dead" (no activity for timeout period).
     /// </summary>
     public bool IsConnectionDead(TimeSpan timeout) => DateTimeOffset.UtcNow - LastActivity > timeout;
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        try
-        {
-            _cts.Cancel();
-            _stream.Dispose();
-            _tcpClient.Dispose();
-            _sendLock.Dispose();
-            _cts.Dispose();
-        }
-        catch (ObjectDisposedException)
-        {
-            // Expected if already disposed
-        }
-        catch (Exception)
-        {
-            // Suppress exceptions during cleanup to avoid masking the original issue
-        }
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // PRIVATE METHODS

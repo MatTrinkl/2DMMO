@@ -44,25 +44,23 @@ public class ConsoleLog : ILog
         }
     }
 
-    private static string FormatMessage(string message, object[] args)
+    private static string FormatMessage(string message, object[]? args)
     {
         if (args == null || args.Length == 0)
             return message;
 
-        // Einfaches Placeholder-Replacement:  {Name} -> args[index]
+        // Simple Placeholder-Replacement:  {Name} -> args[index]
         string result = message;
-        for (int i = 0; i < args.Length; i++)
+        foreach (object arg in args)
         {
-            // Finde {xyz} und ersetze mit args[i]
+            // Find {xyz} and replace with args[i]
             int startIndex = result.IndexOf('{');
-            if (startIndex >= 0)
-            {
-                int endIndex = result.IndexOf('}', startIndex);
-                if (endIndex > startIndex)
-                    result = result.Substring(0, startIndex) +
-                             args[i] +
-                             result.Substring(endIndex + 1);
-            }
+            if (startIndex < 0) continue;
+            int endIndex = result.IndexOf('}', startIndex);
+            if (endIndex > startIndex)
+                result = result[..startIndex] +
+                         arg +
+                         result[(endIndex + 1)..];
         }
 
         return result;

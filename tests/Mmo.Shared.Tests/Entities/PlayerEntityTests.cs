@@ -96,8 +96,8 @@ public class PlayerEntityTests
             new Position(123.45f, 678.90f));
         originalPlayer.SetEntityId(42, 100);
 
-        byte[] serialized = MessagePackSerializer.Serialize<PlayerEntity>(originalPlayer);
-        var deserializedPlayer = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
+        byte[] serialized = MessagePackSerializer.Serialize(originalPlayer);
+        PlayerEntity deserializedPlayer = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
 
         Assert.NotNull(deserializedPlayer);
         // Note: PersistentId, EntityId, and IsTrulyPersistent are not serialized due to 'protected init/set' - known limitations
@@ -114,7 +114,7 @@ public class PlayerEntityTests
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
 
         byte[] serialized = MessagePackSerializer.Serialize(player);
-        var deserialized = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
+        PlayerEntity deserialized = MessagePackSerializer.Deserialize<PlayerEntity>(serialized);
 
         // Deserialization works, even if PersistentId is not preserved
         Assert.NotNull(deserialized);

@@ -33,6 +33,28 @@ public sealed class MessageContext : IMessageContext
     private readonly ServerPlayerCharacter? _serverPlayer;
 
     // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public MessageContext(
+        ClientConnection connection,
+        GameServer gameServer,
+        ZoneManager zoneManager,
+        IServiceProvider services)
+    {
+        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _gameServer = gameServer ?? throw new ArgumentNullException(nameof(gameServer));
+        ZoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        Services = services ?? throw new ArgumentNullException(nameof(services));
+
+        // Get ServerPlayer from ZoneManager (if already logged in)
+        ZoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
+
+        // Wrap ServerPlayer in IPlayerInfo (Shared-compatible)
+        if (_serverPlayer != null) PlayerInfo = new ServerPlayerInfo(_serverPlayer);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // PROPERTIES - Server-only (not in IMessageContext!)
     // ═══════════════════════════════════════════════════════════════
 
@@ -129,28 +151,6 @@ public sealed class MessageContext : IMessageContext
 
     /// <inheritdoc />
     public T? GetOptionalService<T>() where T : class => Services.GetService<T>();
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public MessageContext(
-        ClientConnection connection,
-        GameServer gameServer,
-        ZoneManager zoneManager,
-        IServiceProvider services)
-    {
-        Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _gameServer = gameServer ?? throw new ArgumentNullException(nameof(gameServer));
-        ZoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
-        Services = services ?? throw new ArgumentNullException(nameof(services));
-
-        // Get ServerPlayer from ZoneManager (if already logged in)
-        ZoneManager.TryGetPlayerByConnectionId(connection.Id, out _serverPlayer);
-
-        // Wrap ServerPlayer in IPlayerInfo (Shared-compatible)
-        if (_serverPlayer != null) PlayerInfo = new ServerPlayerInfo(_serverPlayer);
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // PUBLIC METHODS - IMessageContext - Send Methods (Queued)
@@ -276,8 +276,7 @@ public sealed class MessageContext : IMessageContext
             message,
             _serverPlayer.RuntimeId.ZoneId,
             _serverPlayer.Entity.Position,
-            radius,
-            null // Don't exclude anyone
+            radius // Don't exclude anyone
         );
         _gameServer.QueueOutgoingMessage(outgoing);
     }

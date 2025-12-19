@@ -1,4 +1,3 @@
-using Mmo.Server.Handlers.Base;
 using Mmo.Server.Networking;
 using Mmo.Server.Services.Authentication;
 using Mmo.Server.Services.Player;
@@ -26,17 +25,11 @@ public class ConnectionHandler : BaseCategoryHandler
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
-    
+
     private readonly IAuthenticationService _authService;
     private readonly ILog _log;
     private readonly IPlayerService _playerService;
     private readonly ZoneManager _zoneManager;
-
-    // ═══════════════════════════════════════════════════════════════
-    // PROPERTIES
-    // ═══════════════════════════════════════════════════════════════
-
-    public override MessageCategory Category => MessageCategory.Connection;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -53,6 +46,12 @@ public class ConnectionHandler : BaseCategoryHandler
         _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
         _log = log;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
+    public override MessageCategory Category => MessageCategory.Connection;
 
     // ═══════════════════════════════════════════════════════════════
     // PROTECTED METHODS

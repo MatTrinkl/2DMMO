@@ -187,13 +187,7 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
         TargetEntityId = null;
     }
 
-    protected override void OnDeath(ICombatEntity? killer)
-    {
-        State = CharacterState.Dead;
-
-        // PvP Death tracking
-        if (killer is ICharacterEntity killerPlayer) PvpDeaths++;
-    }
+    protected override void OnDeath(ICombatEntity? killer) => State = CharacterState.Dead;
 
     public void EnablePvpFlag(int durationSeconds = 300)
     {

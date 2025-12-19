@@ -139,10 +139,9 @@ public class ServerPlayerCharacter(PlayerEntity entity, ClientConnection connect
 
         // Exponential Moving Average (Smoothing)
         // SmoothedLatency = 0.8 * SmoothedLatency + 0.2 * NewLatency
-        if (SmoothedLatencyMs == 0)
-            SmoothedLatencyMs = newLatencyMs;
-        else
-            SmoothedLatencyMs = (int)(SmoothedLatencyMs * 0.8f + newLatencyMs * 0.2f);
+        SmoothedLatencyMs = SmoothedLatencyMs == 0
+            ? newLatencyMs
+            : (int)(SmoothedLatencyMs * 0.8f + newLatencyMs * 0.2f);
 
         LastActivity = DateTimeOffset.UtcNow;
     }

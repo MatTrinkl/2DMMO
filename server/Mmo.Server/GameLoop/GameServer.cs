@@ -38,33 +38,13 @@ public class GameServer : IDisposable
     private const float _deadConnectionCheckInterval = 10.0f;
     private static readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(30);
 
-    // ═══════════════════════════════════════════════════════════════
-    // FIELDS
-    // ═══════════════════════════════════════════════════════════════
-
-    private readonly ILog _log;
-    private readonly MessageRouter _messageRouter;
-    private readonly NetworkServer _networkServer;
-    private readonly IServiceProvider _services;
-    private readonly ZoneManager _zoneManager;
-
-    /// <summary>
-    ///     Incoming messages from clients.
-    ///     Populated by NetworkServer event, processed in ProcessInputQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<IncomingMessage> _inputQueue = new();
-
-    /// <summary>
-    ///     Outgoing messages to clients.
-    ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
-    /// </summary>
-    private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
-
     /// <summary>
     ///     Callbacks from completed async tasks.
     ///     Populated by ctx.RunAsync(), processed in ProcessCompletionQueue().
     /// </summary>
     private readonly ConcurrentQueue<(Guid ConnectionId, Action<MessageContext> Callback)> _completionQueue = new();
+
+    private readonly CancellationTokenSource _cts = new();
 
     /// <summary>
     ///     Connections that should be disconnected.
@@ -72,13 +52,60 @@ public class GameServer : IDisposable
     /// </summary>
     private readonly ConcurrentQueue<(Guid ConnectionId, string? Reason)> _disconnectQueue = new();
 
-    private readonly CancellationTokenSource _cts = new();
+    /// <summary>
+    ///     Incoming messages from clients.
+    ///     Populated by NetworkServer event, processed in ProcessInputQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<IncomingMessage> _inputQueue = new();
+
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+
+    private readonly ILog _log;
+    private readonly MessageRouter _messageRouter;
+    private readonly NetworkServer _networkServer;
+
+    /// <summary>
+    ///     Outgoing messages to clients.
+    ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
+
+    private readonly IServiceProvider _services;
+    private readonly ZoneManager _zoneManager;
 
     private float _deadConnectionTimer;
     private bool _disposed;
     private Thread? _gameLoopThread;
     private float _heartbeatTimer;
     private bool _isRunning;
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public GameServer(
+        NetworkServer networkServer,
+        MessageRouter messageRouter,
+        ZoneManager zoneManager,
+        IServiceProvider services,
+        ILog log)
+    {
+        _networkServer = networkServer ?? throw new ArgumentNullException(nameof(networkServer));
+        _messageRouter = messageRouter ?? throw new ArgumentNullException(nameof(messageRouter));
+        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        _services = services ?? throw new ArgumentNullException(nameof(services));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+
+        // ════════════════════════════════════════════════════════════
+        // Register for NetworkServer events
+        // NetworkServer does NOT know that GameServer exists!
+        // ════════════════════════════════════════════════════════════
+        _networkServer.OnMessageReceived += HandleNetworkMessage;
+        _networkServer.OnClientConnected += HandleClientConnected;
+        _networkServer.OnClientDisconnected += HandleClientDisconnected;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // PROPERTIES
@@ -105,30 +132,19 @@ public class GameServer : IDisposable
     /// <summary>Server uptime.</summary>
     public TimeSpan Uptime => DateTimeOffset.UtcNow - StartedAt;
 
-    // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public GameServer(
-        NetworkServer networkServer,
-        MessageRouter messageRouter,
-        ZoneManager zoneManager,
-        IServiceProvider services,
-        ILog log)
+    public void Dispose()
     {
-        _networkServer = networkServer ?? throw new ArgumentNullException(nameof(networkServer));
-        _messageRouter = messageRouter ?? throw new ArgumentNullException(nameof(messageRouter));
-        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
-        _services = services ?? throw new ArgumentNullException(nameof(services));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        if (_disposed) return;
+        _disposed = true;
 
-        // ════════════════════════════════════════════════════════════
-        // Register for NetworkServer events
-        // NetworkServer does NOT know that GameServer exists!
-        // ════════════════════════════════════════════════════════════
-        _networkServer.OnMessageReceived += HandleNetworkMessage;
-        _networkServer.OnClientConnected += HandleClientConnected;
-        _networkServer.OnClientDisconnected += HandleClientDisconnected;
+        Stop();
+
+        // Unregister events
+        _networkServer.OnMessageReceived -= HandleNetworkMessage;
+        _networkServer.OnClientConnected -= HandleClientConnected;
+        _networkServer.OnClientDisconnected -= HandleClientDisconnected;
+
+        _cts.Dispose();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -180,21 +196,6 @@ public class GameServer : IDisposable
         DisconnectAllPlayers("Server shutting down");
 
         _log.Info("GameServer stopped after {TickCount} ticks", TickCount);
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        Stop();
-
-        // Unregister events
-        _networkServer.OnMessageReceived -= HandleNetworkMessage;
-        _networkServer.OnClientConnected -= HandleClientConnected;
-        _networkServer.OnClientDisconnected -= HandleClientDisconnected;
-
-        _cts.Dispose();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -446,7 +447,7 @@ public class GameServer : IDisposable
     {
         _heartbeatTimer += deltaTime;
 
-        if (!(_heartbeatTimer >= _heartbeatInterval)) return;
+        if (_heartbeatTimer < _heartbeatInterval) return;
         _heartbeatTimer = 0;
 
         // Send heartbeat to all authenticated players
@@ -466,7 +467,7 @@ public class GameServer : IDisposable
     {
         _deadConnectionTimer += deltaTime;
 
-        if (!(_deadConnectionTimer >= _deadConnectionCheckInterval)) return;
+        if (_deadConnectionTimer < _deadConnectionCheckInterval) return;
         _deadConnectionTimer = 0;
 
         var deadConnections = _zoneManager
@@ -557,9 +558,8 @@ public class GameServer : IDisposable
 
         IEnumerable<ServerPlayerCharacter> players = _zoneManager.GetServerPlayersInZone(outgoing.ZoneId.Value);
 
-        foreach (ServerPlayerCharacter player in players)
-            if (player.Connection.IsConnected)
-                _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in players.Where(p => p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
     }
 
     private void BroadcastToZoneExcept(OutgoingMessage outgoing)
@@ -568,10 +568,9 @@ public class GameServer : IDisposable
 
         IEnumerable<ServerPlayerCharacter> players = _zoneManager.GetServerPlayersInZone(outgoing.ZoneId.Value);
 
-        foreach (ServerPlayerCharacter player in players)
-            if (player.Connection.Id != outgoing.ExcludeConnectionId &&
-                player.Connection.IsConnected)
-                _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in players.Where(p => p.Connection.Id != outgoing.ExcludeConnectionId &&
+                                                                    p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
     }
 
     private void BroadcastToNearby(OutgoingMessage outgoing)
@@ -583,14 +582,9 @@ public class GameServer : IDisposable
         Position? origin = outgoing.Origin;
         float radiusSquared = outgoing.Radius.Value * outgoing.Radius.Value;
 
-        foreach (ServerPlayerCharacter player in players)
+        foreach (ServerPlayerCharacter player in players.Where(p =>
+                     p.Connection.IsConnected && p.Connection.Id != outgoing.ExcludeConnectionId))
         {
-            if (player.Connection.Id == outgoing.ExcludeConnectionId)
-                continue;
-
-            if (!player.Connection.IsConnected)
-                continue;
-
             Position pos = player.Entity.Position;
             float dx = pos.X - origin.X;
             float dy = pos.Y - origin.Y;
@@ -625,22 +619,17 @@ public class GameServer : IDisposable
             .GetAllServerPlayers()
             .Where(p => p.GuildId == outgoing.GuildId.Value);
 
-        foreach (ServerPlayerCharacter player in guildMembers)
-        {
-            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
-                continue;
-
-            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
-        }
+        foreach (ServerPlayerCharacter player in guildMembers.Where(p =>
+                     includeExcluded && p.Connection.Id != outgoing.ExcludeConnectionId && p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
     }
 
     private void BroadcastToAll(OutgoingMessage outgoing)
     {
         IEnumerable<ServerPlayerCharacter> allPlayers = _zoneManager.GetAllServerPlayers();
 
-        foreach (ServerPlayerCharacter player in allPlayers)
-            if (player.Connection.IsConnected)
-                _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in allPlayers.Where(p => p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
     }
 
     // ───────────────────────────────────────────────────────────────

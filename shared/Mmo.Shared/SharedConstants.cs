@@ -62,4 +62,9 @@ public static class SharedConstants
     /// </summary>
     public static readonly TimeSpan TickDuration =
         TimeSpan.FromSeconds(1.0 / TickRate);
+
+    /// <summary>
+    ///     The maximum numbers of players on one server/shard later.
+    /// </summary>
+    public static readonly int MaxConnection = 1000;
 }

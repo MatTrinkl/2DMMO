@@ -1,4 +1,3 @@
-using Mmo.Shared.Enums;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Services.Authentication;
@@ -24,8 +23,7 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         return new AuthResult(
             true,
             Guid.NewGuid(), // TODO:  Echte Account-ID aus DB
-            username,
-            AccountFlags.None
+            username
         );
     }
 

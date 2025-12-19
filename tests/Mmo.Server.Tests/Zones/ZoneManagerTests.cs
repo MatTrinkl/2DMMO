@@ -11,8 +11,8 @@ namespace Mmo.Server.Tests.Zones;
 [Collection("IdRegistry")]
 public class ZoneManagerTests : IDisposable
 {
-    private static MockNetworkServer _sharedMockNetworkServer;
     private static readonly MockLog _mockLog = new();
+    private readonly MockNetworkServer _sharedMockNetworkServer;
 
     public ZoneManagerTests()
     {

@@ -8,6 +8,7 @@ using Mmo.Server.Networking;
 using Mmo.Server.Services.Authentication;
 using Mmo.Server.Services.Player;
 using Mmo.Server.Zones;
+using Mmo.Shared;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server;
@@ -21,13 +22,13 @@ public class Program
         Console.WriteLine("═══════════════════════════════════════════");
 
         // ════════════════════════════════════════════════════════════
-        // 1. DI-Container konfigurieren
+        // 1. configure DI-Container
         // ════════════════════════════════════════════════════════════
         ServiceCollection services = ConfigureServices();
         ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         // ════════════════════════════════════════════════════════════
-        // 2. Services aus DI holen
+        // 2. Get Services from DI
         // ════════════════════════════════════════════════════════════
         ILog log = serviceProvider.GetRequiredService<ILog>();
         NetworkServer networkServer = serviceProvider.GetRequiredService<NetworkServer>();
@@ -35,12 +36,12 @@ public class Program
         MessageRouter messageRouter = serviceProvider.GetRequiredService<MessageRouter>();
 
         // ════════════════════════════════════════════════════════════
-        // 3. Handler registrieren
+        // 3.Register Handler
         // ════════════════════════════════════════════════════════════
         RegisterHandlers(serviceProvider, messageRouter);
 
         // ════════════════════════════════════════════════════════════
-        // 4. Server starten
+        // 4. Starting Server
         // ════════════════════════════════════════════════════════════
         networkServer.Start();
         gameServer.Start();
@@ -50,16 +51,17 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // 5. Graceful Shutdown
         // ════════════════════════════════════════════════════════════
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
-        Console.CancelKeyPress += (sender, e) =>
+        Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
             log.Info("Shutdown signal received.. .");
+            // ReSharper disable once AccessToDisposedClosure
             cts.Cancel();
         };
 
-        // Warten bis Ctrl+C
+        // Wait until Ctrl+C
         try
         {
             await Task.Delay(Timeout.Infinite, cts.Token);
@@ -77,14 +79,14 @@ public class Program
         gameServer.Stop();
         networkServer.Stop();
 
-        // Dispose ServiceProvider (ruft Dispose auf allen Services auf)
+        // Dispose ServiceProvider (calls Dispose on all services)
         if (serviceProvider is IDisposable disposable) disposable.Dispose();
 
         log.Info("Server stopped.  Goodbye!");
     }
 
     /// <summary>
-    ///     Konfiguriert alle Services für den DI-Container.
+    ///     Configures all services for the DI-Container.
     /// </summary>
     private static ServiceCollection ConfigureServices()
     {
@@ -98,15 +100,12 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // CONFIGURATION
         // ════════════════════════════════════════════════════════════
-        services.AddSingleton<ServerConfiguration>(sp =>
+        services.AddSingleton<ServerConfiguration>(_ => new ServerConfiguration
         {
-            return new ServerConfiguration
-            {
-                Port = 7777,
-                TickRate = 20,
-                MaxConnections = 1000,
-                ConnectionTimeout = TimeSpan.FromSeconds(30)
-            };
+            Port = 7777,
+            TickRate = 20,
+            MaxConnections = 1000,
+            ConnectionTimeout = TimeSpan.FromSeconds(30)
         });
 
         // ════════════════════════════════════════════════════════════
@@ -176,15 +175,14 @@ public class Program
     }
 
     /// <summary>
-    ///     Registriert alle Handler beim MessageRouter.
+    ///     Register all handler in MessageRouter.
     /// </summary>
     private static void RegisterHandlers(IServiceProvider serviceProvider, MessageRouter router)
     {
         ILog log = serviceProvider.GetRequiredService<ILog>();
 
-        // Alle Handler aus DI holen und registrieren
-        Type[] handlerTypes = new[]
-        {
+        Type[] handlerTypes =
+        [
             typeof(ConnectionHandler)
             // typeof(MovementHandler),
             // typeof(CombatHandler),
@@ -192,7 +190,7 @@ public class Program
             // typeof(InventoryHandler),
             // typeof(SocialHandler),
             // typeof(AdminHandler),
-        };
+        ];
 
         foreach (Type handlerType in handlerTypes)
         {
@@ -205,12 +203,14 @@ public class Program
 }
 
 /// <summary>
-///     Server-Konfiguration.
+///     Server-Configuration
 /// </summary>
 public class ServerConfiguration
 {
-    public int Port { get; set; } = 7777;
-    public int TickRate { get; set; } = 20;
-    public int MaxConnections { get; set; } = 1000;
-    public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
+    public int Port { get; init; } = SharedConstants.DefaultPort;
+    public int TickRate { get; init; } = SharedConstants.TickRate;
+    public int MaxConnections { get; init; } = SharedConstants.MaxConnection;
+
+    public TimeSpan ConnectionTimeout { get; init; } =
+        TimeSpan.FromSeconds(SharedConstants.TimeToConnectionDeadInSeconds);
 }

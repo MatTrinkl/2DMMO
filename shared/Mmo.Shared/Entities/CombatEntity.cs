@@ -269,7 +269,7 @@ public abstract class CombatEntity : ICombatEntity
     protected virtual int CalculateArmorMitigation(int rawDamage)
     {
         // Simple formula:  Damage * (1 - Armor / (Armor + 100 * Level))
-        float mitigation = Armor / (float)(Armor + 100 * Math.Max(1, Level));
+        float mitigation = (float)Armor / (Armor + 100 * Math.Max(1, Level));
         return (int)(rawDamage * (1 - mitigation));
     }
 

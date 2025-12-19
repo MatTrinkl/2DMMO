@@ -148,10 +148,8 @@ public class NpcEntity : CombatEntity, INpcEntity
 
     public void AddThreat(Guid entityId, int amount)
     {
-        if (_threatTable.ContainsKey(entityId))
+        if (!_threatTable.TryAdd(entityId, amount))
             _threatTable[entityId] += amount;
-        else
-            _threatTable[entityId] = amount;
     }
 
     public void ClearThreat() => _threatTable.Clear();

@@ -20,7 +20,7 @@ public class NetworkServer(
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
-    
+
     private readonly ConcurrentDictionary<Guid, ClientConnection> _connections = new();
     private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener = new(IPAddress.Any, port);
@@ -33,6 +33,12 @@ public class NetworkServer(
     ///     Number of active connections.
     /// </summary>
     public int ConnectionCount => _connections.Count;
+
+    public void Dispose()
+    {
+        Stop();
+        _cts.Dispose();
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // EVENTS
@@ -70,12 +76,6 @@ public class NetworkServer(
 
         _connections.Clear();
         log.Info("NetworkServer stopped");
-    }
-
-    public void Dispose()
-    {
-        Stop();
-        _cts.Dispose();
     }
 
     // ═══════════════════════════════════════════════════════════════
