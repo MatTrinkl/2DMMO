@@ -8,7 +8,7 @@ namespace Mmo.Server.Tests.Players;
 
 public class ServerPlayerCharacterTests
 {
-    private static MockNetworkServer _mockNetworkServer;
+    private readonly MockNetworkServer _mockNetworkServer;
     private static readonly MockLog _mockLog = new();
 
     public ServerPlayerCharacterTests()

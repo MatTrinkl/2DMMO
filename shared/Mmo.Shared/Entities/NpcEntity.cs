@@ -21,6 +21,7 @@ public class NpcEntity : CombatEntity, INpcEntity
     [SerializationConstructor]
     public NpcEntity()
     {
+        SpawnPosition = null!;
     }
 
     public NpcEntity(

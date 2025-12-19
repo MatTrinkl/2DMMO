@@ -20,6 +20,7 @@ public abstract class CombatEntity : ICombatEntity
     [SerializationConstructor]
     protected CombatEntity()
     {
+        Position = null!;
     }
 
     protected CombatEntity(Guid persistentId, Position position, ushort prefabId)
