@@ -358,4 +358,328 @@ public class ZoneManagerTests : IDisposable
 
         Assert.True(playerCharacter.Entity.IsTrulyPersistent);
     }
+
+    // ══════════════════════════════════════════════════════════
+    // ADDITIONAL ENTITY TESTS
+    // ══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void GetEntity_ReturnsCorrectEntity()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+        int entityId = playerCharacter.Entity.RuntimeId.LocalId;
+
+        IEntity? entity = zoneManager.GetEntity(0, entityId);
+
+        Assert.NotNull(entity);
+        Assert.Equal(playerCharacter.Entity.PersistentId, entity.PersistentId);
+    }
+
+    [Fact]
+    public void GetEntity_NonExistentZone_ReturnsNull()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        IEntity? entity = zoneManager.GetEntity(999, 0);
+
+        Assert.Null(entity);
+    }
+
+    [Fact]
+    public void GetEntity_NonExistentEntity_ReturnsNull()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        IEntity? entity = zoneManager.GetEntity(0, 999);
+
+        Assert.Null(entity);
+    }
+
+    [Fact]
+    public void GetEntityFromDefaultZone_ReturnsCorrectEntity()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+        int entityId = playerCharacter.Entity.RuntimeId.LocalId;
+
+        IEntity? entity = zoneManager.GetEntityFromDefaultZone(entityId);
+
+        Assert.NotNull(entity);
+        Assert.Equal(playerCharacter.Entity.PersistentId, entity.PersistentId);
+    }
+
+    [Fact]
+    public void GetAllEntitiesFromDefaultZone_ReturnsAllEntities()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter player1 = CreateServerPlayer();
+        ServerPlayerCharacter player2 = CreateServerPlayer();
+        zoneManager.AddPlayer(player1, 0);
+        zoneManager.AddPlayer(player2, 0);
+
+        List<IEntity> entities = zoneManager.GetAllEntitiesFromDefaultZone();
+
+        Assert.Equal(2, entities.Count);
+    }
+
+    [Fact]
+    public void GetPlayerEntities_ReturnsOnlyPlayerEntities()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+
+        var playerEntities = zoneManager.GetPlayerEntities(0).ToList();
+
+        Assert.Single(playerEntities);
+        Assert.Equal(playerCharacter.Entity.PersistentId, playerEntities[0].PersistentId);
+    }
+
+    [Fact]
+    public void GetPlayerEntities_NonExistentZone_ReturnsEmpty()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        var playerEntities = zoneManager.GetPlayerEntities(999).ToList();
+
+        Assert.Empty(playerEntities);
+    }
+
+    [Fact]
+    public void AddEntity_ToSpecificZone_AddsSuccessfully()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
+        zoneManager.RegisterZone(1, zone1);
+        var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Entity", new Position(0, 0));
+
+        zoneManager.AddEntity(entity, 1);
+
+        Assert.True(zone1.HasEntity(entity));
+    }
+
+    [Fact]
+    public void AddEntity_NullEntity_ThrowsArgumentNullException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        Assert.Throws<ArgumentNullException>(() => zoneManager.AddEntity(null!, 0));
+    }
+
+    [Fact]
+    public void AddEntity_NonExistentZone_ThrowsInvalidOperationException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Entity", new Position(0, 0));
+
+        Assert.Throws<InvalidOperationException>(() => zoneManager.AddEntity(entity, 999));
+    }
+
+    [Fact]
+    public void RemoveEntity_ExistingEntity_ReturnsEntity()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+        IdRegistry.Instance.RegisterEntity(playerCharacter.Entity);
+
+        IEntity? removed = zoneManager.RemoveEntity(playerCharacter.Entity.PersistentId);
+
+        Assert.NotNull(removed);
+        Assert.Equal(playerCharacter.Entity.PersistentId, removed.PersistentId);
+    }
+
+    [Fact]
+    public void RemoveEntity_NonExistentEntity_ReturnsNull()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        IEntity? removed = zoneManager.RemoveEntity(Guid.NewGuid());
+
+        Assert.Null(removed);
+    }
+
+    [Fact]
+    public void HasPersistentEntity_ExistingEntity_ReturnsTrue()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+        IdRegistry.Instance.RegisterEntity(playerCharacter.Entity);
+
+        bool exists = zoneManager.HasPersistentEntity(playerCharacter.Entity.PersistentId);
+
+        Assert.True(exists);
+    }
+
+    [Fact]
+    public void HasPersistentEntity_NonExistentEntity_ReturnsFalse()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        bool exists = zoneManager.HasPersistentEntity(Guid.NewGuid());
+
+        Assert.False(exists);
+    }
+
+    [Fact]
+    public void GetAllZones_ReturnsAllRegisteredZones()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
+        var zone2 = new Zone(2, "zone2", new ZoneBounds(0, 0, 500, 500));
+        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(2, zone2);
+
+        var allZones = zoneManager.GetAllZones().ToList();
+
+        Assert.Equal(3, allZones.Count); // default + zone1 + zone2
+    }
+
+    [Fact]
+    public void SpawnPlayer_CreatesPlayerWithCorrectPosition()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var connectionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+
+        PlayerEntity player = zoneManager.SpawnPlayer(connectionId, accountId, "TestPlayer");
+
+        Assert.NotNull(player);
+        Assert.Equal("TestPlayer", player.DisplayName);
+        Assert.Equal(new Position(0, 0), player.Position);
+    }
+
+    [Fact]
+    public void SpawnPlayer_NullUsername_ThrowsArgumentNullException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        Assert.Throws<ArgumentNullException>(() =>
+            zoneManager.SpawnPlayer(Guid.NewGuid(), Guid.NewGuid(), null!));
+    }
+
+    [Fact]
+    public void UnregisterZone_NonExistentZone_ReturnsFalse()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        bool result = zoneManager.UnregisterZone(999);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void RemovePlayerByPersistentId_ExistingPlayer_ReturnsPlayer()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var persistentId = Guid.NewGuid();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter, 0);
+
+        ServerPlayerCharacter? removedPlayer = zoneManager.RemovePlayerByPersistentId(persistentId);
+
+        Assert.NotNull(removedPlayer);
+        Assert.Equal(persistentId, removedPlayer.Entity.PersistentId);
+        Assert.Equal(0, zoneManager.PlayerCount);
+    }
+
+    [Fact]
+    public void RemovePlayerByPersistentId_NonExistent_ReturnsNull()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        ServerPlayerCharacter? removedPlayer = zoneManager.RemovePlayerByPersistentId(Guid.NewGuid());
+
+        Assert.Null(removedPlayer);
+    }
+
+    [Fact]
+    public void TransferPlayerByPersistentId_SameZone_ReturnsTrue()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var persistentId = Guid.NewGuid();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
+        zoneManager.AddPlayer(playerCharacter, 0);
+
+        bool result = zoneManager.TransferPlayerByPersistentId(persistentId, 0);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void TransferPlayerByPersistentId_NonExistentPlayer_ReturnsFalse()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+
+        bool result = zoneManager.TransferPlayerByPersistentId(Guid.NewGuid(), 0);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void TransferEntity_SameZone_DoesNotChange()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+        int originalLocalId = playerCharacter.Entity.RuntimeId.LocalId;
+
+        zoneManager.TransferEntity(playerCharacter.Entity, 0, 0);
+
+        // Same zone transfer should be a no-op
+        Assert.Equal(originalLocalId, playerCharacter.Entity.RuntimeId.LocalId);
+    }
+
+    [Fact]
+    public void TransferEntity_NullFromZone_ThrowsArgumentNullException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Entity", new Position(0, 0));
+
+        Assert.Throws<ArgumentNullException>(() =>
+            zoneManager.TransferEntity(entity, 999, 0));
+    }
+
+    [Fact]
+    public void TransferEntity_NullToZone_ThrowsArgumentNullException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0);
+
+        Assert.Throws<ArgumentNullException>(() =>
+            zoneManager.TransferEntity(playerCharacter.Entity, 0, 999));
+    }
+
+    [Fact]
+    public void TransferEntity_EntityNotInFromZone_ThrowsArgumentException()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
+        zoneManager.RegisterZone(1, zone1);
+        ServerPlayerCharacter playerCharacter = CreateServerPlayer();
+        zoneManager.AddPlayer(playerCharacter, 0); // Add to zone 0
+
+        // Entity is in zone 0, but we claim it's in zone 1
+        Assert.Throws<ArgumentException>(() =>
+            zoneManager.TransferEntity(playerCharacter.Entity, 1, 0));
+    }
+
+    [Fact]
+    public void GetAllServerPlayers_ReturnsAllPlayers()
+    {
+        ZoneManager zoneManager = CreateZoneManager();
+        ServerPlayerCharacter player1 = CreateServerPlayer();
+        ServerPlayerCharacter player2 = CreateServerPlayer();
+        zoneManager.AddPlayer(player1, 0);
+        zoneManager.AddPlayer(player2, 0);
+
+        var allPlayers = zoneManager.GetAllServerPlayers().ToList();
+
+        Assert.Equal(2, allPlayers.Count);
+    }
 }

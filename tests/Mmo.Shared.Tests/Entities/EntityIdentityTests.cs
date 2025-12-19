@@ -196,4 +196,114 @@ public class EntityIdentityTests
 
         Assert.False(identity.Equals(other));
     }
+
+    [Fact]
+    public void Unassigned_CreatesUnassignedIdentity()
+    {
+        var identity = EntityIdentity.Unassigned(42);
+
+        Assert.Equal(0, identity.ServerId);
+        Assert.Equal(0, identity.ZoneId);
+        Assert.Equal(0, identity.ShardId);
+        Assert.Equal(0, identity.LocalId);
+        Assert.Equal(42, identity.PrefabId);
+    }
+
+    [Fact]
+    public void IsAssigned_WithUnassigned_ReturnsFalse()
+    {
+        var identity = EntityIdentity.Unassigned(1);
+
+        Assert.False(identity.IsAssigned);
+    }
+
+    [Fact]
+    public void IsAssigned_WithAssigned_ReturnsTrue()
+    {
+        var identity = new EntityIdentity(1, 100, 0, 42, 1);
+
+        Assert.True(identity.IsAssigned);
+    }
+
+    [Fact]
+    public void IsAssigned_WithZeroZoneId_ReturnsFalse()
+    {
+        var identity = new EntityIdentity(1, 0, 0, 42, 1);
+
+        Assert.False(identity.IsAssigned);
+    }
+
+    [Fact]
+    public void IsAssigned_WithZeroLocalId_ReturnsFalse()
+    {
+        var identity = new EntityIdentity(1, 100, 0, 0, 1);
+
+        Assert.False(identity.IsAssigned);
+    }
+
+    [Fact]
+    public void TransferToServer_ChangesServerId()
+    {
+        var identity = new EntityIdentity(1, 100, 5, 42, 7);
+
+        identity.TransferToServer(2);
+
+        Assert.Equal(2, identity.ServerId);
+        Assert.Equal(100, identity.ZoneId); // Other values unchanged
+        Assert.Equal(5, identity.ShardId);
+        Assert.Equal(42, identity.LocalId);
+    }
+
+    [Fact]
+    public void TransferToZone_ChangesZoneIdAndLocalId()
+    {
+        var identity = new EntityIdentity(1, 100, 5, 42, 7);
+
+        identity.TransferToZone(200, 99);
+
+        Assert.Equal(1, identity.ServerId); // Unchanged
+        Assert.Equal(200, identity.ZoneId);
+        Assert.Equal(5, identity.ShardId); // Unchanged
+        Assert.Equal(99, identity.LocalId);
+    }
+
+    [Fact]
+    public void TransferToShard_ChangesShardIdAndLocalId()
+    {
+        var identity = new EntityIdentity(1, 100, 5, 42, 7);
+
+        identity.TransferToShard(10, 88);
+
+        Assert.Equal(1, identity.ServerId); // Unchanged
+        Assert.Equal(100, identity.ZoneId); // Unchanged
+        Assert.Equal(10, identity.ShardId);
+        Assert.Equal(88, identity.LocalId);
+    }
+
+    [Fact]
+    public void OperatorEquals_SameValues_ReturnsTrue()
+    {
+        var identity1 = new EntityIdentity(1, 100, 5, 42, 7);
+        var identity2 = new EntityIdentity(1, 100, 5, 42, 7);
+
+        Assert.True(identity1 == identity2);
+    }
+
+    [Fact]
+    public void OperatorNotEquals_DifferentValues_ReturnsTrue()
+    {
+        var identity1 = new EntityIdentity(1, 100, 5, 42, 7);
+        var identity2 = new EntityIdentity(1, 100, 5, 43, 7);
+
+        Assert.True(identity1 != identity2);
+    }
+
+    [Fact]
+    public void EqualsObject_WithEntityIdentityBoxed_ReturnsTrue()
+    {
+        var identity1 = new EntityIdentity(1, 100, 5, 42, 7);
+        object boxedIdentity = new EntityIdentity(1, 100, 5, 42, 7);
+
+        Assert.True(identity1.Equals(boxedIdentity));
+    }
 }
