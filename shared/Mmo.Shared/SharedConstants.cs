@@ -48,8 +48,23 @@ public static class SharedConstants
     public const float PlayerSpeed = 200f; // pixels per second
 
     /// <summary>
+    ///     The amount of time until a player is flagged as Away from Keyboard.
+    /// </summary>
+    public const int TimeToAfkInSeconds = 300; // 5 minutes
+
+    /// <summary>
+    ///     The Client times out when he doesn't send a heartbeat in this time.
+    /// </summary>
+    public const int TimeToConnectionDeadInSeconds = 30;
+
+    /// <summary>
     ///     The tick interval in milliseconds (40ms).
     /// </summary>
     public static readonly TimeSpan TickDuration =
         TimeSpan.FromSeconds(1.0 / TickRate);
+
+    /// <summary>
+    ///     The maximum numbers of players on one server/shard later.
+    /// </summary>
+    public static readonly int MaxConnection = 1000;
 }

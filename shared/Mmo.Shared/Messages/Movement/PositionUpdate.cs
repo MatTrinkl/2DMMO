@@ -1,6 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 
@@ -26,7 +26,7 @@ public class PositionUpdate : ITimestampedMessage
     /// <param name="timestamp">The timestamp when this position update happened.</param>
     /// <param name="entityOldPosition">The Entity which changed the position.</param>
     /// <param name="newPosition">The new Position of the Entity.</param>
-    public PositionUpdate(long timestamp, Entity entityOldPosition, Position newPosition)
+    public PositionUpdate(long timestamp, IEntity entityOldPosition, Position newPosition)
     {
         Timestamp = timestamp;
         EntityOldPosition = entityOldPosition;
@@ -37,7 +37,7 @@ public class PositionUpdate : ITimestampedMessage
     ///     Entity to updates the position.
     /// </summary>
     [Key(2)]
-    public Entity? EntityOldPosition { get; set; }
+    public IEntity? EntityOldPosition { get; set; }
 
     /// <summary>
     ///     New Position of the entity.

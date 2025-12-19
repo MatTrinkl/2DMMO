@@ -1,4 +1,6 @@
-using Mmo.Server.Networking;
+using Mmo.Server.MessageRouting;
+using Mmo.Server.Tests.Helpers;
+using Mmo.Server.Zones;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -6,67 +8,39 @@ namespace Mmo.Server.Tests.GameServer;
 /// <summary>
 ///     A test implementation of GameServer that simulates slow tick phases
 ///     for testing tick overrun handling.
+///     Note: The new GameServer runs in a background thread and doesn't expose
+///     protected methods to override. This class now simulates slowness by
+///     adding delay in the Tick method via interception.
 /// </summary>
-internal sealed class SlowGameServer(
-    ILog log,
-    INetworkServer networkServer,
-    TimeSpan? inputPhaseDuration = null,
-    TimeSpan? updatePhaseDuration = null,
-    TimeSpan? outputPhaseDuration = null)
-    : Server.GameLoop.GameServer(log, networkServer)
+internal sealed class SlowGameServer : GameLoop.GameServer
 {
-    private readonly TimeSpan _inputPhaseDuration = inputPhaseDuration ?? TimeSpan.Zero;
-    private readonly TimeSpan _outputPhaseDuration = outputPhaseDuration ?? TimeSpan.Zero;
-    private readonly TimeSpan _updatePhaseDuration = updatePhaseDuration ?? TimeSpan.Zero;
+    private readonly TimeSpan _tickDelay;
+
+    public SlowGameServer(
+        ILog log,
+        MockNetworkServer networkServer,
+        TimeSpan tickDelay,
+        ZoneManager? zoneManager = null,
+        MessageRouter? messageRouter = null,
+        IServiceProvider? services = null)
+        : base(
+            networkServer,
+            messageRouter ??
+            TestHelpers.CreateMessageRouter(log, zoneManager ?? TestHelpers.CreateDefaultZoneManager()),
+            zoneManager ?? TestHelpers.CreateDefaultZoneManager(),
+            services ?? TestHelpers.CreateTestServices(log, zoneManager ?? TestHelpers.CreateDefaultZoneManager()),
+            log)
+    {
+        _tickDelay = tickDelay;
+    }
 
     /// <summary>
-    ///     Convenience constructor for simple slow tick simulation.
+    ///     Overrides Tick to add artificial delay for testing tick overruns.
     /// </summary>
-    public SlowGameServer(ILog log, INetworkServer networkServer, TimeSpan tickWorkDuration)
-        : this(log, networkServer, inputPhaseDuration: tickWorkDuration)
+    protected override void Tick(float deltaTime)
     {
-    }
+        if (_tickDelay > TimeSpan.Zero) Thread.Sleep(_tickDelay);
 
-    protected override async Task InputPhaseAsync(CancellationToken cancellationToken)
-    {
-        if (_inputPhaseDuration > TimeSpan.Zero)
-            try
-            {
-                await Task.Delay(_inputPhaseDuration, cancellationToken);
-            }
-            catch (TaskCanceledException)
-            {
-                // Expected when test cancels - just return
-            }
-    }
-
-    protected override async Task UpdatePhaseAsync(CancellationToken cancellationToken)
-    {
-        if (_updatePhaseDuration > TimeSpan.Zero)
-            try
-            {
-                await Task.Delay(_updatePhaseDuration, cancellationToken);
-            }
-            catch (TaskCanceledException)
-            {
-                // Expected when test cancels - still increment tick
-            }
-
-        // Call base to increment CurrentTick
-        await base.UpdatePhaseAsync(cancellationToken);
-    }
-
-    protected override async Task OutputPhaseAsync(CancellationToken cancellationToken)
-    {
-        if (_outputPhaseDuration > TimeSpan.Zero)
-            try
-            {
-                await Task.Delay(_outputPhaseDuration, cancellationToken);
-            }
-            catch (TaskCanceledException)
-            {
-                // Expected when test cancels - just return
-            }
-        // Don't call base - we don't want to broadcast in tests
+        base.Tick(deltaTime);
     }
 }

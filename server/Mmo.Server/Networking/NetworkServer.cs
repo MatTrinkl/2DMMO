@@ -1,260 +1,229 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using Mmo.Server.Networking.NetworkEvents;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Networking;
 
 /// <summary>
-///     TCP server that manages client connections and routes messages.
+///     Manages all client connections.
+///     IMPORTANT:
+///     - Contains NO game logic!
+///     - Creates ClientConnections and listens for their events
+///     - Forwards events to the game layer
 /// </summary>
-public sealed class NetworkServer(int port, ILog log) : INetworkServer
+public class NetworkServer(
+    ILog log,
+    int port = 7777) : IDisposable
 {
-    private readonly ConcurrentDictionary<Guid, ClientConnection> _clients = new();
-    private readonly ConcurrentDictionary<Guid, Guid> _playerToConnection = new(); // PlayerId → ConnId
-    private bool _isDisposed;
-    private TcpListener? _listener;
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+
+    private readonly ConcurrentDictionary<Guid, ClientConnection> _connections = new();
+    private readonly CancellationTokenSource _cts = new();
+    private readonly TcpListener _listener = new(IPAddress.Any, port);
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Number of currently connected clients.
+    ///     Number of active connections.
     /// </summary>
-    public int ClientCount => _clients.Count;
-
-    /// <summary>
-    ///     Returns true if the server is listening.
-    /// </summary>
-    public bool IsListening => _listener?.Server.IsBound ?? false;
+    public int ConnectionCount => _connections.Count;
 
     public void Dispose()
     {
-        if (_isDisposed) return;
-        _isDisposed = true;
-
-        _listener?.Stop();
-
-        foreach (ClientConnection connection in _clients.Values) connection.Dispose();
-
-        _clients.Clear();
+        Stop();
+        _cts.Dispose();
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Fired when a new client connects. </summary>
-    public event EventHandler<ClientConnectedEventArgs>? ClientConnected;
+    /// <summary>Fired when a message is received from a client.</summary>
+    public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
+
+    /// <summary>Fired when a client connects.</summary>
+    public event Action<ClientConnection>? OnClientConnected;
 
     /// <summary>Fired when a client disconnects.</summary>
-    public event EventHandler<ClientDisconnectedEventArgs>? ClientDisconnected;
+    public event Action<ClientConnection, string?>? OnClientDisconnected;
 
-    /// <summary>Fired when a message is received from any client.</summary>
-    public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Fired when a network error occurs.</summary>
-    public event EventHandler<NetworkErrorEventArgs>? ErrorOccurred;
+    public void Start()
+    {
+        _listener.Start();
+        log.Info("NetworkServer started on port {Port}",
+            ((IPEndPoint)_listener.LocalEndpoint).Port);
 
+        // Start accept loop
+        _ = AcceptClientsAsync();
+    }
+
+    public void Stop()
+    {
+        _cts.Cancel();
+        _listener.Stop();
+
+        foreach (ClientConnection connection in _connections.Values) connection.Dispose();
+
+        _connections.Clear();
+        log.Info("NetworkServer stopped");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRIVATE METHODS
+    // ═══════════════════════════════════════════════════════════════
+
+    private async Task AcceptClientsAsync()
+    {
+        while (!_cts.Token.IsCancellationRequested)
+            try
+            {
+                TcpClient tcpClient = await _listener.AcceptTcpClientAsync(_cts.Token);
+
+                // Create connection
+                var connection = new ClientConnection(tcpClient, log);
+
+                if (_connections.TryAdd(connection.Id, connection))
+                {
+                    log.Info("Client connected: {ConnectionId} from {Endpoint}",
+                        connection.Id, connection.RemoteEndPoint);
+
+                    // Listen for connection events
+                    connection.OnMessageReceived += HandleConnectionMessage;
+                    connection.OnDisconnected += HandleConnectionDisconnected;
+
+                    // Fire event to game layer
+                    OnClientConnected?.Invoke(connection);
+
+                    // Connection starts receiving on its own!
+                    connection.StartReceivingAsync();
+                }
+                else
+                {
+                    connection.Dispose();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Server was stopped
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                // Server was stopped
+                break;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Error accepting client");
+            }
+    }
 
     /// <summary>
-    ///     Starts the server and listens for incoming connections.
+    ///     Called by ClientConnection when a message is received.
     /// </summary>
-    /// <param name="cancellationToken">Token to stop the server.</param>
-    public async Task RunAsync(CancellationToken cancellationToken)
+    private void HandleConnectionMessage(
+        ClientConnection connection,
+        MessageType type,
+        INetworkMessage message)
     {
-        _listener = new TcpListener(IPAddress.Any, port);
-        _listener.Start();
-        log.Info("NetworkServer listening on port {Port}", port);
+        // Forward event to game layer (GameServer)
+        OnMessageReceived?.Invoke(connection, type, message);
+    }
+
+    /// <summary>
+    ///     Called by ClientConnection when the connection is disconnected.
+    /// </summary>
+    private void HandleConnectionDisconnected(ClientConnection connection, string? reason)
+    {
+        // Unregister events
+        connection.OnMessageReceived -= HandleConnectionMessage;
+        connection.OnDisconnected -= HandleConnectionDisconnected;
+
+        // Remove from dictionary
+        _connections.TryRemove(connection.Id, out _);
+
+        log.Info("Client disconnected: {ConnectionId} - {Reason}",
+            connection.Id, reason ?? "Unknown");
+
+        // Fire event to game layer
+        OnClientDisconnected?.Invoke(connection, reason);
+
+        // Cleanup connection
+        connection.Dispose();
+    }
+
+    /// <summary>
+    ///     Removes and disconnects a connection.
+    /// </summary>
+    public void RemoveConnection(Guid connectionId, string? reason = null)
+    {
+        if (_connections.TryRemove(connectionId, out ClientConnection? connection))
+        {
+            // Unregister events
+            connection.OnMessageReceived -= HandleConnectionMessage;
+            connection.OnDisconnected -= HandleConnectionDisconnected;
+
+            log.Info("Removing connection: {ConnectionId} - {Reason}",
+                connectionId, reason ?? "Unknown");
+
+            // Fire event BEFORE dispose
+            OnClientDisconnected?.Invoke(connection, reason);
+
+            // Cleanup
+            connection.Dispose();
+        }
+    }
+
+    /// <summary>
+    ///     Gets a connection by ID.
+    /// </summary>
+    public bool TryGetConnection(Guid connectionId, out ClientConnection? connection) =>
+        _connections.TryGetValue(connectionId, out connection);
+
+    /// <summary>
+    ///     Gets all active connections.
+    /// </summary>
+    public IEnumerable<ClientConnection> GetAllConnections() => _connections.Values;
+
+    /// <summary>
+    ///     Sends a message to a connection.
+    /// </summary>
+    public void Send(ClientConnection connection, INetworkMessage message)
+    {
+        if (connection == null) return;
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                // Await new connection
-                TcpClient tcpClient = await _listener.AcceptTcpClientAsync(cancellationToken);
-
-                // Create ClientConnection
-                var connection = new ClientConnection(tcpClient, log);
-                _clients.TryAdd(connection.Id, connection);
-
-                // Setup event handlers
-                SetupConnectionEvents(connection);
-
-                // Fire connected event
-                OnClientConnected(new ClientConnectedEventArgs(connection.Id, connection.RemoteEndPoint));
-                log.Info("Client {ClientId} connected from {EndPoint}", connection.Id, connection.RemoteEndPoint);
-
-                // Start receive loop (fire and forget)
-                _ = connection.StartReceivingAsync(cancellationToken);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            log.Info("NetworkServer shutting down.. .");
+            connection.Send(message);
         }
         catch (Exception ex)
         {
-            log.Error("NetworkServer error: {Error}", ex.Message);
-            OnErrorOccurred(new NetworkErrorEventArgs(null, ex, "AcceptLoop"));
+            log.Error(ex, "Error sending to {ConnectionId}", connection.Id);
+            RemoveConnection(connection.Id, "Send error");
         }
-        finally
+    }
+
+    /// <summary>
+    ///     Sends a message to a connection by ID.
+    /// </summary>
+    public bool Send(Guid connectionId, INetworkMessage message)
+    {
+        if (_connections.TryGetValue(connectionId, out ClientConnection? connection))
         {
-            await ShutdownAsync();
+            Send(connection, message);
+            return true;
         }
-    }
 
-    /// <summary>
-    ///     Sends a message to a specific client.
-    /// </summary>
-    /// <param name="client"></param>
-    /// <param name="message">The message to send.</param>
-    public async Task SendToClientAsync(ClientConnection client, INetworkMessage message)
-    {
-        if (_clients.TryGetValue(client.Id, out ClientConnection? connection))
-            await connection.SendAsync(message);
-        else
-            log.Debug("Cannot send to unknown client {ClientId}", client);
-    }
-
-    /// <summary>
-    ///     Broadcasts a message to all connected clients.
-    /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    public async Task BroadcastAsync(INetworkMessage message)
-    {
-        if (_clients.IsEmpty) return;
-
-        IEnumerable<Task> tasks = _clients.Values.Select(c => c.SendAsync(message));
-        await Task.WhenAll(tasks);
-    }
-
-    /// <summary>
-    ///     Broadcasts a message to all clients except one (e.g., the sender).
-    /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    /// <param name="excludeClient">The client ID to exclude.</param>
-    public async Task BroadcastExceptAsync(INetworkMessage message, ClientConnection excludeClient)
-    {
-        IEnumerable<Task> tasks = _clients
-            .Where(kvp => kvp.Key != excludeClient.Id)
-            .Select(kvp => kvp.Value.SendAsync(message));
-
-        await Task.WhenAll(tasks);
-    }
-
-    /// <summary>
-    ///     Kicks a client from the server.
-    /// </summary>
-    /// <param name="client">The client to kick.</param>
-    public async Task KickClientAsync(ClientConnection client)
-    {
-        if (_clients.TryGetValue(client.Id, out ClientConnection? connection)) await connection.KickAsync();
-    }
-
-    /// <summary>
-    ///     Gets all connected client IDs.
-    /// </summary>
-    public IEnumerable<Guid> GetConnectedClientIds() => _clients.Keys.ToList();
-
-    /// <summary>
-    ///     Checks if a client is connected.
-    /// </summary>
-    /// <param name="client">The client ID to check.</param>
-    public bool IsClientConnected(ClientConnection client) => _clients.ContainsKey(client.Id);
-
-    public void AssociatePlayer(ClientConnection connection, Guid playerId)
-    {
-        _playerToConnection[playerId] = connection.Id;
-        if (_clients.TryGetValue(connection.Id, out ClientConnection? conn)) conn.PlayerId = playerId;
-    }
-
-    public void RemovePlayer(ClientConnection player) => _playerToConnection.TryRemove(player.Id, out _);
-    public Task BroadcastToZoneAsync(INetworkMessage eventMessageMessage) => throw new NotImplementedException();
-
-    /// <summary>
-    ///     Sends a message to a specific client by connection ID.
-    ///     Helper overload for backward compatibility with tests.
-    /// </summary>
-    /// <param name="clientId">The client connection ID.</param>
-    /// <param name="message">The message to send.</param>
-    public async Task SendToClientAsync(Guid clientId, INetworkMessage message)
-    {
-        if (_clients.TryGetValue(clientId, out ClientConnection? connection))
-            await connection.SendAsync(message);
-        else
-            log.Debug("Cannot send to unknown client {ClientId}", clientId);
-    }
-
-    /// <summary>
-    ///     Broadcasts a message to all clients except one by connection ID.
-    ///     Helper overload for backward compatibility with tests.
-    /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    /// <param name="excludeClientId">The client connection ID to exclude.</param>
-    public async Task BroadcastExceptAsync(INetworkMessage message, Guid excludeClientId)
-    {
-        IEnumerable<Task> tasks = _clients
-            .Where(kvp => kvp.Key != excludeClientId)
-            .Select(kvp => kvp.Value.SendAsync(message));
-
-        await Task.WhenAll(tasks);
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // EVENT INVOKERS
-    // ══════════════════════════════════════════════════════════
-
-    private void OnClientConnected(ClientConnectedEventArgs e) => ClientConnected?.Invoke(this, e);
-
-    private void OnClientDisconnected(ClientDisconnectedEventArgs e) => ClientDisconnected?.Invoke(this, e);
-
-    internal void OnMessageReceived(ClientConnection connection, INetworkMessage message) => MessageReceived?.Invoke(
-        this,
-        new MessageReceivedEventArgs(connection, message, DateTimeOffset.UtcNow));
-
-    private void OnErrorOccurred(NetworkErrorEventArgs e) => ErrorOccurred?.Invoke(this, e);
-
-    /// <summary>
-    ///     Sets up event handlers for a client connection.
-    /// </summary>
-    private void SetupConnectionEvents(ClientConnection connection)
-    {
-        // Message received
-        connection.MessageReceived += message => { OnMessageReceived(connection, message); };
-
-        // Client disconnected (with reason from ClientConnection)
-        connection.Disconnected += reason => { HandleDisconnect(connection, reason); };
-    }
-
-    /// <summary>
-    ///     Handles client disconnection.
-    /// </summary>
-    private void HandleDisconnect(ClientConnection clientId, DisconnectReason reason)
-    {
-        if (_clients.TryRemove(clientId.Id, out ClientConnection? connection)) connection.Dispose();
-
-        OnClientDisconnected(new ClientDisconnectedEventArgs(clientId.Id, reason));
-        log.Info("Client {ClientId} disconnected:  {Reason}", clientId, reason);
-    }
-
-    /// <summary>
-    ///     Gracefully shuts down the server and disconnects all clients.
-    /// </summary>
-    private async Task ShutdownAsync()
-    {
-        log.Info("Shutting down NetworkServer, disconnecting {Count} clients...", _clients.Count);
-
-        // Stop listening
-        _listener?.Stop();
-
-        // Disconnect all clients
-        IEnumerable<Task> disconnectTasks = _clients.Values
-            .Select(c => c.DisconnectAsync(DisconnectReason.ServerShutdown));
-
-        await Task.WhenAll(disconnectTasks);
-
-        // Dispose all connections
-        foreach (ClientConnection connection in _clients.Values) connection.Dispose();
-
-        _clients.Clear();
-
-        log.Info("NetworkServer shutdown complete");
+        return false;
     }
 }

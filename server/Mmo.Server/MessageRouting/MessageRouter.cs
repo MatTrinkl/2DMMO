@@ -1,137 +1,94 @@
-using Mmo.Server.GameLoop;
-using Mmo.Server.MessageRouting.MessageHandler;
+using Mmo.Server.Handlers.Base;
 using Mmo.Server.Networking;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Connection;
 
 namespace Mmo.Server.MessageRouting;
 
 /// <summary>
-///     Routes incoming network messages to their appropriate handlers based on message type.
+///     Routes incoming messages to the appropriate CategoryHandler.
+///     Uses O(1) array lookup based on MessageCategory.
 /// </summary>
-/// <remarks>
-///     The MessageRouter categorizes messages into three groups:
-///     <list type="bullet">
-///         <item>
-///             <description>
-///                 Client → Server: Messages that should be processed by the server (LoginRequest,
-///                 PositionUpdate, etc.)
-///             </description>
-///         </item>
-///         <item>
-///             <description>
-///                 Server → Client: Messages that should never be received from clients (LoginResponse,
-///                 broadcasts, etc.)
-///             </description>
-///         </item>
-///         <item>
-///             <description>Bidirectional: Messages that can flow in both directions (JoinZone, LeaveZone)</description>
-///         </item>
-///     </list>
-///     <para>
-///         Unimplemented handlers log at Debug level to indicate missing functionality without cluttering production logs.
-///         Invalid messages (e.g., server-to-client messages received from clients) log at Warn level.
-///     </para>
-/// </remarks>
-public class MessageRouter(GameServer gameServer, ILog log)
+public sealed class MessageRouter(ILog log)
 {
-    private readonly GameServer _gameServer = gameServer;
-    private readonly ILog _log = log;
-    private readonly LoginHandler _loginHandler = new(gameServer, log);
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
+
+    private readonly ICategoryHandler?[] _handlers = new ICategoryHandler?[50];
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS
+    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Routes an incoming network message to its appropriate handler.
+    ///     Registers a handler for its category.
+    ///     Each category can only have one handler.
     /// </summary>
-    /// <param name="connection">The client connection that sent the message.</param>
-    /// <param name="message">The network message to route.</param>
-    /// <remarks>
-    ///     Messages are routed based on their <see cref="MessageType" />. Unimplemented handlers
-    ///     log at Debug level with a TODO comment. Invalid messages (server-to-client messages
-    ///     received from clients) log at Warn level.
-    /// </remarks>
-    public void Route(ClientConnection connection, INetworkMessage message)
+    /// <param name="handler">The category handler to register.</param>
+    /// <exception cref="InvalidOperationException">If a handler is already registered for this category.</exception>
+    public void RegisterHandler(ICategoryHandler handler)
     {
-        switch (message.Type)
+        int index = (int)handler.Category;
+
+        if (_handlers[index] != null)
+            throw new InvalidOperationException(
+                $"Handler for category {handler.Category} already registered.");
+
+        _handlers[index] = handler;
+        log.Debug("Registered handler for category {Category}", handler.Category);
+    }
+
+    /// <summary>
+    ///     Routes a message to the appropriate handler based on its type.
+    ///     SYNCHRONOUS - no async/await!
+    ///     The handler is determined by calculating the category from the message type
+    ///     using integer division (MessageType / 100).
+    /// </summary>
+    /// <param name="ctx">The message context containing connection and player information.</param>
+    /// <param name="type">The message type.</param>
+    /// <param name="message">The message to route.</param>
+    public void Route(MessageContext ctx, MessageType type, INetworkMessage message)
+    {
+        // O(1) category calculation
+        int categoryIndex = (ushort)type / 100;
+
+        if (categoryIndex >= _handlers.Length)
         {
-            // ═══════════════════════════════════════════════════
-            // CLIENT → SERVER Messages (These are handled here)
-            // ═══════════════════════════════════════════════════
+            log.Warn("Invalid message category index: {Index} for type {Type}", categoryIndex, type);
+            return;
+        }
 
-            case MessageType.LoginRequest:
-                _loginHandler.Handle(connection, (LoginRequest)message);
-                break;
+        ICategoryHandler? handler = _handlers[categoryIndex];
 
-            // TODO: Implement handlers for these client-to-server messages:
-            case MessageType.LogoutRequest:
-                _log.Debug("LogoutRequest from {ConnectionId} - Handler not yet implemented", connection.Id);
-                // TODO: Create LogoutHandler
-                break;
+        if (handler == null)
+        {
+            log.Warn("No handler registered for category {Category} (type:  {Type})",
+                (MessageCategory)categoryIndex, type);
+            return;
+        }
 
-            case MessageType.Heartbeat:
-                // Heartbeat is handled by ClientConnection timeout logic
-                // No logging needed - this happens every few seconds per client
-                break;
+        if (!handler.CanHandle(type))
+        {
+            log.Warn("Handler {Handler} cannot handle message type {Type}",
+                handler.GetType().Name, type);
+            return;
+        }
 
-            case MessageType.PositionUpdate:
-                _log.Debug("PositionUpdate from {ConnectionId} - Handler not yet implemented", connection.Id);
-                // TODO: Create PositionUpdateHandler
-                break;
+        try
+        {
+            handler.Handle(ctx, type, message);
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, "Error handling message {Type} in {Handler}",
+                type, handler.GetType().Name);
 
-            case MessageType.ActionRequest:
-                _log.Debug("ActionRequest from {ConnectionId} - Handler not yet implemented", connection.Id);
-                // TODO: Create ActionRequestHandler
-                break;
-
-            case MessageType.ChatMessage:
-                _log.Debug("ChatMessage from {ConnectionId} - Handler not yet implemented", connection.Id);
-                // TODO: Create ChatMessageHandler
-                break;
-
-            case MessageType.Ping:
-                _log.Debug("Ping from {ConnectionId} - Handler not yet implemented", connection.Id);
-                // TODO: Create PingHandler
-                break;
-
-            // ═══════════════════════════════════════════════════
-            // SERVER → CLIENT Messages (Should NEVER be received)
-            // ═══════════════════════════════════════════════════
-
-            case MessageType.LoginResponse:
-            case MessageType.Disconnect:
-            case MessageType.ZoneState:
-            case MessageType.PlayerJoinedZone:
-            case MessageType.PlayerLeftZone:
-            case MessageType.PositionBroadcast:
-            case MessageType.ActionResult:
-            case MessageType.DamageEvent:
-            case MessageType.DeathEvent:
-            case MessageType.ChatBroadcast:
-            case MessageType.ChatWhisper:
-            case MessageType.Pong:
-                _log.Warn("Received server-to-client message type {Type} from {ConnectionId} - This should not happen",
-                    message.Type, connection.Id);
-                break;
-
-            // ═══════════════════════════════════════════════════
-            // BIDIRECTIONAL or ZONE Messages (Future implementation)
-            // ═══════════════════════════════════════════════════
-
-            case MessageType.JoinZone:
-            case MessageType.LeaveZone:
-                _log.Debug("{Type} from {ConnectionId} - Handler not yet implemented",
-                    message.Type, connection.Id);
-                // TODO: Implement when zone transfer system is ready
-                break;
-
-            // ═══════════════════════════════════════════════════
-            // UNKNOWN Messages
-            // ═══════════════════════════════════════════════════
-
-            default:
-                _log.Warn("Unknown message type: {Type} from {ConnectionId}",
-                    message.Type, connection.Id);
-                break;
+            ctx.SendError("INTERNAL_ERROR", "An error occurred processing your request.");
         }
     }
 }

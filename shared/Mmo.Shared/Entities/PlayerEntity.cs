@@ -1,58 +1,215 @@
 using MessagePack;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Entities;
+using Mmo.Shared.Enums.Messages;
+using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
 
 /// <summary>
-///     This class represents the player data in the world.
+///     Represents a player character entity in the game world.
 /// </summary>
 [MessagePackObject]
-public class PlayerEntity : Entity
+public class PlayerEntity : CombatEntity, ICharacterEntity
 {
-    /// <summary>
-    ///     The constructor used by <see cref="MessagePackSerializer" />.
-    /// </summary>
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTORS
+    // ═══════════════════════════════════════════════════════════════
+
     [SerializationConstructor]
     public PlayerEntity()
     {
     }
 
-    /// <summary>
-    ///     Creates a new PlayerEntity.
-    /// </summary>
-    /// <param name="characterId">Persistent ID from database - NEVER changes.</param>
-    /// <param name="displayName">Username of the player.</param>
-    /// <param name="position">Starting position.</param>
-    public PlayerEntity(Guid characterId, string displayName, Position position)
+    public PlayerEntity(Guid characterId, Guid accountId, string displayName, Position position)
         : base(characterId, position, PrefabIds.PlayerDefault)
     {
+        CharacterId = characterId;
+        AccountId = accountId;
         DisplayName = displayName;
     }
 
-    /// <summary>
-    ///     The username of the player.
-    /// </summary>
-    [Key(4)]
-    public string DisplayName { get; set; } = "";
+    [IgnoreMember]
+    public float LevelProgress => ExperienceToNextLevel > 0
+        ? (float)Experience / ExperienceToNextLevel
+        : 0f;
 
-    /// <summary>
-    ///     The EntityType of the player is Player.
-    /// </summary>
-    [Key(5)]
-    public override EntityType Type => EntityType.Player;
+    [Key(27)] public DateTime? PvpFlagExpires { get; set; }
 
-    /// <summary>
-    ///     The player has no EntityRole for now.
-    /// </summary>
-    [Key(6)]
-    public override EntityRole Role => EntityRole.None;
+    [Key(29)] public int PvpKills { get; set; }
 
-    /// <summary>
-    ///     WIP: This methode will be called when this player changes the zone.
-    /// </summary>
-    /// <param name="newZoneId">The ID of the new zone.</param>
+    [Key(30)] public int PvpDeaths { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Locations
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(34)] public BindLocation? HearthstoneLocation { get; set; }
+
+    [Key(35)] public Position? LastSafePosition { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // IEntity Overrides
+    // ═══════════════════════════════════════════════════════════════
+
+    [IgnoreMember] public override EntityType Type => EntityType.Player;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICombatEntity Overrides
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(18)] public override ResourceType ResourceType { get; set; } = ResourceType.Mana;
+
+    [IgnoreMember] public override bool IsDead => State == CharacterState.Dead || CurrentHealth <= 0;
+
+    [IgnoreMember] public override bool IsAttackable => !IsDead && State != CharacterState.Ghost;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Identity
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(19)] public Guid CharacterId { get; }
+
+    [Key(20)] public Guid AccountId { get; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Character Info
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(21)] public Race Race { get; set; } = Race.Human;
+
+    [Key(22)] public CharacterClass Class { get; set; } = CharacterClass.Warrior;
+
+    [Key(23)] public Gender Gender { get; set; } = Gender.Male;
+
+    [Key(24)] public string? Title { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Progression
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(25)] public long Experience { get; set; }
+
+    [IgnoreMember] public long ExperienceToNextLevel => CalculateXpForLevel(Level + 1);
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - PvP
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(26)] public bool IsPvpFlagged { get; set; }
+
+    [Key(28)] public int HonorPoints { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - State
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(31)] public CharacterState State { get; set; } = CharacterState.Alive;
+
+    [Key(32)] public MovementFlags MovementFlags { get; set; } = MovementFlags.None;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Currency
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(33)] public long Gold { get; set; } = 0;
+
+    // ═══════════════════════════════════════════════════════════════
+    // OVERRIDES
+    // ═══════════════════════════════════════════════════════════════
+
+    public override bool IsHostileTo(ICombatEntity other)
+    {
+        // Basis-Check
+        if (base.IsHostileTo(other))
+            return true;
+
+        // PvP-Check für andere Spieler
+        if (other is ICharacterEntity otherPlayer)
+            // Beide müssen PvP-flagged sein
+            return IsPvpFlagged && otherPlayer.IsPvpFlagged;
+
+        return false;
+    }
+
     public override void ChangeZone(ushort newZoneId)
     {
+        LastSafePosition = Position;
+        base.ChangeZone(newZoneId);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity METHODS
+    // ═══════════════════════════════════════════════════════════════
+
+    public bool GainExperience(long amount)
+    {
+        if (amount <= 0) return false;
+
+        Experience += amount;
+
+        if (Experience >= ExperienceToNextLevel)
+        {
+            LevelUp();
+            return true;
+        }
+
+        return false;
+    }
+
+    public void LevelUp()
+    {
+        Experience -= ExperienceToNextLevel;
+        Level++;
+
+        // Stats erhöhen
+        int healthGain = 10 + Level * 2;
+        int resourceGain = 5 + Level;
+
+        MaxHealth += healthGain;
+        MaxResource += resourceGain;
+
+        // Full heal on level up
+        CurrentHealth = MaxHealth;
+        CurrentResource = MaxResource;
+
+        AttackPower += 2;
+    }
+
+    public void Respawn(Position position)
+    {
+        State = CharacterState.Alive;
+        Position = position;
+        CurrentHealth = MaxHealth / 2;
+        CurrentResource = MaxResource / 2;
+        IsInCombat = false;
+        TargetEntityId = null;
+    }
+
+    protected override void OnDeath(ICombatEntity? killer) => State = CharacterState.Dead;
+
+    public void EnablePvpFlag(int durationSeconds = 300)
+    {
+        IsPvpFlagged = true;
+        PvpFlagExpires = durationSeconds > 0
+            ? DateTime.UtcNow.AddSeconds(durationSeconds)
+            : null;
+    }
+
+    public void DisablePvpFlag()
+    {
+        IsPvpFlagged = false;
+        PvpFlagExpires = null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════
+
+    private static long CalculateXpForLevel(int level)
+    {
+        // XP Curve: 100 * level^2
+        return 100L * level * level;
     }
 }

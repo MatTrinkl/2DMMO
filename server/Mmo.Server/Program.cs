@@ -1,133 +1,216 @@
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.GameLoop;
+using Mmo.Server.Handlers.Base;
+using Mmo.Server.Logging;
+using Mmo.Server.MessageRouting;
+using Mmo.Server.MessageRouting.MessageHandler;
 using Mmo.Server.Networking;
+using Mmo.Server.Services.Authentication;
+using Mmo.Server.Services.Player;
+using Mmo.Server.Zones;
 using Mmo.Shared;
+using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server;
 
-/// <summary>
-///     Entry point for the 2DMMO server application.
-/// </summary>
-/// <remarks>
-///     <para>
-///         The server consists of two main components running in parallel:
-///         <list type="bullet">
-///             <item>
-///                 <description><strong>NetworkServer:</strong> Handles TCP connections and message transmission</description>
-///             </item>
-///             <item>
-///                 <description><strong>GameServer:</strong> Runs the game loop at 25 Hz (40ms per tick)</description>
-///             </item>
-///         </list>
-///     </para>
-///     <para>
-///         The server supports graceful shutdown via Ctrl+C or SIGTERM signals,
-///         ensuring all resources are properly cleaned up before exit.
-///     </para>
-/// </remarks>
-internal static class Program
+public class Program
 {
-    /// <summary>
-    ///     Main entry point for the server application.
-    /// </summary>
-    /// <param name="args">Command-line arguments (currently unused).</param>
-    /// <returns>A task that completes when the server shuts down.</returns>
-    private static async Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        // ══════════════════════════════════════════════════════════
-        // LOGGING SETUP
-        // ══════════════════════════════════════════════════════════
-        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .AddSimpleConsole(options =>
-                {
-                    options.TimestampFormat = "[HH:mm:ss] ";
-                    options.SingleLine = true;
-                })
-                .SetMinimumLevel(LogLevel.Debug);
-        });
+        Console.WriteLine("═══════════════════════════════════════════");
+        Console.WriteLine("  MMO Server Starting...");
+        Console.WriteLine("═══════════════════════════════════════════");
 
-        ILogger coreLogger = loggerFactory.CreateLogger("Mmo.Server");
-        var log = new LoggerAdapter(coreLogger);
+        // ════════════════════════════════════════════════════════════
+        // 1. configure DI-Container
+        // ════════════════════════════════════════════════════════════
+        ServiceCollection services = ConfigureServices();
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
 
-        log.Info("═══════════════════════════════════════════════════");
-        log.Info("  2DMMO Server v0.1.0");
-        log.Info("  Port:   {Port} | Tick Rate: {TickRate} Hz",
-            SharedConstants.DefaultPort, SharedConstants.TickRate);
-        log.Info("═══════════════════════════════════════════════════");
+        // ════════════════════════════════════════════════════════════
+        // 2. Get Services from DI
+        // ════════════════════════════════════════════════════════════
+        ILog log = serviceProvider.GetRequiredService<ILog>();
+        NetworkServer networkServer = serviceProvider.GetRequiredService<NetworkServer>();
+        GameServer gameServer = serviceProvider.GetRequiredService<GameServer>();
+        MessageRouter messageRouter = serviceProvider.GetRequiredService<MessageRouter>();
 
-        // ══════════════════════════════════════════════════════════
-        // SERVER SETUP
-        // ══════════════════════════════════════════════════════════
-        using var networkServer = new NetworkServer(SharedConstants.DefaultPort, log);
-        var gameServer = new GameServer(log, networkServer);
+        // ════════════════════════════════════════════════════════════
+        // 3.Register Handler
+        // ════════════════════════════════════════════════════════════
+        RegisterHandlers(serviceProvider, messageRouter);
 
-        // ══════════════════════════════════════════════════════════
-        // CANCELLATION
-        // ══════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════
+        // 4. Starting Server
+        // ════════════════════════════════════════════════════════════
+        networkServer.Start();
+        gameServer.Start();
+
+        log.Info("Server is running.  Press Ctrl+C to stop.");
+
+        // ════════════════════════════════════════════════════════════
+        // 5. Graceful Shutdown
+        // ════════════════════════════════════════════════════════════
         using var cts = new CancellationTokenSource();
 
-        // Flag to prevent double-cancellation
-        bool shutdownRequested = false;
-        object shutdownLock = new();
-
-        void RequestShutdown(string source)
+        Console.CancelKeyPress += (_, e) =>
         {
-            lock (shutdownLock)
-            {
-                if (shutdownRequested) return;
-                shutdownRequested = true;
-
-                log.Info("{Source} received.   Initiating graceful shutdown...", source);
-
-                try
-                {
-                    if (!cts.IsCancellationRequested) cts.Cancel();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // Already disposed, ignore
-                }
-            }
-        }
-
-        // Handle Ctrl+C
-        Console.CancelKeyPress += (sender, eventArgs) =>
-        {
-            eventArgs.Cancel = true; // Prevent immediate termination
-            RequestShutdown("Ctrl+C");
+            e.Cancel = true;
+            log.Info("Shutdown signal received.. .");
+            // ReSharper disable once AccessToDisposedClosure
+            cts.Cancel();
         };
 
-        // Handle SIGTERM (for Docker/Kubernetes) - use weak reference pattern
-        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => { RequestShutdown("SIGTERM"); };
-
-        // ══════════════════════════════════════════════════════════
-        // RUN SERVER
-        // ══════════════════════════════════════════════════════════
+        // Wait until Ctrl+C
         try
         {
-            log.Info("Starting server...");
-
-            await Task.WhenAll(
-                networkServer.RunAsync(cts.Token),
-                gameServer.StartServerAsync(cts.Token)
-            );
-
-            log.Info("Server shutdown completed gracefully.");
+            await Task.Delay(Timeout.Infinite, cts.Token);
         }
-        catch (OperationCanceledException)
+        catch (TaskCanceledException)
         {
-            // Expected when cancellation is requested
-            log.Info("Server shutdown completed gracefully.");
-        }
-        catch (Exception ex)
-        {
-            log.Error("Unhandled exception in server: {Error}", ex.Message);
-            log.Error("Stack trace: {StackTrace}", ex.StackTrace ?? "N/A");
-            Environment.ExitCode = 1;
+            // Normal shutdown
         }
 
-        log.Info("Server resources cleaned up.   Goodbye!");
+        // ════════════════════════════════════════════════════════════
+        // 6. Cleanup
+        // ════════════════════════════════════════════════════════════
+        log.Info("Shutting down...");
+
+        gameServer.Stop();
+        networkServer.Stop();
+
+        // Dispose ServiceProvider (calls Dispose on all services)
+        if (serviceProvider is IDisposable disposable) disposable.Dispose();
+
+        log.Info("Server stopped.  Goodbye!");
     }
+
+    /// <summary>
+    ///     Configures all services for the DI-Container.
+    /// </summary>
+    private static ServiceCollection ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        // ════════════════════════════════════════════════════════════
+        // LOGGING
+        // ════════════════════════════════════════════════════════════
+        services.AddSingleton<ILog, ConsoleLog>(); // Oder: SerilogAdapter, etc.
+
+        // ════════════════════════════════════════════════════════════
+        // CONFIGURATION
+        // ════════════════════════════════════════════════════════════
+        services.AddSingleton<ServerConfiguration>(_ => new ServerConfiguration
+        {
+            Port = 7777,
+            TickRate = 20,
+            MaxConnections = 1000,
+            ConnectionTimeout = TimeSpan.FromSeconds(30)
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // NETWORKING
+        // ════════════════════════════════════════════════════════════
+        services.AddSingleton<NetworkServer>(sp =>
+        {
+            ServerConfiguration config = sp.GetRequiredService<ServerConfiguration>();
+            ILog log = sp.GetRequiredService<ILog>();
+
+            return new NetworkServer(log, config.Port);
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // GAME SYSTEMS
+        // ════════════════════════════════════════════════════════════
+        services.AddSingleton<ZoneManager>();
+        services.AddSingleton<MessageRouter>();
+
+        services.AddSingleton<GameServer>(sp =>
+        {
+            NetworkServer networkServer = sp.GetRequiredService<NetworkServer>();
+            MessageRouter messageRouter = sp.GetRequiredService<MessageRouter>();
+            ZoneManager zoneManager = sp.GetRequiredService<ZoneManager>();
+            ILog log = sp.GetRequiredService<ILog>();
+            ServerConfiguration config = sp.GetRequiredService<ServerConfiguration>();
+
+            var gameServer = new GameServer(networkServer, messageRouter, zoneManager, sp, log)
+            {
+                TargetTickRate = config.TickRate
+            };
+
+            return gameServer;
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // SERVICES (Business Logic)
+        // ════════════════════════════════════════════════════════════
+
+        // Authentication
+        services.AddSingleton<IAuthenticationService, AuthenticationService>();
+
+        // Player
+        services.AddSingleton<IPlayerService, PlayerService>();
+
+        // TODO:  Weitere Services
+        // services.AddSingleton<IChatService, ChatService>();
+        // services.AddSingleton<ICombatService, CombatService>();
+        // services.AddSingleton<IInventoryService, InventoryService>();
+        // services.AddSingleton<IGuildService, GuildService>();
+        // services.AddSingleton<IPartyService, PartyService>();
+        // services.AddSingleton<IAuctionService, AuctionService>();
+        // services.AddSingleton<IMailService, MailService>();
+
+        // ════════════════════════════════════════════════════════════
+        // HANDLERS
+        // ════════════════════════════════════════════════════════════
+        services.AddSingleton<ConnectionHandler>();
+        // services.AddSingleton<MovementHandler>();
+        // services. AddSingleton<CombatHandler>();
+        // services.AddSingleton<ChatHandler>();
+        // services.AddSingleton<InventoryHandler>();
+        // services.AddSingleton<SocialHandler>();
+        // services.AddSingleton<AdminHandler>();
+
+        return services;
+    }
+
+    /// <summary>
+    ///     Register all handler in MessageRouter.
+    /// </summary>
+    private static void RegisterHandlers(IServiceProvider serviceProvider, MessageRouter router)
+    {
+        ILog log = serviceProvider.GetRequiredService<ILog>();
+
+        Type[] handlerTypes =
+        [
+            typeof(ConnectionHandler)
+            // typeof(MovementHandler),
+            // typeof(CombatHandler),
+            // typeof(ChatHandler),
+            // typeof(InventoryHandler),
+            // typeof(SocialHandler),
+            // typeof(AdminHandler),
+        ];
+
+        foreach (Type handlerType in handlerTypes)
+        {
+            var handler = (ICategoryHandler)serviceProvider.GetRequiredService(handlerType);
+            router.RegisterHandler(handler);
+            log.Info("Registered handler:  {Handler} for category {Category}",
+                handlerType.Name, handler.Category);
+        }
+    }
+}
+
+/// <summary>
+///     Server-Configuration
+/// </summary>
+public class ServerConfiguration
+{
+    public int Port { get; init; } = SharedConstants.DefaultPort;
+    public int TickRate { get; init; } = SharedConstants.TickRate;
+    public int MaxConnections { get; init; } = SharedConstants.MaxConnection;
+
+    public TimeSpan ConnectionTimeout { get; init; } =
+        TimeSpan.FromSeconds(SharedConstants.TimeToConnectionDeadInSeconds);
 }

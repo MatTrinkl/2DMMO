@@ -1,42 +1,95 @@
+using Mmo.Shared.Enums;
+using Mmo.Shared.Records;
+
 namespace Mmo.Shared.Configurations.Zones;
 
 /// <summary>
-///     A configuration of a Zone. This is used when saving them to JSON.
+///     Statische Zone-Definition.  Wird aus Config geladen.
+///     Ändert sich NICHT zur Laufzeit.
 /// </summary>
-/// <param name="zoneId">The ID of the zone.</param>
-/// <param name="zoneName">The Name of the zone.</param>
-/// <param name="bounds">The border of the zone.</param>
-/// <param name="spawnPoints">WIP: The SpawnPoints of the Zone.</param>
-/// <param name="isDefault">Is this Zone the default zone.</param>
-public class ZoneConfig(
-    ushort zoneId,
-    string zoneName,
-    ZoneBoundsConfig bounds,
-    SpawnPointConfig[] spawnPoints,
-    bool isDefault)
+public class ZoneConfig
 {
-    /// <summary>
-    ///     The ID of the Zone.
-    /// </summary>
-    public ushort ZoneId { get; init; } = zoneId;
+    // ═══════════════════════════════════════════════════════════════
+    // IDENTITY
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    ///     The Name of the Zone.
-    /// </summary>
-    public string ZoneName { get; init; } = zoneName;
+    /// <summary>Eindeutige Zone-ID.</summary>
+    public ushort ZoneId { get; set; }
 
-    /// <summary>
-    ///     The outer border of the zone.
-    /// </summary>
-    public ZoneBoundsConfig Bounds { get; init; } = bounds;
+    /// <summary>Interner Name (für Code).</summary>
+    public string InternalName { get; set; } = "";
 
-    /// <summary>
-    ///     WIP: The spawn points of the Zone.
-    /// </summary>
-    public SpawnPointConfig[] SpawnPoints { get; init; } = spawnPoints;
+    /// <summary>Anzeigename (für UI).</summary>
+    public string DisplayName { get; set; } = "";
 
-    /// <summary>
-    ///     Is this zone the default zone.
-    /// </summary>
-    public bool IsDefault { get; init; } = isDefault;
+    /// <summary>Beschreibung. </summary>
+    public string Description { get; set; } = "";
+
+    // ═══════════════════════════════════════════════════════════════
+    // REGELN (statisch)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>PvP-Regeln dieser Zone.</summary>
+    public PvpZoneType PvpType { get; set; } = PvpZoneType.Normal;
+
+    /// <summary>Zone-Flags (NoMount, IsCapital, etc.).</summary>
+    public ZoneFlags Flags { get; set; } = ZoneFlags.None;
+
+    /// <summary>Empfohlenes Mindest-Level.</summary>
+    public int MinLevel { get; set; } = 1;
+
+    /// <summary>Empfohlenes Max-Level.</summary>
+    public int MaxLevel { get; set; } = 60;
+
+    /// <summary>Max. Spieler (0 = unbegrenzt).</summary>
+    public int MaxPlayers { get; set; } = 0;
+
+    /// <summary>Welche Fraktion "besitzt" die Zone? (null = neutral).</summary>
+    public Faction? OwningFaction { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BOUNDS & GEOMETRY
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Zone-Grenzen.</summary>
+    public ZoneBoundsConfig Bounds { get; set; } = new(0, 0, 1000, 1000);
+
+    // ═══════════════════════════════════════════════════════════════
+    // SPAWNS (statisch definiert)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Spieler-Spawn-Punkte.</summary>
+    public List<SpawnPointConfig> PlayerSpawnPoints { get; set; } = new();
+
+    /// <summary>NPC-Spawns.</summary>
+    public List<NpcSpawnConfig> NpcSpawns { get; set; } = new();
+
+    /// <summary>Spirit Healer Positionen.</summary>
+    public List<Position> GraveyardPositions { get; set; } = new();
+
+    // ═══════════════════════════════════════════════════════════════
+    // ENVIRONMENT (Defaults)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Standard-Wetter.</summary>
+    public WeatherType DefaultWeather { get; set; } = WeatherType.Clear;
+
+    /// <summary>Musik-ID.</summary>
+    public int? MusicId { get; set; }
+
+    /// <summary>Ambiente-Sound-ID.</summary>
+    public int? AmbienceId { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMPUTED (aus Flags)
+    // ═══════════════════════════════════════════════════════════════
+
+    public bool IsPvpEnabled => PvpType != PvpZoneType.Sanctuary;
+    public bool IsSanctuary => PvpType == PvpZoneType.Sanctuary;
+    public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
+    public bool IsRaid => Flags.HasFlag(ZoneFlags.IsRaid);
+    public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
+    public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
+    public bool AllowsMounting => !Flags.HasFlag(ZoneFlags.NoMounting);
+    public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
 }

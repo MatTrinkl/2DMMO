@@ -1,224 +1,288 @@
+using System.Buffers;
 using System.Net.Sockets;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Serialization;
 
 namespace Mmo.Server.Networking;
 
 /// <summary>
-///     Represents a single client connection, handling sending and receiving of messages.
+///     Represents a connection to a client.
+///     Responsibilities:
+///     - Manage TCP stream
+///     - Receive messages and fire events
+///     - Send messages
+///     - Track connection state
+///     NO game logic here! Everything goes through events to GameServer.
 /// </summary>
-public class ClientConnection(TcpClient tcpClient, ILog log) : IDisposable
+public sealed class ClientConnection : IDisposable
 {
-    private readonly NetworkStream _stream = tcpClient.GetStream();
-    private bool _isDisconnecting;
-    private bool _isDisposed;
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    ///     Unique identifier for this connection.
-    ///     Generated through IdRegistry for centralized ID management.
-    /// </summary>
-    public Guid Id { get; } = IdRegistry.Instance.GeneratePersistentId();
+    private readonly CancellationTokenSource _cts = new();
+    private readonly ILog _log;
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private readonly NetworkStream _stream;
+    private readonly TcpClient _tcpClient;
 
-    /// <summary>
-    ///     Returns true if the underlying TCP connection is still active.
-    /// </summary>
-    public bool IsConnected => !_isDisposed && tcpClient.Connected;
+    private bool _disposed;
 
-    /// <summary>
-    ///     The remote endpoint (IP: Port) of this connection.
-    /// </summary>
-    public string RemoteEndPoint => tcpClient.Client.RemoteEndPoint?.ToString() ?? "unknown";
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
 
-    public Guid PlayerId { get; set; }
+    public ClientConnection(
+        TcpClient tcpClient,
+        ILog log)
+    {
+        _tcpClient = tcpClient ?? throw new ArgumentNullException(nameof(tcpClient));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+
+        _stream = tcpClient.GetStream();
+        RemoteEndPoint = tcpClient.Client.RemoteEndPoint?.ToString() ?? "Unknown";
+
+        _tcpClient.NoDelay = true;
+        _tcpClient.ReceiveTimeout = 30000;
+        _tcpClient.SendTimeout = 10000;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Identity
+    // ═══════════════════════════════════════════════════════════════
+
+    public Guid Id { get; } = Guid.NewGuid();
+    public string RemoteEndPoint { get; }
+    public DateTimeOffset ConnectedAt { get; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset LastActivity { get; private set; } = DateTimeOffset.UtcNow;
+    public bool IsConnected => !_disposed && _tcpClient.Connected;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Auth State (set by handler)
+    // ═══════════════════════════════════════════════════════════════
+
+    public ConnectionState State { get; private set; } = ConnectionState.Connected;
+    public Guid? AccountId { get; private set; }
+    public AccountFlags AccountFlags { get; private set; } = AccountFlags.None;
+    public string? Username { get; private set; }
+    public Guid? SessionToken { get; private set; }
+
+    public bool IsAuthenticated => State >= ConnectionState.Authenticated;
+    public bool IsInGame => State == ConnectionState.InGame;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES - Metrics
+    // ═══════════════════════════════════════════════════════════════
+
+    public int LatencyMs { get; set; }
+    public int SmoothedLatencyMs { get; set; }
+    public long MessagesReceived { get; private set; }
+    public long MessagesSent { get; private set; }
 
     public void Dispose()
     {
-        if (_isDisposed) return;
-        _isDisposed = true;
+        if (_disposed) return;
+        _disposed = true;
 
         try
         {
+            _cts.Cancel();
             _stream.Dispose();
-            tcpClient.Dispose();
+            _tcpClient.Dispose();
+            _sendLock.Dispose();
+            _cts.Dispose();
         }
-        catch
+        catch (ObjectDisposedException)
         {
-            // Ignore dispose errors
+            // Expected if already disposed
         }
-
-        GC.SuppressFinalize(this);
+        catch (Exception)
+        {
+            // Suppress exceptions during cleanup to avoid masking the original issue
+        }
     }
 
-    /// <summary>
-    ///     Fired when a message is received from this client.
-    /// </summary>
-    public event Action<INetworkMessage>? MessageReceived;
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    ///     Fired when this client disconnects (includes reason).
-    /// </summary>
-    public event Action<DisconnectReason>? Disconnected;
+    public event Action<ClientConnection, MessageType, INetworkMessage>? OnMessageReceived;
+    public event Action<ClientConnection, string?>? OnDisconnected;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS
+    // ═══════════════════════════════════════════════════════════════
+
+    public void StartReceivingAsync() => _ = ReceiveLoopAsync();
 
     /// <summary>
     ///     Sends a message to this client.
     /// </summary>
-    public async Task SendAsync(INetworkMessage message) // ← Nicht mehr generisch!
+    public void Send(INetworkMessage message)
     {
-        if (_isDisposed || _isDisconnecting)
-        {
-            log.Warn("Cannot send to disposed/disconnecting client {ClientId}", Id);
-            return;
-        }
+        if (_disposed || !IsConnected) return;
 
         try
         {
-            // Serialize - verwende dynamic dispatch um den konkreten Typ zu bekommen
-            byte[] payload = SerializeMessage(message);
+            byte[] data = MessageSerializer.Serialize(message);
+            byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
 
-            // Frame:  [4 Bytes Length][Payload]
-            byte[] lengthBytes = BitConverter.GetBytes((uint)payload.Length);
-
-            await _stream.WriteAsync(lengthBytes);
-            await _stream.WriteAsync(payload);
-            await _stream.FlushAsync();
-        }
-        catch (ObjectDisposedException)
-        {
-            log.Debug("Stream already disposed for client {ClientId}", Id);
-        }
-        catch (IOException ex)
-        {
-            log.Error("Send failed for client {ClientId}: {Error}", Id, ex.Message);
-            await DisconnectAsync(DisconnectReason.NetworkError);
+            _sendLock.Wait();
+            try
+            {
+                _stream.Write(lengthPrefix, 0, 4);
+                _stream.Write(data, 0, data.Length);
+                MessagesSent++;
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
         }
         catch (Exception ex)
         {
-            log.Error("Unexpected send error for client {ClientId}:  {Error}", Id, ex.Message);
-            await DisconnectAsync(DisconnectReason.NetworkError);
+            _log.Error(ex, "Error sending to {ConnectionId}", Id);
+            Dispose();
         }
     }
 
     /// <summary>
-    ///     Serializes a message using its runtime type, not the interface type.
+    ///     Sets the authentication state. Called by ConnectionHandler after successful authentication.
     /// </summary>
-    private static byte[] SerializeMessage(INetworkMessage message)
+    public void SetAuthenticated(Guid accountId, string username, AccountFlags flags, Guid sessionToken)
     {
-        // Verwende dynamic um den KONKRETEN Typ zu serialisieren
-        return MessageSerializer.Serialize((dynamic)message);
+        AccountId = accountId;
+        Username = username;
+        AccountFlags = flags;
+        SessionToken = sessionToken;
+        State = ConnectionState.Authenticated;
+
+        _log.Debug("Connection {ConnectionId} authenticated as {Username}", Id, username);
     }
 
     /// <summary>
-    ///     Starts the receiving loop for this connection.
-    ///     This method runs until the connection is closed or canceled.
+    ///     Sets state to InGame. Called by ConnectionHandler when player enters game world.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token to stop receiving.</param>
-    public async Task StartReceivingAsync(CancellationToken cancellationToken)
+    public void SetInGame()
     {
-        DisconnectReason disconnectReason = DisconnectReason.ClientDisconnected;
+        if (State == ConnectionState.Authenticated)
+        {
+            State = ConnectionState.InGame;
+            _log.Debug("Connection {ConnectionId} is now InGame", Id);
+        }
+    }
+
+    /// <summary>
+    ///     Resets to unauthenticated state (logout).
+    /// </summary>
+    public void ResetAuth()
+    {
+        AccountId = null;
+        Username = null;
+        AccountFlags = AccountFlags.None;
+        SessionToken = null;
+        State = ConnectionState.Connected;
+    }
+
+    /// <summary>
+    ///     Updates the latency measurement using exponential smoothing.
+    /// </summary>
+    public void UpdateLatency(int latencyMs)
+    {
+        if (latencyMs < 0 || latencyMs > 10000) return;
+
+        LatencyMs = latencyMs;
+        SmoothedLatencyMs = SmoothedLatencyMs == 0
+            ? latencyMs
+            : (int)(SmoothedLatencyMs * 0.8f + latencyMs * 0.2f);
+
+        LastActivity = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    ///     Checks if the connection is "dead" (no activity for timeout period).
+    /// </summary>
+    public bool IsConnectionDead(TimeSpan timeout) => DateTimeOffset.UtcNow - LastActivity > timeout;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRIVATE METHODS
+    // ═══════════════════════════════════════════════════════════════
+
+    private async Task ReceiveLoopAsync()
+    {
+        byte[] headerBuffer = new byte[4];
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested && IsConnected)
+            while (!_cts.Token.IsCancellationRequested && IsConnected)
             {
-                // 1. Read length (4 bytes)
-                byte[] lengthBuffer = new byte[4];
-                await ReadExactlyAsync(lengthBuffer, 4, cancellationToken);
-                uint length = BitConverter.ToUInt32(lengthBuffer);
+                // Read header (4-byte message length)
+                int bytesRead = await ReadExactAsync(headerBuffer, 4);
+                if (bytesRead == 0) break;
 
-                // Sanity check:  prevent excessive memory allocation
-                if (length > 10 * 1024 * 1024) // 10 MB max
+                int messageLength = BitConverter.ToInt32(headerBuffer, 0);
+
+                if (messageLength <= 0 || messageLength > 1024 * 1024)
                 {
-                    log.Warn("Client {ClientId} sent oversized message: {Length} bytes", Id, length);
-                    disconnectReason = DisconnectReason.ProtocolError;
+                    _log.Warn("Invalid message length {Length} from {ConnectionId}", messageLength, Id);
                     break;
                 }
 
-                // 2. Read payload (dynamic size)
-                byte[] payload = new byte[length];
-                await ReadExactlyAsync(payload, (int)length, cancellationToken);
+                // Read body
+                byte[] bodyBuffer = ArrayPool<byte>.Shared.Rent(messageLength);
+                try
+                {
+                    bytesRead = await ReadExactAsync(bodyBuffer, messageLength);
+                    if (bytesRead == 0) break;
 
-                // 3. Deserialize with MessageSerializer
-                INetworkMessage message = MessageSerializer.Deserialize(payload);
+                    // Deserialize message
+                    INetworkMessage message = MessageSerializer.Deserialize(
+                        new ReadOnlyMemory<byte>(bodyBuffer, 0, messageLength));
 
-                // 4. Raise event
-                MessageReceived?.Invoke(message);
+                    LastActivity = DateTimeOffset.UtcNow;
+                    MessagesReceived++;
+
+                    // ALL messages go to GameServer!
+                    OnMessageReceived?.Invoke(this, message.Type, message);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(bodyBuffer);
+                }
             }
-
-            // If canceled, it's a server shutdown
-            if (cancellationToken.IsCancellationRequested) disconnectReason = DisconnectReason.ServerShutdown;
         }
         catch (OperationCanceledException)
         {
-            disconnectReason = DisconnectReason.ServerShutdown;
         }
         catch (IOException ex)
         {
-            // Connection closed by remote host or network error
-            log.Warn("Client {ClientId} connection closed: {Error}", Id, ex.Message);
-            disconnectReason = DisconnectReason.ClientDisconnected;
+            _log.Debug("Connection {ConnectionId} IO error: {Message}", Id, ex.Message);
         }
         catch (Exception ex)
         {
-            log.Warn("Client {ClientId} read loop error: {Error}", Id, ex.Message);
-            disconnectReason = DisconnectReason.NetworkError;
+            _log.Error(ex, "Connection {ConnectionId} receive error", Id);
         }
         finally
         {
-            await DisconnectAsync(disconnectReason);
+            OnDisconnected?.Invoke(this, "Connection closed");
         }
     }
 
-    /// <summary>
-    ///     Reads exactly the specified number of bytes from the stream.
-    ///     TCP doesn't guarantee all bytes arrive at once, so we loop.
-    /// </summary>
-    private async Task ReadExactlyAsync(byte[] buffer, int count, CancellationToken ct)
+    private async Task<int> ReadExactAsync(byte[] buffer, int count)
     {
         int totalRead = 0;
         while (totalRead < count)
         {
             int bytesRead = await _stream.ReadAsync(
-                buffer.AsMemory(totalRead, count - totalRead), ct);
+                buffer.AsMemory(totalRead, count - totalRead),
+                _cts.Token);
 
-            if (bytesRead == 0) throw new IOException("Connection closed by remote host");
-
+            if (bytesRead == 0) return 0;
             totalRead += bytesRead;
         }
+
+        return totalRead;
     }
-
-    /// <summary>
-    ///     Disconnects this client with the specified reason.
-    /// </summary>
-    /// <param name="reason">The reason for disconnection.</param>
-    public Task DisconnectAsync(DisconnectReason reason = DisconnectReason.ClientDisconnected)
-    {
-        // Prevent multiple disconnect calls
-        if (_isDisconnecting) return Task.CompletedTask;
-
-        _isDisconnecting = true;
-
-        log.Debug("Disconnecting client {ClientId}:  {Reason}", Id, reason);
-
-        try
-        {
-            _stream.Close();
-            tcpClient.Close();
-        }
-        catch
-        {
-            // Ignore cleanup errors
-        }
-
-        // Raise event with reason
-        Disconnected?.Invoke(reason);
-
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    ///     Kicks this client with the Kicked reason.
-    /// </summary>
-    public Task KickAsync() => DisconnectAsync(DisconnectReason.Kicked);
 }

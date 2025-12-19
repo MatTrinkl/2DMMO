@@ -1,6 +1,7 @@
 using MessagePack;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
@@ -68,7 +69,7 @@ public class MessageSerializerTests
     public void Serialize_Disconnect_RoundTrip()
     {
         var playerId = Guid.NewGuid();
-        var original = new Disconnect(playerId);
+        var original = new Disconnect(playerId, DisconnectReason.ClientDisconnected);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         Disconnect deserialized = MessagePackSerializer.Deserialize<Disconnect>(serialized);
@@ -85,7 +86,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_PositionUpdate_RoundTrip()
     {
-        var player = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(100, 200));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 200));
         var newPos = new Position(110, 210);
         var original = new PositionUpdate(98765L, player, newPos);
 
@@ -188,7 +189,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_PlayerJoinedZone_RoundTrip()
     {
-        var player = new PlayerEntity(Guid.NewGuid(), "NewPlayer", new Position(10, 20));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "NewPlayer", new Position(10, 20));
         var original = new PlayerJoinedZone(player);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
@@ -203,7 +204,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_PlayerLeftZone_RoundTrip()
     {
-        var player = new PlayerEntity(Guid.NewGuid(), "LeavingPlayer", new Position(10, 20));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "LeavingPlayer", new Position(10, 20));
         var original = new PlayerLeftZone(player);
 
         byte[] serialized = MessagePackSerializer.Serialize(original);

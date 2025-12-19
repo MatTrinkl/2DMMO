@@ -1,5 +1,5 @@
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Tests.Entities;
@@ -351,7 +351,6 @@ public class IdRegistryTests : IDisposable
         public Guid PersistentId { get; } = Guid.NewGuid();
         public bool IsTrulyPersistent => false;
         public EntityType Type => EntityType.Player;
-        public EntityRole Role => EntityRole.None;
         public Position Position { get; set; } = new(0, 0);
 
         public void SetEntityId(int localId, ushort zoneId) =>

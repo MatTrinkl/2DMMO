@@ -4,327 +4,744 @@ using Mmo.Server.Entities;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Networking;
-using Mmo.Server.Networking.NetworkEvents;
 using Mmo.Server.Zones;
 using Mmo.Shared;
-using Mmo.Shared.Entities;
+using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Movement;
+using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messages.System;
 using Mmo.Shared.Messages.ZoneEvents;
-using Mmo.Shared.Zones;
+using Mmo.Shared.Records;
 
 namespace Mmo.Server.GameLoop;
 
 /// <summary>
-///     This class is the core server structure.  All communication will be done with an instance of this class.
+///     The central Game Server.
+///     Responsibilities:
+///     - Manage the Game Loop (Tick)
+///     - Process Input/Output/Completion Queues
+///     - Route messages to handlers
+///     - Execute broadcasts
+///     IMPORTANT:
+///     - NetworkServer does NOT know about GameServer (only events)
+///     - GameServer registers for NetworkServer events
+///     - All send operations are queued (Output phase)
 /// </summary>
-public class GameServer
+public class GameServer : IDisposable
 {
-    /// <summary>
-    ///     PersistentIds of entities that changed this tick (for delta updates).
-    /// </summary>
-    private readonly HashSet<Guid> _dirtyEntities = new();
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTANTS
+    // ═══════════════════════════════════════════════════════════════
+
+    private const float _heartbeatInterval = 5.0f;
+    private const float _deadConnectionCheckInterval = 10.0f;
+    private static readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    ///     Incoming messages from clients, processed in InputPhase.
+    ///     Callbacks from completed async tasks.
+    ///     Populated by ctx.RunAsync(), processed in ProcessCompletionQueue().
     /// </summary>
-    private readonly ConcurrentQueue<MessageReceivedEventArgs> _incomingMessages = new();
+    private readonly ConcurrentQueue<(Guid ConnectionId, Action<MessageContext> Callback)> _completionQueue = new();
+
+    private readonly CancellationTokenSource _cts = new();
+
+    /// <summary>
+    ///     Connections that should be disconnected.
+    ///     Processed in ProcessDisconnectQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<(Guid ConnectionId, string? Reason)> _disconnectQueue = new();
+
+    /// <summary>
+    ///     Incoming messages from clients.
+    ///     Populated by NetworkServer event, processed in ProcessInputQueue().
+    /// </summary>
+    private readonly ConcurrentQueue<IncomingMessage> _inputQueue = new();
+
+    // ═══════════════════════════════════════════════════════════════
+    // FIELDS
+    // ═══════════════════════════════════════════════════════════════
 
     private readonly ILog _log;
+    private readonly MessageRouter _messageRouter;
+    private readonly NetworkServer _networkServer;
 
     /// <summary>
-    ///     Outgoing event broadcasts (PlayerJoined, PlayerLeft, Chat, etc. ),
-    ///     collected during the tick and sent in OutputPhase.
+    ///     Outgoing messages to clients.
+    ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
     /// </summary>
-    private readonly ConcurrentQueue<OutgoingMessage> _outgoingMessages = new();
+    private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
 
-    private readonly MessageRouter _router;
-    internal readonly INetworkServer NetworkServer;
+    private readonly IServiceProvider _services;
+    private readonly ZoneManager _zoneManager;
 
-    /// <summary>
-    ///     Creates a new GameServer object.
-    /// </summary>
-    /// <param name="log">The logging interface.</param>
-    /// <param name="networkServer">The network server for client communication.</param>
-    public GameServer(ILog log, INetworkServer networkServer)
+    private float _deadConnectionTimer;
+    private bool _disposed;
+    private Thread? _gameLoopThread;
+    private float _heartbeatTimer;
+    private bool _isRunning;
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTRUCTOR
+    // ═══════════════════════════════════════════════════════════════
+
+    public GameServer(
+        NetworkServer networkServer,
+        MessageRouter messageRouter,
+        ZoneManager zoneManager,
+        IServiceProvider services,
+        ILog log)
     {
-        _log = log;
-        NetworkServer = networkServer;
-        _router = new MessageRouter(this, log);
+        _networkServer = networkServer ?? throw new ArgumentNullException(nameof(networkServer));
+        _messageRouter = messageRouter ?? throw new ArgumentNullException(nameof(messageRouter));
+        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        _services = services ?? throw new ArgumentNullException(nameof(services));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
 
-        CurrentTick = 0;
-        IsRunning = false;
+        // ════════════════════════════════════════════════════════════
+        // Register for NetworkServer events
+        // NetworkServer does NOT know that GameServer exists!
+        // ════════════════════════════════════════════════════════════
+        _networkServer.OnMessageReceived += HandleNetworkMessage;
+        _networkServer.OnClientConnected += HandleClientConnected;
+        _networkServer.OnClientDisconnected += HandleClientDisconnected;
+    }
 
-        // Only temporary - later loaded from config files.
-        ZoneManager = new ZoneManager(0, new Zone(0, "default", new ZoneBounds(0, 0, 0, 0)));
+    // ═══════════════════════════════════════════════════════════════
+    // PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
 
-        // Subscribe to network events
-        NetworkServer.ClientConnected += OnClientConnected;
-        NetworkServer.ClientDisconnected += OnClientDisconnected;
-        NetworkServer.MessageReceived += OnMessageReceived;
-        NetworkServer.ErrorOccurred += OnNetworkError;
+    /// <summary>Target tick rate (ticks per second).</summary>
+    public int TargetTickRate { get; set; } = SharedConstants.TickRate;
+
+    /// <summary>Target tick time in milliseconds.</summary>
+    private double TargetTickTimeMs => 1000.0 / TargetTickRate;
+
+    /// <summary>Current tick counter.</summary>
+    public long TickCount { get; private set; }
+
+    /// <summary>Duration of the last tick in milliseconds.</summary>
+    public double LastTickDurationMs { get; private set; }
+
+    /// <summary>Average tick duration in milliseconds.</summary>
+    public double AverageTickDurationMs { get; private set; }
+
+    /// <summary>Server start time.</summary>
+    public DateTimeOffset StartedAt { get; private set; }
+
+    /// <summary>Server uptime.</summary>
+    public TimeSpan Uptime => DateTimeOffset.UtcNow - StartedAt;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        Stop();
+
+        // Unregister events
+        _networkServer.OnMessageReceived -= HandleNetworkMessage;
+        _networkServer.OnClientConnected -= HandleClientConnected;
+        _networkServer.OnClientDisconnected -= HandleClientDisconnected;
+
+        _cts.Dispose();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PUBLIC METHODS
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    ///     Starts the Game Server.
+    /// </summary>
+    public void Start()
+    {
+        if (_isRunning)
+        {
+            _log.Warn("GameServer is already running");
+            return;
+        }
+
+        _isRunning = true;
+        StartedAt = DateTimeOffset.UtcNow;
+
+        // Start Game Loop in separate thread
+        _gameLoopThread = new Thread(GameLoopThread)
+        {
+            Name = "GameLoop",
+            IsBackground = false,
+            Priority = ThreadPriority.AboveNormal
+        };
+        _gameLoopThread.Start();
+
+        _log.Info("GameServer started (TickRate: {TickRate}/s)", TargetTickRate);
     }
 
     /// <summary>
-    ///     True if the server is running.
+    ///     Stops the Game Server.
     /// </summary>
-    public bool IsRunning { get; private set; }
-
-    /// <summary>
-    ///     The current tick of the server.
-    /// </summary>
-    public long CurrentTick { get; private set; }
-
-    /// <summary>
-    ///     Access to the ZoneManager for external usage.
-    /// </summary>
-    public ZoneManager ZoneManager { get; }
-
-    /// <summary>
-    ///     Starts the server and keeps its loop until the cancellation is requested.
-    ///     Then the final tick will run and the server shuts down.
-    /// </summary>
-    /// <param name="cancellationToken">The cancellation token. </param>
-    public async Task StartServerAsync(CancellationToken cancellationToken)
+    public void Stop()
     {
-        _log.Info("GameServer starting with {TickRate} Hz...", SharedConstants.TickRate);
-        IsRunning = true;
-        var stopwatch = Stopwatch.StartNew();
+        if (!_isRunning) return;
 
-        while (!cancellationToken.IsCancellationRequested)
+        _log.Info("GameServer stopping...");
+
+        _isRunning = false;
+        _cts.Cancel();
+
+        // Wait for Game Loop thread
+        _gameLoopThread?.Join(TimeSpan.FromSeconds(5));
+
+        // Disconnect all players
+        DisconnectAllPlayers("Server shutting down");
+
+        _log.Info("GameServer stopped after {TickCount} ticks", TickCount);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRIVATE METHODS - GAME LOOP
+    // ═══════════════════════════════════════════════════════════════
+
+    private void GameLoopThread()
+    {
+        _log.Info("Game loop thread started");
+
+        var stopwatch = new Stopwatch();
+        var tickTimes = new Queue<double>(100);
+
+        while (_isRunning && !_cts.Token.IsCancellationRequested)
         {
-            TimeSpan tickStart = stopwatch.Elapsed;
-
-            // 1️⃣ INPUT PHASE
-            await InputPhaseAsync(cancellationToken);
-
-            // 2️⃣ UPDATE PHASE
-            await UpdatePhaseAsync(cancellationToken);
-
-            // 3️⃣ OUTPUT PHASE
-            await OutputPhaseAsync(cancellationToken);
-
-            TimeSpan elapsed = stopwatch.Elapsed - tickStart;
-            double elapsedMs = elapsed.TotalMilliseconds;
-            double budgetMs = SharedConstants.TickDuration.TotalMilliseconds;
-
-            // Tick-Overrun Logging
-            if (elapsed > SharedConstants.TickDuration)
-            {
-                _log.Warn(
-                    "Tick {Tick} overrun: {ElapsedMs:F2} ms (budget: {BudgetMs: F2} ms)",
-                    CurrentTick,
-                    elapsedMs,
-                    budgetMs);
-
-                continue;
-            }
-
-            TimeSpan remaining = SharedConstants.TickDuration - elapsed;
+            stopwatch.Restart();
 
             try
             {
-                await Task.Delay(remaining, cancellationToken);
+                // Calculate delta time (in seconds)
+                float deltaTime = (float)(TargetTickTimeMs / 1000.0);
+
+                // Execute tick
+                Tick(deltaTime);
+
+                TickCount++;
             }
-            catch (TaskCanceledException)
+            catch (Exception ex)
             {
-                break;
+                _log.Error(ex, "Error in game loop tick {TickCount}", TickCount);
             }
+
+            stopwatch.Stop();
+            LastTickDurationMs = stopwatch.Elapsed.TotalMilliseconds;
+
+            // Calculate average
+            tickTimes.Enqueue(LastTickDurationMs);
+            if (tickTimes.Count > 100) tickTimes.Dequeue();
+            AverageTickDurationMs = tickTimes.Average();
+
+            // Warn if tick takes too long
+            if (LastTickDurationMs > TargetTickTimeMs * 1.5)
+                _log.Warn("Tick {TickCount} took {Duration: F2}ms (target: {Target:F2}ms)",
+                    TickCount, LastTickDurationMs, TargetTickTimeMs);
+
+            // Sleep until next tick
+            double sleepTime = TargetTickTimeMs - LastTickDurationMs;
+            if (sleepTime > 0) Thread.Sleep((int)sleepTime);
         }
 
-        IsRunning = false;
-        _log.Info("GameServer stopped after {Ticks} ticks.", CurrentTick);
+        _log.Info("Game loop thread ended");
     }
 
     /// <summary>
-    ///     Input Phase: Process all incoming messages from clients.
+    ///     Executes one tick of the Game Loop.
+    ///     The Game Loop consists of five phases that run sequentially:
+    ///     1. COMPLETION - Process callbacks from completed async operations
+    ///     2. INPUT - Process incoming messages from clients
+    ///     3. UPDATE - Execute game logic and system updates
+    ///     4. OUTPUT - Send outgoing messages to clients
+    ///     5. CLEANUP - Process connection disconnects
     /// </summary>
-    protected virtual Task InputPhaseAsync(CancellationToken cancellationToken)
+    /// <param name="deltaTime">Time elapsed since last tick in seconds.</param>
+    protected virtual void Tick(float deltaTime)
     {
-        while (_incomingMessages.TryDequeue(out MessageReceivedEventArgs? incoming))
-            _router.Route(incoming.Connection, incoming.Message);
+        // 1. COMPLETION PHASE - Completed async tasks
+        ProcessCompletionQueue();
 
-        return Task.CompletedTask;
+        // 2. INPUT PHASE - Process new messages
+        ProcessInputQueue();
+
+        // 3. UPDATE PHASE - Game logic
+        UpdateGameSystems(deltaTime);
+
+        // 4. OUTPUT PHASE - Send messages
+        ProcessOutputQueue();
+
+        // 5. CLEANUP PHASE - Process disconnects
+        ProcessDisconnectQueue();
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Network Event Handlers (called from Network thread!)
+    // ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    ///     Called by NetworkServer when a message is received.
+    ///     Runs on Network thread - only add to queue!
+    /// </summary>
+    private void HandleNetworkMessage(ClientConnection connection, MessageType type, INetworkMessage message)
+    {
+        var incoming = new IncomingMessage(connection, type, message);
+        _inputQueue.Enqueue(incoming);
     }
 
     /// <summary>
-    ///     Update Phase:  Validate positions, check collisions, update game state.
+    ///     Called by NetworkServer when a client connects.
     /// </summary>
-    protected virtual Task UpdatePhaseAsync(CancellationToken cancellationToken)
+    private void HandleClientConnected(ClientConnection connection)
     {
-        // TODO:  Position validate, check collisions, update GameState (ZoneState)
-        CurrentTick++;
-        return Task.CompletedTask;
+        _log.Debug("Client connected event:  {ConnectionId} from {Endpoint}",
+            connection.Id, connection.RemoteEndPoint);
     }
 
     /// <summary>
-    ///     Output Phase: Send broadcasts to clients (events, delta updates, full state).
+    ///     Called by NetworkServer when a client disconnects.
     /// </summary>
-    protected virtual async Task OutputPhaseAsync(CancellationToken cancellationToken)
+    private void HandleClientDisconnected(ClientConnection connection, string? reason)
     {
-        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        _log.Debug("Client disconnected event: {ConnectionId} - {Reason}",
+            connection.Id, reason ?? "No reason logged.");
 
-        // ══════════════════════════════════════════════════════════
-        // 1. EVENT BROADCASTS (highest priority)
-        // ══════════════════════════════════════════════════════════
-        while (_outgoingMessages.TryDequeue(out OutgoingMessage eventMessage))
+        // Queue cleanup for Game Loop
+        _disconnectQueue.Enqueue((connection.Id, reason));
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Public API (Thread-safe, called by handlers)
+    // ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    ///     Adds an outgoing message to the queue.
+    ///     Called by MessageContext.
+    /// </summary>
+    public void QueueOutgoingMessage(OutgoingMessage message) => _outputQueue.Enqueue(message);
+
+    /// <summary>
+    ///     Queues a callback to be executed in the next tick.
+    ///     Called by ctx.RunAsync() when an async task completes.
+    /// </summary>
+    public void QueueCompletion(Guid connectionId, Action<MessageContext> callback) =>
+        _completionQueue.Enqueue((connectionId, callback));
+
+    /// <summary>
+    ///     Marks a connection for disconnection.
+    /// </summary>
+    public void QueueDisconnect(Guid connectionId, string? reason = null) =>
+        _disconnectQueue.Enqueue((connectionId, reason));
+
+    // ───────────────────────────────────────────────────────────────
+    // COMPLETION PHASE
+    // ───────────────────────────────────────────────────────────────
+
+    private void ProcessCompletionQueue()
+    {
+        int processed = 0;
+        const int maxPerTick = 100; // Limit to avoid overloading a single tick
+
+        while (processed < maxPerTick &&
+               _completionQueue.TryDequeue(out (Guid ConnectionId, Action<MessageContext> Callback) completion))
         {
-            if (eventMessage.TargetClient == null)
+            try
             {
-                if (eventMessage.ZoneId == null)
-                    await NetworkServer.BroadcastAsync(eventMessage.Message);
+                // Connection still exists?
+                if (_networkServer.TryGetConnection(completion.ConnectionId, out ClientConnection? connection) &&
+                    connection != null)
+                {
+                    MessageContext ctx = CreateMessageContext(connection);
+                    completion.Callback(ctx);
+                }
                 else
-                    foreach (ServerPlayer playerInZone in ZoneManager.GetServerPlayersInZone(eventMessage.ZoneId))
-                        await NetworkServer.SendToClientAsync(playerInZone.Connection, eventMessage.Message);
+                {
+                    _log.Debug("Completion callback skipped - connection {ConnectionId} no longer exists",
+                        completion.ConnectionId);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await NetworkServer.SendToClientAsync(eventMessage.TargetClient, eventMessage.Message);
+                _log.Error(ex, "Error processing completion for {ConnectionId}", completion.ConnectionId);
             }
 
-            _log.Debug("Event broadcast:  {MessageType}", eventMessage.Message.Type);
+            processed++;
         }
 
-        // ══════════════════════════════════════════════════════════
-        // 2. FULL STATE:  All n ticks - per zone
-        // ══════════════════════════════════════════════════════════
-        if (CurrentTick % SharedConstants.TickRate == 0)
+        if (_completionQueue.Count > 0)
+            _log.Debug("Completion queue has {Count} remaining items", _completionQueue.Count);
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // INPUT PHASE
+    // ───────────────────────────────────────────────────────────────
+
+    private void ProcessInputQueue()
+    {
+        int processed = 0;
+        const int maxPerTick = 1000; // Limit
+
+        while (processed < maxPerTick && _inputQueue.TryDequeue(out IncomingMessage incoming))
         {
-            await BroadcastFullZoneStatesAsync(timestamp);
-            _dirtyEntities.Clear();
+            try
+            {
+                ProcessMessage(incoming);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error processing message {Type} from {ConnectionId}",
+                    incoming.MessageType, incoming.Connection.Id);
+            }
+
+            processed++;
         }
-        // ══════════════════════════════════════════════════════════
-        // 3. DELTA:  Update dirty Entities - per zone
-        // ══════════════════════════════════════════════════════════
-        else if (_dirtyEntities.Count > 0)
-        {
-            await BroadcastDirtyEntitiesAsync(timestamp);
-            _dirtyEntities.Clear();
-        }
+
+        if (_inputQueue.Count > 0) _log.Warn("Input queue overloaded:  {Count} messages remaining", _inputQueue.Count);
     }
 
     /// <summary>
-    ///     Broadcasts full ZoneState to all players in each zone.
+    ///     Processes a single incoming message by creating a context and routing it to the appropriate handler.
     /// </summary>
-    private async Task BroadcastFullZoneStatesAsync(long timestamp)
+    private void ProcessMessage(IncomingMessage incoming)
     {
-        foreach (Zone zone in ZoneManager.GetAllZones())
-        {
-            var playersInZone = ZoneManager.GetServerPlayersInZone(zone.ZoneId).ToList();
+        // Create MessageContext
+        MessageContext ctx = CreateMessageContext(incoming.Connection);
 
-            if (playersInZone.Count == 0)
+        // Route to handler
+        _messageRouter.Route(ctx, incoming.MessageType, incoming.Message);
+    }
+
+    /// <summary>
+    ///     Creates a MessageContext for a connection.
+    ///     The context provides access to game services and enables handlers to send responses.
+    /// </summary>
+    private MessageContext CreateMessageContext(ClientConnection connection) =>
+        new(connection, this, _zoneManager, _services);
+
+    // ───────────────────────────────────────────────────────────────
+    // UPDATE PHASE
+    // ───────────────────────────────────────────────────────────────
+
+    private void UpdateGameSystems(float deltaTime)
+    {
+        // TODO: Game systems will be added here:
+        // - AI Update
+        // - Combat Update
+        // - Buff/Debuff Timers
+        // - Respawn Timers
+        // - Zone Updates
+        // - Heartbeat Service
+        // - AFK Detection
+        // - etc.
+
+        // Example: Heartbeat every 5 seconds
+        UpdateHeartbeat(deltaTime);
+
+        // Example: AFK/Dead Connection Check
+        CheckDeadConnections(deltaTime);
+    }
+
+    private void UpdateHeartbeat(float deltaTime)
+    {
+        _heartbeatTimer += deltaTime;
+
+        if (_heartbeatTimer < _heartbeatInterval) return;
+        _heartbeatTimer = 0;
+
+        // Send heartbeat to all authenticated players
+        var heartbeat = new Heartbeat
+        {
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+
+        foreach (ServerPlayerCharacter player in _zoneManager.GetAllServerPlayers())
+        {
+            var outgoing = OutgoingMessage.ToClient(player.Connection, heartbeat);
+            _outputQueue.Enqueue(outgoing);
+        }
+    }
+
+    private void CheckDeadConnections(float deltaTime)
+    {
+        _deadConnectionTimer += deltaTime;
+
+        if (_deadConnectionTimer < _deadConnectionCheckInterval) return;
+        _deadConnectionTimer = 0;
+
+        var deadConnections = _zoneManager
+            .GetAllServerPlayers()
+            .Where(p => p.Connection.IsConnectionDead(_connectionTimeout))
+            .Select(p => p.Connection.Id)
+            .ToList();
+
+        foreach (Guid connectionId in deadConnections)
+        {
+            _log.Warn("Connection {ConnectionId} timed out", connectionId);
+            _disconnectQueue.Enqueue((connectionId, "Connection timeout"));
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // OUTPUT PHASE
+    // ───────────────────────────────────────────────────────────────
+
+    private void ProcessOutputQueue()
+    {
+        while (_outputQueue.TryDequeue(out OutgoingMessage outgoing))
+            try
+            {
+                SendMessage(outgoing);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error sending message {Type}", outgoing.Type);
+            }
+    }
+
+    private void SendMessage(OutgoingMessage outgoing)
+    {
+        switch (outgoing.Type)
+        {
+            case OutgoingMessageType.ToClient:
+                SendToClient(outgoing);
+                break;
+
+            case OutgoingMessageType.BroadcastToZone:
+                BroadcastToZone(outgoing);
+                break;
+
+            case OutgoingMessageType.BroadcastToZoneExcept:
+                BroadcastToZoneExcept(outgoing);
+                break;
+
+            case OutgoingMessageType.BroadcastToNearby:
+                BroadcastToNearby(outgoing);
+                break;
+
+            case OutgoingMessageType.BroadcastToParty:
+                BroadcastToParty(outgoing, true);
+                break;
+
+            case OutgoingMessageType.BroadcastToPartyExcept:
+                BroadcastToParty(outgoing, false);
+                break;
+
+            case OutgoingMessageType.BroadcastToGuild:
+                BroadcastToGuild(outgoing, true);
+                break;
+
+            case OutgoingMessageType.BroadcastToGuildExcept:
+                BroadcastToGuild(outgoing, false);
+                break;
+
+            case OutgoingMessageType.BroadcastToAll:
+                BroadcastToAll(outgoing);
+                break;
+
+            default:
+                _log.Warn("Unknown outgoing message type: {Type}", outgoing.Type);
+                break;
+        }
+    }
+
+    private void SendToClient(OutgoingMessage outgoing)
+    {
+        if (outgoing.TargetConnection is { IsConnected: true })
+            _networkServer.Send(outgoing.TargetConnection, outgoing.Message);
+    }
+
+    private void BroadcastToZone(OutgoingMessage outgoing)
+    {
+        if (!outgoing.ZoneId.HasValue) return;
+
+        IEnumerable<ServerPlayerCharacter> players = _zoneManager.GetServerPlayersInZone(outgoing.ZoneId.Value);
+
+        foreach (ServerPlayerCharacter player in players.Where(p => p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
+    }
+
+    private void BroadcastToZoneExcept(OutgoingMessage outgoing)
+    {
+        if (!outgoing.ZoneId.HasValue) return;
+
+        IEnumerable<ServerPlayerCharacter> players = _zoneManager.GetServerPlayersInZone(outgoing.ZoneId.Value);
+
+        foreach (ServerPlayerCharacter player in players.Where(p => p.Connection.Id != outgoing.ExcludeConnectionId &&
+                                                                    p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
+    }
+
+    private void BroadcastToNearby(OutgoingMessage outgoing)
+    {
+        if (!outgoing.ZoneId.HasValue || outgoing.Origin == null || !outgoing.Radius.HasValue)
+            return;
+
+        IEnumerable<ServerPlayerCharacter> players = _zoneManager.GetServerPlayersInZone(outgoing.ZoneId.Value);
+        Position? origin = outgoing.Origin;
+        float radiusSquared = outgoing.Radius.Value * outgoing.Radius.Value;
+
+        foreach (ServerPlayerCharacter player in players.Where(p =>
+                     p.Connection.IsConnected && p.Connection.Id != outgoing.ExcludeConnectionId))
+        {
+            Position pos = player.Entity.Position;
+            float dx = pos.X - origin.X;
+            float dy = pos.Y - origin.Y;
+            float distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared <= radiusSquared) _networkServer.Send(player.Connection, outgoing.Message);
+        }
+    }
+
+    private void BroadcastToParty(OutgoingMessage outgoing, bool includeExcluded)
+    {
+        if (!outgoing.PartyId.HasValue) return;
+
+        IEnumerable<ServerPlayerCharacter> partyMembers = _zoneManager
+            .GetAllServerPlayers()
+            .Where(p => p.PartyId == outgoing.PartyId.Value);
+
+        foreach (ServerPlayerCharacter player in partyMembers)
+        {
+            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
                 continue;
 
-            var zoneState = new ZoneState(
-                timestamp,
-                zone.ZoneId,
-                ZoneManager.GetAllEntities(zone.ZoneId)
+            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
+        }
+    }
+
+    private void BroadcastToGuild(OutgoingMessage outgoing, bool includeExcluded)
+    {
+        if (!outgoing.GuildId.HasValue) return;
+
+        IEnumerable<ServerPlayerCharacter> guildMembers = _zoneManager
+            .GetAllServerPlayers()
+            .Where(p => p.GuildId == outgoing.GuildId.Value);
+
+        foreach (ServerPlayerCharacter player in guildMembers.Where(p =>
+                     includeExcluded && p.Connection.Id != outgoing.ExcludeConnectionId && p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
+    }
+
+    private void BroadcastToAll(OutgoingMessage outgoing)
+    {
+        IEnumerable<ServerPlayerCharacter> allPlayers = _zoneManager.GetAllServerPlayers();
+
+        foreach (ServerPlayerCharacter player in allPlayers.Where(p => p.Connection.IsConnected))
+            _networkServer.Send(player.Connection, outgoing.Message);
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // DISCONNECT PHASE
+    // ───────────────────────────────────────────────────────────────
+
+    private void ProcessDisconnectQueue()
+    {
+        while (_disconnectQueue.TryDequeue(out (Guid ConnectionId, string? Reason) disconnect))
+            try
+            {
+                ProcessDisconnect(disconnect.ConnectionId, disconnect.Reason);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error processing disconnect for {ConnectionId}", disconnect.ConnectionId);
+            }
+    }
+
+    private void ProcessDisconnect(Guid connectionId, string? reason)
+    {
+        // Remove player from ZoneManager
+        ServerPlayerCharacter? player = _zoneManager.RemovePlayerByConnectionId(connectionId);
+
+        if (player != null)
+        {
+            _log.Info("Player {Name} removed from zone {ZoneId}:  {Reason}",
+                player.Name, player.RuntimeId.ZoneId, reason ?? "Unknown");
+
+            // Broadcast to zone: Player has left
+            var leftMessage = new PlayerLeftZone(player.Entity);
+            var outgoing = OutgoingMessage.BroadcastToZoneExcept(
+                leftMessage,
+                player.RuntimeId.ZoneId,
+                connectionId
             );
-
-            await BroadcastToPlayersAsync(playersInZone, zoneState);
-
-            _log.Debug("Full ZoneState for Zone {ZoneId} → {PlayerCount} players at tick {Tick}",
-                zone.ZoneId, playersInZone.Count, CurrentTick);
+            _outputQueue.Enqueue(outgoing);
         }
+
+        // Close connection in NetworkServer
+        _networkServer.RemoveConnection(connectionId, reason);
     }
 
-    /// <summary>
-    ///     Broadcasts position updates only for dirty entities to relevant zones.
-    /// </summary>
-    private async Task BroadcastDirtyEntitiesAsync(long timestamp)
+    private void DisconnectAllPlayers(string reason)
     {
-        // Collect dirty Entities and group them by Zone
-        IEnumerable<IGrouping<ushort, IEntity>> entitiesByZone = _dirtyEntities
-            .Select(persistentId =>
-                ZoneManager.TryGetEntityByPersistentId(persistentId, out IEntity? entity) ? entity : null)
-            .OfType<IEntity>()
-            .GroupBy(e => e.RuntimeId.ZoneId);
+        var allPlayers = _zoneManager.GetAllServerPlayers().ToList();
 
-        foreach (IGrouping<ushort, IEntity> zoneGroup in entitiesByZone)
-        {
-            ushort zoneId = zoneGroup.Key;
-            var playersInZone = ZoneManager.GetServerPlayersInZone(zoneId).ToList();
-
-            if (playersInZone.Count == 0)
-                continue;
-
-            foreach (IEntity entity in zoneGroup)
+        foreach (ServerPlayerCharacter player in allPlayers)
+            try
             {
-                var positionBroadcast = new PositionBroadcast(
-                    timestamp,
-                    entity.PersistentId,
-                    entity.Position
-                );
+                // Send disconnect message
+                var disconnectMsg = new Disconnect
+                {
+                    Reason = DisconnectReason.ServerShutdown,
+                    Message = reason
+                };
+                _networkServer.Send(player.Connection, disconnectMsg);
 
-                await BroadcastToPlayersAsync(playersInZone, positionBroadcast);
+                // Remove from ZoneManager
+                _zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
+
+                // Close connection
+                _networkServer.RemoveConnection(player.Connection.Id, reason);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Error disconnecting player {Name}", player.Name);
             }
 
-            _log.Debug("Delta broadcast for Zone {ZoneId}:  {EntityCount} entities → {PlayerCount} players",
-                zoneId, zoneGroup.Count(), playersInZone.Count);
-        }
+        _log.Info("Disconnected {Count} players:  {Reason}", allPlayers.Count, reason);
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Public Utilities
+    // ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    ///     Sends a server announcement to all players.
+    /// </summary>
+    /// <param name="message">The announcement message text.</param>
+    /// <param name="type">The type/severity of the announcement (Info, Warning, etc.).</param>
+    public void BroadcastAnnouncement(string message, AnnouncementType type = AnnouncementType.Info)
+    {
+        var announcement = new ServerAnnouncement
+        {
+            Message = message,
+            AnnouncementType = type,
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+
+        _outputQueue.Enqueue(OutgoingMessage.BroadcastToAll(announcement));
+        _log.Info("Server announcement:  {Message}", message);
     }
 
     /// <summary>
-    ///     Broadcasts a message to a specific list of players.
+    ///     Gets current server statistics including tick performance and queue sizes.
     /// </summary>
-    private async Task BroadcastToPlayersAsync(IEnumerable<ServerPlayer> players, INetworkMessage message)
+    /// <returns>A ServerStats object containing current metrics.</returns>
+    public ServerStats GetStats()
     {
-        IEnumerable<Task> tasks = players.Select(p => NetworkServer.SendToClientAsync(p.Connection, message));
-        await Task.WhenAll(tasks);
+        return new ServerStats
+        {
+            TickCount = TickCount,
+            Uptime = Uptime,
+            TargetTickRate = TargetTickRate,
+            LastTickDurationMs = LastTickDurationMs,
+            AverageTickDurationMs = AverageTickDurationMs,
+            PlayerCount = _zoneManager.GetAllServerPlayers().Count(),
+            ConnectionCount = _networkServer.ConnectionCount,
+            InputQueueSize = _inputQueue.Count,
+            OutputQueueSize = _outputQueue.Count,
+            CompletionQueueSize = _completionQueue.Count
+        };
     }
-
-    private void OnClientConnected(object? sender, ClientConnectedEventArgs e)
-    {
-        _log.Info("Client {ClientId} connected from {EndPoint}",
-            e.ClientId, e.RemoteEndPoint);
-
-        // No Player yet - only after LoginRequest
-    }
-
-    private void OnClientDisconnected(object? sender, ClientDisconnectedEventArgs e)
-    {
-        _log.Info("Client {ClientId} disconnected:  {Reason}",
-            e.ClientId, e.Reason);
-
-        // Remove Player from Zone via ZoneManager
-        ServerPlayer? serverPlayer = ZoneManager.RemovePlayerByConnectionId(e.ClientId);
-
-        if (serverPlayer == null) return;
-        _log.Info("Player {PlayerName} removed from zone", serverPlayer.Entity.DisplayName);
-
-        // Notify other clients via pending broadcasts
-        var playerLeft = new PlayerLeftZone(serverPlayer.Entity);
-        _outgoingMessages.Enqueue(OutgoingMessage.BroadcastToServer(playerLeft));
-    }
-
-    private void OnMessageReceived(object? sender, MessageReceivedEventArgs e) => _incomingMessages.Enqueue(e);
-
-    private void OnNetworkError(object? sender, NetworkErrorEventArgs e)
-    {
-        if (e.ClientId.HasValue)
-            _log.Error("Network error for client {ClientId} in {Context}:  {Error}",
-                e.ClientId, e.Context, e.Exception.Message);
-        else
-            _log.Error("Server network error in {Context}: {Error}",
-                e.Context, e.Exception.Message);
-    }
-
-    /// <summary>
-    ///     Mark an entity as dirty (changed) for delta broadcasts.
-    ///     Uses PersistentId for stability across zone transfers.
-    /// </summary>
-    /// <param name="persistentId">The PersistentId of the entity.</param>
-    public void MarkEntityDirty(Guid persistentId) => _dirtyEntities.Add(persistentId);
-
-    /// <summary>
-    ///     Mark an entity as dirty (changed) for delta broadcasts.
-    /// </summary>
-    /// <param name="entity">The entity to mark as dirty.</param>
-    public void MarkEntityDirty(IEntity entity) => _dirtyEntities.Add(entity.PersistentId);
-
-    /// <summary>
-    ///     Queue an event broadcast to be sent in the next OutputPhase.
-    /// </summary>
-    /// <param name="message">The message to broadcast.</param>
-    public void QueueOutgoingMessage(OutgoingMessage message) => _outgoingMessages.Enqueue(message);
 }

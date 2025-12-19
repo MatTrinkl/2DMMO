@@ -1,100 +1,51 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Mmo.Server.Networking;
-using Mmo.Server.Networking.NetworkEvents;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 
 namespace Mmo.Server.Tests.Helpers;
 
 /// <summary>
-///     A mock implementation of INetworkServer for testing.
+///     A mock implementation of NetworkServer for testing.
 ///     Tracks sent messages and allows simulation of network events.
+///     Uses the new event-based pattern from the refactored architecture.
 /// </summary>
-public class MockNetworkServer : INetworkServer
+public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) : NetworkServer(log, port)
 {
-    private readonly List<ClientConnection> _connectedClients = new();
-    private readonly Dictionary<Guid, ClientConnection> _mockConnections = new();
-    private bool _isDisposed;
+    private readonly Dictionary<Guid, ClientConnection> _connections = new();
+    private bool _isDisposed = isDisposed;
 
     public List<(ClientConnection Client, INetworkMessage Message)> SentMessages { get; } = new();
-    public List<INetworkMessage> BroadcastMessages { get; } = new();
 
-    public List<(INetworkMessage Message, ClientConnection ExcludedClient)> BroadcastExceptMessages { get; } = new();
+    public new int ConnectionCount => _connections.Count;
 
-    public List<ClientConnection> KickedClients { get; } = new();
+    // ══════════════════════════════════════════════════════════
+    // METHODS CALLED BY GAMESERVER
+    // ══════════════════════════════════════════════════════════
 
-    public int ClientCount => _connectedClients.Count;
-    public bool IsListening { get; set; } = true;
-
-    public event EventHandler<ClientConnectedEventArgs>? ClientConnected;
-    public event EventHandler<ClientDisconnectedEventArgs>? ClientDisconnected;
-    public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
-    public event EventHandler<NetworkErrorEventArgs>? ErrorOccurred;
-
-    public Task RunAsync(CancellationToken cancellationToken)
-    {
-        // Mock implementation - does nothing but allows cancellation
-        return Task.Delay(-1, cancellationToken).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnCanceled);
-    }
-
-    public Task SendToClientAsync(ClientConnection client, INetworkMessage message)
+    public new void Send(ClientConnection connection, INetworkMessage message)
     {
         if (_isDisposed)
             throw new ObjectDisposedException(nameof(MockNetworkServer));
 
-        SentMessages.Add((client, message));
-        return Task.CompletedTask;
+        SentMessages.Add((connection, message));
     }
 
-    public Task BroadcastAsync(INetworkMessage message)
+    public new bool TryGetConnection(Guid connectionId, out ClientConnection? connection) =>
+        _connections.TryGetValue(connectionId, out connection);
+
+    public new void RemoveConnection(Guid connectionId, string? reason)
     {
-        if (_isDisposed)
-            throw new ObjectDisposedException(nameof(MockNetworkServer));
-
-        BroadcastMessages.Add(message);
-        return Task.CompletedTask;
+        if (_connections.Remove(connectionId, out ClientConnection? connection))
+            // Trigger disconnect event
+            RaiseOnClientDisconnected(connection, reason);
     }
 
-    public Task BroadcastExceptAsync(INetworkMessage message, ClientConnection excludeClient)
-    {
-        if (_isDisposed)
-            throw new ObjectDisposedException(nameof(MockNetworkServer));
-
-        BroadcastExceptMessages.Add((message, excludeClient));
-        return Task.CompletedTask;
-    }
-
-    public Task KickClientAsync(ClientConnection client)
-    {
-        if (_isDisposed)
-            throw new ObjectDisposedException(nameof(MockNetworkServer));
-
-        KickedClients.Add(client);
-        _connectedClients.Remove(client);
-        return Task.CompletedTask;
-    }
-
-    public IEnumerable<Guid> GetConnectedClientIds() => _connectedClients.Select(c => c.Id).ToList();
-
-    public bool IsClientConnected(ClientConnection client) => _connectedClients.Contains(client);
-
-    public void AssociatePlayer(ClientConnection connection, Guid playerId)
-    {
-        // Mock implementation - track association if needed for tests
-        connection.PlayerId = playerId;
-    }
-
-    public void RemovePlayer(ClientConnection connection)
-    {
-        // Mock implementation - track removal if needed for tests
-        connection.PlayerId = Guid.Empty;
-    }
-
-    public void Dispose()
+    public new void Dispose()
     {
         _isDisposed = true;
-        _connectedClients.Clear();
+        _connections.Clear();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -102,31 +53,25 @@ public class MockNetworkServer : INetworkServer
     // ══════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Creates a mock ClientConnection for testing.
-    /// </summary>
-    public ClientConnection CreateMockClient(Guid? clientId = null)
-    {
-        // Create a mock ClientConnection - we'll need to use reflection or a test-friendly approach
-        // For now, let's return the clientId which the tests can use
-        // This is a limitation - we can't easily create ClientConnection without a real TcpClient
-        throw new NotImplementedException("Use SimulateClientConnected with ClientConnection instead");
-    }
-
-    /// <summary>
     ///     Simulates a client connecting to the server.
     /// </summary>
     public void SimulateClientConnected(Guid clientId, string remoteEndPoint = "127.0.0.1:12345")
     {
-        // For backwards compatibility, we track by GUID but the actual implementation uses ClientConnection
-        // This is a test helper limitation
-        ClientConnected?.Invoke(this, new ClientConnectedEventArgs(clientId, remoteEndPoint));
+        ClientConnection connection = GetOrCreateMockConnection(clientId);
+        RaiseOnClientConnected(connection);
     }
 
     /// <summary>
     ///     Simulates a client disconnecting from the server.
     /// </summary>
-    public void SimulateClientDisconnected(Guid clientId, DisconnectReason reason) =>
-        ClientDisconnected?.Invoke(this, new ClientDisconnectedEventArgs(clientId, reason));
+    public void SimulateClientDisconnected(Guid clientId, string? reason = null)
+    {
+        if (_connections.TryGetValue(clientId, out ClientConnection? connection))
+        {
+            RaiseOnClientDisconnected(connection, reason);
+            _connections.Remove(clientId);
+        }
+    }
 
     /// <summary>
     ///     Simulates receiving a message from a client.
@@ -134,38 +79,69 @@ public class MockNetworkServer : INetworkServer
     public void SimulateMessageReceived(Guid clientId, INetworkMessage message)
     {
         ClientConnection connection = GetOrCreateMockConnection(clientId);
-        MessageReceived?.Invoke(this, new MessageReceivedEventArgs(connection, message, DateTime.UtcNow));
+        MessageType messageType = message.Type;
+        RaiseOnMessageReceived(connection, messageType, message);
     }
 
     /// <summary>
-    ///     Simulates a network error occurring.
+    ///     Raises the OnMessageReceived event using reflection to access the base class event.
     /// </summary>
-    public void SimulateNetworkError(Guid? clientId, Exception exception, string context = "Test error") =>
-        ErrorOccurred?.Invoke(this, new NetworkErrorEventArgs(clientId, exception, context));
+    private void RaiseOnMessageReceived(ClientConnection connection, MessageType messageType, INetworkMessage message)
+    {
+        FieldInfo? eventField = typeof(NetworkServer).GetField("OnMessageReceived",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        if (eventField == null)
+            throw new InvalidOperationException("Could not find OnMessageReceived event field via reflection");
+
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection, messageType, message);
+    }
+
+    /// <summary>
+    ///     Raises the OnClientConnected event using reflection to access the base class event.
+    /// </summary>
+    private void RaiseOnClientConnected(ClientConnection connection)
+    {
+        FieldInfo? eventField = typeof(NetworkServer).GetField("OnClientConnected",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        if (eventField == null)
+            throw new InvalidOperationException("Could not find OnClientConnected event field via reflection");
+
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection);
+    }
+
+    /// <summary>
+    ///     Raises the OnClientDisconnected event using reflection to access the base class event.
+    /// </summary>
+    private void RaiseOnClientDisconnected(ClientConnection connection, string? reason)
+    {
+        FieldInfo? eventField = typeof(NetworkServer).GetField("OnClientDisconnected",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        if (eventField == null)
+            throw new InvalidOperationException("Could not find OnClientDisconnected event field via reflection");
+
+        var eventDelegate = eventField.GetValue(this) as MulticastDelegate;
+        eventDelegate?.DynamicInvoke(connection, reason);
+    }
 
     /// <summary>
     ///     Clears all tracked messages and events.
     /// </summary>
-    public void Clear()
-    {
-        SentMessages.Clear();
-        BroadcastMessages.Clear();
-        BroadcastExceptMessages.Clear();
-        KickedClients.Clear();
-    }
+    public void Clear() => SentMessages.Clear();
 
     /// <summary>
     ///     Gets or creates a mock ClientConnection for the given Guid.
     /// </summary>
     public ClientConnection GetOrCreateMockConnection(Guid clientId)
     {
-        if (!_mockConnections.TryGetValue(clientId, out ClientConnection? connection))
+        if (!_connections.TryGetValue(clientId, out ClientConnection? connection))
         {
-            // Create a mock using System.Net.Sockets.TcpClient mock
-            // Since we can't easily mock this, we'll use reflection to create a ClientConnection
-            // For testing purposes, we'll create a null-safe version
             connection = CreateMockClientConnection(clientId);
-            _mockConnections[clientId] = connection;
+            _connections[clientId] = connection;
         }
 
         return connection;
@@ -182,6 +158,16 @@ public class MockNetworkServer : INetworkServer
         FieldInfo? idField = typeof(ClientConnection).GetField("<Id>k__BackingField",
             BindingFlags.Instance | BindingFlags.NonPublic);
         idField?.SetValue(connection, clientId);
+
+        // Set RemoteEndPoint using reflection
+        FieldInfo? endpointField = typeof(ClientConnection).GetField("<RemoteEndPoint>k__BackingField",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        endpointField?.SetValue(connection, "127.0.0.1:12345");
+
+        // Set ConnectedAt using reflection
+        FieldInfo? connectedAtField = typeof(ClientConnection).GetField("<ConnectedAt>k__BackingField",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        connectedAtField?.SetValue(connection, DateTimeOffset.UtcNow);
 
         return connection;
     }

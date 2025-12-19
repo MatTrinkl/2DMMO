@@ -1,10 +1,13 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
-using Mmo.Shared.Enums;
+using MessagePack;
+using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Entities;
 
+[Union(0, typeof(PlayerEntity))]
+[Union(1, typeof(NpcEntity))]
 public interface IEntity
 {
     /// <summary>
@@ -26,7 +29,6 @@ public interface IEntity
     bool IsTrulyPersistent { get; }
 
     EntityType Type { get; }
-    EntityRole Role { get; }
     Position Position { get; set; }
 
     /// <summary>

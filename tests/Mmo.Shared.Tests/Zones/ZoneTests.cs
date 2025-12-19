@@ -36,7 +36,7 @@ public class ZoneTests : IDisposable
     public void AddEntity_AssignsCorrectEntityId()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50));
 
         zone.AddEntity(player);
 
@@ -46,25 +46,12 @@ public class ZoneTests : IDisposable
     }
 
     [Fact]
-    public void AddEntity_CallsSetEntityId()
-    {
-        var zone = new Zone(5, "test", new ZoneBounds(0, 0, 100, 100));
-        var mob = new MobEntity("Goblin", new Position(25, 25));
-
-        zone.AddEntity(mob);
-
-        // Verify SetEntityId was called by checking the RuntimeId was set
-        Assert.Equal(0, mob.RuntimeId.LocalId);
-        Assert.Equal(5, mob.RuntimeId.ZoneId);
-    }
-
-    [Fact]
     public void AddEntity_MultipleEntities_AssignsSequentialIds()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
-        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
-        var player3 = new PlayerEntity(Guid.NewGuid(), "Player3", new Position(30, 30));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20));
+        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30));
 
         zone.AddEntity(player1);
         zone.AddEntity(player2);
@@ -97,7 +84,7 @@ public class ZoneTests : IDisposable
     public void RemoveEntity_RemovesFromDictionary()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
         int entityId = player.RuntimeId.LocalId;
 
@@ -120,9 +107,9 @@ public class ZoneTests : IDisposable
     public void RemoveEntity_ThenAddNewEntity_ReusesEntityId()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
-        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
-        var player3 = new PlayerEntity(Guid.NewGuid(), "Player3", new Position(30, 30));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20));
+        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30));
 
         zone.AddEntity(player1); // Gets ID 0
         zone.AddEntity(player2); // Gets ID 1
@@ -131,7 +118,7 @@ public class ZoneTests : IDisposable
         int reusedId = player1.RuntimeId.LocalId;
         zone.RemoveEntity(reusedId); // Free ID 0
 
-        var player4 = new PlayerEntity(Guid.NewGuid(), "Player4", new Position(40, 40));
+        var player4 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player4", new Position(40, 40));
         zone.AddEntity(player4); // Should reuse ID 0
 
         Assert.Equal(reusedId, player4.RuntimeId.LocalId);
@@ -142,7 +129,7 @@ public class ZoneTests : IDisposable
     public void HasEntity_WithEntity_ReturnsTrue()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
 
         Assert.True(zone.HasEntity(player));
@@ -152,7 +139,7 @@ public class ZoneTests : IDisposable
     public void HasEntity_WithEntityId_ReturnsTrue()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
 
         Assert.True(zone.HasEntity(player.RuntimeId.LocalId));
@@ -162,7 +149,7 @@ public class ZoneTests : IDisposable
     public void HasEntity_NotInZone_ReturnsFalse()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
 
         Assert.False(zone.HasEntity(player));
     }
@@ -173,41 +160,6 @@ public class ZoneTests : IDisposable
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
 
         Assert.Throws<ArgumentNullException>(() => zone.HasEntity(null!));
-    }
-
-    [Fact]
-    public void GetPlayers_ReturnsOnlyPlayerEntities()
-    {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player1 = new PlayerEntity(Guid.NewGuid(), "Player1", new Position(10, 10));
-        var player2 = new PlayerEntity(Guid.NewGuid(), "Player2", new Position(20, 20));
-        var mob = new MobEntity("Goblin", new Position(30, 30));
-
-        zone.AddEntity(player1);
-        zone.AddEntity(mob);
-        zone.AddEntity(player2);
-
-        var players = zone.GetPlayers().ToList();
-
-        Assert.Equal(2, players.Count);
-        Assert.Contains(player1, players);
-        Assert.Contains(player2, players);
-        Assert.DoesNotContain(mob, players.Cast<IEntity>());
-    }
-
-    [Fact]
-    public void GetPlayers_NoPlayers_ReturnsEmpty()
-    {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var mob1 = new MobEntity("Goblin", new Position(10, 10));
-        var mob2 = new MobEntity("Orc", new Position(20, 20));
-
-        zone.AddEntity(mob1);
-        zone.AddEntity(mob2);
-
-        var players = zone.GetPlayers().ToList();
-
-        Assert.Empty(players);
     }
 
     [Fact]
@@ -250,7 +202,7 @@ public class ZoneTests : IDisposable
     public void Entities_IsAccessible()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), "Player", new Position(50, 50));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
         zone.AddEntity(player);
 
         Assert.NotEmpty(zone.Entities);

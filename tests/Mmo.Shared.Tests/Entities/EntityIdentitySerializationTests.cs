@@ -25,7 +25,7 @@ public class EntityIdentitySerializationTests
     [Fact]
     public void PlayerEntity_Serialization_PreservesRuntimeIdWithPrefabId()
     {
-        var player = new PlayerEntity(Guid.NewGuid(), "TestPlayer", new Position(10, 20));
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(10, 20));
 
         // Verify PrefabId is set correctly before serialization
         Assert.Equal(PrefabIds.PlayerDefault, player.RuntimeId.PrefabId);

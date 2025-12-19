@@ -64,7 +64,7 @@ public static class ZoneLoader
     public static Zone CreateZoneFromConfig(ZoneConfig config)
     {
         var bounds = ZoneBounds.FromConfig(config.Bounds);
-        var newZone = new Zone(config.ZoneId, config.ZoneName, bounds);
+        var newZone = new Zone(config.ZoneId, config.InternalName, bounds);
         return newZone;
     }
 }

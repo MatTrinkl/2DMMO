@@ -21,8 +21,5 @@ public class IdRegistryFixture : IDisposable
         IdRegistry.Instance.Clear();
     }
 
-    public void Dispose()
-    {
-        IdRegistry.Instance.Clear();
-    }
+    public void Dispose() => IdRegistry.Instance.Clear();
 }

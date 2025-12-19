@@ -23,13 +23,13 @@ public class ZoneManager
     ///     ConnectionId → ServerPlayer (Session-stabil, ändert sich nie während der Verbindung)
     ///     Note: This is server-specific (ServerPlayer wraps PlayerEntity with Connection info)
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, ServerPlayer> _playersByConnectionId = new();
+    private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByConnectionId = new();
 
     /// <summary>
-    ///     PersistentId → ServerPlayer (Permanent-stabil, ändert sich nie - auch nicht bei Zonenwechsel)
-    ///     Note: This is server-specific (ServerPlayer wraps PlayerEntity with Connection info)
+    ///     PersistentId → ServerPlayer (permanent and stable, never changes - even during zone transfer).
+    ///     Note: This is server-specific (ServerPlayer wraps PlayerEntity with Connection info).
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, ServerPlayer> _playersByPersistentId = new();
+    private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByPersistentId = new();
 
     /// <summary>
     ///     All Zones of the world. Access them with <see cref="Zone.ZoneId" />.
@@ -102,24 +102,24 @@ public class ZoneManager
     /// </summary>
     public IEnumerable<Zone> GetAllZones() => _zones.Values;
 
-    public PlayerEntity SpawnPlayer(Guid connectionId, string username)
+    public PlayerEntity SpawnPlayer(Guid connectionId, Guid accountId, string username)
     {
         ArgumentNullException.ThrowIfNull(username);
         //TODO: CharacterId and Position read from DB, currently its the connectionId and always spawn at 0,0
-        return new PlayerEntity(connectionId, username, new Position(0, 0));
+        return new PlayerEntity(connectionId, accountId, username, new Position(0, 0));
     }
 
     /// <summary>
     ///     Adds a player to a zone.
     ///     Note: Caller is responsible for registering entity and connection in IdRegistry.
     /// </summary>
-    /// <param name="serverPlayer">The server player wrapper.</param>
+    /// <param name="serverPlayerCharacter">The server player wrapper.</param>
     /// <param name="zoneId">The zone to add the player to.  Defaults to the default zone.</param>
     /// <exception cref="InvalidOperationException">Thrown when zone doesn't exist.</exception>
     /// <exception cref="ArgumentNullException">Thrown when serverPlayer is null.</exception>
-    public void AddPlayer(ServerPlayer serverPlayer, ushort? zoneId = null)
+    public void AddPlayer(ServerPlayerCharacter serverPlayerCharacter, ushort? zoneId = null)
     {
-        ArgumentNullException.ThrowIfNull(serverPlayer);
+        ArgumentNullException.ThrowIfNull(serverPlayerCharacter);
 
         ushort targetZoneId = zoneId ?? _defaultZoneId;
         Zone? zone = GetZone(targetZoneId);
@@ -128,11 +128,11 @@ public class ZoneManager
             throw new InvalidOperationException($"Zone {targetZoneId} does not exist.");
 
         // Add to Zone (assigns EntityId via IdRegistry)
-        zone.AddEntity(serverPlayer.Entity);
+        zone.AddEntity(serverPlayerCharacter.Entity);
 
         // Add to server-specific ServerPlayer lookups
-        _playersByConnectionId.TryAdd(serverPlayer.Connection.Id, serverPlayer);
-        _playersByPersistentId.TryAdd(serverPlayer.Entity.PersistentId, serverPlayer);
+        _playersByConnectionId.TryAdd(serverPlayerCharacter.Connection.Id, serverPlayerCharacter);
+        _playersByPersistentId.TryAdd(serverPlayerCharacter.Entity.PersistentId, serverPlayerCharacter);
     }
 
     /// <summary>
@@ -141,9 +141,9 @@ public class ZoneManager
     /// </summary>
     /// <param name="connectionId">The connection ID of the player to remove.</param>
     /// <returns>The removed player, or null if not found.</returns>
-    public ServerPlayer? RemovePlayerByConnectionId(Guid connectionId)
+    public ServerPlayerCharacter? RemovePlayerByConnectionId(Guid connectionId)
     {
-        if (!_playersByConnectionId.TryRemove(connectionId, out ServerPlayer? serverPlayer))
+        if (!_playersByConnectionId.TryRemove(connectionId, out ServerPlayerCharacter? serverPlayer))
             return null;
 
         // Remove from server-specific lookups
@@ -163,9 +163,9 @@ public class ZoneManager
     /// </summary>
     /// <param name="persistentId">The persistent ID of the player to remove.</param>
     /// <returns>The removed player, or null if not found.</returns>
-    public ServerPlayer? RemovePlayerByPersistentId(Guid persistentId)
+    public ServerPlayerCharacter? RemovePlayerByPersistentId(Guid persistentId)
     {
-        if (!_playersByPersistentId.TryRemove(persistentId, out ServerPlayer? serverPlayer))
+        if (!_playersByPersistentId.TryRemove(persistentId, out ServerPlayerCharacter? serverPlayer))
             return null;
 
         // Remove from other lookups
@@ -185,7 +185,7 @@ public class ZoneManager
     /// <param name="connectionId">The connection ID to search for.</param>
     /// <param name="player">The found player, or null. </param>
     /// <returns>True if the player was found. </returns>
-    public bool TryGetPlayerByConnectionId(Guid connectionId, [NotNullWhen(true)] out ServerPlayer? player) =>
+    public bool TryGetPlayerByConnectionId(Guid connectionId, [NotNullWhen(true)] out ServerPlayerCharacter? player) =>
         _playersByConnectionId.TryGetValue(connectionId, out player);
 
     /// <summary>
@@ -194,19 +194,19 @@ public class ZoneManager
     /// <param name="persistentId">The persistent ID to search for.</param>
     /// <param name="player">The found player, or null.</param>
     /// <returns>True if the player was found.</returns>
-    public bool TryGetPlayerByPersistentId(Guid persistentId, [NotNullWhen(true)] out ServerPlayer? player) =>
+    public bool TryGetPlayerByPersistentId(Guid persistentId, [NotNullWhen(true)] out ServerPlayerCharacter? player) =>
         _playersByPersistentId.TryGetValue(persistentId, out player);
 
     /// <summary>
     ///     Gets all server players (across all zones).
     /// </summary>
-    public IEnumerable<ServerPlayer> GetAllServerPlayers() => _playersByConnectionId.Values;
+    public IEnumerable<ServerPlayerCharacter> GetAllServerPlayers() => _playersByConnectionId.Values;
 
     /// <summary>
     ///     Gets all server players in a specific zone.
     /// </summary>
     /// <param name="zoneId">The zone ID to filter by.</param>
-    public IEnumerable<ServerPlayer> GetServerPlayersInZone(ushort? zoneId)
+    public IEnumerable<ServerPlayerCharacter> GetServerPlayersInZone(ushort? zoneId)
     {
         return GetAllServerPlayers()
             .Where(p => p.Entity.RuntimeId.ZoneId == zoneId);
@@ -360,17 +360,17 @@ public class ZoneManager
     /// </summary>
     /// <param name="zoneId">The zone ID.</param>
     /// <returns>List of entities, or empty list if zone not found.</returns>
-    public List<Entity> GetAllEntities(ushort zoneId)
+    public List<IEntity> GetAllEntities(ushort zoneId)
     {
         Zone? zone = GetZone(zoneId);
-        return zone?.Entities.Values.OfType<Entity>().ToList() ?? [];
+        return zone?.Entities.Values.ToList() ?? [];
     }
 
     /// <summary>
     ///     Gets all entities from the default zone.
     /// </summary>
     /// <returns>List of entities. </returns>
-    public List<Entity> GetAllEntitiesFromDefaultZone() => GetAllEntities(_defaultZoneId);
+    public List<IEntity> GetAllEntitiesFromDefaultZone() => GetAllEntities(_defaultZoneId);
 
     /// <summary>
     ///     Gets all player entities from a specific zone (shared PlayerEntity, not ServerPlayer).
@@ -433,7 +433,7 @@ public class ZoneManager
     /// <returns>True if the transfer was successful.</returns>
     public bool TransferPlayerByConnectionId(Guid connectionId, ushort toZoneId)
     {
-        if (!TryGetPlayerByConnectionId(connectionId, out ServerPlayer? serverPlayer))
+        if (!TryGetPlayerByConnectionId(connectionId, out ServerPlayerCharacter? serverPlayer))
             return false;
 
         ushort fromZoneId = serverPlayer.Entity.RuntimeId.ZoneId;
@@ -453,7 +453,7 @@ public class ZoneManager
     /// <returns>True if the transfer was successful.</returns>
     public bool TransferPlayerByPersistentId(Guid persistentId, ushort toZoneId)
     {
-        if (!TryGetPlayerByPersistentId(persistentId, out ServerPlayer? serverPlayer))
+        if (!TryGetPlayerByPersistentId(persistentId, out ServerPlayerCharacter? serverPlayer))
             return false;
 
         ushort fromZoneId = serverPlayer.Entity.RuntimeId.ZoneId;
