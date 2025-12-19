@@ -15,7 +15,8 @@ namespace Mmo.Server.Tests.Helpers;
 
 public static class TestHelpers
 {
-    private static readonly MockNetworkServer _mockNetworkServer;
+    private static readonly MockLog _mockLog = new();
+    private static readonly MockNetworkServer _mockNetworkServer = new(_mockLog, true);
 
     /// <summary>
     ///     Creates a GameServer instance for testing with all required dependencies.

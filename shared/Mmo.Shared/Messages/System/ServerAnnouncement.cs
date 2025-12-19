@@ -14,6 +14,7 @@ public class ServerAnnouncement : ITimestampedMessage
     [SerializationConstructor]
     public ServerAnnouncement()
     {
+        Message = null!;
     }
 
     /// <summary>
