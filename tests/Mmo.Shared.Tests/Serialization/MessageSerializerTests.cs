@@ -431,13 +431,13 @@ public class MessageSerializerTests
         // Create a message with corrupted data
         var original = new LoginRequest("user", "pass");
         byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
-        
+
         // Corrupt the data by setting the MessageType byte to an invalid value (byte.MaxValue = 255)
         // This causes MessagePack to fail when trying to deserialize the enum
         serialized[1] = byte.MaxValue;
-        
+
         // MessagePack should throw when trying to deserialize corrupted data
-        Assert.ThrowsAny<Exception>(() => 
+        Assert.ThrowsAny<Exception>(() =>
             Shared.Serialization.MessageSerializer.Deserialize(serialized));
     }
 }

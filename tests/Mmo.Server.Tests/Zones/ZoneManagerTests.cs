@@ -558,7 +558,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
 
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             zoneManager.SpawnPlayer(Guid.NewGuid(), Guid.NewGuid(), null!));
     }
 
@@ -640,7 +640,7 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Entity", new Position(0, 0));
 
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             zoneManager.TransferEntity(entity, 999, 0));
     }
 
@@ -651,7 +651,7 @@ public class ZoneManagerTests : IDisposable
         ServerPlayerCharacter playerCharacter = CreateServerPlayer();
         zoneManager.AddPlayer(playerCharacter, 0);
 
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             zoneManager.TransferEntity(playerCharacter.Entity, 0, 999));
     }
 
@@ -665,7 +665,7 @@ public class ZoneManagerTests : IDisposable
         zoneManager.AddPlayer(playerCharacter, 0); // Add to zone 0
 
         // Entity is in zone 0, but we claim it's in zone 1
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             zoneManager.TransferEntity(playerCharacter.Entity, 1, 0));
     }
 

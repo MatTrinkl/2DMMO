@@ -89,7 +89,7 @@ public class MessageRouterTests : IDisposable
         // Arrange
         var router = new MessageRouter(_mockLog);
         var loginRequest = new LoginRequest("test", "pass");
-        
+
         // Create a real MessageContext using test helpers
         GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         var zoneManager = TestHelpers.CreateDefaultZoneManager();
@@ -111,7 +111,7 @@ public class MessageRouterTests : IDisposable
         // Arrange
         var router = new MessageRouter(_mockLog);
         var loginRequest = new LoginRequest("test", "pass");
-        
+
         // Create a real MessageContext using test helpers
         GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         var zoneManager = TestHelpers.CreateDefaultZoneManager();
@@ -137,7 +137,7 @@ public class MessageRouterTests : IDisposable
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
-        
+
         // Create a real MessageContext using test helpers
         GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         var zoneManager = TestHelpers.CreateDefaultZoneManager();
@@ -163,7 +163,7 @@ public class MessageRouterTests : IDisposable
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
-        
+
         // Create a real MessageContext using test helpers
         GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         var zoneManager = TestHelpers.CreateDefaultZoneManager();
@@ -191,7 +191,7 @@ public class MessageRouterTests : IDisposable
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
-        
+
         // Create a real MessageContext using test helpers
         GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         var zoneManager = TestHelpers.CreateDefaultZoneManager();

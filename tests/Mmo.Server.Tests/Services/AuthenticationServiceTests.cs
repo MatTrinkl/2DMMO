@@ -13,10 +13,10 @@ public class AuthenticationServiceTests
     {
         // Arrange
         var authService = new AuthenticationService(_mockLog);
-        
+
         // Act
         AuthResult result = await authService.AuthenticateAsync("TestUser", "password123");
-        
+
         // Assert
         Assert.True(result.Success);
         Assert.NotNull(result.AccountId);
@@ -30,10 +30,10 @@ public class AuthenticationServiceTests
     {
         // Arrange
         var authService = new AuthenticationService(_mockLog);
-        
+
         // Act
         await authService.AuthenticateAsync("AnyUser", "anyPassword");
-        
+
         // Assert
         Assert.True(_mockLog.HasMessageContaining("INFO", "Authentication successful"));
     }
@@ -43,11 +43,11 @@ public class AuthenticationServiceTests
     {
         // Arrange
         var authService = new AuthenticationService(_mockLog);
-        
+
         // Act
         AuthResult result1 = await authService.AuthenticateAsync("User1", "pass1");
         AuthResult result2 = await authService.AuthenticateAsync("User2", "pass2");
-        
+
         // Assert
         Assert.NotEqual(result1.AccountId, result2.AccountId);
     }
@@ -58,10 +58,10 @@ public class AuthenticationServiceTests
         // Arrange
         var authService = new AuthenticationService(_mockLog);
         var sessionToken = Guid.NewGuid();
-        
+
         // Act
         AuthResult result = await authService.ValidateSessionAsync(sessionToken);
-        
+
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Session validation not implemented", result.Error);
@@ -73,10 +73,10 @@ public class AuthenticationServiceTests
         // Arrange
         var authService = new AuthenticationService(_mockLog);
         var sessionToken = Guid.NewGuid();
-        
+
         // Act
         await authService.InvalidateSessionAsync(sessionToken);
-        
+
         // Assert
         Assert.True(_mockLog.HasMessageContaining("INFO", "Session invalidated"));
     }
@@ -86,10 +86,10 @@ public class AuthenticationServiceTests
     {
         // Arrange
         var authService = new AuthenticationService(_mockLog);
-        
+
         // Act
         AuthResult result = await authService.AuthenticateAsync("TestUser", "password");
-        
+
         // Assert
         Assert.Equal(AccountFlags.None, result.Flags);
     }
