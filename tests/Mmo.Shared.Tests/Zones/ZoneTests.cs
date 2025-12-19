@@ -208,4 +208,97 @@ public class ZoneTests : IDisposable
         Assert.NotEmpty(zone.Entities);
         Assert.Contains(player, zone.Entities.Values);
     }
+
+    [Fact]
+    public void GetPlayers_ReturnsOnlyPlayerEntities()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20));
+        zone.AddEntity(player1);
+        zone.AddEntity(player2);
+
+        var players = zone.GetPlayers().ToList();
+
+        Assert.Equal(2, players.Count);
+        Assert.Contains(player1, players);
+        Assert.Contains(player2, players);
+    }
+
+    [Fact]
+    public void GetPlayers_EmptyZone_ReturnsEmpty()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        var players = zone.GetPlayers().ToList();
+
+        Assert.Empty(players);
+    }
+
+    [Fact]
+    public void PlayerCount_ReturnsCorrectCount()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20));
+
+        Assert.Equal(0, zone.PlayerCount());
+
+        zone.AddEntity(player1);
+        Assert.Equal(1, zone.PlayerCount());
+
+        zone.AddEntity(player2);
+        Assert.Equal(2, zone.PlayerCount());
+
+        zone.RemoveEntity(player1.RuntimeId.LocalId);
+        Assert.Equal(1, zone.PlayerCount());
+    }
+
+    [Fact]
+    public void IsPositionInBounds_OnBoundary_ReturnsTrue()
+    {
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+
+        // Corners
+        Assert.True(zone.IsPositionInBounds(new Position(0, 0)));
+        Assert.True(zone.IsPositionInBounds(new Position(100, 0)));
+        Assert.True(zone.IsPositionInBounds(new Position(0, 100)));
+        Assert.True(zone.IsPositionInBounds(new Position(100, 100)));
+
+        // Edges
+        Assert.True(zone.IsPositionInBounds(new Position(50, 0)));
+        Assert.True(zone.IsPositionInBounds(new Position(50, 100)));
+        Assert.True(zone.IsPositionInBounds(new Position(0, 50)));
+        Assert.True(zone.IsPositionInBounds(new Position(100, 50)));
+    }
+
+    [Fact]
+    public void CustomIdRegistry_IsUsedForIdAllocation()
+    {
+        var mockIdRegistry = new Mock<IIdRegistry>();
+        mockIdRegistry.Setup(r => r.GetNextLocalId(It.IsAny<ushort>(), It.IsAny<ushort>())).Returns(42);
+
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100), mockIdRegistry.Object);
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
+
+        zone.AddEntity(player);
+
+        Assert.Equal(42, player.RuntimeId.LocalId);
+        mockIdRegistry.Verify(r => r.GetNextLocalId(1, 0), Times.Once);
+    }
+
+    [Fact]
+    public void CustomIdRegistry_ReleaseIdCalledOnRemove()
+    {
+        var mockIdRegistry = new Mock<IIdRegistry>();
+        mockIdRegistry.Setup(r => r.GetNextLocalId(It.IsAny<ushort>(), It.IsAny<ushort>())).Returns(42);
+
+        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100), mockIdRegistry.Object);
+        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(50, 50));
+        zone.AddEntity(player);
+
+        zone.RemoveEntity(42);
+
+        mockIdRegistry.Verify(r => r.ReleaseLocalId(1, 0, 42), Times.Once);
+    }
 }
