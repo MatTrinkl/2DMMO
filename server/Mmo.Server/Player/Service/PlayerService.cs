@@ -48,7 +48,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         };
 
         // Add to ZoneManager
-        zoneManager.AddPlayer(serverPlayer);
+        zoneManager.RegisterServerPlayer(serverPlayer);
 
         log.Info(
             "Player spawned: {Name} (CharacterId: {CharacterId}, AccountId: {AccountId})",
@@ -63,7 +63,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
         await Task.Delay(1);
 
         // PROTOTYPE: Empty list
-        return new List<CharacterInfo>();
+        return [];
     }
 
     public async Task<CharacterCreateResult> CreateCharacterAsync(
@@ -85,7 +85,7 @@ public class PlayerService(ZoneManager zoneManager, ILog log) : IPlayerService
 
     public async Task RemovePlayerAsync(Guid connectionId)
     {
-        ServerPlayerCharacter? player = zoneManager.RemovePlayerByConnectionId(connectionId);
+        ServerPlayerCharacter? player = zoneManager.RemoveServerPlayer(connectionId);
 
         if (player != null)
         {

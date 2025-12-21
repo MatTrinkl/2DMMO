@@ -1,5 +1,6 @@
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Core;
 using Mmo.Shared.Zones.Configurations;
 using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Structs;
@@ -16,7 +17,6 @@ public class ZoneContext(Zone zone, ZoneConfig config, ushort shardId = 0) : IZo
 
     // ═══ Runtime State ═══
     public ushort ShardId { get; } = shardId;
-    public int PlayerCount => zone.PlayerCount();
     public WeatherType CurrentWeather { get; set; } = config.DefaultWeather;
     public float TimeOfDay { get; set; } = 12f; // Default: Mittag
     public Faction? ControllingFaction { get; set; }

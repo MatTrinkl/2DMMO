@@ -58,7 +58,9 @@ public static class TestHelpers
     public static ZoneManager CreateDefaultZoneManager()
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
-        return new ZoneManager(0, defaultZone);
+        var zoneManager = new ZoneManager(0);
+        zoneManager.RegisterZone(defaultZone);
+        return zoneManager;
     }
 
     /// <summary>
@@ -67,7 +69,8 @@ public static class TestHelpers
     public static ZoneManager CreateZoneManagerWithZones(params (ushort id, string name)[] zones)
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
-        var zoneManager = new ZoneManager(0, defaultZone);
+        var zoneManager = new ZoneManager(0);
+        zoneManager.RegisterZone(defaultZone);
 
         foreach ((ushort id, string name) in zones)
         {
@@ -109,7 +112,7 @@ public static class TestHelpers
         services.AddSingleton(zoneManager ?? CreateDefaultZoneManager());
         services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
         services.AddSingleton<IPlayerService, Player.Service.PlayerService>();
-        
+
         // Add mock services that would normally depend on GameServer
         // These are simple implementations that do nothing for testing
         services.AddSingleton<IBroadcastService>(sp => new MockBroadcastService());
@@ -219,7 +222,7 @@ internal class MockZoneService : IZoneService
     public ZoneInfo? GetZoneInfo(ushort zoneId) => null;
     public IEnumerable<ZoneInfo> GetAllZones() => Enumerable.Empty<ZoneInfo>();
     public bool ZoneExists(ushort zoneId) => true;
-    public ZoneTransferResult RequestZoneTransferAsync(Guid playerId, ushort targetZoneId, Position? targetPosition = null) => 
+    public ZoneTransferResult RequestZoneTransferAsync(Guid playerId, ushort targetZoneId, Position? targetPosition = null) =>
         ZoneTransferResult.Succeeded(targetZoneId, targetPosition ?? new Position(0, 0));
     public int GetPlayerCount(ushort zoneId) => 0;
     public IEnumerable<Guid> GetPlayersInZone(ushort zoneId) => Enumerable.Empty<Guid>();

@@ -29,10 +29,10 @@ public class ZoneTests : IDisposable
         var bounds = new ZoneBounds(10, 20, 100, 200);
         var zone = new Zone(42, "TestZone", bounds);
 
-        Assert.Equal(42, zone.ZoneId);
-        Assert.Equal("TestZone", zone.ZoneName);
+        Assert.Equal(42, zone.Id);
+        Assert.Equal("TestZone", zone.Name);
         Assert.Equal(bounds, zone.Bounds);
-        Assert.Empty(zone.Entities);
+        Assert.Empty(zone.GetEntityIds());
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class ZoneTests : IDisposable
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50));
 
-        zone.AddEntity(player);
+        zone.AddEntity(player.PersistentId);
 
         Assert.Equal(0, player.RuntimeId.LocalId); // First entity gets ID 0
         Assert.Equal(1, player.RuntimeId.ZoneId); // ZoneId matches the zone

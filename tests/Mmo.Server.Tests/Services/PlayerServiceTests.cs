@@ -23,7 +23,8 @@ public class PlayerServiceTests : IDisposable
         IdRegistry.Instance.Clear();
         _mockNetworkServer = new MockNetworkServer(_mockLog, true);
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
-        _zoneManager = new ZoneManager(0, defaultZone);
+        _zoneManager = new ZoneManager(0);
+        _zoneManager.RegisterZone(defaultZone);
         _playerService = new Player.Service.PlayerService(_zoneManager, _mockLog);
     }
 
@@ -89,11 +90,11 @@ public class PlayerServiceTests : IDisposable
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
 
         // Act
-        ServerPlayerCharacter result = await _playerService.SpawnPlayerAsync(accountId, "Player", connection);
+        await _playerService.SpawnPlayerAsync(accountId, "Player", connection);
 
         // Assert
-        Assert.Equal(1, _zoneManager.PlayerCount);
-        Assert.True(_zoneManager.HasPlayerWithConnectionId(connection.Id));
+        Assert.Single(_zoneManager.GetAllServerPlayers());
+        Assert.True(_zoneManager.TryGetPlayerByConnectionId(connection.Id, out _));
     }
 
     [Fact]
@@ -152,7 +153,7 @@ public class PlayerServiceTests : IDisposable
         await _playerService.RemovePlayerAsync(connection.Id);
 
         // Assert
-        Assert.Equal(0, _zoneManager.PlayerCount);
+        Assert.Empty(_zoneManager.GetAllServerPlayers());
     }
 
     [Fact]

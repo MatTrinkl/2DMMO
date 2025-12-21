@@ -463,11 +463,10 @@ public class GameServer : IDisposable
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
 
-        foreach (ServerPlayerCharacter player in _zoneManager.GetAllServerPlayers())
-        {
-            var outgoing = OutgoingMessage.ToClient(player.Connection, heartbeat);
+
+            var outgoing = OutgoingMessage.BroadcastToAll(heartbeat);
             _outputQueue.Enqueue(outgoing);
-        }
+
     }
 
     private void CheckDeadConnections(float deltaTime)
@@ -544,9 +543,12 @@ public class GameServer : IDisposable
                 break;
 
             case OutgoingMessageType.BroadcastToAll:
-                BroadcastToAll(outgoing);
+                BroadcastToAll(outgoing,true);
                 break;
 
+            case OutgoingMessageType.BroadcastToAllExcept:
+                BroadcastToAll(outgoing, false);
+                break;
             default:
                 _log.Warn("Unknown outgoing message type: {Type}", outgoing.Type);
                 break;
@@ -626,17 +628,26 @@ public class GameServer : IDisposable
             .GetAllServerPlayers()
             .Where(p => p.GuildId == outgoing.GuildId.Value);
 
-        foreach (ServerPlayerCharacter player in guildMembers.Where(p =>
-                     includeExcluded && p.Connection.Id != outgoing.ExcludeConnectionId && p.Connection.IsConnected))
-            _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in guildMembers)
+        {
+            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
+                continue;
+
+            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
+        }
     }
 
-    private void BroadcastToAll(OutgoingMessage outgoing)
+    private void BroadcastToAll(OutgoingMessage outgoing,bool includeExcluded)
     {
         IEnumerable<ServerPlayerCharacter> allPlayers = _zoneManager.GetAllServerPlayers();
 
-        foreach (ServerPlayerCharacter player in allPlayers.Where(p => p.Connection.IsConnected))
-            _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in allPlayers)
+        {
+            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
+                continue;
+
+            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
+        }
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -659,7 +670,7 @@ public class GameServer : IDisposable
     private void ProcessDisconnect(Guid connectionId, string? reason)
     {
         // Remove player from ZoneManager
-        ServerPlayerCharacter? player = _zoneManager.RemovePlayerByConnectionId(connectionId);
+        ServerPlayerCharacter? player = _zoneManager.RemoveServerPlayer(connectionId);
 
         if (player != null)
         {
@@ -696,7 +707,7 @@ public class GameServer : IDisposable
                 _networkServer.Send(player.Connection, disconnectMsg);
 
                 // Remove from ZoneManager
-                _zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
+                _zoneManager.RemoveServerPlayer(player.Connection.Id);
 
                 // Close connection
                 _networkServer.RemoveConnection(player.Connection.Id, reason);

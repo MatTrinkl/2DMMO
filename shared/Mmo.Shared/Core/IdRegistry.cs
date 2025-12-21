@@ -37,13 +37,13 @@ public sealed class IdRegistry : IIdRegistry
     ///     Freed LocalIds per zone/shard for reuse.
     ///     Key = (ZoneId  16) | ShardId
     /// </summary>
-    private readonly ConcurrentDictionary<uint, ConcurrentQueue<int>> _freedLocalIds = new();
+    private readonly ConcurrentDictionary<uint, ConcurrentQueue<ushort>> _freedLocalIds = new();
 
     /// <summary>
     ///     LocalId counters per zone/shard combination.
     ///     Key = (ZoneId  16) | ShardId
     /// </summary>
-    private readonly ConcurrentDictionary<uint, int> _localIdCounters = new();
+    private readonly ConcurrentDictionary<uint, ushort> _localIdCounters = new();
 
     /// <summary>
     ///     Private constructor for singleton pattern.
@@ -71,27 +71,27 @@ public sealed class IdRegistry : IIdRegistry
     public Guid GeneratePersistentId() => Guid.NewGuid();
 
     /// <inheritdoc />
-    public int GetNextLocalId(ushort zoneId, ushort shardId = 0)
+    public ushort GetNextLocalId(ushort zoneId, ushort shardId = 0)
     {
         uint key = GetZoneShardKey(zoneId, shardId);
 
         // Try to reuse a freed ID first
-        if (_freedLocalIds.TryGetValue(key, out ConcurrentQueue<int>? freedQueue) &&
-            freedQueue.TryDequeue(out int freedId))
+        if (_freedLocalIds.TryGetValue(key, out ConcurrentQueue<ushort>? freedQueue) &&
+            freedQueue.TryDequeue(out ushort freedId))
             return freedId;
 
         // AddOrUpdate behavior:
         // - First call (key doesn't exist): returns addValue (0), stores 0
         // - Subsequent calls: returns current + 1, stores the new value
         // Result: IDs are 0, 1, 2, 3, ...
-        return _localIdCounters.AddOrUpdate(key, 0, (_, current) => current + 1);
+        return _localIdCounters.AddOrUpdate(key, 0, (_, current) => (ushort)(current + 1));
     }
 
     /// <inheritdoc />
-    public void ReleaseLocalId(ushort zoneId, ushort shardId, int localId)
+    public void ReleaseLocalId(ushort zoneId, ushort shardId, ushort localId)
     {
         uint key = GetZoneShardKey(zoneId, shardId);
-        ConcurrentQueue<int> freedQueue = _freedLocalIds.GetOrAdd(key, _ => new ConcurrentQueue<int>());
+        ConcurrentQueue<ushort> freedQueue = _freedLocalIds.GetOrAdd(key, _ => new ConcurrentQueue<ushort>());
         freedQueue.Enqueue(localId);
     }
 
