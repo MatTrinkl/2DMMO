@@ -194,4 +194,84 @@ public class EntityServiceTests : IDisposable
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public void GetEntitiesInRange_ReturnsOnlyEntitiesWithinRadius()
+    {
+        var service = new EntityService(_zoneManager, _log);
+        
+        // Spawn entities at different positions
+        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
+        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
+
+        service.SpawnEntity(player1, 0);
+        service.SpawnEntity(player2, 0);
+        service.SpawnEntity(player3, 0);
+
+        // Get entities within 10 units of (100, 100)
+        var entitiesInRange = service.GetEntitiesInRange(0, new Position(100, 100), 10).ToList();
+
+        Assert.Equal(2, entitiesInRange.Count); // player1 and player2
+        Assert.Contains(player1, entitiesInRange);
+        Assert.Contains(player2, entitiesInRange);
+        Assert.DoesNotContain(player3, entitiesInRange);
+    }
+
+    [Fact]
+    public void GetEntitiesInRange_EmptyZone_ReturnsEmpty()
+    {
+        var service = new EntityService(_zoneManager, _log);
+
+        var entitiesInRange = service.GetEntitiesInRange(0, new Position(100, 100), 50).ToList();
+
+        Assert.Empty(entitiesInRange);
+    }
+
+    [Fact]
+    public void GetVisibleEntities_ReturnsOtherEntitiesInSameZone()
+    {
+        var service = new EntityService(_zoneManager, _log);
+        
+        var playerId = Guid.NewGuid();
+        var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+        var other1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200));
+        var other2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Other2", new Position(300, 300));
+
+        service.SpawnEntity(player, 0);
+        service.SpawnEntity(other1, 0);
+        service.SpawnEntity(other2, 0);
+
+        var visibleEntities = service.GetVisibleEntities(playerId).ToList();
+
+        Assert.Equal(2, visibleEntities.Count); // other1 and other2, not player itself
+        Assert.Contains(other1, visibleEntities);
+        Assert.Contains(other2, visibleEntities);
+        Assert.DoesNotContain(player, visibleEntities);
+    }
+
+    [Fact]
+    public void GetVisibleEntities_NonExistentPlayer_ReturnsEmpty()
+    {
+        var service = new EntityService(_zoneManager, _log);
+
+        var visibleEntities = service.GetVisibleEntities(Guid.NewGuid()).ToList();
+
+        Assert.Empty(visibleEntities);
+    }
+
+    [Fact]
+    public void GetVisibleEntities_PlayerAloneInZone_ReturnsEmpty()
+    {
+        var service = new EntityService(_zoneManager, _log);
+        
+        var playerId = Guid.NewGuid();
+        var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+
+        service.SpawnEntity(player, 0);
+
+        var visibleEntities = service.GetVisibleEntities(playerId).ToList();
+
+        Assert.Empty(visibleEntities); // No other entities
+    }
 }

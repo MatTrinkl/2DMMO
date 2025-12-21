@@ -108,15 +108,22 @@ public class ZoneBoundsExtendedTests
     }
 
     [Fact]
-    public void IsNearEdge_PositionOutsideBounds_ReturnsFalse()
+    public void IsNearEdge_PositionFarOutsideBounds_StillChecksDistance()
     {
         var bounds = new ZoneBounds(0, 0, 100, 100);
         float margin = 10;
 
-        Assert.False(bounds.IsNearEdge(-5, 50, margin));   // Outside left
-        Assert.False(bounds.IsNearEdge(105, 50, margin));  // Outside right
-        Assert.False(bounds.IsNearEdge(50, -5, margin));   // Outside top
-        Assert.False(bounds.IsNearEdge(50, 105, margin));  // Outside bottom
+        // Positions just outside but within margin - returns TRUE
+        Assert.True(bounds.IsNearEdge(-5, 50, margin));    // Outside left by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(105, 50, margin));   // Outside right by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(50, -5, margin));    // Outside top by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(50, 105, margin));   // Outside bottom by 5, within margin of 10
+
+        // Positions far outside margin - returns FALSE
+        Assert.False(bounds.IsNearEdge(-15, 50, margin));  // Outside left by 15, beyond margin
+        Assert.False(bounds.IsNearEdge(115, 50, margin));  // Outside right by 15, beyond margin
+        Assert.False(bounds.IsNearEdge(50, -15, margin));  // Outside top by 15, beyond margin
+        Assert.False(bounds.IsNearEdge(50, 115, margin));  // Outside bottom by 15, beyond margin
     }
 
     [Fact]

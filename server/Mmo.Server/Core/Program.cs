@@ -170,7 +170,7 @@ public class Program
         services.AddSingleton<IZoneService, ZoneService>();
 
         //Entity
-        //services.AddSingleton<IEntityService, EntityService>();
+        services.AddSingleton<IEntityService, Entities.Services.EntityService>();
 
         //Movement
         //services.AddSingleton<IMovementService, MovementService>();
