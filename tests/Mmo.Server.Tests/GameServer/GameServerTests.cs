@@ -3,10 +3,10 @@ using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Messages.Movement;
-using Mmo.Shared.Records;
+using Mmo.Shared.Movement;
 
 namespace Mmo.Server.Tests.GameServer;
 
@@ -24,7 +24,7 @@ public class GameServerTests
     [Fact]
     public void Constructor_InitializesCorrectly()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         Assert.Equal(0, gameServer.TickCount);
     }
@@ -32,7 +32,7 @@ public class GameServerTests
     [Fact]
     public void QueueOutgoingMessage_AddsMessageToQueue()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var message = new ChatMessage(Guid.NewGuid(), "Test");
 
         // Should not throw
@@ -44,7 +44,7 @@ public class GameServerTests
     [Fact]
     public void Start_AndStop_WorksGracefully()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         gameServer.Start();
         Thread.Sleep(100);
@@ -57,7 +57,7 @@ public class GameServerTests
     [Fact]
     public void OnClientConnected_LogsConnection()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         gameServer.Start();
@@ -72,7 +72,7 @@ public class GameServerTests
     [Fact]
     public void OnClientDisconnected_LogsDisconnection()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         gameServer.Start();
@@ -88,7 +88,7 @@ public class GameServerTests
     [Fact]
     public void OnMessageReceived_QueuesMessageForProcessing()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         var message = new ChatMessage(Guid.NewGuid(), "Hello");
 
@@ -107,7 +107,7 @@ public class GameServerTests
     [Fact]
     public void ProcessMessage_HandlesDifferentMessageTypes()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Simulate different message types
@@ -133,7 +133,7 @@ public class GameServerTests
     [Fact]
     public void PlayerLogin_ValidatesUsername()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Simulate login with invalid usernames
@@ -161,7 +161,7 @@ public class GameServerTests
     [Fact]
     public void GetStats_ReturnsValidStats()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         gameServer.Start();
         Thread.Sleep(100);

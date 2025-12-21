@@ -1,6 +1,9 @@
 using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Core;
+using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Records;
+using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 using Moq;

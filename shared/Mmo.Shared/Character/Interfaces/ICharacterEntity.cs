@@ -1,8 +1,8 @@
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Records;
+using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Movement.Enums;
 
 namespace Mmo.Shared.Character.Interfaces;
 

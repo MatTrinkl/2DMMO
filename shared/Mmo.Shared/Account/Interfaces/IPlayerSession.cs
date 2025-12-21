@@ -1,6 +1,5 @@
 using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Character.Interfaces;
-using Mmo.Shared.Enums;
 
 namespace Mmo.Shared.Account.Interfaces;
 

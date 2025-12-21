@@ -1,7 +1,7 @@
 using MessagePack;
 using Mmo.Shared.Prefab;
 
-namespace Mmo.Shared.Entities;
+namespace Mmo.Shared.Entities.Structs;
 
 /// <summary>
 ///     This class is used to identify an entity.

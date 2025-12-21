@@ -1,9 +1,10 @@
+using Mmo.Server.Connections;
 using Mmo.Server.Network;
-using Mmo.Server.Players;
+using Mmo.Server.PlayerService;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Records;
 
 namespace Mmo.Server.Tests.Players;
 

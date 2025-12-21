@@ -1,4 +1,4 @@
-using Mmo.Shared.Records;
+using Mmo.Shared.Core.Records;
 
 namespace Mmo.Shared.Zones.Configurations;
 

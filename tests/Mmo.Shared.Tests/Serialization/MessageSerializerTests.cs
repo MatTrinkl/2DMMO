@@ -1,14 +1,14 @@
 using MessagePack;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
+using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Messages.Movement;
-using Mmo.Shared.Messages.Serialization;
-using Mmo.Shared.Records;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
+using Mmo.Shared.Messaging.Serialization;
+using Mmo.Shared.Movement;
 using Mmo.Shared.Zones.Messages;
 
 namespace Mmo.Shared.Tests.Serialization;

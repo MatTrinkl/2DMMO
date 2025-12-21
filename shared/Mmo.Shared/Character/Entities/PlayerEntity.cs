@@ -1,13 +1,15 @@
 using MessagePack;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
+using Mmo.Shared.Combat.Entities;
 using Mmo.Shared.Combat.Enums;
 using Mmo.Shared.Combat.Records;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums.Entities;
-using Mmo.Shared.Enums.Messages;
+using Mmo.Shared.Entities.Enums;
+using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Movement.Enums;
 using Mmo.Shared.Prefab;
-using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Character.Entities;
 

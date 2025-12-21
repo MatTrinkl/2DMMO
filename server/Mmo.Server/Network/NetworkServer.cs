@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
+using Mmo.Server.Connections;
+using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Server.Network;
 

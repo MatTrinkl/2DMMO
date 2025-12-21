@@ -1,6 +1,6 @@
 using Mmo.Server.Messages;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Server.MessageRouting.Interfaces;
 

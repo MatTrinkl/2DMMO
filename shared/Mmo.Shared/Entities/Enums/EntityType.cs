@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Enums.Entities;
+namespace Mmo.Shared.Entities.Enums;
 
 /// <summary>
 ///     Represents the type of entity in the game world.

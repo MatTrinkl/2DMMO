@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Enums;
+namespace Mmo.Shared.Connection.Enums;
 
 /// <summary>
 ///     Reasons why a client might disconnect.

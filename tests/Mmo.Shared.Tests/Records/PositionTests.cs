@@ -1,5 +1,5 @@
 using MessagePack;
-using Mmo.Shared.Records;
+using Mmo.Shared.Core.Records;
 
 namespace Mmo.Shared.Tests.Records;
 

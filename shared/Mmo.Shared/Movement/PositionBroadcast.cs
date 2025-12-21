@@ -1,9 +1,9 @@
 using MessagePack;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Records;
+using Mmo.Shared.Core.Records;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 
-namespace Mmo.Shared.Messages.Movement;
+namespace Mmo.Shared.Movement;
 
 /// <summary>
 ///     This class is sent to all clients for updating a position of an entity.

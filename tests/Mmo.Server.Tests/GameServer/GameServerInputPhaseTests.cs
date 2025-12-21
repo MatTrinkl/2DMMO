@@ -1,10 +1,10 @@
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Messages.Movement;
-using Mmo.Shared.Records;
+using Mmo.Shared.Movement;
 using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -24,7 +24,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_ProcessesQueuedMessages()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Queue multiple messages
@@ -47,7 +47,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_ProcessesMessagesFromMultipleClients()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId1 = Guid.NewGuid();
         var clientId2 = Guid.NewGuid();
         var clientId3 = Guid.NewGuid();
@@ -69,7 +69,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesLoginRequest()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send LoginRequest (handled by ConnectionHandler)
@@ -87,7 +87,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesPositionUpdate()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send PositionUpdate
@@ -107,7 +107,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesChatMessage()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send ChatMessage
@@ -125,7 +125,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesPingMessage()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send Ping
@@ -143,7 +143,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesHeartbeat()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send Heartbeat
@@ -162,7 +162,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_ProcessesMessagesInOrder()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Queue messages in specific order
@@ -184,7 +184,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesEmptyQueue()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         // Don't send any messages
         // Start and run
@@ -199,7 +199,7 @@ public class GameServerInputPhaseTests
     [Fact]
     public void InputPhase_HandlesMixedMessageTypes()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
 
         // Send various message types

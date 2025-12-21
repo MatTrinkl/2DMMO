@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Helper;
+namespace Mmo.Shared.Networking;
 
 /// <summary>
 ///     This class helps by converting between DateTime and long. Also returns the current Unix Time in milliseconds as a

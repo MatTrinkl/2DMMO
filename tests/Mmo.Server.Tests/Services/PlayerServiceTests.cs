@@ -1,13 +1,13 @@
+using Mmo.Server.Connections;
 using Mmo.Server.Network;
-using Mmo.Server.Players;
-using Mmo.Server.ServicePlayer;
-using Mmo.Server.ServicePlayer.Records;
+using Mmo.Server.PlayerService;
+using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Core;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
@@ -18,7 +18,7 @@ public class PlayerServiceTests : IDisposable
 {
     private readonly MockLog _mockLog = new();
     private readonly MockNetworkServer _mockNetworkServer;
-    private readonly PlayerService _playerService;
+    private readonly PlayerService.PlayerService _playerService;
     private readonly ZoneManager _zoneManager;
 
     public PlayerServiceTests()
@@ -27,7 +27,7 @@ public class PlayerServiceTests : IDisposable
         _mockNetworkServer = new MockNetworkServer(_mockLog, true);
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
         _zoneManager = new ZoneManager(0, defaultZone);
-        _playerService = new PlayerService(_zoneManager, _mockLog);
+        _playerService = new PlayerService.PlayerService(_zoneManager, _mockLog);
     }
 
     public void Dispose() => IdRegistry.Instance.Clear();

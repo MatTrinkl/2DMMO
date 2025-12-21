@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Enums;
+namespace Mmo.Shared.Groups.Enums;
 
 /// <summary>
 ///     Represents the player's role in groups (tank, healer, DPS).

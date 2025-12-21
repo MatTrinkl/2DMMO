@@ -2,11 +2,12 @@
 
 using MessagePack;
 using Mmo.Shared.Character.Entities;
-using Mmo.Shared.Enums.Entities;
+using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Enums;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Npc.Entities;
-using Mmo.Shared.Records;
 
-namespace Mmo.Shared.Entities;
+namespace Mmo.Shared.Entities.Interfaces;
 
 [Union(0, typeof(PlayerEntity))]
 [Union(1, typeof(NpcEntity))]

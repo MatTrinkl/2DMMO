@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Enums.Messages;
+namespace Mmo.Shared.Movement.Enums;
 
 /// <summary>
 ///     Represents movement state flags (can be combined).

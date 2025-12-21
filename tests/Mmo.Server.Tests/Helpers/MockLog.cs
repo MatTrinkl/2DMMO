@@ -1,6 +1,6 @@
 // tests/Mmo.Server.Tests/Helpers/MockLog.cs
 
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.Tests.Helpers;
 

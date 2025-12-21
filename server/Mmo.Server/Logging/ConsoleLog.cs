@@ -1,4 +1,4 @@
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.Logging;
 

@@ -1,8 +1,10 @@
+using Mmo.Server.Connections;
 using Mmo.Server.Core.Structs;
 using Mmo.Server.Messages;
 using Mmo.Server.Network;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Chat.Messages;
+using Mmo.Shared.Core;
 using Mmo.Shared.Entities;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -29,7 +31,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void OutputPhase_SendsQueuedMessages()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var message = new ChatMessage(Guid.NewGuid(), "Test broadcast");
 
         // Queue a broadcast
@@ -48,7 +50,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void QueueOutgoingMessage_MultipleMessages_AllProcessed()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var message1 = new ChatMessage(Guid.NewGuid(), "Message 1");
         var message2 = new ChatMessage(Guid.NewGuid(), "Message 2");
         var message3 = new ChatMessage(Guid.NewGuid(), "Message 3");
@@ -70,7 +72,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void QueueOutgoingMessage_ToSpecificClient_DoesNotCrash()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
         var clientId = Guid.NewGuid();
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         var message = new ChatMessage(Guid.NewGuid(), "Hello Client");
@@ -90,7 +92,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void BroadcastAnnouncement_SendsToAllPlayers()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         // Start server
         gameServer.Start();
@@ -108,7 +110,7 @@ public class GameServerBroadcastTests : IDisposable
     [Fact]
     public void GetStats_ReturnsCorrectQueueSizes()
     {
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
 
         // Queue some messages
         for (int i = 0; i < 5; i++)

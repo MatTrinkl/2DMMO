@@ -1,14 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
+using Mmo.Server.Connections;
+using Mmo.Server.Core;
 using Mmo.Server.Network;
-using Mmo.Server.Players;
+using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Account.Interfaces;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Network;
-using Mmo.Shared.Records;
+using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core.Records;
+using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Messages;
@@ -30,7 +31,7 @@ public sealed class MessageContext : IMessageContext
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
 
-    private readonly GameServer.GameServer _gameServer;
+    private readonly GameServer _gameServer;
     private readonly ServerPlayerCharacter? _serverPlayer;
 
     // ═══════════════════════════════════════════════════════════════
@@ -39,7 +40,7 @@ public sealed class MessageContext : IMessageContext
 
     public MessageContext(
         ClientConnection connection,
-        GameServer.GameServer gameServer,
+        GameServer gameServer,
         ZoneManager zoneManager,
         IServiceProvider services)
     {

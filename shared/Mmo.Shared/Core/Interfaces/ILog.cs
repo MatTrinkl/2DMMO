@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Interfaces;
+namespace Mmo.Shared.Core.Interfaces;
 
 /// <summary>
 ///     This interface is used for logging metrics. Can be implemented with normal console logging or later used with

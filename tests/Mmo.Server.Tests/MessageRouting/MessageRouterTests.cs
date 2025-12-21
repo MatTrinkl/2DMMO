@@ -1,13 +1,15 @@
+using Mmo.Server.Connections;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Messages;
 using Mmo.Server.Network;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Connection;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 using Moq;
 
 namespace Mmo.Server.Tests.MessageRouting;
@@ -88,7 +90,7 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
         IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
@@ -110,7 +112,7 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
         IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
@@ -136,7 +138,7 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
         IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
@@ -162,7 +164,7 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
         IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
@@ -192,7 +194,7 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        Server.GameServer.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
         ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
         IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);

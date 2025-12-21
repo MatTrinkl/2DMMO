@@ -1,7 +1,6 @@
 using MessagePack;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Enums;
 
 namespace Mmo.Shared.System.Messages;

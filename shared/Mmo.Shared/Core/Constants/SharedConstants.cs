@@ -1,4 +1,4 @@
-namespace Mmo.Shared;
+namespace Mmo.Shared.Core.Constants;
 
 /// <summary>
 ///     Shared constants for the 2DMMO project.

@@ -1,17 +1,16 @@
 using Microsoft.Extensions.DependencyInjection;
+using Mmo.Server.AuthenticationService.Interfaces;
+using Mmo.Server.Connections;
 using Mmo.Server.Connections.Handler;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Network;
-using Mmo.Server.Players;
-using Mmo.Server.ServiceAuthentication;
-using Mmo.Server.ServiceAuthentication.Interfaces;
-using Mmo.Server.ServicePlayer;
-using Mmo.Server.ServicePlayer.Interfaces;
+using Mmo.Server.PlayerService;
+using Mmo.Server.PlayerService.Interfaces;
 using Mmo.Server.Zones;
 using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
@@ -25,7 +24,7 @@ public static class TestHelpers
     /// <summary>
     ///     Creates a GameServer instance for testing with all required dependencies.
     /// </summary>
-    public static Server.GameServer.GameServer CreateTestGameServer(
+    public static Core.GameServer CreateTestGameServer(
         ILog? log = null,
         MockNetworkServer? networkServer = null,
         ZoneManager? zoneManager = null,
@@ -39,7 +38,7 @@ public static class TestHelpers
         messageRouter ??= CreateMessageRouter(log, zoneManager);
         services ??= CreateTestServices(log, zoneManager);
 
-        var gameServer = new Server.GameServer.GameServer(
+        var gameServer = new Core.GameServer(
             networkServer,
             messageRouter,
             zoneManager,
@@ -107,8 +106,8 @@ public static class TestHelpers
 
         services.AddSingleton(log);
         services.AddSingleton(zoneManager ?? CreateDefaultZoneManager());
-        services.AddSingleton<IAuthenticationService, AuthenticationService>();
-        services.AddSingleton<IPlayerService, PlayerService>();
+        services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
+        services.AddSingleton<IPlayerService, PlayerService.PlayerService>();
 
         return services.BuildServiceProvider();
     }

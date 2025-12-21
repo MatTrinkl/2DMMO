@@ -1,4 +1,4 @@
-namespace Mmo.Shared.Enums;
+namespace Mmo.Shared.Creatures.Enums;
 
 /// <summary>
 ///     Represents the creature type classification for NPCs and monsters.

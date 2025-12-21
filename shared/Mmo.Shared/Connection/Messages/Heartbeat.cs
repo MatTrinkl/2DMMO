@@ -1,8 +1,8 @@
 using MessagePack;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 
-namespace Mmo.Shared.Messages.Connection;
+namespace Mmo.Shared.Connection.Messages;
 
 /// <summary>
 ///     This class indicates a heartbeat of a client.

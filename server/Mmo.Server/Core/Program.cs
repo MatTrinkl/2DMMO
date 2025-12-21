@@ -1,16 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
+using Mmo.Server.AuthenticationService.Interfaces;
 using Mmo.Server.Connections.Handler;
 using Mmo.Server.Logging;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Network;
-using Mmo.Server.ServiceAuthentication;
-using Mmo.Server.ServiceAuthentication.Interfaces;
-using Mmo.Server.ServicePlayer;
-using Mmo.Server.ServicePlayer.Interfaces;
+using Mmo.Server.PlayerService.Interfaces;
 using Mmo.Server.Zones;
 using Mmo.Shared;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Core.Constants;
+using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.Core;
 
@@ -33,7 +32,7 @@ public class Program
         // ════════════════════════════════════════════════════════════
         ILog log = serviceProvider.GetRequiredService<ILog>();
         NetworkServer networkServer = serviceProvider.GetRequiredService<NetworkServer>();
-        GameServer.GameServer gameServer = serviceProvider.GetRequiredService<GameServer.GameServer>();
+        GameServer gameServer = serviceProvider.GetRequiredService<GameServer>();
         MessageRouter messageRouter = serviceProvider.GetRequiredService<MessageRouter>();
 
         // ════════════════════════════════════════════════════════════
@@ -126,7 +125,7 @@ public class Program
         services.AddSingleton<ZoneManager>();
         services.AddSingleton<MessageRouter>();
 
-        services.AddSingleton<GameServer.GameServer>(sp =>
+        services.AddSingleton<GameServer>(sp =>
         {
             NetworkServer networkServer = sp.GetRequiredService<NetworkServer>();
             MessageRouter messageRouter = sp.GetRequiredService<MessageRouter>();
@@ -134,7 +133,7 @@ public class Program
             ILog log = sp.GetRequiredService<ILog>();
             ServerConfiguration config = sp.GetRequiredService<ServerConfiguration>();
 
-            var gameServer = new GameServer.GameServer(networkServer, messageRouter, zoneManager, sp, log)
+            var gameServer = new GameServer(networkServer, messageRouter, zoneManager, sp, log)
             {
                 TargetTickRate = config.TickRate
             };
@@ -147,10 +146,10 @@ public class Program
         // ════════════════════════════════════════════════════════════
 
         // Authentication
-        services.AddSingleton<IAuthenticationService, AuthenticationService>();
+        services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
 
         // Player
-        services.AddSingleton<IPlayerService, PlayerService>();
+        services.AddSingleton<IPlayerService, PlayerService.PlayerService>();
 
         // TODO:  Weitere Services
         // services.AddSingleton<IChatService, ChatService>();
