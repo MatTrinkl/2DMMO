@@ -1,7 +1,7 @@
-﻿using Mmo.Server.AsyncTask.Services;
+﻿using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.MessageRouting.Handler;
 using Mmo.Server.Messages;
-using Mmo.Server.Network.Services;
+using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Core.Interfaces;
@@ -20,12 +20,12 @@ public class ZoneHandler(IZoneService zoneService, ILog log) : BaseCategoryHandl
 
     private void HandleZoneTransfer(MessageContext ctx, ZoneTransferRequest request)
     {
-        ctx.GetService<AsyncTaskService>().Run(ctx.ConnectionId, async () => zoneService.RequestZoneTransferAsync(
+        ctx.GetService<IAsyncTaskService>().Run(ctx.ConnectionId, async () => zoneService.RequestZoneTransferAsync(
             ctx.ServerPlayer!.Entity.PersistentId,
             request.TargetZoneId
         ), (ctx, result) =>
         {
-            ctx.GetService<BroadcastService>().SendToPlayer(ctx.Connection, result.Success
+            ctx.GetService<IBroadcastService>().SendToPlayer(ctx.Connection, result.Success
                 ? ZoneTransferResponse.Succeeded(request.TargetZoneId)
                 : ZoneTransferResponse.Failed(result.Error!));
         });

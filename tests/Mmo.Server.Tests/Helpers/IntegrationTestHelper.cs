@@ -1,14 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
+using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Connections;
 using Mmo.Server.Connections.MessageHandler;
+using Mmo.Server.Messages;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Player.Interfaces;
 using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Interfaces;
+using Mmo.Server.Zones.Records;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Helpers;
@@ -104,6 +110,12 @@ public static class TestHelpers
         services.AddSingleton(zoneManager ?? CreateDefaultZoneManager());
         services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
         services.AddSingleton<IPlayerService, Player.Service.PlayerService>();
+        
+        // Add mock services that would normally depend on GameServer
+        // These are simple implementations that do nothing for testing
+        services.AddSingleton<IBroadcastService>(sp => new MockBroadcastService());
+        services.AddSingleton<IAsyncTaskService>(sp => new MockAsyncTaskService());
+        services.AddSingleton<IZoneService>(sp => new MockZoneService());
 
         return services.BuildServiceProvider();
     }
@@ -138,4 +150,59 @@ public static class TestHelpers
             .Select(i => CreateServerPlayer($"Player{i}"))
             .ToList();
     }
+}
+
+/// <summary>
+///     Mock implementation of IBroadcastService for testing.
+/// </summary>
+internal class MockBroadcastService : IBroadcastService
+{
+    public void BroadcastToZone(ushort zoneId, INetworkMessage message) { }
+    public void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message) { }
+    public void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message) { }
+    public void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId, INetworkMessage message) { }
+    public void SendToPlayer(ClientConnection client, INetworkMessage message) { }
+    public void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message) { }
+    public void SendError(ClientConnection client, string code, string message, string? details, string? field) { }
+    public void BroadcastGlobal(INetworkMessage message) { }
+    public void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message) { }
+    public void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message) { }
+    public void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message) { }
+    public void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message) { }
+    public void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message) { }
+}
+
+/// <summary>
+///     Mock implementation of IAsyncTaskService for testing.
+/// </summary>
+internal class MockAsyncTaskService : IAsyncTaskService
+{
+    public void Run<TResult>(Guid connectionId, Func<Task<TResult>> asyncTask, Action<MessageContext, TResult> onComplete)
+    {
+        // For testing, execute synchronously
+        var result = asyncTask().GetAwaiter().GetResult();
+        // Note: We can't call onComplete without a proper MessageContext
+        // In a real test scenario, this would need to be handled differently
+    }
+
+    public void Run(Guid connectionId, Func<Task> asyncTask, Action<MessageContext> onComplete)
+    {
+        // For testing, execute synchronously
+        asyncTask().GetAwaiter().GetResult();
+        // Note: We can't call onComplete without a proper MessageContext
+    }
+}
+
+/// <summary>
+///     Mock implementation of IZoneService for testing.
+/// </summary>
+internal class MockZoneService : IZoneService
+{
+    public ZoneInfo? GetZoneInfo(ushort zoneId) => null;
+    public IEnumerable<ZoneInfo> GetAllZones() => Enumerable.Empty<ZoneInfo>();
+    public bool ZoneExists(ushort zoneId) => true;
+    public ZoneTransferResult RequestZoneTransferAsync(Guid playerId, ushort targetZoneId, Position? targetPosition = null) => 
+        ZoneTransferResult.Succeeded(targetZoneId, targetPosition ?? new Position(0, 0));
+    public int GetPlayerCount(ushort zoneId) => 0;
+    public IEnumerable<Guid> GetPlayersInZone(ushort zoneId) => Enumerable.Empty<Guid>();
 }

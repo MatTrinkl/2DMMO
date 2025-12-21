@@ -1,6 +1,6 @@
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Messages;
-using Mmo.Server.Network.Services;
+using Mmo.Server.Network.Interfaces;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -90,7 +90,7 @@ public sealed class MessageRouter(ILog log)
             log.Error(ex, "Error handling message {Type} in {Handler}",
                 type, handler.GetType().Name);
 
-            ctx.GetService<BroadcastService>().SendError(ctx.Connection,"INTERNAL_ERROR", "An error occurred processing your request.");
+            ctx.GetService<IBroadcastService>().SendError(ctx.Connection,"INTERNAL_ERROR", "An error occurred processing your request.", null, null);
         }
     }
 }
