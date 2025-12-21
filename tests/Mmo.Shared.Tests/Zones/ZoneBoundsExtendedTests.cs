@@ -11,10 +11,10 @@ public class ZoneBoundsExtendedTests
         var bounds = new ZoneBounds(0, 0, 100, 100);
 
         Assert.True(bounds.Contains(50, 50));
-        Assert.True(bounds.Contains(0, 0));       // Left-top corner
-        Assert.True(bounds.Contains(100, 100));   // Right-bottom corner
-        Assert.True(bounds.Contains(100, 0));     // Right-top corner
-        Assert.True(bounds.Contains(0, 100));     // Left-bottom corner
+        Assert.True(bounds.Contains(0, 0)); // Left-top corner
+        Assert.True(bounds.Contains(100, 100)); // Right-bottom corner
+        Assert.True(bounds.Contains(100, 0)); // Right-top corner
+        Assert.True(bounds.Contains(0, 100)); // Left-bottom corner
     }
 
     [Fact]
@@ -22,11 +22,11 @@ public class ZoneBoundsExtendedTests
     {
         var bounds = new ZoneBounds(0, 0, 100, 100);
 
-        Assert.False(bounds.Contains(-1, 50));    // Left of bounds
-        Assert.False(bounds.Contains(101, 50));   // Right of bounds
-        Assert.False(bounds.Contains(50, -1));    // Above bounds
-        Assert.False(bounds.Contains(50, 101));   // Below bounds
-        Assert.False(bounds.Contains(-10, -10));  // Far outside
+        Assert.False(bounds.Contains(-1, 50)); // Left of bounds
+        Assert.False(bounds.Contains(101, 50)); // Right of bounds
+        Assert.False(bounds.Contains(50, -1)); // Above bounds
+        Assert.False(bounds.Contains(50, 101)); // Below bounds
+        Assert.False(bounds.Contains(-10, -10)); // Far outside
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class ZoneBoundsExtendedTests
         var bounds = new ZoneBounds(0, 0, 100, 100);
         var position = new Position(50, 50);
 
-        var clamped = bounds.Clamp(position);
+        Position clamped = bounds.Clamp(position);
 
         Assert.Equal(50, clamped.X);
         Assert.Equal(50, clamped.Y);
@@ -64,19 +64,19 @@ public class ZoneBoundsExtendedTests
     {
         var bounds = new ZoneBounds(0, 0, 100, 100);
 
-        var clampedLeft = bounds.Clamp(new Position(-10, 50));
+        Position clampedLeft = bounds.Clamp(new Position(-10, 50));
         Assert.Equal(0, clampedLeft.X);
         Assert.Equal(50, clampedLeft.Y);
 
-        var clampedRight = bounds.Clamp(new Position(110, 50));
+        Position clampedRight = bounds.Clamp(new Position(110, 50));
         Assert.Equal(100, clampedRight.X);
         Assert.Equal(50, clampedRight.Y);
 
-        var clampedTop = bounds.Clamp(new Position(50, -10));
+        Position clampedTop = bounds.Clamp(new Position(50, -10));
         Assert.Equal(50, clampedTop.X);
         Assert.Equal(0, clampedTop.Y);
 
-        var clampedBottom = bounds.Clamp(new Position(50, 110));
+        Position clampedBottom = bounds.Clamp(new Position(50, 110));
         Assert.Equal(50, clampedBottom.X);
         Assert.Equal(100, clampedBottom.Y);
     }
@@ -87,11 +87,11 @@ public class ZoneBoundsExtendedTests
         var bounds = new ZoneBounds(0, 0, 100, 100);
         float margin = 10;
 
-        Assert.True(bounds.IsNearEdge(5, 50, margin));     // Near left edge
-        Assert.True(bounds.IsNearEdge(95, 50, margin));    // Near right edge
-        Assert.True(bounds.IsNearEdge(50, 5, margin));     // Near top edge
-        Assert.True(bounds.IsNearEdge(50, 95, margin));    // Near bottom edge
-        Assert.True(bounds.IsNearEdge(5, 5, margin));      // Near corner
+        Assert.True(bounds.IsNearEdge(5, 50, margin)); // Near left edge
+        Assert.True(bounds.IsNearEdge(95, 50, margin)); // Near right edge
+        Assert.True(bounds.IsNearEdge(50, 5, margin)); // Near top edge
+        Assert.True(bounds.IsNearEdge(50, 95, margin)); // Near bottom edge
+        Assert.True(bounds.IsNearEdge(5, 5, margin)); // Near corner
     }
 
     [Fact]
@@ -100,11 +100,11 @@ public class ZoneBoundsExtendedTests
         var bounds = new ZoneBounds(0, 0, 100, 100);
         float margin = 10;
 
-        Assert.False(bounds.IsNearEdge(50, 50, margin));   // Center
-        Assert.False(bounds.IsNearEdge(20, 50, margin));   // Not near left
-        Assert.False(bounds.IsNearEdge(80, 50, margin));   // Not near right
-        Assert.False(bounds.IsNearEdge(50, 20, margin));   // Not near top
-        Assert.False(bounds.IsNearEdge(50, 80, margin));   // Not near bottom
+        Assert.False(bounds.IsNearEdge(50, 50, margin)); // Center
+        Assert.False(bounds.IsNearEdge(20, 50, margin)); // Not near left
+        Assert.False(bounds.IsNearEdge(80, 50, margin)); // Not near right
+        Assert.False(bounds.IsNearEdge(50, 20, margin)); // Not near top
+        Assert.False(bounds.IsNearEdge(50, 80, margin)); // Not near bottom
     }
 
     [Fact]
@@ -114,11 +114,10 @@ public class ZoneBoundsExtendedTests
         float margin = 10;
 
         // Positions just outside but within margin - returns TRUE
-        Assert.True(bounds.IsNearEdge(-5, 50, margin));    // Outside left by 5, within margin of 10
-        Assert.True(bounds.IsNearEdge(105, 50, margin));   // Outside right by 5, within margin of 10
-        Assert.True(bounds.IsNearEdge(50, -5, margin));    // Outside top by 5, within margin of 10
-        Assert.True(bounds.IsNearEdge(50, 105, margin));   // Outside bottom by 5, within margin of 10
-
+        Assert.True(bounds.IsNearEdge(-5, 50, margin)); // Outside left by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(105, 50, margin)); // Outside right by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(50, -5, margin)); // Outside top by 5, within margin of 10
+        Assert.True(bounds.IsNearEdge(50, 105, margin)); // Outside bottom by 5, within margin of 10
     }
 
     [Fact]
@@ -129,8 +128,8 @@ public class ZoneBoundsExtendedTests
         float width = bounds.MaxX - bounds.MinX;
         float height = bounds.MaxY - bounds.MinY;
 
-        Assert.Equal(40, width);  // 50 - 10 = 40
-        Assert.Equal(40, height);  // 60 - 20 = 40
+        Assert.Equal(40, width); // 50 - 10 = 40
+        Assert.Equal(40, height); // 60 - 20 = 40
     }
 
     [Fact]

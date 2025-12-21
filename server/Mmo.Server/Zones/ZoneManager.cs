@@ -8,19 +8,20 @@ namespace Mmo.Server.Zones;
 
 public class ZoneManager(ushort defaultZoneId)
 {
-    private readonly ConcurrentDictionary<ushort, Zone> _zones = new();
-
     // NUR ServerPlayerCharacter - für Connection-Mapping
     // IEntity-Lookups gehen über IdRegistry!
     private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByConnectionId = new();
+    private readonly ConcurrentDictionary<ushort, Zone> _zones = new();
 
     public ushort DefaultZoneId { get; } = defaultZoneId;
+
+    public int ZoneCount => _zones.Count;
 
     // ═══════════════════════════════════════════════════════════════
     // ZONE METHODS
     // ═══════════════════════════════════════════════════════════════
 
-    public Zone?  GetZone(ushort zoneId)
+    public Zone? GetZone(ushort zoneId)
     {
         if (_zones.TryGetValue(zoneId, out Zone zone))
             return zone;
@@ -37,18 +38,16 @@ public class ZoneManager(ushort defaultZoneId)
     public bool ZoneExists(ushort zoneId)
         => _zones.ContainsKey(zoneId);
 
-    public bool RegisterZone( Zone zone) => _zones.TryAdd(zone.Id, zone);
-
-    public int ZoneCount => _zones.Count;
+    public bool RegisterZone(Zone zone) => _zones.TryAdd(zone.Id, zone);
 
     // ═══════════════════════════════════════════════════════════════
     // ENTITY METHODS - Delegiert an IdRegistry + Zone
     // ═══════════════════════════════════════════════════════════════
 
-    public IEntity?  GetEntity(Guid persistentId)
+    public IEntity? GetEntity(Guid persistentId)
     {
         // Lookup über IdRegistry - KEINE eigene Liste!
-        IdRegistry. Instance.TryGetEntity(persistentId, out IEntity? entity);
+        IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity);
         return entity;
     }
 
@@ -60,7 +59,7 @@ public class ZoneManager(ushort defaultZoneId)
         // Zone hat nur IDs, Entities kommen aus IdRegistry
         return zone.Value.GetEntityIds()
             .Select(id => IdRegistry.Instance.TryGetEntity(id, out IEntity? e) ? e : null)
-            .Where(e => e != null)! ;
+            .Where(e => e != null)!;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -73,10 +72,8 @@ public class ZoneManager(ushort defaultZoneId)
     public bool TryGetPlayerByPersistentId(Guid persistentId, out ServerPlayerCharacter? player)
     {
         // Über IdRegistry Connection finden, dann in unserer Map nachschauen
-        if (IdRegistry.Instance. TryGetConnectionByEntity(persistentId, out Guid connectionId))
-        {
+        if (IdRegistry.Instance.TryGetConnectionByEntity(persistentId, out Guid connectionId))
             return _playersByConnectionId.TryGetValue(connectionId, out player);
-        }
         player = null;
         return false;
     }
@@ -91,15 +88,13 @@ public class ZoneManager(ushort defaultZoneId)
             {
                 if (IdRegistry.Instance.TryGetConnectionByEntity(id, out Guid connId) &&
                     _playersByConnectionId.TryGetValue(connId, out ServerPlayerCharacter? player))
-                {
                     return player;
-                }
                 return null;
             })
             .Where(p => p != null)!;
     }
 
-    public IEnumerable<ServerPlayerCharacter> GetAllServerPlayers()=>_playersByConnectionId.Values;
+    public IEnumerable<ServerPlayerCharacter> GetAllServerPlayers() => _playersByConnectionId.Values;
 
 
     // ═══════════════════════════════════════════════════════════════
@@ -108,7 +103,7 @@ public class ZoneManager(ushort defaultZoneId)
 
     internal void RegisterServerPlayer(ServerPlayerCharacter serverPlayer)
     {
-        _playersByConnectionId[serverPlayer.Connection. Id] = serverPlayer;
+        _playersByConnectionId[serverPlayer.Connection.Id] = serverPlayer;
 
         // Connection-Mapping in IdRegistry
         IdRegistry.Instance.RegisterConnection(
@@ -119,10 +114,10 @@ public class ZoneManager(ushort defaultZoneId)
 
     internal ServerPlayerCharacter? RemoveServerPlayer(Guid connectionId)
     {
-        if (! _playersByConnectionId.TryGetValue(connectionId, out ServerPlayerCharacter? player))
+        if (!_playersByConnectionId.TryGetValue(connectionId, out ServerPlayerCharacter? player))
             return null;
 
-        _playersByConnectionId. TryRemove(connectionId, out _);
+        _playersByConnectionId.TryRemove(connectionId, out _);
         IdRegistry.Instance.UnregisterConnection(connectionId);
 
         return player;

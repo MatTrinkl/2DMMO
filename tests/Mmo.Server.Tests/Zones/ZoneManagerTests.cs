@@ -5,7 +5,6 @@ using Mmo.Server.Zones;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Zones;
@@ -32,7 +31,7 @@ public class ZoneManagerTests : IDisposable
     private ZoneManager CreateZoneManager()
     {
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
-        var manger=new ZoneManager(0);
+        var manger = new ZoneManager(0);
         manger.RegisterZone(defaultZone);
         return manger;
     }
@@ -112,6 +111,4 @@ public class ZoneManagerTests : IDisposable
         Assert.False(found);
         Assert.Null(foundPlayer);
     }
-
-
 }

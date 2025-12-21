@@ -17,8 +17,7 @@ using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Enums;
 using Mmo.Shared.System.Messages;
-using Mmo.Shared.Zones.Messages;
-using Mmo.Shared.Zones.Messages.Server_Broadcast;
+using Mmo.Shared.Zones.Messages.Server_Brodcast;
 
 namespace Mmo.Server.Core;
 
@@ -464,9 +463,8 @@ public class GameServer : IDisposable
         };
 
 
-            var outgoing = OutgoingMessage.BroadcastToAll(heartbeat);
-            _outputQueue.Enqueue(outgoing);
-
+        var outgoing = OutgoingMessage.BroadcastToAll(heartbeat);
+        _outputQueue.Enqueue(outgoing);
     }
 
     private void CheckDeadConnections(float deltaTime)
@@ -543,7 +541,7 @@ public class GameServer : IDisposable
                 break;
 
             case OutgoingMessageType.BroadcastToAll:
-                BroadcastToAll(outgoing,true);
+                BroadcastToAll(outgoing, true);
                 break;
 
             case OutgoingMessageType.BroadcastToAllExcept:
@@ -637,7 +635,7 @@ public class GameServer : IDisposable
         }
     }
 
-    private void BroadcastToAll(OutgoingMessage outgoing,bool includeExcluded)
+    private void BroadcastToAll(OutgoingMessage outgoing, bool includeExcluded)
     {
         IEnumerable<ServerPlayerCharacter> allPlayers = _zoneManager.GetAllServerPlayers();
 

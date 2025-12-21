@@ -1,10 +1,7 @@
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
-using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Zones.Structs;
-using Moq;
 
 namespace Mmo.Shared.Tests.Zones;
 
@@ -70,10 +67,10 @@ public class ZoneTests : IDisposable
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
         var playerId = Guid.NewGuid();
-        
+
         zone.AddEntity(playerId);
         zone.AddEntity(playerId); // HashSet ignores duplicates
-        
+
         Assert.Equal(1, zone.EntityCount);
     }
 
@@ -84,7 +81,7 @@ public class ZoneTests : IDisposable
 
         // Guid.Empty is a valid Guid, not null
         zone.AddEntity(Guid.Empty);
-        
+
         Assert.True(zone.HasEntity(Guid.Empty));
     }
 
@@ -108,7 +105,7 @@ public class ZoneTests : IDisposable
 
         // Should not throw
         zone.RemoveEntity(Guid.NewGuid());
-        
+
         Assert.Equal(0, zone.EntityCount);
     }
 

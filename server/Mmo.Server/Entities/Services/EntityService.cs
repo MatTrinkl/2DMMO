@@ -4,13 +4,14 @@ using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Entities.Services;
 
-public class EntityService :  IEntityService
+public class EntityService : IEntityService
 {
-    private readonly ZoneManager _zoneManager;
     private readonly ILog _log;
+    private readonly ZoneManager _zoneManager;
 
     public EntityService(ZoneManager zoneManager, ILog log)
     {
@@ -20,8 +21,8 @@ public class EntityService :  IEntityService
 
     public IEnumerable<IEntity> GetEntitiesInRange(ushort zoneId, Position center, float radius)
     {
-        var entitiesInZone = _zoneManager.GetEntitiesInZone(zoneId);
-        
+        IEnumerable<IEntity> entitiesInZone = _zoneManager.GetEntitiesInZone(zoneId);
+
         // Filter entities by distance
         return entitiesInZone.Where(entity =>
         {
@@ -34,11 +35,8 @@ public class EntityService :  IEntityService
 
     public SpawnResult SpawnEntity(IEntity entity, ushort zoneId)
     {
-        var zone = _zoneManager.GetZone(zoneId);
-        if (zone == null)
-        {
-            return SpawnResult.Failed("ZONE_NOT_FOUND");
-        }
+        Zone? zone = _zoneManager.GetZone(zoneId);
+        if (zone == null) return SpawnResult.Failed("ZONE_NOT_FOUND");
 
         // 1. LocalId vergeben + RuntimeId setzen
         ushort localId = IdRegistry.Instance.GetNextLocalId(zoneId);
@@ -58,13 +56,13 @@ public class EntityService :  IEntityService
 
     public bool DespawnEntity(Guid persistentId)
     {
-        if (!IdRegistry.Instance.TryGetEntity(persistentId, out var entity))
+        if (!IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity))
             return false;
 
         ushort zoneId = entity.RuntimeId.ZoneId;
 
         // 1. Aus Zone entfernen
-        var zone = _zoneManager.GetZone(zoneId);
+        Zone? zone = _zoneManager.GetZone(zoneId);
         zone?.RemoveEntity(persistentId);
 
         // 2. LocalId freigeben
@@ -79,12 +77,12 @@ public class EntityService :  IEntityService
     public IEnumerable<IEntity> GetVisibleEntities(Guid playerId)
     {
         // Get the player entity
-        if (!IdRegistry.Instance.TryGetEntity(playerId, out var playerEntity))
+        if (!IdRegistry.Instance.TryGetEntity(playerId, out IEntity? playerEntity))
             return [];
 
         // Get all entities in the same zone
-        var entitiesInZone = _zoneManager.GetEntitiesInZone(playerEntity.RuntimeId.ZoneId);
-        
+        IEnumerable<IEntity> entitiesInZone = _zoneManager.GetEntitiesInZone(playerEntity.RuntimeId.ZoneId);
+
         // Return all entities except the player itself
         // In a full implementation, this could include visibility checks, distance, etc.
         return entitiesInZone.Where(e => e.PersistentId != playerId);
@@ -93,7 +91,7 @@ public class EntityService :  IEntityService
     // Lookups delegieren an IdRegistry
     public IEntity? GetEntity(Guid persistentId)
     {
-        IdRegistry.Instance.TryGetEntity(persistentId, out var entity);
+        IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity);
         return entity;
     }
 

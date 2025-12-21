@@ -2,8 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Connections;
 using Mmo.Server.Connections.MessageHandler;
-using Mmo.Server.Messages;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Player.Interfaces;
 using Mmo.Server.PlayerService;
@@ -159,19 +159,58 @@ public static class TestHelpers
 /// </summary>
 internal class MockBroadcastService : IBroadcastService
 {
-    public void BroadcastToZone(ushort zoneId, INetworkMessage message) { }
-    public void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message) { }
-    public void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message) { }
-    public void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId, INetworkMessage message) { }
-    public void SendToPlayer(ClientConnection client, INetworkMessage message) { }
-    public void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message) { }
-    public void SendError(ClientConnection client, string code, string message, string? details, string? field) { }
-    public void BroadcastGlobal(INetworkMessage message) { }
-    public void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message) { }
-    public void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message) { }
-    public void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message) { }
-    public void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message) { }
-    public void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message) { }
+    public void BroadcastToZone(ushort zoneId, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId,
+        INetworkMessage message)
+    {
+    }
+
+    public void SendToPlayer(ClientConnection client, INetworkMessage message)
+    {
+    }
+
+    public void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message)
+    {
+    }
+
+    public void SendError(ClientConnection client, string code, string message, string? details, string? field)
+    {
+    }
+
+    public void BroadcastGlobal(INetworkMessage message)
+    {
+    }
+
+    public void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message)
+    {
+    }
+
+    public void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message)
+    {
+    }
 }
 
 /// <summary>
@@ -179,7 +218,8 @@ internal class MockBroadcastService : IBroadcastService
 /// </summary>
 internal class MockAsyncTaskService : IAsyncTaskService
 {
-    public void Run<TResult>(Guid connectionId, Func<Task<TResult>> asyncTask, Action<MessageContext, TResult> onComplete)
+    public void Run<TResult>(Guid connectionId, Func<Task<TResult>> asyncTask,
+        Action<MessageContext, TResult> onComplete)
     {
         // For testing, execute the task but don't call the callback
         // The callback requires a MessageContext which we don't have in this mock
@@ -222,8 +262,11 @@ internal class MockZoneService : IZoneService
     public ZoneInfo? GetZoneInfo(ushort zoneId) => null;
     public IEnumerable<ZoneInfo> GetAllZones() => Enumerable.Empty<ZoneInfo>();
     public bool ZoneExists(ushort zoneId) => true;
-    public ZoneTransferResult RequestZoneTransferAsync(Guid playerId, ushort targetZoneId, Position? targetPosition = null) =>
+
+    public ZoneTransferResult RequestZoneTransferAsync(Guid playerId, ushort targetZoneId,
+        Position? targetPosition = null) =>
         ZoneTransferResult.Succeeded(targetZoneId, targetPosition ?? new Position(0, 0));
+
     public int GetPlayerCount(ushort zoneId) => 0;
     public IEnumerable<Guid> GetPlayersInZone(ushort zoneId) => Enumerable.Empty<Guid>();
 }
