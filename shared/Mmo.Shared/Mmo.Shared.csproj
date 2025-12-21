@@ -10,4 +10,12 @@
     <PackageReference Include="MessagePack" Version="2.*"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Character\Messages\"/>
+    <Folder Include="Character\Records\"/>
+    <Folder Include="Entities\Messages\"/>
+    <Folder Include="Entities\Records\"/>
+    <Folder Include="Groups\"/>
+  </ItemGroup>
+
 </Project>

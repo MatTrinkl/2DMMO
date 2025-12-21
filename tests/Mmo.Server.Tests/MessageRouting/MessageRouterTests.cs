@@ -1,13 +1,13 @@
-using Mmo.Server.Handlers.Base;
+using Mmo.Server.Connections;
 using Mmo.Server.MessageRouting;
-using Mmo.Server.Networking;
+using Mmo.Server.MessageRouting.Interfaces;
+using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Entities;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
-using Mmo.Shared.Messages.Connection;
-using Mmo.Shared.Records;
-using Mmo.Shared.Zones;
+using Mmo.Server.Zones;
+using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Core;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 using Moq;
 
 namespace Mmo.Server.Tests.MessageRouting;
@@ -22,17 +22,14 @@ public class MessageRouterTests : IDisposable
         IdRegistry.Instance.Clear();
     }
 
-    public void Dispose()
-    {
-        IdRegistry.Instance.Clear();
-    }
+    public void Dispose() => IdRegistry.Instance.Clear();
 
     [Fact]
     public void RegisterHandler_AddsHandler()
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var mockHandler = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> mockHandler = CreateMockHandler(MessageCategory.Connection);
 
         // Act & Assert - Should not throw
         router.RegisterHandler(mockHandler.Object);
@@ -43,8 +40,8 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var handler1 = CreateMockHandler(MessageCategory.Connection);
-        var handler2 = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> handler1 = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> handler2 = CreateMockHandler(MessageCategory.Connection);
         router.RegisterHandler(handler1.Object);
 
         // Act & Assert
@@ -56,7 +53,7 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var mockHandler = CreateMockHandler(MessageCategory.Movement);
+        Mock<ICategoryHandler> mockHandler = CreateMockHandler(MessageCategory.Movement);
 
         // Act
         router.RegisterHandler(mockHandler.Object);
@@ -70,9 +67,9 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var handler1 = CreateMockHandler(MessageCategory.Connection);
-        var handler2 = CreateMockHandler(MessageCategory.Movement);
-        var handler3 = CreateMockHandler(MessageCategory.Chat);
+        Mock<ICategoryHandler> handler1 = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> handler2 = CreateMockHandler(MessageCategory.Movement);
+        Mock<ICategoryHandler> handler3 = CreateMockHandler(MessageCategory.Chat);
 
         // Act - Should not throw
         router.RegisterHandler(handler1.Object);
@@ -91,11 +88,11 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
-        var zoneManager = TestHelpers.CreateDefaultZoneManager();
-        var services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
+        IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var ctx = new MessageContext(connection, gameServer, zoneManager, services);
 
         // Act - Use a message type with category index >= 50 (handlers array size)
@@ -113,11 +110,11 @@ public class MessageRouterTests : IDisposable
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
-        var zoneManager = TestHelpers.CreateDefaultZoneManager();
-        var services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
+        IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var ctx = new MessageContext(connection, gameServer, zoneManager, services);
 
         // Act
@@ -132,18 +129,18 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var mockHandler = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> mockHandler = CreateMockHandler(MessageCategory.Connection);
         mockHandler.Setup(h => h.CanHandle(It.IsAny<MessageType>())).Returns(false);
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
-        var zoneManager = TestHelpers.CreateDefaultZoneManager();
-        var services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
+        IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var ctx = new MessageContext(connection, gameServer, zoneManager, services);
 
         // Act
@@ -158,25 +155,26 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var mockHandler = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> mockHandler = CreateMockHandler(MessageCategory.Connection);
         mockHandler.Setup(h => h.CanHandle(MessageType.LoginRequest)).Returns(true);
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
-        var zoneManager = TestHelpers.CreateDefaultZoneManager();
-        var services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
+        IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var ctx = new MessageContext(connection, gameServer, zoneManager, services);
 
         // Act
         router.Route(ctx, MessageType.LoginRequest, loginRequest);
 
         // Assert
-        mockHandler.Verify(h => h.Handle(It.IsAny<MessageContext>(), MessageType.LoginRequest, loginRequest), Times.Once);
+        mockHandler.Verify(h => h.Handle(It.IsAny<MessageContext>(), MessageType.LoginRequest, loginRequest),
+            Times.Once);
     }
 
     [Fact]
@@ -184,20 +182,21 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var mockHandler = CreateMockHandler(MessageCategory.Connection);
+        Mock<ICategoryHandler> mockHandler = CreateMockHandler(MessageCategory.Connection);
         mockHandler.Setup(h => h.CanHandle(MessageType.LoginRequest)).Returns(true);
-        mockHandler.Setup(h => h.Handle(It.IsAny<MessageContext>(), It.IsAny<MessageType>(), It.IsAny<INetworkMessage>()))
+        mockHandler.Setup(h =>
+                h.Handle(It.IsAny<MessageContext>(), It.IsAny<MessageType>(), It.IsAny<INetworkMessage>()))
             .Throws(new InvalidOperationException("Test exception"));
         router.RegisterHandler(mockHandler.Object);
 
         var loginRequest = new LoginRequest("test", "pass");
 
         // Create a real MessageContext using test helpers
-        GameLoop.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
-        var zoneManager = TestHelpers.CreateDefaultZoneManager();
-        var services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
+        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
+        ZoneManager zoneManager = TestHelpers.CreateDefaultZoneManager();
+        IServiceProvider services = TestHelpers.CreateTestServices(_mockLog, zoneManager);
         var mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
+        ClientConnection connection = mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var ctx = new MessageContext(connection, gameServer, zoneManager, services);
 
         // Act

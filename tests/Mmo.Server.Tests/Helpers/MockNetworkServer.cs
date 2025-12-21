@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Mmo.Server.Networking;
-using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Interfaces;
+using Mmo.Server.Connections;
+using Mmo.Server.Network;
+using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Server.Tests.Helpers;
 

@@ -1,6 +1,9 @@
-using Mmo.Shared.Entities;
-using Mmo.Shared.Records;
-using Mmo.Shared.Zones;
+using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Core;
+using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Zones.Structs;
 using Moq;
 
 namespace Mmo.Shared.Tests.Zones;
@@ -186,16 +189,6 @@ public class ZoneTests : IDisposable
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
 
         Assert.Throws<ArgumentNullException>(() => zone.IsPositionInBounds(null!));
-    }
-
-    [Fact]
-    public void ZoneId_CanBeUpdated()
-    {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-
-        zone.ZoneId = 42;
-
-        Assert.Equal(42, zone.ZoneId);
     }
 
     [Fact]

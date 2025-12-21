@@ -1,7 +1,7 @@
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Shared.Interfaces;
+using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.Tests.GameServer;
 
@@ -12,7 +12,7 @@ namespace Mmo.Server.Tests.GameServer;
 ///     protected methods to override. This class now simulates slowness by
 ///     adding delay in the Tick method via interception.
 /// </summary>
-internal sealed class SlowGameServer : GameLoop.GameServer
+internal sealed class SlowGameServer : Core.GameServer
 {
     private readonly TimeSpan _tickDelay;
 

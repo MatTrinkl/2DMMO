@@ -1,4 +1,4 @@
-using Mmo.Shared.Entities;
+using Mmo.Shared.Core;
 
 namespace Mmo.Server.Tests;
 

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Mmo.Server.Logging;
 using Moq;
 using static Moq.It;
 

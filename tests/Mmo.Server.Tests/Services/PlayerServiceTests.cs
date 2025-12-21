@@ -1,12 +1,12 @@
-using Mmo.Server.Entities;
-using Mmo.Server.Networking;
-using Mmo.Server.Services.Player;
+using Mmo.Server.Connections;
+using Mmo.Server.PlayerService;
+using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Shared.Entities;
-using Mmo.Shared.Enums;
-using Mmo.Shared.Records;
-using Mmo.Shared.Zones;
+using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Core;
+using Mmo.Shared.Core.Records;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -15,8 +15,8 @@ public class PlayerServiceTests : IDisposable
 {
     private readonly MockLog _mockLog = new();
     private readonly MockNetworkServer _mockNetworkServer;
+    private readonly PlayerService.PlayerService _playerService;
     private readonly ZoneManager _zoneManager;
-    private readonly PlayerService _playerService;
 
     public PlayerServiceTests()
     {
@@ -24,13 +24,10 @@ public class PlayerServiceTests : IDisposable
         _mockNetworkServer = new MockNetworkServer(_mockLog, true);
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
         _zoneManager = new ZoneManager(0, defaultZone);
-        _playerService = new PlayerService(_zoneManager, _mockLog);
+        _playerService = new PlayerService.PlayerService(_zoneManager, _mockLog);
     }
 
-    public void Dispose()
-    {
-        IdRegistry.Instance.Clear();
-    }
+    public void Dispose() => IdRegistry.Instance.Clear();
 
     [Fact]
     public async Task SpawnPlayerAsync_CreatesPlayerWithCorrectProperties()
@@ -120,7 +117,7 @@ public class PlayerServiceTests : IDisposable
         var accountId = Guid.NewGuid();
 
         // Act
-        var result = await _playerService.GetCharacterListAsync(accountId);
+        List<CharacterInfo> result = await _playerService.GetCharacterListAsync(accountId);
 
         // Assert
         Assert.NotNull(result);

@@ -1,6 +1,6 @@
-using Mmo.Server.Services.Authentication;
+using Mmo.Server.AuthenticationService.Records;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Enums;
+using Mmo.Shared.Account.Enums;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -12,7 +12,7 @@ public class AuthenticationServiceTests
     public async Task AuthenticateAsync_ValidCredentials_ReturnsSuccess()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
 
         // Act
         AuthResult result = await authService.AuthenticateAsync("TestUser", "password123");
@@ -29,7 +29,7 @@ public class AuthenticationServiceTests
     public async Task AuthenticateAsync_AnyUsername_LogsAuthentication()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
 
         // Act
         await authService.AuthenticateAsync("AnyUser", "anyPassword");
@@ -42,7 +42,7 @@ public class AuthenticationServiceTests
     public async Task AuthenticateAsync_DifferentUsers_ReturnDifferentAccountIds()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
 
         // Act
         AuthResult result1 = await authService.AuthenticateAsync("User1", "pass1");
@@ -56,7 +56,7 @@ public class AuthenticationServiceTests
     public async Task ValidateSessionAsync_ReturnsNotImplemented()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
         var sessionToken = Guid.NewGuid();
 
         // Act
@@ -71,7 +71,7 @@ public class AuthenticationServiceTests
     public async Task InvalidateSessionAsync_LogsSessionInvalidation()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
         var sessionToken = Guid.NewGuid();
 
         // Act
@@ -85,7 +85,7 @@ public class AuthenticationServiceTests
     public async Task AuthenticateAsync_DefaultFlags_ReturnsNone()
     {
         // Arrange
-        var authService = new AuthenticationService(_mockLog);
+        var authService = new AuthenticationService.AuthenticationService(_mockLog);
 
         // Act
         AuthResult result = await authService.AuthenticateAsync("TestUser", "password");
