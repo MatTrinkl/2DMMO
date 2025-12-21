@@ -5,6 +5,8 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
 
+namespace Mmo.Server.Entities.Services;
+
 public class EntityService :  IEntityService
 {
     private readonly ZoneManager _zoneManager;
