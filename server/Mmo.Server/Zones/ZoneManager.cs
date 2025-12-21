@@ -21,9 +21,18 @@ public class ZoneManager(ushort defaultZoneId)
     // ═══════════════════════════════════════════════════════════════
 
     public Zone?  GetZone(ushort zoneId)
-        => _zones.GetValueOrDefault(zoneId);
+    {
+        if (_zones.TryGetValue(zoneId, out Zone zone))
+            return zone;
+        return null;
+    }
 
-    public Zone? GetDefaultZone()=>_zones.GetValueOrDefault(DefaultZoneId);
+    public Zone? GetDefaultZone()
+    {
+        if (_zones.TryGetValue(DefaultZoneId, out Zone zone))
+            return zone;
+        return null;
+    }
 
     public bool ZoneExists(ushort zoneId)
         => _zones.ContainsKey(zoneId);

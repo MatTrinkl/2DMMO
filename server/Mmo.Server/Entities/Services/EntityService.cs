@@ -10,6 +10,12 @@ public class EntityService :  IEntityService
     private readonly ZoneManager _zoneManager;
     private readonly ILog _log;
 
+    public EntityService(ZoneManager zoneManager, ILog log)
+    {
+        _zoneManager = zoneManager;
+        _log = log;
+    }
+
     public IEnumerable<IEntity> GetEntitiesInRange(ushort zoneId, Position center, float radius) => throw new NotImplementedException();
 
     public SpawnResult SpawnEntity(IEntity entity, ushort zoneId)
