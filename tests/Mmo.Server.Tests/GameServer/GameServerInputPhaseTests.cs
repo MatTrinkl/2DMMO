@@ -3,7 +3,6 @@ using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Movement;
 using Mmo.Shared.System.Messages;
 

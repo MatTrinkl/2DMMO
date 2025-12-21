@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Shared.Core;

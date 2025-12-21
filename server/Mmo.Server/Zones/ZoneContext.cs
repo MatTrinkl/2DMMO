@@ -1,6 +1,5 @@
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Configurations;
 using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Structs;

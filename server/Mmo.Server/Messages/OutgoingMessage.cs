@@ -1,5 +1,4 @@
 using Mmo.Server.Connections;
-using Mmo.Server.Network;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
 

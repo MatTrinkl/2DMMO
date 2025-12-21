@@ -1,6 +1,5 @@
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Movement.Enums;
 

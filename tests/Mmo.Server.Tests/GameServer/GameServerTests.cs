@@ -5,7 +5,6 @@ using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Movement;
 
 namespace Mmo.Server.Tests.GameServer;
@@ -168,8 +167,7 @@ public class GameServerTests
         gameServer.Stop();
 
         ServerStats stats = gameServer.GetStats();
-
-        Assert.NotNull(stats);
+        
         Assert.True(stats.TickCount > 0);
         Assert.True(stats.Uptime.TotalMilliseconds >= 0);
     }

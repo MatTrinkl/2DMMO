@@ -7,7 +7,6 @@ using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Messaging.Enums;
 
 namespace Mmo.Server.Connections.Handler;

@@ -1,4 +1,3 @@
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Structs;
 
 namespace Mmo.Shared.Tests.Entities;

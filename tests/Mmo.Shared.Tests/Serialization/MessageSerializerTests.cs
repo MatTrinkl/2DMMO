@@ -4,7 +4,6 @@ using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Messaging.Serialization;

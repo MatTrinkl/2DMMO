@@ -1,5 +1,4 @@
 using Mmo.Server.Connections;
-using Mmo.Server.Network;
 using Mmo.Server.PlayerService;
 using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Tests.Helpers;
@@ -7,8 +6,6 @@ using Mmo.Server.Zones;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities;
-using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;

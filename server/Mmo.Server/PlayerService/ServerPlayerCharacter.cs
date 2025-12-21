@@ -1,10 +1,8 @@
 using Mmo.Server.Connections;
-using Mmo.Shared;
 using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Constants;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Groups.Enums;
 

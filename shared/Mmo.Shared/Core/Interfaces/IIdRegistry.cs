@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Shared.Core.Interfaces;

@@ -7,7 +7,6 @@ using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Network;
 using Mmo.Server.PlayerService.Interfaces;
 using Mmo.Server.Zones;
-using Mmo.Shared;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
 

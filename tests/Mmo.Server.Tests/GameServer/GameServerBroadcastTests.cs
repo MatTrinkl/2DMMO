@@ -1,11 +1,9 @@
 using Mmo.Server.Connections;
 using Mmo.Server.Core.Structs;
 using Mmo.Server.Messages;
-using Mmo.Server.Network;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Core;
-using Mmo.Shared.Entities;
 
 namespace Mmo.Server.Tests.GameServer;
 

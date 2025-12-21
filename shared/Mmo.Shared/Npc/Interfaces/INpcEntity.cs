@@ -1,7 +1,6 @@
 using Mmo.Shared.Combat.Enums;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Creatures.Enums;
-using Mmo.Shared.Entities;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Npc.Enums;
 
