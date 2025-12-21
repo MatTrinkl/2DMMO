@@ -29,7 +29,6 @@ namespace Mmo.Server.Connections.MessageHandler;
 /// </summary>
 public class ConnectionHandler(
     IServiceProvider services,
-    ZoneManager zoneManager,
     ILog log)
     : BaseCategoryHandler(log)
 {

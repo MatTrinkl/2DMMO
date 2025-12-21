@@ -163,7 +163,7 @@ public class Program
         services.AddSingleton<IBroadcastService, BroadcastService>();
 
         //AsyncTask
-        services.AddSingleton<IAsyncTaskService, IAsyncTaskService>();
+        services.AddSingleton<IAsyncTaskService, AsyncTask.Services.AsyncTaskService>();
 
         //Zone
         services.AddSingleton<IZoneService, ZoneService>();
