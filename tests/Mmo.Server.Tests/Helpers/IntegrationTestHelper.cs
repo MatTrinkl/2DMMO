@@ -91,7 +91,6 @@ public static class TestHelpers
         IServiceProvider services = CreateTestServices(log, zoneManager);
         var connectionHandler = new ConnectionHandler(
             services,
-            zoneManager,
             log
         );
         router.RegisterHandler(connectionHandler);
