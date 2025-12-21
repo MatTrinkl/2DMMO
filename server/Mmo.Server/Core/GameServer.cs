@@ -18,7 +18,7 @@ using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Enums;
 using Mmo.Shared.System.Messages;
 using Mmo.Shared.Zones.Messages;
-using Mmo.Shared.Zones.Messages.Server_Brodcast;
+using Mmo.Shared.Zones.Messages.Server_Broadcast;
 
 namespace Mmo.Server.Core;
 
