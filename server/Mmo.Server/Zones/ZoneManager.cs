@@ -101,7 +101,7 @@ public class ZoneManager
     /// <returns>Returns the Default Zone or null.</returns>
     public Zone? GetDefaultZone()
     {
-        if (_zones.TryGetValue(0, out Zone zone))
+        if (_zones.TryGetValue(_defaultZoneId, out Zone zone))
             return zone;
 
         return null;
@@ -404,17 +404,11 @@ public class ZoneManager
     /// <exception cref="ArgumentException">Thrown when entity is not in the source zone.</exception>
     public void TransferEntity(IEntity entity, ushort fromZoneId, ushort toZoneId)
     {
-        Zone? oldZone = null, newZone = null;
-        if (_zones.TryGetValue(fromZoneId, out Zone outoldZone))
-            if (outoldZone != default)
-                oldZone = outoldZone;
-        if (_zones.TryGetValue(toZoneId, out Zone outnewZone))
-            if (outnewZone != default)
-                newZone = outnewZone;
 
-
-        ArgumentNullException.ThrowIfNull(oldZone, nameof(fromZoneId));
-        ArgumentNullException.ThrowIfNull(newZone, nameof(toZoneId));
+        if (!_zones.TryGetValue(fromZoneId, out Zone oldZone))
+            throw new ArgumentNullException(nameof(fromZoneId));
+        if (!_zones.TryGetValue(toZoneId, out Zone newZone))
+            throw new ArgumentNullException(nameof(toZoneId));
 
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -428,10 +422,10 @@ public class ZoneManager
         long oldGlobalKey = entity.RuntimeId.GlobalKey;
 
         // Remove from old zone (releases LocalId via IdRegistry)
-        oldZone.Value.RemoveEntity(entity.RuntimeId.LocalId);
+        oldZone.RemoveEntity(entity.RuntimeId.LocalId);
 
         // Add to new zone (assigns new LocalId via IdRegistry)
-        newZone.Value.AddEntity(entity);
+        newZone.AddEntity(entity);
 
         // Update GlobalKey lookup in IdRegistry if entity is registered
         IdRegistry.Instance.UpdateEntityGlobalKey(entity, oldGlobalKey);

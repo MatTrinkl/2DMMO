@@ -167,7 +167,7 @@ public class GameServerTests
         gameServer.Stop();
 
         ServerStats stats = gameServer.GetStats();
-        
+
         Assert.True(stats.TickCount > 0);
         Assert.True(stats.Uptime.TotalMilliseconds >= 0);
     }

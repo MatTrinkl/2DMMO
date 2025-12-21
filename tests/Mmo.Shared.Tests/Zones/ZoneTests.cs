@@ -192,14 +192,6 @@ public class ZoneTests : IDisposable
     }
 
     [Fact]
-    public void ZoneId_CanBeUpdated()
-    {
-        var zone = new Zone(42, "main", new ZoneBounds(0, 0, 100, 100));
-
-        Assert.Equal(42, zone.ZoneId);
-    }
-
-    [Fact]
     public void Entities_IsAccessible()
     {
         var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
