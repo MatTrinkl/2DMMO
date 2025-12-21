@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using MessagePack;
+using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
-using Mmo.Shared.Messages.ZoneEvents;
+using Mmo.Shared.Messages.Serialization;
 using Mmo.Shared.Records;
-using Mmo.Shared.Serialization;
+using Mmo.Shared.Zones.Messages;
 
 namespace Mmo.Server.Tests.Networking;
 

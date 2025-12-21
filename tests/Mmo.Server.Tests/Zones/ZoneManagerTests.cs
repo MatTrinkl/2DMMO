@@ -1,10 +1,12 @@
-using Mmo.Server.Entities;
-using Mmo.Server.Networking;
+using Mmo.Server.Network;
+using Mmo.Server.Players;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Zones;
 
@@ -66,7 +68,7 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "second", new ZoneBounds(0, 0, 500, 500));
 
-        zoneManager.RegisterZone(1, newZone);
+        zoneManager.RegisterZone(newZone);
 
         Assert.Equal(2, zoneManager.ZoneCount);
         Assert.NotNull(zoneManager.GetZone(1));
@@ -78,7 +80,7 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var duplicateZone = new Zone(0, "duplicate", new ZoneBounds(0, 0, 100, 100));
 
-        Assert.Throws<ArgumentException>(() => zoneManager.RegisterZone(0, duplicateZone));
+        Assert.Throws<ArgumentException>(() => zoneManager.RegisterZone(duplicateZone));
     }
 
     [Fact]
@@ -86,7 +88,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "toRemove", new ZoneBounds(0, 0, 100, 100));
-        zoneManager.RegisterZone(1, newZone);
+        zoneManager.RegisterZone(newZone);
 
         bool result = zoneManager.UnregisterZone(1);
 
@@ -124,7 +126,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var newZone = new Zone(1, "other", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, newZone);
+        zoneManager.RegisterZone(newZone);
         ServerPlayerCharacter playerCharacter = CreateServerPlayer();
 
         zoneManager.AddPlayer(playerCharacter, 1);
@@ -237,7 +239,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(zone1);
 
         ServerPlayerCharacter player1 = CreateServerPlayer();
         ServerPlayerCharacter player2 = CreateServerPlayer();
@@ -296,7 +298,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(zone1);
         ServerPlayerCharacter playerCharacter = CreateServerPlayer();
         zoneManager.AddPlayer(playerCharacter, 0);
 
@@ -336,7 +338,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(zone1);
         var persistentId = Guid.NewGuid();
         ServerPlayerCharacter playerCharacter = CreateServerPlayer(persistentId);
         zoneManager.AddPlayer(playerCharacter, 0);
@@ -453,7 +455,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(zone1);
         var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Entity", new Position(0, 0));
 
         zoneManager.AddEntity(entity, 1);
@@ -531,8 +533,8 @@ public class ZoneManagerTests : IDisposable
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
         var zone2 = new Zone(2, "zone2", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
-        zoneManager.RegisterZone(2, zone2);
+        zoneManager.RegisterZone(zone1);
+        zoneManager.RegisterZone(zone2);
 
         var allZones = zoneManager.GetAllZones().ToList();
 
@@ -660,7 +662,7 @@ public class ZoneManagerTests : IDisposable
     {
         ZoneManager zoneManager = CreateZoneManager();
         var zone1 = new Zone(1, "zone1", new ZoneBounds(0, 0, 500, 500));
-        zoneManager.RegisterZone(1, zone1);
+        zoneManager.RegisterZone(zone1);
         ServerPlayerCharacter playerCharacter = CreateServerPlayer();
         zoneManager.AddPlayer(playerCharacter, 0); // Add to zone 0
 

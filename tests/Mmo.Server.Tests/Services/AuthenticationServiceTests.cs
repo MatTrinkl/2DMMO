@@ -1,5 +1,7 @@
-using Mmo.Server.Services.Authentication;
+using Mmo.Server.ServiceAuthentication;
+using Mmo.Server.ServiceAuthentication.Records;
 using Mmo.Server.Tests.Helpers;
+using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Enums;
 
 namespace Mmo.Server.Tests.Services;

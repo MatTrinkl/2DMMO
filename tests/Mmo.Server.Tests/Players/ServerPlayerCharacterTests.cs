@@ -1,6 +1,7 @@
-using Mmo.Server.Entities;
-using Mmo.Server.Networking;
+using Mmo.Server.Network;
+using Mmo.Server.Players;
 using Mmo.Server.Tests.Helpers;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
 
@@ -8,8 +9,8 @@ namespace Mmo.Server.Tests.Players;
 
 public class ServerPlayerCharacterTests
 {
-    private readonly MockNetworkServer _mockNetworkServer;
     private static readonly MockLog _mockLog = new();
+    private readonly MockNetworkServer _mockNetworkServer;
 
     public ServerPlayerCharacterTests()
     {

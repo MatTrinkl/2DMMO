@@ -1,7 +1,8 @@
 using FluentAssertions;
+using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Messages.Chat;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
 using Mmo.Shared.Records;

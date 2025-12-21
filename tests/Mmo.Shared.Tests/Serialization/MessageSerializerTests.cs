@@ -1,12 +1,15 @@
 using MessagePack;
+using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Messages;
-using Mmo.Shared.Messages.Chat;
+using Mmo.Shared.Interfaces;
 using Mmo.Shared.Messages.Connection;
 using Mmo.Shared.Messages.Movement;
-using Mmo.Shared.Messages.ZoneEvents;
+using Mmo.Shared.Messages.Serialization;
 using Mmo.Shared.Records;
+using Mmo.Shared.Zones.Messages;
 
 namespace Mmo.Shared.Tests.Serialization;
 
@@ -281,9 +284,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_LoginRequest_ReturnsCorrectType()
     {
         var original = new LoginRequest("user", "pass");
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<LoginRequest>(deserialized);
         var login = (LoginRequest)deserialized;
@@ -294,9 +297,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_LoginResponse_ReturnsCorrectType()
     {
         var original = new LoginResponse(true, Guid.NewGuid(), 1, null);
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<LoginResponse>(deserialized);
     }
@@ -305,9 +308,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_Heartbeat_ReturnsCorrectType()
     {
         var original = new Heartbeat(12345L, Guid.NewGuid());
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<Heartbeat>(deserialized);
     }
@@ -316,9 +319,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_Disconnect_ReturnsCorrectType()
     {
         var original = new Disconnect(Guid.NewGuid(), DisconnectReason.ServerShutdown);
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<Disconnect>(deserialized);
     }
@@ -327,9 +330,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_LogoutRequest_ReturnsCorrectType()
     {
         var original = new LogoutRequest(Guid.NewGuid());
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<LogoutRequest>(deserialized);
     }
@@ -338,9 +341,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_JoinZone_ReturnsCorrectType()
     {
         var original = new JoinZone(Guid.NewGuid());
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<JoinZone>(deserialized);
     }
@@ -349,9 +352,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_LeaveZone_ReturnsCorrectType()
     {
         var original = new LeaveZone(Guid.NewGuid());
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<LeaveZone>(deserialized);
     }
@@ -361,9 +364,9 @@ public class MessageSerializerTests
     {
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
         var original = new PositionUpdate(12345L, player, new Position(10, 20));
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<PositionUpdate>(deserialized);
     }
@@ -372,9 +375,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_PositionBroadcast_ReturnsCorrectType()
     {
         var original = new PositionBroadcast(12345L, Guid.NewGuid(), new Position(10, 20));
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<PositionBroadcast>(deserialized);
     }
@@ -383,9 +386,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_ChatMessage_ReturnsCorrectType()
     {
         var original = new ChatMessage(Guid.NewGuid(), "Hello");
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<ChatMessage>(deserialized);
     }
@@ -394,9 +397,9 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_ChatBroadcast_ReturnsCorrectType()
     {
         var original = new ChatBroadcast(Guid.NewGuid(), "Broadcast");
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<ChatBroadcast>(deserialized);
     }
@@ -406,9 +409,9 @@ public class MessageSerializerTests
     {
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
         var original = new PlayerJoinedZone(player);
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<PlayerJoinedZone>(deserialized);
     }
@@ -418,9 +421,9 @@ public class MessageSerializerTests
     {
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
         var original = new PlayerLeftZone(player);
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
-        Shared.Interfaces.INetworkMessage deserialized = Shared.Serialization.MessageSerializer.Deserialize(serialized);
+        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<PlayerLeftZone>(deserialized);
     }
@@ -430,7 +433,7 @@ public class MessageSerializerTests
     {
         // Create a message with corrupted data
         var original = new LoginRequest("user", "pass");
-        byte[] serialized = Shared.Serialization.MessageSerializer.Serialize(original);
+        byte[] serialized = MessageSerializer.Serialize(original);
 
         // Corrupt the data by setting the MessageType byte to an invalid value (byte.MaxValue = 255)
         // This causes MessagePack to fail when trying to deserialize the enum
@@ -438,6 +441,6 @@ public class MessageSerializerTests
 
         // MessagePack should throw when trying to deserialize corrupted data
         Assert.ThrowsAny<Exception>(() =>
-            Shared.Serialization.MessageSerializer.Deserialize(serialized));
+            MessageSerializer.Deserialize(serialized));
     }
 }

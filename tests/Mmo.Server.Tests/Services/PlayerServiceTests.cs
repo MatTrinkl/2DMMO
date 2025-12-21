@@ -1,12 +1,15 @@
-using Mmo.Server.Entities;
-using Mmo.Server.Networking;
-using Mmo.Server.Services.Player;
+using Mmo.Server.Network;
+using Mmo.Server.Players;
+using Mmo.Server.ServicePlayer;
+using Mmo.Server.ServicePlayer.Records;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -15,8 +18,8 @@ public class PlayerServiceTests : IDisposable
 {
     private readonly MockLog _mockLog = new();
     private readonly MockNetworkServer _mockNetworkServer;
-    private readonly ZoneManager _zoneManager;
     private readonly PlayerService _playerService;
+    private readonly ZoneManager _zoneManager;
 
     public PlayerServiceTests()
     {
@@ -27,10 +30,7 @@ public class PlayerServiceTests : IDisposable
         _playerService = new PlayerService(_zoneManager, _mockLog);
     }
 
-    public void Dispose()
-    {
-        IdRegistry.Instance.Clear();
-    }
+    public void Dispose() => IdRegistry.Instance.Clear();
 
     [Fact]
     public async Task SpawnPlayerAsync_CreatesPlayerWithCorrectProperties()
@@ -120,7 +120,7 @@ public class PlayerServiceTests : IDisposable
         var accountId = Guid.NewGuid();
 
         // Act
-        var result = await _playerService.GetCharacterListAsync(accountId);
+        List<CharacterInfo> result = await _playerService.GetCharacterListAsync(accountId);
 
         // Assert
         Assert.NotNull(result);

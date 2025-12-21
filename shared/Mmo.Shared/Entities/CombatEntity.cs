@@ -1,4 +1,8 @@
 using MessagePack;
+using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Character.Interfaces;
+using Mmo.Shared.Combat.Enums;
+using Mmo.Shared.Combat.Records;
 using Mmo.Shared.Enums;
 using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Interfaces;
@@ -91,7 +95,7 @@ public abstract class CombatEntity : ICombatEntity
 
     [Key(9)] public int MaxResource { get; set; } = 100;
 
-    [Key(10)] public virtual ResourceType ResourceType { get; set; } = ResourceType.None;
+    [Key(10)] public virtual CombatResourceType CombatResourceType { get; set; } = CombatResourceType.None;
 
     // ═══════════════════════════════════════════════════════════════
     // ICombatEntity - State

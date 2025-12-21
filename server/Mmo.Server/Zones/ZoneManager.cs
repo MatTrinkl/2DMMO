@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using Mmo.Server.Entities;
+using Mmo.Server.Players;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Zones;
 
@@ -65,16 +67,12 @@ public class ZoneManager
     /// <summary>
     ///     Register a Zone.
     /// </summary>
-    /// <param name="zoneId">The ID of the Zone to register.</param>
     /// <param name="zone">The Zone to register.</param>
     /// <exception cref="ArgumentException">Thrown when the zone is already registered.</exception>
-    public void RegisterZone(ushort zoneId, Zone zone)
+    public void RegisterZone(Zone zone)
     {
-        if (_zones.ContainsKey(zoneId))
-            throw new ArgumentException($"Zone with ID {zoneId} exists already.");
-
-        zone.ZoneId = zoneId;
-        _zones[zoneId] = zone;
+        if (!_zones.TryAdd(zone.Id, zone))
+            throw new ArgumentException($"Zone with ID {zone.Id} exists already.");
     }
 
     /// <summary>
@@ -89,13 +87,25 @@ public class ZoneManager
     /// </summary>
     /// <param name="zoneId">The ID of the Zone. </param>
     /// <returns>Returns the Zone or null. </returns>
-    public Zone? GetZone(ushort zoneId) => _zones.GetValueOrDefault(zoneId);
+    public Zone? GetZone(ushort zoneId)
+    {
+        if (_zones.TryGetValue(zoneId, out Zone zone))
+            return zone;
+
+        return null;
+    }
 
     /// <summary>
     ///     Get the Default Zone.
     /// </summary>
     /// <returns>Returns the Default Zone or null.</returns>
-    public Zone? GetDefaultZone() => _zones.GetValueOrDefault(_defaultZoneId);
+    public Zone? GetDefaultZone()
+    {
+        if (_zones.TryGetValue(0, out Zone zone))
+            return zone;
+
+        return null;
+    }
 
     /// <summary>
     ///     Gets all registered zones.
@@ -128,7 +138,7 @@ public class ZoneManager
             throw new InvalidOperationException($"Zone {targetZoneId} does not exist.");
 
         // Add to Zone (assigns EntityId via IdRegistry)
-        zone.AddEntity(serverPlayerCharacter.Entity);
+        zone.Value.AddEntity(serverPlayerCharacter.Entity);
 
         // Add to server-specific ServerPlayer lookups
         _playersByConnectionId.TryAdd(serverPlayerCharacter.Connection.Id, serverPlayerCharacter);
@@ -239,7 +249,7 @@ public class ZoneManager
         if (zone == null)
             throw new InvalidOperationException($"Zone {zoneId} does not exist.");
 
-        zone.AddEntity(entity);
+        zone.Value.AddEntity(entity);
     }
 
     /// <summary>
@@ -394,11 +404,18 @@ public class ZoneManager
     /// <exception cref="ArgumentException">Thrown when entity is not in the source zone.</exception>
     public void TransferEntity(IEntity entity, ushort fromZoneId, ushort toZoneId)
     {
-        Zone? oldZone = _zones.GetValueOrDefault(fromZoneId);
-        Zone? newZone = _zones.GetValueOrDefault(toZoneId);
+        Zone? oldZone = null, newZone = null;
+        if (_zones.TryGetValue(fromZoneId, out Zone outoldZone))
+            if (outoldZone != default)
+                oldZone = outoldZone;
+        if (_zones.TryGetValue(toZoneId, out Zone outnewZone))
+            if (outnewZone != default)
+                newZone = outnewZone;
+
 
         ArgumentNullException.ThrowIfNull(oldZone, nameof(fromZoneId));
         ArgumentNullException.ThrowIfNull(newZone, nameof(toZoneId));
+
         ArgumentNullException.ThrowIfNull(entity);
 
         if (entity.RuntimeId.ZoneId != fromZoneId)
@@ -411,10 +428,10 @@ public class ZoneManager
         long oldGlobalKey = entity.RuntimeId.GlobalKey;
 
         // Remove from old zone (releases LocalId via IdRegistry)
-        oldZone.RemoveEntity(entity.RuntimeId.LocalId);
+        oldZone.Value.RemoveEntity(entity.RuntimeId.LocalId);
 
         // Add to new zone (assigns new LocalId via IdRegistry)
-        newZone.AddEntity(entity);
+        newZone.Value.AddEntity(entity);
 
         // Update GlobalKey lookup in IdRegistry if entity is registered
         IdRegistry.Instance.UpdateEntityGlobalKey(entity, oldGlobalKey);

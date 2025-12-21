@@ -1,6 +1,7 @@
 using System.Text.Json;
-using Mmo.Shared.Configurations.Prefabs;
 using Mmo.Shared.Entities;
+using Mmo.Shared.Prefab.Configurations;
+using Mmo.Shared.Prefab.Serialization;
 
 namespace Mmo.Shared.Tests.Entities;
 

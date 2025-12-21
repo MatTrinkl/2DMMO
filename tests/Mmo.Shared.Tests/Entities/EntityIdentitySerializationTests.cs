@@ -1,5 +1,7 @@
 using MessagePack;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
+using Mmo.Shared.Prefab;
 using Mmo.Shared.Records;
 
 namespace Mmo.Shared.Tests.Entities;

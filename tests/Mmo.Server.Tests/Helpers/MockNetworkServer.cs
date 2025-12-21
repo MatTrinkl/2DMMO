@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Mmo.Server.Networking;
+using Mmo.Server.Network;
 using Mmo.Shared.Enums.Messages;
 using Mmo.Shared.Interfaces;
 

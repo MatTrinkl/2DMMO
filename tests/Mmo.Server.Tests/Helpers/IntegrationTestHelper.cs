@@ -1,15 +1,19 @@
 using Microsoft.Extensions.DependencyInjection;
-using Mmo.Server.Entities;
+using Mmo.Server.Connections.Handler;
 using Mmo.Server.MessageRouting;
-using Mmo.Server.MessageRouting.MessageHandler;
-using Mmo.Server.Networking;
-using Mmo.Server.Services.Authentication;
-using Mmo.Server.Services.Player;
+using Mmo.Server.Network;
+using Mmo.Server.Players;
+using Mmo.Server.ServiceAuthentication;
+using Mmo.Server.ServiceAuthentication.Interfaces;
+using Mmo.Server.ServicePlayer;
+using Mmo.Server.ServicePlayer.Interfaces;
 using Mmo.Server.Zones;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Interfaces;
 using Mmo.Shared.Records;
 using Mmo.Shared.Zones;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Helpers;
 
@@ -21,7 +25,7 @@ public static class TestHelpers
     /// <summary>
     ///     Creates a GameServer instance for testing with all required dependencies.
     /// </summary>
-    public static GameLoop.GameServer CreateTestGameServer(
+    public static Server.GameServer.GameServer CreateTestGameServer(
         ILog? log = null,
         MockNetworkServer? networkServer = null,
         ZoneManager? zoneManager = null,
@@ -35,7 +39,7 @@ public static class TestHelpers
         messageRouter ??= CreateMessageRouter(log, zoneManager);
         services ??= CreateTestServices(log, zoneManager);
 
-        var gameServer = new GameLoop.GameServer(
+        var gameServer = new Server.GameServer.GameServer(
             networkServer,
             messageRouter,
             zoneManager,
@@ -67,7 +71,7 @@ public static class TestHelpers
         {
             if (id == 0) continue; // Default already exists
             var zone = new Zone(id, name, new ZoneBounds(0, 0, 1000, 1000));
-            zoneManager.RegisterZone(id, zone);
+            zoneManager.RegisterZone(zone);
         }
 
         return zoneManager;

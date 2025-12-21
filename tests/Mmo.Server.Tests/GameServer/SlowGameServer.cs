@@ -12,7 +12,7 @@ namespace Mmo.Server.Tests.GameServer;
 ///     protected methods to override. This class now simulates slowness by
 ///     adding delay in the Tick method via interception.
 /// </summary>
-internal sealed class SlowGameServer : GameLoop.GameServer
+internal sealed class SlowGameServer : Server.GameServer.GameServer
 {
     private readonly TimeSpan _tickDelay;
 

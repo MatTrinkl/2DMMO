@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Entities;
 using Mmo.Shared.Enums.Entities;
 using Mmo.Shared.Records;
