@@ -14,10 +14,10 @@ public record Position(
 )
 {
     /// <summary>
-    /// Calculates the distance from this position to another one.
+    ///     Calculates the distance from this position to another one.
     /// </summary>
     /// <param name="otherPosition">The distance to get the distance from.</param>
-    /// <returns>The distance between this position and <see cref="otherPosition"/>.</returns>
+    /// <returns>The distance between this position and <see cref="otherPosition" />.</returns>
     public float CalculateDistance(Position otherPosition)
     {
         float dx = X - otherPosition.X;

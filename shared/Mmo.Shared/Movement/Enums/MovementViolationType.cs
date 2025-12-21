@@ -6,11 +6,11 @@
 public enum MovementViolationType
 {
     None,
-    SpeedHack,          // Zu schnell bewegt
-    Teleport,           // Position-Sprung ohne Teleport-Request
-    WallClip,           // Durch Wand bewegt
-    FlyHack,            // Fliegen ohne Erlaubnis
-    NoClip,             // Durch Terrain
-    OutOfBounds,        // Außerhalb der Zone-Grenzen
-    InvalidPosition     // Ungültige Koordinaten (NaN, etc.)
+    SpeedHack, // Zu schnell bewegt
+    Teleport, // Position-Sprung ohne Teleport-Request
+    WallClip, // Durch Wand bewegt
+    FlyHack, // Fliegen ohne Erlaubnis
+    NoClip, // Durch Terrain
+    OutOfBounds, // Außerhalb der Zone-Grenzen
+    InvalidPosition // Ungültige Koordinaten (NaN, etc.)
 }

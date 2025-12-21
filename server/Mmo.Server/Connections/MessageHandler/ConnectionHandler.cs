@@ -6,7 +6,6 @@ using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Player.Interfaces;
 using Mmo.Server.PlayerService;
-using Mmo.Server.Zones;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Authentification.Records;
 using Mmo.Shared.Connection.Messages;
@@ -32,15 +31,15 @@ public class ConnectionHandler(
     ILog log)
     : BaseCategoryHandler(log)
 {
+    private readonly IAsyncTaskService _asyncTask = services.GetRequiredService<IAsyncTaskService>();
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
 
     private readonly IAuthenticationService _authService = services.GetRequiredService<IAuthenticationService>();
+    private readonly IBroadcastService _broadcast = services.GetRequiredService<IBroadcastService>();
     private readonly ILog _log = log;
     private readonly IPlayerService _playerService = services.GetRequiredService<IPlayerService>();
-    private readonly IAsyncTaskService _asyncTask = services.GetRequiredService<IAsyncTaskService>();
-    private readonly IBroadcastService _broadcast = services.GetRequiredService<IBroadcastService>();
 
     // ═══════════════════════════════════════════════════════════════
     // PROPERTIES
@@ -108,11 +107,12 @@ public class ConnectionHandler(
                         "Authentication service unavailable.  Please try again later.", null, null);
                     return new LoginTaskResult(false, Error: authResult.Error);
                 }
+
                 // Authentication successful - Update connection state
                 Guid sessionToken = IdRegistry.Instance.GeneratePersistentId();
                 ctx.Connection.SetAuthenticated(
                     authResult.AccountId!.Value,
-                    authResult.Username??request.Username,
+                    authResult.Username ?? request.Username,
                     authResult.Flags,
                     sessionToken
                 );
@@ -126,7 +126,7 @@ public class ConnectionHandler(
                     connection
                 );
 
-                return new LoginTaskResult(true, Player: player);
+                return new LoginTaskResult(true, player);
             },
 
             // 2. COMPLETION CALLBACK (läuft im Game Loop mit frischem ctx)
@@ -151,7 +151,6 @@ public class ConnectionHandler(
             }
         );
     }
-
 
 
     private static string? ValidateCharacterName(string? name)

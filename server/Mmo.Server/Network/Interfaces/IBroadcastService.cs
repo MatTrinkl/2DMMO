@@ -7,7 +7,6 @@ namespace Mmo.Server.Network.Interfaces;
 
 public interface IBroadcastService
 {
-
     // Zone Broadcasts
     void BroadcastToZone(ushort zoneId, INetworkMessage message);
     void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message);
@@ -28,11 +27,10 @@ public interface IBroadcastService
     void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message);
 
     //Party
-    void BroadcastToParty(ServerPlayerCharacter characterInParty,INetworkMessage message);
+    void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message);
     void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message);
 
     //Guild
-    void BroadcastToGuild(ServerPlayerCharacter characterInGuild,INetworkMessage message);
+    void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message);
     void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message);
-
 }

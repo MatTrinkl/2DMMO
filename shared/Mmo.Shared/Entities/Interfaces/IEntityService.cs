@@ -6,7 +6,7 @@ namespace Mmo.Shared.Entities.Interfaces;
 public interface IEntityService
 {
     // Entity Queries
-    IEntity?  GetEntity(Guid persistentId );
+    IEntity? GetEntity(Guid persistentId);
     IEnumerable<IEntity> GetEntitiesInZone(ushort zoneId);
     IEnumerable<IEntity> GetEntitiesInRange(ushort zoneId, Position center, float radius);
 

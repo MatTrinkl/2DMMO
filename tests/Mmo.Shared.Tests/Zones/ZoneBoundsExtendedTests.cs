@@ -118,7 +118,7 @@ public class ZoneBoundsExtendedTests
         Assert.True(bounds.IsNearEdge(105, 50, margin));   // Outside right by 5, within margin of 10
         Assert.True(bounds.IsNearEdge(50, -5, margin));    // Outside top by 5, within margin of 10
         Assert.True(bounds.IsNearEdge(50, 105, margin));   // Outside bottom by 5, within margin of 10
-        
+
     }
 
     [Fact]

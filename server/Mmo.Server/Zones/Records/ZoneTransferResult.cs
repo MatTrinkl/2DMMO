@@ -11,7 +11,7 @@ public record ZoneTransferResult
     public bool Success { get; init; }
 
     /// <summary>Die neue Zone-ID (nur bei Erfolg).</summary>
-    public ushort?  NewZoneId { get; init; }
+    public ushort? NewZoneId { get; init; }
 
     /// <summary>Die Spawn-Position in der neuen Zone. </summary>
     public Position? SpawnPosition { get; init; }

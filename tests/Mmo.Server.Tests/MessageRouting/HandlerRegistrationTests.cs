@@ -70,11 +70,11 @@ public class HandlerRegistrationTests
         Assert.Equal((int)MessageCategory.Ping, (int)pingHandler.Category);
 
         // Verify numeric ranges
-        Assert.Equal(1, (int)zoneEventHandler.Category);    // 100-199 range
-        Assert.Equal(2, (int)movementHandler.Category);     // 200-299 range
-        Assert.Equal(3, (int)combatHandler.Category);       // 300-399 range
-        Assert.Equal(4, (int)chatHandler.Category);         // 400-499 range
-        Assert.Equal(9, (int)pingHandler.Category);         // 900-999 range
+        Assert.Equal(1, (int)zoneEventHandler.Category); // 100-199 range
+        Assert.Equal(2, (int)movementHandler.Category); // 200-299 range
+        Assert.Equal(3, (int)combatHandler.Category); // 300-399 range
+        Assert.Equal(4, (int)chatHandler.Category); // 400-499 range
+        Assert.Equal(9, (int)pingHandler.Category); // 900-999 range
     }
 
     [Fact]

@@ -32,8 +32,9 @@ public enum OutgoingMessageType : byte
 
     /// <summary>To ALL players on the server.</summary>
     BroadcastToAll = 8,
+
     /// <summary>
-    /// To All players, except one.
+    ///     To All players, except one.
     /// </summary>
-    BroadcastToAllExcept = 9,
+    BroadcastToAllExcept = 9
 }

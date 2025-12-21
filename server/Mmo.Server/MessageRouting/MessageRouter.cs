@@ -90,7 +90,8 @@ public sealed class MessageRouter(ILog log)
             log.Error(ex, "Error handling message {Type} in {Handler}",
                 type, handler.GetType().Name);
 
-            ctx.GetService<IBroadcastService>().SendError(ctx.Connection,"INTERNAL_ERROR", "An error occurred processing your request.", null, null);
+            ctx.GetService<IBroadcastService>().SendError(ctx.Connection, "INTERNAL_ERROR",
+                "An error occurred processing your request.", null, null);
         }
     }
 }

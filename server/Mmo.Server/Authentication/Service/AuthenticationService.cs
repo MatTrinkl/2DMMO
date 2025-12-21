@@ -1,6 +1,5 @@
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Authentification.Records;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.AuthenticationService;

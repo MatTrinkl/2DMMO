@@ -183,6 +183,7 @@ public readonly struct OutgoingMessage
             Message = message
         };
     }
+
     /// <summary>
     ///     Creates a broadcast for ALL players on the server.
     /// </summary>
@@ -196,5 +197,3 @@ public readonly struct OutgoingMessage
         };
     }
 }
-
-

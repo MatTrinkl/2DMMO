@@ -1,34 +1,35 @@
-﻿using Microsoft.Extensions.Logging;
-using Mmo.Server.Network.Interfaces;
+﻿using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Zones.Services;
 
 public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, ILog log)
     : IZoneService
 {
+    private readonly IBroadcastService _broadcast = broadcast;
     private readonly ILog _log = log;
     private readonly ZoneManager _zoneManager = zoneManager;
-    private readonly IBroadcastService _broadcast = broadcast;
 
     public ZoneInfo? GetZoneInfo(ushort zoneId)
     {
-        var zone = _zoneManager.GetZone(zoneId);
+        Zone? zone = _zoneManager.GetZone(zoneId);
         if (zone == null)
             return null;
 
         // Using available data from Zone struct
         // TODO: Add RecommendedLevel, IsPvP, IsInstance to Zone configuration
         return new ZoneInfo(
-            ZoneId: zone.Value.Id,
-            Name: zone.Value.Name,
-            RecommendedLevel: 1, // Default value, should come from config
-            IsPvP: false,        // Default value, should come from config
-            IsInstance: false    // Default value, should come from config
+            zone.Value.Id,
+            zone.Value.Name,
+            1, // Default value, should come from config
+            false, // Default value, should come from config
+            false // Default value, should come from config
         );
     }
 
@@ -47,28 +48,24 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
     {
         // 1. Validate target zone exists
         if (!_zoneManager.ZoneExists(targetZoneId))
-        {
             return new ZoneTransferResult
             {
                 Success = false,
                 Error = "TARGET_ZONE_NOT_FOUND"
             };
-        }
 
         // 2. Get player entity
-        if (!IdRegistry.Instance.TryGetEntity(playerId, out var entity))
-        {
+        if (!IdRegistry.Instance.TryGetEntity(playerId, out IEntity? entity))
             return new ZoneTransferResult
             {
                 Success = false,
                 Error = "PLAYER_NOT_FOUND"
             };
-        }
 
         ushort oldZoneId = entity.RuntimeId.ZoneId;
 
         // 3. Remove from old zone
-        var oldZone = _zoneManager.GetZone(oldZoneId);
+        Zone? oldZone = _zoneManager.GetZone(oldZoneId);
         oldZone?.RemoveEntity(playerId);
 
         // 4. Release old LocalId
@@ -79,12 +76,13 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
         entity.SetEntityId(newLocalId, targetZoneId);
 
         // 6. Add to new zone
-        var newZone = _zoneManager.GetZone(targetZoneId);
+        Zone? newZone = _zoneManager.GetZone(targetZoneId);
         newZone?.AddEntity(playerId);
 
         // 7. Update GlobalKey in IdRegistry
-        IdRegistry.Instance.UpdateEntityGlobalKey(entity, 
-            ((long)entity.RuntimeId.ServerId << 56) | ((long)oldZoneId << 40) | ((long)entity.RuntimeId.ShardId << 24) | entity.RuntimeId.LocalId);
+        IdRegistry.Instance.UpdateEntityGlobalKey(entity,
+            ((long)entity.RuntimeId.ServerId << 56) | ((long)oldZoneId << 40) | ((long)entity.RuntimeId.ShardId << 24) |
+            entity.RuntimeId.LocalId);
 
         // 8. Set spawn position if provided
         Position spawnPos = targetPosition ?? new Position(100, 100); // Default spawn
@@ -103,13 +101,13 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
 
     public int GetPlayerCount(ushort zoneId)
     {
-        var zone = _zoneManager.GetZone(zoneId);
+        Zone? zone = _zoneManager.GetZone(zoneId);
         return zone?.EntityCount ?? 0;
     }
 
     public IEnumerable<Guid> GetPlayersInZone(ushort zoneId)
     {
-        var zone = _zoneManager.GetZone(zoneId);
+        Zone? zone = _zoneManager.GetZone(zoneId);
         if (zone == null)
             return [];
 

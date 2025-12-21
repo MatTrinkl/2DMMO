@@ -1,4 +1,3 @@
-using Mmo.Server.Messages;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
 

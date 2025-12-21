@@ -3,8 +3,6 @@ using Mmo.Server.Core;
 using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
 using Mmo.Server.PlayerService;
-using Mmo.Server.Zones.Interfaces;
-using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Messages;
@@ -61,7 +59,8 @@ public class BroadcastService(GameServer gameServer)
             SendToPlayer(client, message);
     }
 
-    public void SendError(ClientConnection client, string code, string message, string? details=null, string? field=null)
+    public void SendError(ClientConnection client, string code, string message, string? details = null,
+        string? field = null)
     {
         if (string.IsNullOrEmpty(code)) throw new ArgumentNullException(nameof(code));
         if (string.IsNullOrEmpty(message)) throw new ArgumentNullException(nameof(message));

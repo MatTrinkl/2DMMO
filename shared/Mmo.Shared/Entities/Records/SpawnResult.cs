@@ -12,7 +12,7 @@ public record SpawnResult
     public ushort? LocalId { get; init; }
 
     /// <summary>Die ZoneId wo die Entity gespawnt wurde (nur bei Erfolg).</summary>
-    public ushort?  ZoneId { get; init; }
+    public ushort? ZoneId { get; init; }
 
     /// <summary>Error-Code bei Fehlschlag. </summary>
     public string? Error { get; init; }

@@ -1,12 +1,12 @@
 namespace Mmo.Shared.Zones.Structs;
 
-public readonly struct Zone (ushort zoneId, string name, ZoneBounds bounds)
+public readonly struct Zone(ushort zoneId, string name, ZoneBounds bounds)
 {
-    private readonly HashSet<Guid> _entityIds = new();  // Nur IDs!
+    private readonly HashSet<Guid> _entityIds = new(); // Nur IDs!
 
-    public ushort Id { get; } =  zoneId;
-    public string Name { get; }= name;
-    public ZoneBounds Bounds { get; }= bounds;
+    public ushort Id { get; } = zoneId;
+    public string Name { get; } = name;
+    public ZoneBounds Bounds { get; } = bounds;
 
     public int EntityCount => _entityIds.Count;
 

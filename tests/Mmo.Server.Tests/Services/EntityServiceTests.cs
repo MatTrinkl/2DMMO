@@ -4,6 +4,8 @@ using Mmo.Server.Zones;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Entities.Records;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
@@ -18,16 +20,13 @@ public class EntityServiceTests : IDisposable
     {
         IdRegistry.Instance.Clear();
         _zoneManager = new ZoneManager(0);
-        
+
         // Register default zone
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
         _zoneManager.RegisterZone(defaultZone);
     }
 
-    public void Dispose()
-    {
-        IdRegistry.Instance.Clear();
-    }
+    public void Dispose() => IdRegistry.Instance.Clear();
 
     [Fact]
     public void SpawnEntity_ValidZone_SucceedsAndAssignsLocalId()
@@ -35,7 +34,7 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
-        var result = service.SpawnEntity(player, 0);
+        SpawnResult result = service.SpawnEntity(player, 0);
 
         Assert.True(result.Success);
         Assert.NotNull(result.LocalId);
@@ -52,7 +51,7 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
         var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
-        var result = service.SpawnEntity(player, 999);
+        SpawnResult result = service.SpawnEntity(player, 999);
 
         Assert.False(result.Success);
         Assert.Equal("ZONE_NOT_FOUND", result.Error);
@@ -66,9 +65,9 @@ public class EntityServiceTests : IDisposable
         var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
         var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
 
-        var result1 = service.SpawnEntity(player1, 0);
-        var result2 = service.SpawnEntity(player2, 0);
-        var result3 = service.SpawnEntity(player3, 0);
+        SpawnResult result1 = service.SpawnEntity(player1, 0);
+        SpawnResult result2 = service.SpawnEntity(player2, 0);
+        SpawnResult result3 = service.SpawnEntity(player3, 0);
 
         Assert.NotNull(result1.LocalId);
         Assert.NotNull(result2.LocalId);
@@ -88,7 +87,7 @@ public class EntityServiceTests : IDisposable
         service.SpawnEntity(player, 0);
 
         Assert.True(IdRegistry.Instance.HasEntity(playerId));
-        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out var retrieved));
+        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out IEntity? retrieved));
         Assert.Equal(player, retrieved);
     }
 
@@ -101,7 +100,7 @@ public class EntityServiceTests : IDisposable
 
         service.SpawnEntity(player, 0);
 
-        var zone = _zoneManager.GetZone(0);
+        Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
         Assert.True(zone.Value.HasEntity(playerId));
     }
@@ -112,15 +111,15 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
         var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
-        
+
         service.SpawnEntity(player, 0);
 
-        var result = service.DespawnEntity(playerId);
+        bool result = service.DespawnEntity(playerId);
 
         Assert.True(result);
         Assert.False(IdRegistry.Instance.HasEntity(playerId));
-        
-        var zone = _zoneManager.GetZone(0);
+
+        Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
         Assert.False(zone.Value.HasEntity(playerId));
     }
@@ -130,7 +129,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
 
-        var result = service.DespawnEntity(Guid.NewGuid());
+        bool result = service.DespawnEntity(Guid.NewGuid());
 
         Assert.False(result);
     }
@@ -147,7 +146,7 @@ public class EntityServiceTests : IDisposable
         service.DespawnEntity(player1.PersistentId); // Releases ID 0
 
         var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
-        var result = service.SpawnEntity(player3, 0); // Should reuse ID 0
+        SpawnResult result = service.SpawnEntity(player3, 0); // Should reuse ID 0
 
         Assert.NotNull(result.LocalId);
         Assert.Equal((ushort)0, result.LocalId.Value);
@@ -176,10 +175,10 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
         var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
-        
+
         service.SpawnEntity(player, 0);
 
-        var result = service.GetEntity(playerId);
+        IEntity? result = service.GetEntity(playerId);
 
         Assert.NotNull(result);
         Assert.Equal(player, result);
@@ -190,7 +189,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
 
-        var result = service.GetEntity(Guid.NewGuid());
+        IEntity? result = service.GetEntity(Guid.NewGuid());
 
         Assert.Null(result);
     }
@@ -199,11 +198,13 @@ public class EntityServiceTests : IDisposable
     public void GetEntitiesInRange_ReturnsOnlyEntitiesWithinRadius()
     {
         var service = new EntityService(_zoneManager, _log);
-        
+
         // Spawn entities at different positions
         var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
-        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
+        var player2 =
+            new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
+        var player3 =
+            new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
 
         service.SpawnEntity(player1, 0);
         service.SpawnEntity(player2, 0);
@@ -232,7 +233,7 @@ public class EntityServiceTests : IDisposable
     public void GetVisibleEntities_ReturnsOtherEntitiesInSameZone()
     {
         var service = new EntityService(_zoneManager, _log);
-        
+
         var playerId = Guid.NewGuid();
         var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
         var other1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200));
@@ -264,7 +265,7 @@ public class EntityServiceTests : IDisposable
     public void GetVisibleEntities_PlayerAloneInZone_ReturnsEmpty()
     {
         var service = new EntityService(_zoneManager, _log);
-        
+
         var playerId = Guid.NewGuid();
         var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
 

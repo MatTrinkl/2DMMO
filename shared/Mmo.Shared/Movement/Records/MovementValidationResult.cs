@@ -12,13 +12,13 @@ public record MovementValidationResult
     public bool IsValid { get; init; }
 
     /// <summary>Korrigierte Position (bei Cheat-Verdacht).</summary>
-    public Position?  CorrectedPosition { get; init; }
+    public Position? CorrectedPosition { get; init; }
 
     /// <summary>Art der Verletzung (für Logging/Banning).</summary>
-    public MovementViolationType?  ViolationType { get; init; }
+    public MovementViolationType? ViolationType { get; init; }
 
     /// <summary>Schwere der Verletzung (0. 0 - 1.0).</summary>
-    public float?  ViolationSeverity { get; init; }
+    public float? ViolationSeverity { get; init; }
 
     // ─── Factory Methods ───
 

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.AsyncTask.Interface;
+using Mmo.Server.AsyncTask.Services;
 using Mmo.Server.Connections.MessageHandler;
+using Mmo.Server.Entities.Services;
 using Mmo.Server.Logging;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.MessageRouting.Handler;
@@ -17,8 +19,6 @@ using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Entities.Interfaces;
-using Mmo.Shared.Movement.Interfaces;
-using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Core;
 
@@ -164,13 +164,13 @@ public class Program
         services.AddSingleton<IBroadcastService, BroadcastService>();
 
         //AsyncTask
-        services.AddSingleton<IAsyncTaskService, AsyncTask.Services.AsyncTaskService>();
+        services.AddSingleton<IAsyncTaskService, AsyncTaskService>();
 
         //Zone
         services.AddSingleton<IZoneService, ZoneService>();
 
         //Entity
-        services.AddSingleton<IEntityService, Entities.Services.EntityService>();
+        services.AddSingleton<IEntityService, EntityService>();
 
         //Movement
         //services.AddSingleton<IMovementService, MovementService>();

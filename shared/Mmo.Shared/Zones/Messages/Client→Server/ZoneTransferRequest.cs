@@ -8,10 +8,8 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 /// <summary>
 ///     Client requests a zone transfer (Portal, Teleport, etc.).
 /// </summary>
-public record ZoneTransferRequest :  INetworkMessage
+public record ZoneTransferRequest : INetworkMessage
 {
-    public MessageType Type => MessageType.ZoneTransferRequest;
-
     /// <summary>Ziel-Zone ID. </summary>
     public required ushort TargetZoneId { get; init; }
 
@@ -20,4 +18,6 @@ public record ZoneTransferRequest :  INetworkMessage
 
     /// <summary>Optionale Ziel-Position (z.B. bei Portal).</summary>
     public Position? TargetPosition { get; init; }
+
+    public MessageType Type => MessageType.ZoneTransferRequest;
 }
