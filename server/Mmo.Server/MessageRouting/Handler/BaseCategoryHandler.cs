@@ -1,5 +1,6 @@
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Messages;
+using Mmo.Server.Network.Services;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -75,7 +76,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
         catch (Exception ex)
         {
             _log.Error(ex, "Error in handler for {MessageType} in {Handler}", type, GetType().Name);
-            ctx.SendError("INTERNAL_ERROR", "An error occurred processing your request");
+            ctx.GetService<BroadcastService>().SendError(ctx.Connection,"INTERNAL_ERROR", "An error occurred processing your request");
         }
     }
 
@@ -127,13 +128,10 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireAuthenticated(MessageContext ctx)
     {
-        if (!ctx.IsAuthenticated)
-        {
-            ctx.SendError("NOT_AUTHENTICATED", "You must be logged in");
-            return false;
-        }
+        if (ctx.IsAuthenticated) return true;
+        ctx.GetService<BroadcastService>().SendError(ctx.Connection,"NOT_AUTHENTICATED", "You must be logged in");
+        return false;
 
-        return true;
     }
 
     /// <summary>
@@ -142,13 +140,10 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireCharacter(MessageContext ctx)
     {
-        if (!ctx.HasCharacter)
-        {
-            ctx.SendError("NO_CHARACTER", "You must select a character first");
-            return false;
-        }
+        if (ctx.HasCharacter) return true;
+        ctx.GetService<BroadcastService>().SendError(ctx.Connection,"NO_CHARACTER", "You must select a character first");
+        return false;
 
-        return true;
     }
 
     /// <summary>
@@ -163,13 +158,10 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireGameMaster(MessageContext ctx)
     {
-        if (!ctx.IsGameMaster)
-        {
-            ctx.SendError("PERMISSION_DENIED", "This action requires Game Master privileges");
-            return false;
-        }
+        if (ctx.IsGameMaster) return true;
+        ctx.GetService<BroadcastService>().SendError(ctx.Connection,"PERMISSION_DENIED", "This action requires Game Master privileges");
+        return false;
 
-        return true;
     }
 
     /// <summary>
@@ -178,13 +170,10 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireAdmin(MessageContext ctx)
     {
-        if (!ctx.IsAdmin)
-        {
-            ctx.SendError("PERMISSION_DENIED", "This action requires Admin privileges");
-            return false;
-        }
+        if (ctx.IsAdmin) return true;
+        ctx.GetService<BroadcastService>().SendError(ctx.Connection,"PERMISSION_DENIED", "This action requires Admin privileges");
+        return false;
 
-        return true;
     }
 
     /// <summary>
@@ -193,12 +182,9 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     /// </summary>
     protected bool RequireNotMuted(MessageContext ctx)
     {
-        if (ctx.IsMuted)
-        {
-            ctx.SendError("MUTED", "You are muted and cannot perform this action");
-            return false;
-        }
+        if (!ctx.IsMuted) return true;
+        ctx.GetService<BroadcastService>().SendError(ctx.Connection,"MUTED", "You are muted and cannot perform this action");
+        return false;
 
-        return true;
     }
 }
