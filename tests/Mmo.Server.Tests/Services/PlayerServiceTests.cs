@@ -15,7 +15,7 @@ public class PlayerServiceTests : IDisposable
 {
     private readonly MockLog _mockLog = new();
     private readonly MockNetworkServer _mockNetworkServer;
-    private readonly PlayerService.PlayerService _playerService;
+    private readonly Player.Service.PlayerService _playerService;
     private readonly ZoneManager _zoneManager;
 
     public PlayerServiceTests()
@@ -24,7 +24,7 @@ public class PlayerServiceTests : IDisposable
         _mockNetworkServer = new MockNetworkServer(_mockLog, true);
         var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
         _zoneManager = new ZoneManager(0, defaultZone);
-        _playerService = new PlayerService.PlayerService(_zoneManager, _mockLog);
+        _playerService = new Player.Service.PlayerService(_zoneManager, _mockLog);
     }
 
     public void Dispose() => IdRegistry.Instance.Clear();

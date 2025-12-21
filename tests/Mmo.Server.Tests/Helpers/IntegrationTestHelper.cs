@@ -1,11 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
-using Mmo.Server.AuthenticationService.Interfaces;
 using Mmo.Server.Connections;
-using Mmo.Server.Connections.Handler;
+using Mmo.Server.Connections.MessageHandler;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.Player.Interfaces;
 using Mmo.Server.PlayerService;
-using Mmo.Server.PlayerService.Interfaces;
 using Mmo.Server.Zones;
+using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
@@ -84,8 +84,7 @@ public static class TestHelpers
         zoneManager ??= CreateDefaultZoneManager();
         IServiceProvider services = CreateTestServices(log, zoneManager);
         var connectionHandler = new ConnectionHandler(
-            services.GetRequiredService<IAuthenticationService>(),
-            services.GetRequiredService<IPlayerService>(),
+            services,
             zoneManager,
             log
         );
@@ -104,7 +103,7 @@ public static class TestHelpers
         services.AddSingleton(log);
         services.AddSingleton(zoneManager ?? CreateDefaultZoneManager());
         services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
-        services.AddSingleton<IPlayerService, PlayerService.PlayerService>();
+        services.AddSingleton<IPlayerService, Player.Service.PlayerService>();
 
         return services.BuildServiceProvider();
     }

@@ -1,5 +1,6 @@
 using Mmo.Server.Connections;
-using Mmo.Server.PlayerService.Interfaces;
+using Mmo.Server.Player.Interfaces;
+using Mmo.Server.PlayerService;
 using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Zones;
 using Mmo.Shared.Character.Entities;
@@ -8,7 +9,7 @@ using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 
-namespace Mmo.Server.PlayerService;
+namespace Mmo.Server.Player.Service;
 
 /// <summary>
 ///     Concrete implementation of the Player service.

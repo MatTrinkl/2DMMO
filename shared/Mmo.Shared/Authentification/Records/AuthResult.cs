@@ -1,9 +1,9 @@
 using Mmo.Shared.Account.Enums;
 
-namespace Mmo.Server.AuthenticationService.Records;
+namespace Mmo.Shared.Authentification.Records;
 
 /// <summary>
-///     Ergebnis einer Authentifizierung.
+///     Result of an authentification request.
 /// </summary>
 public record AuthResult(
     bool Success,

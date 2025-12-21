@@ -1,15 +1,20 @@
-using Mmo.Server.AuthenticationService.Interfaces;
-using Mmo.Server.AuthenticationService.Records;
+using Microsoft.Extensions.DependencyInjection;
+using Mmo.Server.AsyncTask.Interface;
+using Mmo.Server.Connections.Records;
 using Mmo.Server.MessageRouting.Handler;
 using Mmo.Server.Messages;
-using Mmo.Server.PlayerService.Interfaces;
+using Mmo.Server.Network.Interfaces;
+using Mmo.Server.Player.Interfaces;
+using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
+using Mmo.Shared.Authentification.Interfaces;
+using Mmo.Shared.Authentification.Records;
 using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
 
-namespace Mmo.Server.Connections.Handler;
+namespace Mmo.Server.Connections.MessageHandler;
 
 /// <summary>
 ///     Handler for Connection category (0000-0099).
@@ -22,32 +27,21 @@ namespace Mmo.Server.Connections.Handler;
 ///     - Handler methods themselves are synchronous (void)
 ///     - Responses are queued and sent in Output phase
 /// </summary>
-public class ConnectionHandler : BaseCategoryHandler
+public class ConnectionHandler(
+    IServiceProvider services,
+    ZoneManager zoneManager,
+    ILog log)
+    : BaseCategoryHandler(log)
 {
     // ═══════════════════════════════════════════════════════════════
     // FIELDS
     // ═══════════════════════════════════════════════════════════════
 
-    private readonly IAuthenticationService _authService;
-    private readonly ILog _log;
-    private readonly IPlayerService _playerService;
-    private readonly ZoneManager _zoneManager;
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONSTRUCTOR
-    // ═══════════════════════════════════════════════════════════════
-
-    public ConnectionHandler(
-        IAuthenticationService authService,
-        IPlayerService playerService,
-        ZoneManager zoneManager,
-        ILog log) : base(log)
-    {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        _playerService = playerService ?? throw new ArgumentNullException(nameof(playerService));
-        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
-        _log = log;
-    }
+    private readonly IAuthenticationService _authService = services.GetRequiredService<IAuthenticationService>();
+    private readonly ILog _log = log;
+    private readonly IPlayerService _playerService = services.GetRequiredService<IPlayerService>();
+    private readonly IAsyncTaskService _asyncTask = services.GetRequiredService<IAsyncTaskService>();
+    private readonly IBroadcastService _broadcast = services.GetRequiredService<IBroadcastService>();
 
     // ═══════════════════════════════════════════════════════════════
     // PROPERTIES
@@ -90,64 +84,73 @@ public class ConnectionHandler : BaseCategoryHandler
     /// </summary>
     private void HandleLoginRequest(MessageContext ctx, LoginRequest request)
     {
-        _log.Debug("Login request from {ConnectionId}:  {Username}", ctx.ConnectionId, request.Username);
+        // Speichere was wir brauchen (Connection kann sich nicht ändern)
+        Guid connectionId = ctx.Connection.Id;
+        ClientConnection connection = ctx.Connection;
 
-        // Already logged in?
-        if (ctx.IsAuthenticated)
-        {
-            ctx.SendError("ALREADY_AUTHENTICATED", "You are already logged in");
-            return;
-        }
+        // ════════════════════════════════════════════════════════════
+        // ASYNC TASK mit Result
+        // ════════════════════════════════════════════════════════════
+        _asyncTask.Run(
+            connectionId,
 
-        // Input validation (synchronous, fast)
-        string? validationError = ValidateLoginInput(request);
-        if (validationError != null)
-        {
-            _log.Warn("Login validation failed for {ConnectionId}: {Error}", ctx.ConnectionId, validationError);
-            ctx.Send(new LoginResponse(false, ctx.ConnectionId, 0, validationError));
-            return;
-        }
+            // 1. ASYNC TEIL (läuft auf ThreadPool)
+            async () =>
+            {
+                AuthResult authResult = await _authService.AuthenticateAsync(
+                    request.Username,
+                    request.Password
+                );
 
-        // Start async authentication
-        Task<AuthResult> authTask = _authService.AuthenticateAsync(request.Username, request.Password);
+                if (!authResult.Success)
+                {
+                    _log.Error(authResult.Error!, "Auth service error for {ConnectionId}", ctx.ConnectionId);
+                    _broadcast.SendError(ctx.Connection, "AUTH_SERVICE_ERROR",
+                        "Authentication service unavailable.  Please try again later.", null, null);
+                    return new LoginTaskResult(false, Error: authResult.Error);
+                }
+                // Authentication successful - Update connection state
+                Guid sessionToken = IdRegistry.Instance.GeneratePersistentId();
+                ctx.Connection.SetAuthenticated(
+                    authResult.AccountId!.Value,
+                    authResult.Username??request.Username,
+                    authResult.Flags,
+                    sessionToken
+                );
+                _log.Info("Login successful for {ConnectionId}: {Username} (AccountId: {AccountId})",
+                    ctx.ConnectionId, authResult.Username!, authResult.AccountId);
 
-        ctx.RunAsync(authTask,
-            (ctx, authResult) => OnLoginAuthCompleted(ctx, authResult, request.Username),
-            (ctx, ex) => OnLoginAuthError(ctx, ex)
+                // Player spawnen (auch async)
+                ServerPlayerCharacter player = await _playerService.SpawnPlayerAsync(
+                    authResult.AccountId!.Value,
+                    request.Username,
+                    connection
+                );
+
+                return new LoginTaskResult(true, Player: player);
+            },
+
+            // 2. COMPLETION CALLBACK (läuft im Game Loop mit frischem ctx)
+            (outCtx, result) =>
+            {
+                // ctx ist FRISCH - hat jetzt auch ctx.Player falls gespawnt!
+                if (result.Success)
+                {
+                    // Send response
+                    // TODO: Add session token, character list, and server info to response
+                    _broadcast.SendToPlayer(outCtx.Connection,
+                        new LoginResponse(true, outCtx.ConnectionId, outCtx.ServerPlayer!.RuntimeId.ZoneId, null));
+
+                    _log.Info("Player {Name} logged in", outCtx.ServerPlayer!.Name);
+                }
+                else
+                {
+                    _log.Warn("Login failed for {ConnectionId}: {Error}", ctx.ConnectionId, result.Error!);
+                    _broadcast.SendToPlayer(outCtx.Connection,
+                        new LoginResponse(false, outCtx.ConnectionId, 0, result.Error));
+                }
+            }
         );
-    }
-
-    private void OnLoginAuthCompleted(MessageContext ctx, AuthResult authResult, string username)
-    {
-        // Authentication failed
-        if (!authResult.Success)
-        {
-            _log.Warn("Auth failed for {ConnectionId}: {Error}", ctx.ConnectionId, authResult.Error!);
-            ctx.Send(new LoginResponse(false, ctx.ConnectionId, 0, authResult.Error ?? "Authentication failed"));
-            return;
-        }
-
-        // Authentication successful - Update connection state
-        Guid sessionToken = IdRegistry.Instance.GeneratePersistentId();
-        ctx.Connection.SetAuthenticated(
-            authResult.AccountId!.Value,
-            authResult.Username ?? username,
-            authResult.Flags,
-            sessionToken
-        );
-
-        _log.Info("Login successful for {ConnectionId}: {Username} (AccountId: {AccountId})",
-            ctx.ConnectionId, authResult.Username!, authResult.AccountId);
-
-        // Send response
-        // TODO: Add session token, character list, and server info to response
-        ctx.Send(new LoginResponse(true, ctx.ConnectionId, 0, null));
-    }
-
-    private void OnLoginAuthError(MessageContext ctx, Exception ex)
-    {
-        _log.Error(ex, "Auth service error for {ConnectionId}", ctx.ConnectionId);
-        ctx.SendError("AUTH_SERVICE_ERROR", "Authentication service unavailable.  Please try again later.");
     }
 
     /// <summary>
@@ -531,33 +534,9 @@ public class ConnectionHandler : BaseCategoryHandler
          ctx.Disconnect(request.Message);
      }*/
 
-    // ═══════════════════════════════════════════════════════════════
-    // VALIDATION HELPERS
-    // ═══════════════════════════════════════════════════════════════
-    private static string? ValidateLoginInput(LoginRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Username))
-            return "Username cannot be empty";
-
-        if (request.Username.Length < 3)
-            return "Username must be at least 3 characters";
-
-        if (request.Username.Length > 20)
-            return "Username must be at most 20 characters";
-
-        // TODO: Regex für erlaubte Zeichen
-        // if (!Regex.IsMatch(request.Username, "^[a-zA-Z0-9_]+$"))
-        //     return "Username can only contain letters, numbers, and underscores";
-
-        // TODO: Password-Validierung
-        // if (string.IsNullOrWhiteSpace(request.Password))
-        //     return "Password cannot be empty";
-
-        return null;
-    }
-
     private static string? ValidateCharacterName(string? name)
     {
+        //Todo: to CharacterCreationService
         if (string.IsNullOrWhiteSpace(name))
             return "Character name cannot be empty";
 

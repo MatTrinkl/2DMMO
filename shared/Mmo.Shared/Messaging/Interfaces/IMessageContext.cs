@@ -130,39 +130,6 @@ public interface IMessageContext
     /// </summary>
     IServiceProvider Services { get; }
 
-    // ═══════════════════════════════════════════════════════════════
-    // SEND METHODS (QUEUED - nicht async!)
-    //
-    // WICHTIG: Diese Methoden senden NICHT sofort!
-    // Sie fügen Messages zur Output-Queue hinzu.
-    // Das tatsächliche Senden passiert in der OUTPUT PHASE des Game-Loops.
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Queued eine Nachricht für diesen Client.
-    ///     Wird in der OUTPUT PHASE gesendet, NICHT sofort!
-    /// </summary>
-    /// <param name="message">Die zu sendende Nachricht.</param>
-    void Send(INetworkMessage message);
-
-    /// <summary>
-    ///     Queued eine Fehlermeldung für diesen Client.
-    /// </summary>
-    /// <param name="code">Fehler-Code (z.B. "AUTH_FAILED", "INVALID_INPUT").</param>
-    /// <param name="message">Benutzerfreundliche Fehlermeldung.</param>
-    void SendError(string code, string message);
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONNECTION CONTROL
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Markiert die Verbindung zum Trennen.
-    ///     Der Disconnect wird am Ende des aktuellen Ticks ausgeführt.
-    /// </summary>
-    /// <param name="reason">Optionaler Grund (wird an Client gesendet).</param>
-    void Disconnect(string? reason = null);
-
     /// <summary>
     ///     Holt einen Service aus dem DI-Container.
     /// </summary>

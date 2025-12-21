@@ -23,9 +23,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Players\"/>
-  </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>

@@ -1,6 +1,6 @@
-using Mmo.Server.AuthenticationService.Records;
+using Mmo.Shared.Authentification.Records;
 
-namespace Mmo.Server.AuthenticationService.Interfaces;
+namespace Mmo.Shared.Authentification.Interfaces;
 
 /// <summary>
 ///     Service for authentication and account validation.

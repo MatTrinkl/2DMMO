@@ -1,8 +1,9 @@
 using Mmo.Server.Connections;
+using Mmo.Server.PlayerService;
 using Mmo.Server.PlayerService.Records;
 using Mmo.Shared.Character.Enums;
 
-namespace Mmo.Server.PlayerService.Interfaces;
+namespace Mmo.Server.Player.Interfaces;
 
 /// <summary>
 ///     Service for player operations (Spawn, Load, Save).
