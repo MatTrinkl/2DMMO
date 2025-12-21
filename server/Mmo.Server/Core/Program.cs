@@ -3,6 +3,7 @@ using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Connections.MessageHandler;
 using Mmo.Server.Logging;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.MessageRouting.Handler;
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Network;
 using Mmo.Server.Network.Interfaces;
@@ -169,7 +170,7 @@ public class Program
         services.AddSingleton<IZoneService, ZoneService>();
 
         //Entity
-        //services.AddSingleton<IEntityService, EntityService>();
+        services.AddSingleton<IEntityService, Entities.Services.EntityService>();
 
         //Movement
         //services.AddSingleton<IMovementService, MovementService>();
@@ -188,8 +189,12 @@ public class Program
         // ════════════════════════════════════════════════════════════
         services.AddSingleton<ConnectionHandler>();
         services.AddSingleton<ZoneHandler>();
-        // services. AddSingleton<CombatHandler>();
-        // services.AddSingleton<ChatHandler>();
+        services.AddSingleton<ZoneEventHandler>();
+        services.AddSingleton<MovementHandler>();
+        services.AddSingleton<CombatHandler>();
+        services.AddSingleton<ChatHandler>();
+        services.AddSingleton<PingHandler>();
+        // TODO: Future handlers
         // services.AddSingleton<InventoryHandler>();
         // services.AddSingleton<SocialHandler>();
         // services.AddSingleton<AdminHandler>();
@@ -207,10 +212,13 @@ public class Program
         Type[] handlerTypes =
         [
             typeof(ConnectionHandler),
-            typeof(ZoneHandler)
-            // typeof(MovementHandler),
-            // typeof(CombatHandler),
-            // typeof(ChatHandler),
+            typeof(ZoneHandler),
+            typeof(ZoneEventHandler),
+            typeof(MovementHandler),
+            typeof(CombatHandler),
+            typeof(ChatHandler),
+            typeof(PingHandler)
+            // TODO: Future handlers
             // typeof(InventoryHandler),
             // typeof(SocialHandler),
             // typeof(AdminHandler),

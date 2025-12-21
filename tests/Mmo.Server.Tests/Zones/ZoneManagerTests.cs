@@ -77,20 +77,24 @@ public class ZoneManagerTests : IDisposable
     }
 
     [Fact]
-    public void RegisterZone_DuplicateId_ThrowsArgumentException()
+    public void RegisterZone_DuplicateId_ReturnsFalse()
     {
         ZoneManager zoneManager = CreateZoneManager();
         var duplicateZone = new Zone(0, "duplicate", new ZoneBounds(0, 0, 100, 100));
 
-        Assert.Throws<ArgumentException>(() => zoneManager.RegisterZone(duplicateZone));
+        // TryAdd returns false when key already exists
+        bool result = zoneManager.RegisterZone(duplicateZone);
+        Assert.False(result);
     }
 
     [Fact]
-    public void GetZone_NonExistent_ReturnsNull()
+    public void GetZone_NonExistent_ReturnsDefault()
     {
         ZoneManager zoneManager = CreateZoneManager();
 
-        Assert.Null(zoneManager.GetZone(999));
+        // GetValueOrDefault returns default(Zone?) which is null for nullable struct
+        Zone? result = zoneManager.GetZone(999);
+        Assert.Null(result);
     }
 
     // ══════════════════════════════════════════════════════════
