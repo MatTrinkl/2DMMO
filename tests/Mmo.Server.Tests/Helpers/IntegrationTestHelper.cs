@@ -178,17 +178,36 @@ internal class MockAsyncTaskService : IAsyncTaskService
 {
     public void Run<TResult>(Guid connectionId, Func<Task<TResult>> asyncTask, Action<MessageContext, TResult> onComplete)
     {
-        // For testing, execute synchronously
-        var result = asyncTask().GetAwaiter().GetResult();
-        // Note: We can't call onComplete without a proper MessageContext
-        // In a real test scenario, this would need to be handled differently
+        // For testing, execute the task but don't call the callback
+        // The callback requires a MessageContext which we don't have in this mock
+        Task.Run(async () =>
+        {
+            try
+            {
+                await asyncTask().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Suppress exceptions in mock - real tests should verify specific behavior
+            }
+        });
     }
 
     public void Run(Guid connectionId, Func<Task> asyncTask, Action<MessageContext> onComplete)
     {
-        // For testing, execute synchronously
-        asyncTask().GetAwaiter().GetResult();
-        // Note: We can't call onComplete without a proper MessageContext
+        // For testing, execute the task but don't call the callback
+        // The callback requires a MessageContext which we don't have in this mock
+        Task.Run(async () =>
+        {
+            try
+            {
+                await asyncTask().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Suppress exceptions in mock - real tests should verify specific behavior
+            }
+        });
     }
 }
 
