@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Entities.Records;
+namespace Mmo.Shared.Entities.Records;
 
 /// <summary>
 ///     Result of an entity spawn operation.

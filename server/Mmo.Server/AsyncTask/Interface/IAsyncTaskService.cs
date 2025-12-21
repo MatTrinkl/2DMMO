@@ -1,4 +1,4 @@
-﻿using Mmo.Server.Messages;
+using Mmo.Server.Messages;
 
 namespace Mmo.Server.AsyncTask.Interface;
 
