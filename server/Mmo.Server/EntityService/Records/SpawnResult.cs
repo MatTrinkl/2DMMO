@@ -5,6 +5,6 @@ namespace Mmo.Server.EntityService.Records;
 /// </summary>
 public record SpawnResult(
     bool Success,
-    ushort? LocalId = null,
+    int? LocalId = null,
     ushort? ZoneId = null,
     string? Error = null);

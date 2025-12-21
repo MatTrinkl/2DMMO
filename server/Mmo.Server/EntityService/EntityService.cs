@@ -49,7 +49,7 @@ public class EntityService : IEntityService
             _log.Debug("Spawned entity {PersistentId} as LocalId {LocalId} in Zone {ZoneId}",
                 entity.PersistentId, localId, zoneId);
 
-            return Task.FromResult(new SpawnResult(true, (ushort)localId, zoneId));
+            return Task.FromResult(new SpawnResult(true, localId, zoneId));
         }
         catch (Exception ex)
         {
