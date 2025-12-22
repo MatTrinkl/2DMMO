@@ -27,8 +27,7 @@ COPY --from=build /app .
 # Expose server port
 EXPOSE 7777
 
-# Add healthcheck support (simple TCP check)
-HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
-  CMD timeout 1 bash -c '</dev/tcp/localhost/7777' || exit 1
+# Note: Healthcheck removed from Dockerfile, will be handled by docker-compose
+# The aspnet runtime image doesn't include bash or nc by default
 
 ENTRYPOINT ["dotnet", "Mmo.Server.dll"]
