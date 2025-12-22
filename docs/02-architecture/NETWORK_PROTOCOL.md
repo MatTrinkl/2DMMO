@@ -289,4 +289,4 @@ public enum DisconnectReason : byte
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*

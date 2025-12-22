@@ -122,4 +122,4 @@ Diese Dokumentation beschreibt das Azure Deployment für das 2DMMO, einschließl
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*

@@ -128,4 +128,4 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 
 ---
 
-*Zurück zur [Architektur-Übersicht](../ARCHITECTURE.md)*
+*Zurück zur [Architektur-Übersicht](README.md)*

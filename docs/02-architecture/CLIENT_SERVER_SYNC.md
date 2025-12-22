@@ -131,4 +131,4 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*

@@ -124,4 +124,4 @@ Diese Dokumentation beschreibt die Skalierungsstrategie für das 2DMMO, einschli
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*
