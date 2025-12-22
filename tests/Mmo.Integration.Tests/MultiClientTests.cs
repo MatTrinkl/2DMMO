@@ -68,7 +68,7 @@ public class MultiClientTests : IAsyncLifetime
         var joinedEvent = playerJoinedMessages.FirstOrDefault();
         if (joinedEvent != null)
         {
-            joinedEvent.Entity.Should().NotBeNull("joined event should contain entity data");
+            joinedEvent.Player.Should().NotBeNull("joined event should contain player data");
         }
 
         // Cleanup
@@ -171,9 +171,10 @@ public class MultiClientTests : IAsyncLifetime
             }));
         }
 
-        // Assert
-        await tasks.Should().NotThrowAsync("rapid connect/disconnect should not cause errors");
-
+        // Assert - wait for all tasks to complete
         await Task.WhenAll(tasks);
+        
+        // If we get here without exceptions, the test passes
+        tasks.Should().HaveCount(10, "all tasks should complete");
     }
 }
