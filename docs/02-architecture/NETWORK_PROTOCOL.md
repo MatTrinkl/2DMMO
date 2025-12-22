@@ -4,7 +4,7 @@
 
 **Version:** 1.2.0  
 **Letzte Aktualisierung:** 2025-12-09  
-**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
+**Teil von:** [Architektur-Dokumentation](README.md)
 
 ---
 

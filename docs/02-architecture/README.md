@@ -2,8 +2,8 @@
 
 ## 2DMMO – Technische Architektur
 
-**Version:** 1.2.0  
-**Letzte Aktualisierung:** 2025-12-09  
+**Version:** 1.3.0  
+**Letzte Aktualisierung:** 2025-12-22  
 **Status:** Finalisiert für Prototyp-Phase
 
 ---
@@ -19,14 +19,15 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 1 | [Server-Komponenten](SERVER_COMPONENTS.md) | Gateway, Zone Server, Kommunikation |
 | 2 | [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) | Transport, Message Framing, Connection Flow |
 | 3 | [Message-Spezifikation](MESSAGES.md) | Message Types, DTOs, Serialization |
-| 4 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
-| 5 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 6 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| 7 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 8 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 9 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
-| 10 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 11 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 4 | [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) | Message Handling, Business Logic, Async Operations |
+| 5 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
+| 6 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
+| 7 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
+| 8 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
+| 9 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
+| 10 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
+| 11 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 12 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
 
 ---
 
@@ -121,6 +122,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 1.3.0 | 2025-12-22 | Hinzugefügt: Handler/Service-Pattern Dokumentation |
 | 1.2.0 | 2025-12-09 | Hinzugefügt: ID-System Dokumentation |
 | 1.1.0 | 2025-12-02 | Refactoring: Aufteilung in Unterseiten |
 | 1.0.0 | 2025-12-02 | Initiale Architektur-Dokumentation |
