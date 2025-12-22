@@ -33,22 +33,22 @@ chmod +x scripts/docker-test.sh
 ### Manuell mit Docker Compose
 ```bash
 # Images bauen
-docker-compose -f docker-compose.test.yml build
+docker compose -f docker compose.test.yml build
 
 # Server starten
-docker-compose -f docker-compose.test.yml up -d mmo-server
+docker compose -f docker compose.test.yml up -d mmo-server
 
 # Auf Server warten
-docker-compose -f docker-compose.test.yml ps
+docker compose -f docker compose.test.yml ps
 
 # Integration Tests ausführen
-docker-compose -f docker-compose.test.yml run --rm integration-tests
+docker compose -f docker compose.test.yml run --rm integration-tests
 
 # Logs anzeigen
-docker-compose -f docker-compose.test.yml logs -f mmo-server
+docker compose -f docker compose.test.yml logs -f mmo-server
 
 # Alles stoppen
-docker-compose -f docker-compose.test.yml down -v
+docker compose -f docker compose.test.yml down -v
 ```
 
 ## Architektur
@@ -100,7 +100,7 @@ Alle Container laufen im gleichen Docker-Netzwerk (`mmo-test-network`):
 
 ### Anpassung
 
-**docker-compose.test.yml** für eigene Konfiguration bearbeiten:
+**docker compose.test.yml** für eigene Konfiguration bearbeiten:
 
 ```yaml
 services:
@@ -124,7 +124,7 @@ Tests für einzelne Client-Szenarien:
 
 **Ausführen:**
 ```bash
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   --filter FullyQualifiedName~SingleClientTests
 ```
 
@@ -141,7 +141,7 @@ Tests für Multi-Client-Szenarien:
 
 **Ausführen:**
 ```bash
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   --filter FullyQualifiedName~MultiClientTests
 ```
 
@@ -157,11 +157,11 @@ docker-compose -f docker-compose.test.yml run --rm integration-tests \
 **Ausführen:**
 ```bash
 # Alle Stress-Tests
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   --filter FullyQualifiedName~StressTests
 
 # Einzelner Test
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   --filter FullyQualifiedName~Server_Handles_50ConcurrentClients
 ```
 
@@ -292,7 +292,7 @@ factory.Dispose();
 
 **Logs prüfen:**
 ```bash
-docker-compose -f docker-compose.test.yml logs mmo-server
+docker compose -f docker compose.test.yml logs mmo-server
 ```
 
 **Häufige Ursachen:**
@@ -303,26 +303,26 @@ docker-compose -f docker-compose.test.yml logs mmo-server
 **Lösung:**
 ```bash
 # Anderen Port verwenden
-docker-compose -f docker-compose.test.yml down -v
-# docker-compose.test.yml bearbeiten: "8888:7777"
+docker compose -f docker compose.test.yml down -v
+# docker compose.test.yml bearbeiten: "8888:7777"
 ```
 
 ### Tests schlagen fehl
 
 **Alle Logs anzeigen:**
 ```bash
-docker-compose -f docker-compose.test.yml logs
+docker compose -f docker compose.test.yml logs
 ```
 
 **Container-Status:**
 ```bash
-docker-compose -f docker-compose.test.yml ps
+docker compose -f docker compose.test.yml ps
 ```
 
 **Tests lokal ausführen:**
 ```bash
 # Server im Docker starten
-docker-compose -f docker-compose.test.yml up -d mmo-server
+docker compose -f docker compose.test.yml up -d mmo-server
 
 # Tests lokal ausführen (mit Debugger)
 cd tests/Mmo.Integration.Tests
@@ -357,7 +357,7 @@ docker network inspect mmo-test-network
 
 **Server von Test-Container erreichen:**
 ```bash
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   bash -c "nc -zv mmo-server 7777"
 ```
 
@@ -365,7 +365,7 @@ docker-compose -f docker-compose.test.yml run --rm integration-tests \
 
 **Cache löschen:**
 ```bash
-docker-compose -f docker-compose.test.yml build --no-cache
+docker compose -f docker compose.test.yml build --no-cache
 ```
 
 **Alte Images entfernen:**
@@ -386,7 +386,7 @@ docker volume prune
 **BuildKit aktivieren:**
 ```bash
 export DOCKER_BUILDKIT=1
-docker-compose -f docker-compose.test.yml build
+docker compose -f docker compose.test.yml build
 ```
 
 ### Test-Zeiten
@@ -419,14 +419,14 @@ docker-compose -f docker-compose.test.yml build
 
 **Einzelnen Test mit Logs:**
 ```bash
-docker-compose -f docker-compose.test.yml run --rm integration-tests \
+docker compose -f docker compose.test.yml run --rm integration-tests \
   --filter FullyQualifiedName~Client_CanConnect_ToServer \
   --logger "console;verbosity=detailed"
 ```
 
 **Server-Logs live verfolgen:**
 ```bash
-docker-compose -f docker-compose.test.yml logs -f mmo-server
+docker compose -f docker compose.test.yml logs -f mmo-server
 ```
 
 ## Roadmap

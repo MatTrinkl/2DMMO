@@ -12,24 +12,24 @@ echo ""
 
 # Build images
 echo "📦 Building Docker images..."
-docker-compose -f docker-compose.test.yml build
+docker compose -f docker-compose.test.yml build
 
 # Start server
 echo "🚀 Starting server..."
-docker-compose -f docker-compose.test.yml up -d mmo-server
+docker compose -f docker-compose.test.yml up -d mmo-server
 
 # Wait for server health
 echo "⏳ Waiting for server to be healthy..."
 for i in {1..30}; do
-  if docker-compose -f docker-compose.test.yml ps mmo-server | grep -q "healthy"; then
+  if docker compose -f docker-compose.test.yml ps mmo-server | grep -q "healthy"; then
     echo "✅ Server is healthy!"
     break
   fi
   
   if [ $i -eq 30 ]; then
     echo "❌ Server failed to become healthy"
-    docker-compose -f docker-compose.test.yml logs mmo-server
-    docker-compose -f docker-compose.test.yml down -v
+    docker compose -f docker-compose.test.yml logs mmo-server
+    docker compose -f docker-compose.test.yml down -v
     exit 1
   fi
   
@@ -40,19 +40,19 @@ done
 # Run integration tests
 echo ""
 echo "🧪 Running integration tests..."
-docker-compose -f docker-compose.test.yml run --rm integration-tests
+docker compose -f docker-compose.test.yml run --rm integration-tests
 TEST_EXIT_CODE=$?
 
 # Collect logs
 echo ""
 echo "📋 Collecting logs..."
-docker-compose -f docker-compose.test.yml logs > integration-test-logs.txt
+docker compose -f docker-compose.test.yml logs > integration-test-logs.txt
 echo "   Logs saved to: integration-test-logs.txt"
 
 # Cleanup
 echo ""
 echo "🧹 Cleaning up..."
-docker-compose -f docker-compose.test.yml down -v
+docker compose -f docker-compose.test.yml down -v
 
 # Report results
 echo ""

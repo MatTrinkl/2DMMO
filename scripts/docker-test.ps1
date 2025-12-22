@@ -10,7 +10,7 @@ Write-Host ""
 
 # Build images
 Write-Host "📦 Building Docker images..." -ForegroundColor Yellow
-docker-compose -f docker-compose.test.yml build
+docker compose -f docker-compose.test.yml build
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Failed to build Docker images" -ForegroundColor Red
     exit $LASTEXITCODE
@@ -18,7 +18,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Start server
 Write-Host "🚀 Starting server..." -ForegroundColor Yellow
-docker-compose -f docker-compose.test.yml up -d mmo-server
+docker compose -f docker-compose.test.yml up -d mmo-server
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Failed to start server" -ForegroundColor Red
     exit $LASTEXITCODE
@@ -32,7 +32,7 @@ $healthy = $false
 
 while ($attempts -lt $maxAttempts) {
     $attempts++
-    $status = docker-compose -f docker-compose.test.yml ps mmo-server
+    $status = docker compose -f docker-compose.test.yml ps mmo-server
     
     if ($status -match "healthy") {
         Write-Host "✅ Server is healthy!" -ForegroundColor Green
@@ -46,27 +46,27 @@ while ($attempts -lt $maxAttempts) {
 
 if (-not $healthy) {
     Write-Host "❌ Server failed to become healthy" -ForegroundColor Red
-    docker-compose -f docker-compose.test.yml logs mmo-server
-    docker-compose -f docker-compose.test.yml down -v
+    docker compose -f docker-compose.test.yml logs mmo-server
+    docker compose -f docker-compose.test.yml down -v
     exit 1
 }
 
 # Run integration tests
 Write-Host ""
 Write-Host "🧪 Running integration tests..." -ForegroundColor Green
-docker-compose -f docker-compose.test.yml run --rm integration-tests
+docker compose -f docker-compose.test.yml run --rm integration-tests
 $testExitCode = $LASTEXITCODE
 
 # Collect logs
 Write-Host ""
 Write-Host "📋 Collecting logs..." -ForegroundColor Yellow
-docker-compose -f docker-compose.test.yml logs | Out-File -FilePath integration-test-logs.txt
+docker compose -f docker-compose.test.yml logs | Out-File -FilePath integration-test-logs.txt
 Write-Host "   Logs saved to: integration-test-logs.txt"
 
 # Cleanup
 Write-Host ""
 Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
-docker-compose -f docker-compose.test.yml down -v
+docker compose -f docker-compose.test.yml down -v
 
 # Report results
 Write-Host ""
