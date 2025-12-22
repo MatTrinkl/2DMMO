@@ -8,29 +8,29 @@ namespace Mmo.Server.Network.Interfaces;
 public interface IBroadcastService
 {
     // Zone Broadcasts
-    void BroadcastToZone(ushort zoneId, INetworkMessage message);
-    void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message);
+    void BroadcastToZone<T>(ushort zoneId, T message) where T : INetworkMessage;
+    void BroadcastToZoneExcept<T>(ushort zoneId, Guid excludedClientId, T message) where T : INetworkMessage;
 
     // Proximity Broadcasts
-    void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message);
+    void BroadcastInRange<T>(ushort zoneId, Position center, float radius, T message) where T : INetworkMessage;
 
-    void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId,
-        INetworkMessage message);
+    void BroadcastInRangeExcept<T>(ushort zoneId, Position center, float radius, Guid excludedClientId,
+        T message) where T : INetworkMessage;
 
     // Targeted
-    void SendToPlayer(ClientConnection client, INetworkMessage message);
-    void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message);
+    void SendToPlayer<T>(ClientConnection client, T message) where T : INetworkMessage;
+    void SendToPlayers<T>(IEnumerable<ClientConnection> clients, T message) where T : INetworkMessage;
     void SendError(ClientConnection client, string code, string message, string? details, string? field);
 
     // Global
-    void BroadcastGlobal(INetworkMessage message);
-    void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message);
+    void BroadcastGlobal<T>(T message) where T : INetworkMessage;
+    void BroadcastGlobalExcept<T>(Guid excludedClientId, T message) where T : INetworkMessage;
 
     //Party
-    void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message);
-    void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message);
+    void BroadcastToParty<T>(ServerPlayerCharacter characterInParty, T message) where T : INetworkMessage;
+    void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage;
 
     //Guild
-    void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message);
-    void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message);
+    void BroadcastToGuild<T>(ServerPlayerCharacter characterInGuild, T message) where T : INetworkMessage;
+    void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message) where T : INetworkMessage;
 }

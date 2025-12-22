@@ -12,7 +12,7 @@ namespace Mmo.Server.Network.Services;
 public class BroadcastService(GameServer gameServer)
     : IBroadcastService
 {
-    public void BroadcastToZone(ushort zoneId, INetworkMessage message)
+    public void BroadcastToZone<T>(ushort zoneId, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -20,7 +20,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message)
+    public void BroadcastToZoneExcept<T>(ushort zoneId, Guid excludedClientId, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -28,7 +28,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message)
+    public void BroadcastInRange<T>(ushort zoneId, Position center, float radius, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -36,8 +36,8 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId,
-        INetworkMessage message)
+    public void BroadcastInRangeExcept<T>(ushort zoneId, Position center, float radius, Guid excludedClientId,
+        T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -45,7 +45,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void SendToPlayer(ClientConnection client, INetworkMessage message)
+    public void SendToPlayer<T>(ClientConnection client, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -53,7 +53,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message)
+    public void SendToPlayers<T>(IEnumerable<ClientConnection> clients, T message) where T : INetworkMessage
     {
         foreach (ClientConnection client in clients)
             SendToPlayer(client, message);
@@ -68,7 +68,7 @@ public class BroadcastService(GameServer gameServer)
         SendToPlayer(client, new ErrorMessage(code, message, details, field));
     }
 
-    public void BroadcastGlobal(INetworkMessage message)
+    public void BroadcastGlobal<T>(T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -76,7 +76,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message)
+    public void BroadcastGlobalExcept<T>(Guid excludedClientId, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
 
@@ -84,7 +84,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message)
+    public void BroadcastToParty<T>(ServerPlayerCharacter characterInParty, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (characterInParty.PartyId == null) return;
@@ -93,7 +93,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message)
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (characterInPartyAndToExcluded.PartyId == null) return;
@@ -103,7 +103,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToGuild(ServerPlayerCharacter clientInGuild, INetworkMessage message)
+    public void BroadcastToGuild<T>(ServerPlayerCharacter clientInGuild, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (clientInGuild?.GuildId == null) return;
@@ -112,7 +112,7 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToGuildExcept(ServerPlayerCharacter clientInGuildAndToExcluded, INetworkMessage message)
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter clientInGuildAndToExcluded, T message) where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (clientInGuildAndToExcluded?.GuildId == null) return;
