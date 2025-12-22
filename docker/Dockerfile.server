@@ -1,0 +1,34 @@
+# Multi-stage build for MMO Server
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY Mmo.sln ./
+COPY server/Mmo.Server/Mmo.Server.csproj ./server/Mmo.Server/
+COPY shared/Mmo.Shared/Mmo.Shared.csproj ./shared/Mmo.Shared/
+
+# Restore dependencies
+RUN dotnet restore server/Mmo.Server/Mmo.Server.csproj
+
+# Copy all source code
+COPY server/ ./server/
+COPY shared/ ./shared/
+
+# Build and publish
+RUN dotnet publish server/Mmo.Server/Mmo.Server.csproj -c Release -o /app
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Copy build artifacts
+COPY --from=build /app .
+
+# Expose server port
+EXPOSE 7777
+
+# Add healthcheck support (simple TCP check)
+HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+  CMD timeout 1 bash -c '</dev/tcp/localhost/7777' || exit 1
+
+ENTRYPOINT ["dotnet", "Mmo.Server.dll"]

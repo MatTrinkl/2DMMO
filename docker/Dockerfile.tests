@@ -1,0 +1,25 @@
+# Dockerfile for Integration Tests
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY Mmo.sln ./
+COPY server/Mmo.Server/Mmo.Server.csproj ./server/Mmo.Server/
+COPY shared/Mmo.Shared/Mmo.Shared.csproj ./shared/Mmo.Shared/
+COPY tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj ./tests/Mmo.Integration.Tests/
+
+# Restore dependencies
+RUN dotnet restore tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj
+
+# Copy all source code
+COPY server/ ./server/
+COPY shared/ ./shared/
+COPY tests/Mmo.Integration.Tests/ ./tests/Mmo.Integration.Tests/
+
+# Build the test project
+RUN dotnet build tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj -c Release
+
+# Test execution
+ENTRYPOINT ["dotnet", "test", "tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj", \
+  "--no-build", "-c", "Release", "--logger", "trx;LogFileName=test-results.trx", \
+  "--results-directory", "/app/test-results"]
