@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Default values
@@ -20,7 +20,8 @@ docker compose -f docker-compose.test.yml up -d mmo-server
 
 # Wait for server health
 echo "⏳ Waiting for server to be healthy..."
-for i in {1..30}; do
+i=1
+while [ $i -le 30 ]; do
   if docker compose -f docker-compose.test.yml ps mmo-server | grep -q "healthy"; then
     echo "✅ Server is healthy!"
     break
@@ -35,6 +36,7 @@ for i in {1..30}; do
   
   echo "   Waiting... ($i/30)"
   sleep 2
+  i=$((i + 1))
 done
 
 # Run integration tests
