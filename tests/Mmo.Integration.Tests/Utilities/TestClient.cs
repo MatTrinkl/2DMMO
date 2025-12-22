@@ -83,7 +83,7 @@ public class TestClient : IDisposable
     /// <summary>
     /// Sends a message to the server.
     /// </summary>
-    public async Task SendMessageAsync(INetworkMessage message)
+    public async Task SendMessageAsync<T>(T message) where T : INetworkMessage
     {
         if (_stream == null || !IsConnected)
             throw new InvalidOperationException("Not connected to server");
