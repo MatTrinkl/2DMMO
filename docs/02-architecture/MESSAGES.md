@@ -45,10 +45,20 @@ Diese Dokumentation beschreibt alle Netzwerk-Nachrichten, DTOs und die Serialisi
 
 ### O(1) Routing Konzept
 
+Das 2-stufige O(1) Routing ermöglicht effiziente Message-Verarbeitung:
+
 ```
 MessageType (ushort) ──► Category = Type / 100 ──► Handler[Category]
      1234             ──►      12 (Targeting)   ──► TargetingHandler
+                                                        │
+                                                        ▼
+                                                   Type % 100 = 34
+                                                        │
+                                                        ▼
+                                            Handler Method Array[34]
 ```
+
+**Implementierung:** Siehe [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) für Details zur Handler-Architektur und O(1) Array-Lookup innerhalb einer Kategorie.
 
 ---
 
@@ -1355,6 +1365,7 @@ public enum MessageType : ushort
 ## 🔗 Verwandte Dokumentation
 
 - **[📨 Message-Referenz](../03-messages/README.md)** - **Detaillierte Dokumentation für ALLE Messages**
+- [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) - Message Handling und O(1) Routing-Implementierung
 - [ID-System](ID_SYSTEM.md) - Entity Identity, PersistentId, RuntimeId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden

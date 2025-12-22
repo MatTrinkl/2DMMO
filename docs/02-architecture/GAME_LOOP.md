@@ -2,9 +2,9 @@
 
 ## 2DMMO – Server Game Loop
 
-**Version:** 1.2.0  
-**Letzte Aktualisierung:** 2025-12-09  
-**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
+**Version:** 1.3.0  
+**Letzte Aktualisierung:** 2025-12-22  
+**Teil von:** [Architektur-Dokumentation](README.md)
 
 ---
 
@@ -23,6 +23,13 @@ Diese Dokumentation beschreibt das Game Loop Design für den 2DMMO Server, inklu
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │                    TICK START                       │ │
+│  │                        │                            │ │
+│  │  ┌─────────────────────▼─────────────────────────┐ │ │
+│  │  │  0. ASYNC COMPLETION PHASE                     │ │ │
+│  │  │     • Async Task Callbacks abarbeiten         │ │ │
+│  │  │     • Mit frischem MessageContext             │ │ │
+│  │  │     • Im Game Loop Thread                     │ │ │
+│  │  └─────────────────────┬─────────────────────────┘ │ │
 │  │                        │                            │ │
 │  │  ┌─────────────────────▼─────────────────────────┐ │ │
 │  │  │  1. INPUT PHASE                                │ │ │
@@ -381,7 +388,172 @@ Tick 25: Full ZoneState mit ALLEN Entities (unabhängig von Dirty)
 
 ---
 
+## ⚡ Async Task Completion
+
+### Übersicht
+
+Handler sind **synchron** (siehe [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md)), aber asynchrone Operationen (DB, APIs) werden über `IAsyncTaskService` ausgeführt. Die Callbacks dieser async Tasks werden in der **Async Completion Phase** am Anfang jedes Ticks verarbeitet.
+
+### Completion Queue
+
+Das `IAsyncTaskService` verwaltet eine Thread-sichere Queue von abgeschlossenen Tasks:
+
+```csharp
+public interface IAsyncTaskService
+{
+    /// <summary>
+    /// Führt async Task aus, dann Callback im Game Loop mit frischem Context.
+    /// </summary>
+    void Run<TResult>(
+        Guid connectionId,
+        Func<Task<TResult>> asyncTask,
+        Action<MessageContext, TResult> onComplete);
+}
+```
+
+### Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   ASYNC COMPLETION FLOW                      │
+│                                                              │
+│  Tick N:                                                     │
+│    Handler ruft IAsyncTaskService.Run() auf                 │
+│         │                                                    │
+│         └──► Task läuft auf ThreadPool                      │
+│                  │                                           │
+│                  ├──► DB Query                               │
+│                  ├──► HTTP Request                           │
+│                  └──► File I/O                               │
+│                                                              │
+│  Tick N+1, N+2, ... (Task läuft noch)                       │
+│                                                              │
+│  Tick N+X: (Task fertig)                                    │
+│    Async Completion Phase:                                  │
+│      1. Task.ContinueWith() enqueued Callback               │
+│      2. Completion Queue wird abgearbeitet                  │
+│      3. Callback(freshContext, result) wird aufgerufen      │
+│         • freshContext = aktueller State                    │
+│         • Im Game Loop Thread (Thread-Safe!)                │
+│         • Kann ctx.Send() sicher aufrufen                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementierung in GameLoop
+
+```csharp
+public async Task RunAsync(CancellationToken cancellationToken)
+{
+    while (!cancellationToken.IsCancellationRequested)
+    {
+        _tickTimer.Restart();
+        
+        // ═══ TICK LOGIC ═══
+        
+        // 0️⃣ Async Completion Phase (ZUERST!)
+        ProcessAsyncCompletions();
+        
+        // 1️⃣ Input Phase
+        ProcessInputs();
+        
+        // 2️⃣ Validation Phase
+        ValidateActions();
+        
+        // 3️⃣ Simulation Phase
+        SimulateWorld();
+        
+        // 4️⃣ Broadcast Phase
+        BroadcastUpdates();
+        
+        // 5️⃣ Persistence Phase
+        if (_currentTick % 30 == 0)
+            PersistToRedis();
+        
+        _currentTick++;
+        
+        // Sleep für verbleibende Zeit
+        await SleepUntilNextTick(cancellationToken);
+    }
+}
+
+private void ProcessAsyncCompletions()
+{
+    var asyncTaskService = _serviceProvider.GetRequiredService<IAsyncTaskService>();
+    asyncTaskService.ProcessCompletions();  // Verarbeitet alle fertigen Tasks
+}
+```
+
+### Beispiel: Login mit Async Completion
+
+```csharp
+// Handler-Methode (synchron)
+private void HandleLoginRequest(MessageContext ctx, LoginRequest request)
+{
+    ctx.GetService<IAsyncTaskService>().Run(
+        ctx.ConnectionId,
+        
+        // Async Teil (läuft auf ThreadPool in Tick N)
+        async () => 
+        {
+            var authResult = await _authService.AuthenticateAsync(
+                request.Username, request.Password);
+            
+            if (!authResult.Success)
+                return new LoginTaskResult(false, authResult.Error);
+            
+            var player = await _playerService.SpawnPlayerAsync(
+                authResult.AccountId!.Value, request.Username, ctx.Connection);
+            
+            return new LoginTaskResult(true, player);
+        },
+        
+        // Callback (läuft in Tick N+X in Async Completion Phase)
+        (freshCtx, result) =>
+        {
+            if (result.Success)
+            {
+                _broadcast.SendToPlayer(freshCtx.Connection,
+                    new LoginResponse(true, freshCtx.ConnectionId, 
+                                     freshCtx.ServerPlayer!.RuntimeId.ZoneId, null));
+            }
+            else
+            {
+                _broadcast.SendToPlayer(freshCtx.Connection,
+                    new LoginResponse(false, freshCtx.ConnectionId, 0, result.Error));
+            }
+        }
+    );
+}
+```
+
+### Wichtige Aspekte
+
+- **Frischer Context:** Callback erhält `MessageContext` mit aktuellem State
+- **Thread-Safety:** Callback läuft im Game Loop Thread (Single-Threaded)
+- **Connection-Validation:** IAsyncTaskService prüft ob Connection noch existiert
+- **Error Handling:** Exceptions im async-Teil werden gefangen und geloggt
+- **Keine Garantie:** Callback wird nur ausgeführt wenn Connection noch existiert
+
+### Performance-Überlegungen
+
+- **Async Completion zuerst:** Am Anfang des Ticks, damit Responses schnell gesendet werden
+- **Batching:** Alle fertigen Tasks werden in einem Durchgang verarbeitet
+- **Timeout:** Tasks mit Timeout verhindern hängende Callbacks
+
+Siehe auch: [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md#async-handling) für Details zum IAsyncTaskService-Pattern.
+
+---
+
 ## Tick-Phasen im Detail
+
+### 0. Async Completion Phase
+
+- Alle fertigen async Tasks aus der Completion Queue holen
+- Für jeden Task:
+  - Connection-Validierung (existiert noch?)
+  - Frischen `MessageContext` erstellen
+  - Callback im Game Loop Thread ausführen
+  - Exceptions fangen und loggen
 
 ### 1. Input Phase
 
@@ -486,6 +658,7 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 
 ## Verwandte Dokumentation
 
+- [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) - Message Handling und Async Operations
 - [Server-Komponenten](SERVER_COMPONENTS.md) - Zone Server Details
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Prediction und Reconciliation
 - [Redis-Strategie](REDIS.md) - Persistence Phase Details
@@ -501,4 +674,4 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*

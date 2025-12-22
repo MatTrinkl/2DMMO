@@ -4,7 +4,7 @@
 
 **Version:** 1.1.0  
 **Letzte Aktualisierung:** 2025-12-02  
-**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
+**Teil von:** [Architektur-Dokumentation](README.md)
 
 ---
 
@@ -131,4 +131,4 @@ Diese Dokumentation beschreibt die Client-Server Synchronisation, einschließlic
 
 ---
 
-*Teil der [Architektur-Dokumentation](../ARCHITECTURE.md)*
+*Teil der [Architektur-Dokumentation](README.md)*

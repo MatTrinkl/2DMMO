@@ -4,7 +4,7 @@
 
 **Version:** 1.1.0  
 **Letzte Aktualisierung:** 2025-12-02  
-**Teil von:** [Architektur-Dokumentation](../ARCHITECTURE.md)
+**Teil von:** [Architektur-Dokumentation](README.md)
 
 ---
 
@@ -128,4 +128,4 @@ Das 2DMMO verwendet eine mehrschichtige Server-Architektur mit Gateway Servern f
 
 ---
 
-*Zurück zur [Architektur-Übersicht](../ARCHITECTURE.md)*
+*Zurück zur [Architektur-Übersicht](README.md)*
