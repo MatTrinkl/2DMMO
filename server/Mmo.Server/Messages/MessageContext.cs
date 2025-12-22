@@ -189,10 +189,7 @@ public sealed class MessageContext : IMessageContext
     public ushort? GetPlayerZone(Guid playerId)
     {
         //Todo: to PlayerService
-        if (ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player))
-            return player.RuntimeId.ZoneId;
-
-        return null;
+        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player) ? null : player?.RuntimeId.ZoneId;
     }
 
     /// <summary>
@@ -216,13 +213,12 @@ public sealed class MessageContext : IMessageContext
         //Todo: to PlayerService
         if (_serverPlayer == null) return null;
 
-        if (ZoneManager.TryGetPlayerByPersistentId(otherPlayerId, out ServerPlayerCharacter? otherPlayer))
-        {
-            if (otherPlayer.RuntimeId.ZoneId != _serverPlayer.RuntimeId.ZoneId)
-                return null;
+        if (!ZoneManager.TryGetPlayerByPersistentId(otherPlayerId, out ServerPlayerCharacter? otherPlayer)) return null;
+        if (otherPlayer != null && otherPlayer.RuntimeId.ZoneId != _serverPlayer.RuntimeId.ZoneId)
+            return null;
 
+        if (otherPlayer != null)
             return _serverPlayer.Entity.Position.CalculateDistance(otherPlayer.Entity.Position);
-        }
 
         return null;
     }

@@ -12,15 +12,16 @@ namespace Mmo.Server.Zones;
 public class ZoneContext(Zone zone, ZoneConfig config, ushort shardId = 0) : IZoneContext
 {
     // ═══ Config ═══
+    public Zone Zone { get; private set; } = zone;
     public ZoneConfig Config { get; } = config;
 
     // ═══ Runtime State ═══
     public ushort ShardId { get; } = shardId;
-    public WeatherType CurrentWeather { get; set; } = config.DefaultWeather;
+    public WeatherType CurrentWeather { get; private set; } = config.DefaultWeather;
     public float TimeOfDay { get; set; } = 12f; // Default: Mittag
     public Faction? ControllingFaction { get; set; }
-    public bool IsLocked { get; set; }
-    public string? LockReason { get; set; }
+    public bool IsLocked { get; private set; }
+    public string? LockReason { get; private set; }
 
     // ═══ Instanz ═══
     public Guid? InstanceId { get; set; }
