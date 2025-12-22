@@ -206,7 +206,8 @@ public class NetworkServer(
 
         try
         {
-            connection.Send(message);
+            // Use dynamic to preserve concrete type for MessagePack serialization
+            connection.Send((dynamic)message);
         }
         catch (Exception ex)
         {

@@ -221,7 +221,15 @@ public class TestClient : IDisposable
 
     public void Dispose()
     {
-        _cts?.Cancel();
+        try
+        {
+            _cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // CTS already disposed, ignore
+        }
+        
         _receiveTask?.Wait(TimeSpan.FromSeconds(2));
         
         _stream?.Dispose();

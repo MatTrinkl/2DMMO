@@ -2,19 +2,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
-COPY Mmo.sln ./
-COPY server/Mmo.Server/Mmo.Server.csproj ./server/Mmo.Server/
-COPY shared/Mmo.Shared/Mmo.Shared.csproj ./shared/Mmo.Shared/
+# Copy all source code (simpler approach, no separate restore step)
+COPY . .
 
-# Restore dependencies
-RUN dotnet restore server/Mmo.Server/Mmo.Server.csproj
-
-# Copy all source code
-COPY server/ ./server/
-COPY shared/ ./shared/
-
-# Build and publish
+# Restore, build and publish
+RUN dotnet restore Mmo.sln
 RUN dotnet publish server/Mmo.Server/Mmo.Server.csproj -c Release -o /app
 
 # Runtime stage
