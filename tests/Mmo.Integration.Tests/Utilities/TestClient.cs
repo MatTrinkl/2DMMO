@@ -90,13 +90,12 @@ public class TestClient : IDisposable
 
         byte[] payload = MessageSerializer.Serialize(message);
         
-        // Frame format: [1 Byte Type][4 Bytes Length][N Bytes Payload]
-        byte[] frame = new byte[5 + payload.Length];
-        frame[0] = (byte)message.Type;
-        BitConverter.GetBytes((uint)payload.Length).CopyTo(frame, 1);
-        payload.CopyTo(frame, 5);
+        // Frame format: [4 Bytes Length][N Bytes Payload]
+        // Note: MessageType is already in the payload at Key(0)
+        byte[] lengthPrefix = BitConverter.GetBytes(payload.Length);
 
-        await _stream.WriteAsync(frame);
+        await _stream.WriteAsync(lengthPrefix);
+        await _stream.WriteAsync(payload);
         await _stream.FlushAsync();
     }
 
@@ -153,25 +152,30 @@ public class TestClient : IDisposable
     {
         if (_stream == null) return;
 
-        var buffer = new byte[8192];
+        var headerBuffer = new byte[4];
         
         try
         {
             while (!cancellationToken.IsCancellationRequested && IsConnected)
             {
-                // Read frame header: [1 Byte Type][4 Bytes Length]
+                // Read frame header: [4 Bytes Length]
                 int headerBytesRead = 0;
-                while (headerBytesRead < 5)
+                while (headerBytesRead < 4)
                 {
-                    int read = await _stream.ReadAsync(buffer.AsMemory(headerBytesRead, 5 - headerBytesRead), cancellationToken);
+                    int read = await _stream.ReadAsync(headerBuffer.AsMemory(headerBytesRead, 4 - headerBytesRead), cancellationToken);
                     if (read == 0)
                         return; // Connection closed
                     
                     headerBytesRead += read;
                 }
 
-                byte messageTypeByte = buffer[0];
-                uint payloadLength = BitConverter.ToUInt32(buffer, 1);
+                int payloadLength = BitConverter.ToInt32(headerBuffer, 0);
+
+                if (payloadLength <= 0 || payloadLength > 1024 * 1024)
+                {
+                    Console.WriteLine($"Invalid message length: {payloadLength}");
+                    return;
+                }
 
                 // Read payload
                 byte[] payloadBuffer = new byte[payloadLength];
@@ -180,7 +184,7 @@ public class TestClient : IDisposable
                 while (payloadBytesRead < payloadLength)
                 {
                     int read = await _stream.ReadAsync(
-                        payloadBuffer.AsMemory(payloadBytesRead, (int)payloadLength - payloadBytesRead), 
+                        payloadBuffer.AsMemory(payloadBytesRead, payloadLength - payloadBytesRead), 
                         cancellationToken);
                     
                     if (read == 0)
