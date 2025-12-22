@@ -64,16 +64,21 @@ Issue #162 has been fully implemented with a comprehensive dockerized test envir
 - Environment variable support
 
 ### 4. CI/CD Integration
-**`.github/workflows/integration-tests.yml`**
-- Runs on: push to main/develop/ServiceImplementation, PRs to main
-- Steps:
+**`.github/workflows/ci.yml`** (integrated into main workflow)
+- Runs on: push to main/develop, PRs
+- **Three parallel test jobs:**
+  1. `unit-tests` - Mmo.Shared.Tests
+  2. `integration-tests` - Mmo.Server.Tests  
+  3. `docker-integration-tests` - Docker E2E tests
+- Steps for `docker-integration-tests`:
   1. Build Docker images
   2. Start server
-  3. Wait for health check
+  3. Wait for port 7777 (using `nc`)
   4. Run integration tests
   5. Collect logs
   6. Upload artifacts
   7. Cleanup
+- All three test jobs feed into the `coverage` job
 - Artifacts: Test results + logs (retained 14 days)
 
 ### 5. Documentation
@@ -201,11 +206,11 @@ Potential additions (not in current scope):
 
 ```
 .gitignore                                     (updated)
-.github/workflows/integration-tests.yml        (new)
-docker/Dockerfile.server                       (new)
+.github/workflows/ci.yml                       (updated - integrated Docker tests)
+docker/Dockerfile.server                       (new - no bash dependency)
 docker/Dockerfile.tests                        (new)
 docker-compose.test.yml                        (new)
-scripts/docker-test.sh                         (new)
+scripts/docker-test.sh                         (new - POSIX sh)
 scripts/docker-test.ps1                        (new)
 tests/Mmo.Integration.Tests/
   ├── Mmo.Integration.Tests.csproj            (new)
@@ -218,6 +223,7 @@ tests/Mmo.Integration.Tests/
       ├── TestClientFactory.cs                 (new)
       └── TestClient.cs                        (new)
 docs/03-testing/DOCKER_TESTING.md              (new)
+DOCKER_TEST_IMPLEMENTATION.md                  (new)
 ```
 
 ## ✨ Summary
@@ -225,9 +231,11 @@ docs/03-testing/DOCKER_TESTING.md              (new)
 **Issue #162 is now complete with:**
 - ✅ Fully dockerized test environment
 - ✅ 16 comprehensive integration tests
-- ✅ CI/CD pipeline integration
+- ✅ **Integrated into main CI pipeline (runs in parallel)**
+- ✅ **Included in code coverage**
 - ✅ Extensive documentation
 - ✅ Production-ready test infrastructure
+- ✅ **Fixed server startup issues (no bash dependency)**
 
 The implementation provides a solid foundation for automated testing, regression detection, and quality assurance as the MMO project continues to grow.
 
