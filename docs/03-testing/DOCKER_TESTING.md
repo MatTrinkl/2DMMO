@@ -167,21 +167,33 @@ docker compose -f docker compose.test.yml run --rm integration-tests \
 
 ## CI Integration
 
-Die Integration Tests laufen automatisch in GitHub Actions bei:
-- Push auf `main`, `develop`, `ServiceImplementation`
-- Pull Requests auf `main`
+Die Docker Integration Tests sind in die Haupt-CI-Pipeline integriert und laufen automatisch bei:
+- Push auf `main`, `develop`
+- Pull Requests auf `main`, `develop`
 
-### Workflow: `.github/workflows/integration-tests.yml`
+### Workflow: `.github/workflows/ci.yml`
+
+Die Tests laufen **parallel** zu den Unit- und Integration-Tests:
 
 **Jobs:**
-1. Build Docker Images
-2. Start Server
-3. Wait for Health
-4. Run Integration Tests
-5. Upload Artifacts (Logs, Test-Ergebnisse)
+1. **`build`** - Kompiliert die Solution
+2. **`unit-tests`** - Mmo.Shared.Tests (parallel)
+3. **`integration-tests`** - Mmo.Server.Tests (parallel)
+4. **`docker-integration-tests`** - Docker E2E Tests (parallel)
+   - Build Docker Images
+   - Start Server
+   - Wait for Port 7777 (using `nc`)
+   - Run Integration Tests
+   - Collect Logs
+5. **`coverage`** - Code Coverage (wartet auf alle 3 Test-Jobs)
+
+**Wichtig:**
+- Alle drei Test-Jobs (`unit-tests`, `integration-tests`, `docker-integration-tests`) laufen parallel
+- Der `coverage` Job sammelt die Coverage-Daten von allen Tests
+- Bei Fehlern werden Server-Logs als Artifacts hochgeladen
 
 **Artifacts:**
-- `integration-test-results` - Test-Ergebnisse und Logs (14 Tage)
+- `docker-integration-test-results` - Test-Ergebnisse und Logs (14 Tage)
 - `server-logs-failed` - Server-Logs bei Fehlern (7 Tage)
 
 ## Entwicklung
