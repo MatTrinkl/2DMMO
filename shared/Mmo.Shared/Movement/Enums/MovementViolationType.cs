@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Movement.Enums;
+namespace Mmo.Shared.Movement.Enums;
 
 /// <summary>
 ///     Arten von Movement-Verletzungen (Anti-Cheat).

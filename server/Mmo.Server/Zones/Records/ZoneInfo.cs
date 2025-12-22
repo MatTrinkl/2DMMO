@@ -1,4 +1,4 @@
-﻿namespace Mmo.Server.Zones.Records;
+namespace Mmo.Server.Zones.Records;
 
 public record ZoneInfo(
     ushort ZoneId,

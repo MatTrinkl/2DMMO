@@ -1,4 +1,4 @@
-﻿namespace Mmo.Server.Messages.Enums;
+namespace Mmo.Server.Messages.Enums;
 
 /// <summary>
 ///     Type of outgoing message.

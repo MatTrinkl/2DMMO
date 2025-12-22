@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Core.Records;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Zones.Enums;

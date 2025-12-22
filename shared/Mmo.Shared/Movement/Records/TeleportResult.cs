@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Core.Records;
+using Mmo.Shared.Core.Records;
 
 namespace Mmo.Shared.Movement.Records;
 

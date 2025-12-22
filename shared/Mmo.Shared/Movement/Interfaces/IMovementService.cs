@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Movement.Records;
 

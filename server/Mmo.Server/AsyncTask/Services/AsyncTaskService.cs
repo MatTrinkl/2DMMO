@@ -1,4 +1,4 @@
-﻿using Mmo.Server.AsyncTask.Interface;
+using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Core;
 using Mmo.Server.Messages;
 using Mmo.Shared.Core.Interfaces;

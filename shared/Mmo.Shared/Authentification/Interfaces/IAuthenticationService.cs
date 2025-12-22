@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Authentification.Records;
+using Mmo.Shared.Authentification.Records;
 
 namespace Mmo.Shared.Authentification.Interfaces;
 

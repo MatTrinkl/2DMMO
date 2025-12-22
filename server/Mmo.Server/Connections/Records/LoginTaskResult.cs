@@ -1,4 +1,4 @@
-﻿using Mmo.Server.PlayerService;
+using Mmo.Server.PlayerService;
 
 namespace Mmo.Server.Connections.Records;
 

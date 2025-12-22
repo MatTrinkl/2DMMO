@@ -1,4 +1,4 @@
-﻿using Mmo.Server.Zones.Records;
+using Mmo.Server.Zones.Records;
 using Mmo.Shared.Core.Records;
 
 namespace Mmo.Server.Zones.Interfaces;
