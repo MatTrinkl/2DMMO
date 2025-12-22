@@ -19,7 +19,7 @@ public class TestClient : IDisposable
     private CancellationTokenSource? _cts;
     private Task? _receiveTask;
     
-    private readonly Queue<INetworkMessage> _receivedMessages = new();
+    private readonly List<INetworkMessage> _receivedMessages = new();
     private readonly object _lock = new();
     
     public bool IsConnected => _tcpClient?.Connected ?? false;
@@ -113,15 +113,9 @@ public class TestClient : IDisposable
             {
                 for (int i = 0; i < _receivedMessages.Count; i++)
                 {
-                    if (_receivedMessages.ElementAt(i) is T message)
+                    if (_receivedMessages[i] is T message)
                     {
-                        // Remove from queue
-                        var list = _receivedMessages.ToList();
-                        list.RemoveAt(i);
-                        _receivedMessages.Clear();
-                        foreach (var msg in list)
-                            _receivedMessages.Enqueue(msg);
-                        
+                        _receivedMessages.RemoveAt(i);
                         return message;
                     }
                 }
@@ -202,7 +196,7 @@ public class TestClient : IDisposable
                     
                     lock (_lock)
                     {
-                        _receivedMessages.Enqueue(message);
+                        _receivedMessages.Add(message);
                     }
                 }
                 catch (Exception ex)
