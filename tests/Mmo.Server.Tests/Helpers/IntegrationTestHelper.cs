@@ -159,28 +159,28 @@ public static class TestHelpers
 /// </summary>
 internal class MockBroadcastService : IBroadcastService
 {
-    public void BroadcastToZone(ushort zoneId, INetworkMessage message)
+    public void BroadcastToZone<T>(ushort zoneId, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastToZoneExcept(ushort zoneId, Guid excludedClientId, INetworkMessage message)
+    public void BroadcastToZoneExcept<T>(ushort zoneId, Guid excludedClientId, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastInRange(ushort zoneId, Position center, float radius, INetworkMessage message)
+    public void BroadcastInRange<T>(ushort zoneId, Position center, float radius, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastInRangeExcept(ushort zoneId, Position center, float radius, Guid excludedClientId,
-        INetworkMessage message)
+    public void BroadcastInRangeExcept<T>(ushort zoneId, Position center, float radius, Guid excludedClientId,
+        T message) where T : INetworkMessage
     {
     }
 
-    public void SendToPlayer(ClientConnection client, INetworkMessage message)
+    public void SendToPlayer<T>(ClientConnection client, T message) where T : INetworkMessage
     {
     }
 
-    public void SendToPlayers(IEnumerable<ClientConnection> clients, INetworkMessage message)
+    public void SendToPlayers<T>(IEnumerable<ClientConnection> clients, T message) where T : INetworkMessage
     {
     }
 
@@ -188,27 +188,27 @@ internal class MockBroadcastService : IBroadcastService
     {
     }
 
-    public void BroadcastGlobal(INetworkMessage message)
+    public void BroadcastGlobal<T>(T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastGlobalExcept(Guid excludedClientId, INetworkMessage message)
+    public void BroadcastGlobalExcept<T>(Guid excludedClientId, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastToParty(ServerPlayerCharacter characterInParty, INetworkMessage message)
+    public void BroadcastToParty<T>(ServerPlayerCharacter characterInParty, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastToPartyExcept(ServerPlayerCharacter characterInPartyAndToExcluded, INetworkMessage message)
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastToGuild(ServerPlayerCharacter characterInGuild, INetworkMessage message)
+    public void BroadcastToGuild<T>(ServerPlayerCharacter characterInGuild, T message) where T : INetworkMessage
     {
     }
 
-    public void BroadcastToGuildExcept(ServerPlayerCharacter characterInGuildAndToExcluded, INetworkMessage message)
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message) where T : INetworkMessage
     {
     }
 }
