@@ -122,7 +122,7 @@ public sealed class ClientConnection : IDisposable
     /// <summary>
     ///     Sends a message to this client.
     /// </summary>
-    public void Send(INetworkMessage message)
+    public void Send<T>(T message) where T : INetworkMessage
     {
         if (_disposed || !IsConnected) return;
 

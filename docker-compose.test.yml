@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  mmo-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: mmo-test-server
+    networks:
+      - mmo-test-network
+    ports:
+      - "7777:7777"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - LOG_LEVEL=Debug
+    volumes:
+      - ./logs/server:/app/logs
+
+  integration-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tests
+    networks:
+      - mmo-test-network
+    environment:
+      - SERVER_HOST=mmo-server
+      - SERVER_PORT=7777
+    depends_on:
+      - mmo-server
+    volumes:
+      - ./test-results:/app/test-results
+
+networks:
+  mmo-test-network:
+    driver: bridge

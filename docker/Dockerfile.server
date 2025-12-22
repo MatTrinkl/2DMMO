@@ -1,0 +1,25 @@
+# Multi-stage build for MMO Server
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy all source code (simpler approach, no separate restore step)
+COPY . .
+
+# Restore, build and publish
+RUN dotnet restore Mmo.sln
+RUN dotnet publish server/Mmo.Server/Mmo.Server.csproj -c Release -o /app
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Copy build artifacts
+COPY --from=build /app .
+
+# Expose server port
+EXPOSE 7777
+
+# Note: Healthcheck removed from Dockerfile, will be handled by docker-compose
+# The aspnet runtime image doesn't include bash or nc by default
+
+ENTRYPOINT ["dotnet", "Mmo.Server.dll"]

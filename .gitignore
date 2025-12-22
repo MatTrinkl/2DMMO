@@ -98,3 +98,8 @@ Desktop.ini
 # Coverage
 coverage-report/
 **/TestResults/
+
+# Docker test environment
+logs/
+test-results/
+integration-test-logs.txt

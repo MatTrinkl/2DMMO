@@ -131,7 +131,7 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // GAME SYSTEMS
         // ════════════════════════════════════════════════════════════
-        services.AddSingleton<ZoneManager>();
+        services.AddSingleton<ZoneManager>(_ => new ZoneManager(defaultZoneId: 1));
         services.AddSingleton<MessageRouter>();
 
         services.AddSingleton<GameServer>(sp =>
@@ -189,7 +189,8 @@ public class Program
         // ════════════════════════════════════════════════════════════
         services.AddSingleton<ConnectionHandler>();
         services.AddSingleton<ZoneHandler>();
-        services.AddSingleton<ZoneEventHandler>();
+        // ZoneEventHandler is not registered - it's a placeholder with no handlers yet
+        // services.AddSingleton<ZoneEventHandler>();
         services.AddSingleton<MovementHandler>();
         services.AddSingleton<CombatHandler>();
         services.AddSingleton<ChatHandler>();
@@ -213,7 +214,8 @@ public class Program
         [
             typeof(ConnectionHandler),
             typeof(ZoneHandler),
-            typeof(ZoneEventHandler),
+            // ZoneEventHandler is not registered - it's a placeholder with no handlers yet
+            // typeof(ZoneEventHandler),
             typeof(MovementHandler),
             typeof(CombatHandler),
             typeof(ChatHandler),

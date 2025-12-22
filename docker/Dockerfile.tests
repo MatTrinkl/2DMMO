@@ -1,0 +1,15 @@
+# Dockerfile for Integration Tests
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy all source code
+COPY . .
+
+# Restore and build the test project
+RUN dotnet restore Mmo.sln
+RUN dotnet build tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj -c Release
+
+# Test execution
+ENTRYPOINT ["dotnet", "test", "tests/Mmo.Integration.Tests/Mmo.Integration.Tests.csproj", \
+  "--no-build", "-c", "Release", "--logger", "trx;LogFileName=test-results.trx", \
+  "--results-directory", "/app/test-results"]
