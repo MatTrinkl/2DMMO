@@ -125,7 +125,7 @@ public abstract class CombatEntity : ICombatEntity
     // IEntity METHODS
     // ═══════════════════════════════════════════════════════════════
 
-    public void SetEntityId(int localId, ushort zoneId)
+    public void SetEntityId(ushort localId, ushort zoneId)
     {
         RuntimeId = new EntityIdentity(
             RuntimeId.ServerId,
@@ -135,6 +135,7 @@ public abstract class CombatEntity : ICombatEntity
             PrefabId
         );
     }
+
 
     public virtual void ChangeZone(ushort newZoneId)
     {

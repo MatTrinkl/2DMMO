@@ -130,34 +130,6 @@ public class GameServerTests
     }
 
     [Fact]
-    public void PlayerLogin_ValidatesUsername()
-    {
-        Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);
-        var clientId = Guid.NewGuid();
-
-        // Simulate login with invalid usernames
-        var loginRequest1 = new LoginRequest("Te", "password123"); // Too short
-        var loginRequest2 = new LoginRequest("Teasdfasdfasfsdfasdfasdfasdfasdfasdfsf", "password123"); // Too long
-        var loginRequest3 = new LoginRequest("", "password123"); // Empty
-
-        _mockNetworkServer.SimulateMessageReceived(clientId, loginRequest1);
-        _mockNetworkServer.SimulateMessageReceived(clientId, loginRequest2);
-        _mockNetworkServer.SimulateMessageReceived(clientId, loginRequest3);
-
-        // Run to process messages
-        gameServer.Start();
-        Thread.Sleep(150); // Give more time for messages to be processed
-        gameServer.Stop();
-
-        // Debug: Output all messages
-        string allMessages = string.Join(Environment.NewLine, _mockLog.Messages);
-
-        // Verify warnings were logged for invalid usernames
-        Assert.True(_mockLog.HasMessageContaining("WARN", "Username"),
-            $"Expected warning with 'Username'. All messages:{Environment.NewLine}{allMessages}");
-    }
-
-    [Fact]
     public void GetStats_ReturnsValidStats()
     {
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog, _mockNetworkServer);

@@ -19,7 +19,7 @@ public enum MessageCategory : byte
     ///     Range: 0100-0199
     ///     Includes: Zone Events (Player joning the Zone, etc.)
     /// </summary>
-    ZoneEvent = 1,
+    Zone = 1,
 
     /// <summary>
     ///     Range: 0200-0299

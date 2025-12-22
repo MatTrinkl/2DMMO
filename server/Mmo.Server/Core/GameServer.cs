@@ -4,6 +4,7 @@ using Mmo.Server.Connections;
 using Mmo.Server.Core.Structs;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
+using Mmo.Server.Messages.Enums;
 using Mmo.Server.Network;
 using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
@@ -16,7 +17,7 @@ using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Enums;
 using Mmo.Shared.System.Messages;
-using Mmo.Shared.Zones.Messages;
+using Mmo.Shared.Zones.Messages.Server_Brodcast;
 
 namespace Mmo.Server.Core;
 
@@ -75,6 +76,7 @@ public class GameServer : IDisposable
     ///     Populated by handlers via ctx.Send(), processed in ProcessOutputQueue().
     /// </summary>
     private readonly ConcurrentQueue<OutgoingMessage> _outputQueue = new();
+
 
     private readonly IServiceProvider _services;
     private readonly ZoneManager _zoneManager;
@@ -460,11 +462,9 @@ public class GameServer : IDisposable
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
 
-        foreach (ServerPlayerCharacter player in _zoneManager.GetAllServerPlayers())
-        {
-            var outgoing = OutgoingMessage.ToClient(player.Connection, heartbeat);
-            _outputQueue.Enqueue(outgoing);
-        }
+
+        var outgoing = OutgoingMessage.BroadcastToAll(heartbeat);
+        _outputQueue.Enqueue(outgoing);
     }
 
     private void CheckDeadConnections(float deltaTime)
@@ -541,9 +541,12 @@ public class GameServer : IDisposable
                 break;
 
             case OutgoingMessageType.BroadcastToAll:
-                BroadcastToAll(outgoing);
+                BroadcastToAll(outgoing, true);
                 break;
 
+            case OutgoingMessageType.BroadcastToAllExcept:
+                BroadcastToAll(outgoing, false);
+                break;
             default:
                 _log.Warn("Unknown outgoing message type: {Type}", outgoing.Type);
                 break;
@@ -623,17 +626,26 @@ public class GameServer : IDisposable
             .GetAllServerPlayers()
             .Where(p => p.GuildId == outgoing.GuildId.Value);
 
-        foreach (ServerPlayerCharacter player in guildMembers.Where(p =>
-                     includeExcluded && p.Connection.Id != outgoing.ExcludeConnectionId && p.Connection.IsConnected))
-            _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in guildMembers)
+        {
+            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
+                continue;
+
+            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
+        }
     }
 
-    private void BroadcastToAll(OutgoingMessage outgoing)
+    private void BroadcastToAll(OutgoingMessage outgoing, bool includeExcluded)
     {
         IEnumerable<ServerPlayerCharacter> allPlayers = _zoneManager.GetAllServerPlayers();
 
-        foreach (ServerPlayerCharacter player in allPlayers.Where(p => p.Connection.IsConnected))
-            _networkServer.Send(player.Connection, outgoing.Message);
+        foreach (ServerPlayerCharacter player in allPlayers)
+        {
+            if (!includeExcluded && player.Connection.Id == outgoing.ExcludeConnectionId)
+                continue;
+
+            if (player.Connection.IsConnected) _networkServer.Send(player.Connection, outgoing.Message);
+        }
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -656,7 +668,7 @@ public class GameServer : IDisposable
     private void ProcessDisconnect(Guid connectionId, string? reason)
     {
         // Remove player from ZoneManager
-        ServerPlayerCharacter? player = _zoneManager.RemovePlayerByConnectionId(connectionId);
+        ServerPlayerCharacter? player = _zoneManager.RemoveServerPlayer(connectionId);
 
         if (player != null)
         {
@@ -693,7 +705,7 @@ public class GameServer : IDisposable
                 _networkServer.Send(player.Connection, disconnectMsg);
 
                 // Remove from ZoneManager
-                _zoneManager.RemovePlayerByConnectionId(player.Connection.Id);
+                _zoneManager.RemoveServerPlayer(player.Connection.Id);
 
                 // Close connection
                 _networkServer.RemoveConnection(player.Connection.Id, reason);

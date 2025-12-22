@@ -93,7 +93,7 @@ public class IdRegistryTests : IDisposable
     {
         ushort zoneId = 1;
 
-        int id1 = IdRegistry.Instance.GetNextLocalId(zoneId);
+        ushort id1 = IdRegistry.Instance.GetNextLocalId(zoneId);
         IdRegistry.Instance.GetNextLocalId(zoneId);
 
         IdRegistry.Instance.ReleaseLocalId(zoneId, 0, id1);
@@ -355,7 +355,7 @@ public class IdRegistryTests : IDisposable
         public EntityType Type => EntityType.Player;
         public Position Position { get; set; } = new(0, 0);
 
-        public void SetEntityId(int localId, ushort zoneId) =>
+        public void SetEntityId(ushort localId, ushort zoneId) =>
             RuntimeId = new EntityIdentity(_testServerId, zoneId, _testShardId, localId, _testPrefabId);
 
         public void ChangeZone(ushort newZoneId)

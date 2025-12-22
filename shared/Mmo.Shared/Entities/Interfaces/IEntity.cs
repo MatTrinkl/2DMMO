@@ -39,7 +39,7 @@ public interface IEntity
     /// </summary>
     /// <param name="localId">The new local ID within the zone.</param>
     /// <param name="zoneId">The zone ID.</param>
-    void SetEntityId(int localId, ushort zoneId);
+    void SetEntityId(ushort localId, ushort zoneId);
 
     /// <summary>
     ///     Called when this entity changes zones.

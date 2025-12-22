@@ -40,11 +40,6 @@ public interface IZoneContext
     /// <summary>Aktuelle Shard-ID.</summary>
     ushort ShardId { get; }
 
-    /// <summary>Aktuelle Spieleranzahl.</summary>
-    int PlayerCount { get; }
-
-    /// <summary>Ist die Zone voll?</summary>
-    bool IsFull => Config.MaxPlayers > 0 && PlayerCount >= Config.MaxPlayers;
 
     /// <summary>Aktuelles Wetter.</summary>
     WeatherType CurrentWeather { get; }

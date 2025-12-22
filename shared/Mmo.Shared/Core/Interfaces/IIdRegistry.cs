@@ -23,7 +23,7 @@ public interface IIdRegistry
     /// <param name="zoneId">The zone ID.</param>
     /// <param name="shardId">The shard ID (default: 0).</param>
     /// <returns>The next available LocalId.</returns>
-    int GetNextLocalId(ushort zoneId, ushort shardId = 0);
+    ushort GetNextLocalId(ushort zoneId, ushort shardId = 0);
 
     /// <summary>
     ///     Releases a LocalId for reuse.
@@ -32,7 +32,7 @@ public interface IIdRegistry
     /// <param name="zoneId">The zone ID.</param>
     /// <param name="shardId">The shard ID.</param>
     /// <param name="localId">The LocalId to release.</param>
-    void ReleaseLocalId(ushort zoneId, ushort shardId, int localId);
+    void ReleaseLocalId(ushort zoneId, ushort shardId, ushort localId);
 
     /// <summary>
     ///     Looks up an entity by its PersistentId.

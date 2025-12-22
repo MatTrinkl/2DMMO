@@ -7,7 +7,8 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Serialization;
 using Mmo.Shared.Movement;
-using Mmo.Shared.Zones.Messages;
+using Mmo.Shared.Zones.Messages.Server_Brodcast;
+using Mmo.Shared.Zones.Messages.Server_Client;
 
 namespace Mmo.Server.Tests.Networking;
 

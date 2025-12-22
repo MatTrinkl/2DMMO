@@ -33,7 +33,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     ///     Local ID - unique within a zone/shard pair. Assigned by the zone.
     /// </summary>
     [Key(3)]
-    public int LocalId { get; private set; }
+    public ushort LocalId { get; private set; }
 
     /// <summary>
     ///     Reference to the prefab of this entity. Defines the type/template.
@@ -51,7 +51,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// <param name="localId">The local ID of the Entity within the zone/shard.</param>
     /// <param name="prefabId">The ID of the prefab of this entity.</param>
     [SerializationConstructor]
-    public EntityIdentity(byte serverId, ushort zoneId, ushort shardId, int localId, ushort prefabId)
+    public EntityIdentity(byte serverId, ushort zoneId, ushort shardId, ushort localId, ushort prefabId)
     {
         ServerId = serverId;
         ZoneId = zoneId;
@@ -141,7 +141,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// </summary>
     /// <param name="newLocalId">The new local ID in the target zone.</param>
     /// <param name="zoneId">The ID of the new zone.</param>
-    public void ZoneTransfer(int newLocalId, ushort zoneId)
+    public void ZoneTransfer(ushort newLocalId, ushort zoneId)
     {
         ZoneId = zoneId;
         LocalId = newLocalId;
@@ -172,7 +172,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// </summary>
     /// <param name="newZoneId">The target zone ID.</param>
     /// <param name="newLocalId">The new local ID in the target zone.</param>
-    public void TransferToZone(ushort newZoneId, int newLocalId)
+    public void TransferToZone(ushort newZoneId, ushort newLocalId)
     {
         ZoneId = newZoneId;
         LocalId = newLocalId;
@@ -183,7 +183,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// </summary>
     /// <param name="newShardId">The target shard ID.</param>
     /// <param name="newLocalId">The new local ID in the target shard.</param>
-    public void TransferToShard(ushort newShardId, int newLocalId)
+    public void TransferToShard(ushort newShardId, ushort newLocalId)
     {
         ShardId = newShardId;
         LocalId = newLocalId;

@@ -30,7 +30,7 @@ public class EntityIdentityTests
     [Fact]
     public void GlobalKey_WithMaxValues_DoesNotOverflow()
     {
-        var identity = new EntityIdentity(255, ushort.MaxValue, ushort.MaxValue, int.MaxValue, 1);
+        var identity = new EntityIdentity(255, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue, 1);
 
         // Should not throw or overflow
         long globalKey = identity.GlobalKey;
@@ -156,7 +156,7 @@ public class EntityIdentityTests
     [Fact]
     public void DecodeGlobalKey_WithMaxValues_ReturnsCorrectValues()
     {
-        var identity = new EntityIdentity(255, ushort.MaxValue, ushort.MaxValue, 0xFFFFFF, 1);
+        var identity = new EntityIdentity(255, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue, 1);
         long globalKey = identity.GlobalKey;
 
         (byte serverId, ushort zoneId, ushort shardId, int localId) = EntityIdentity.DecodeGlobalKey(globalKey);
@@ -164,7 +164,8 @@ public class EntityIdentityTests
         Assert.Equal(255, serverId);
         Assert.Equal(ushort.MaxValue, zoneId);
         Assert.Equal(ushort.MaxValue, shardId);
-        Assert.Equal(0xFFFFFF, localId);
+        // LocalId is a ushort (16-bit) so max value is 0xFFFF (65535), not 0xFFFFFF (24-bit)
+        Assert.Equal(ushort.MaxValue, localId);
     }
 
     [Fact]

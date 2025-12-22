@@ -5,11 +5,7 @@ using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Account.Interfaces;
-using Mmo.Shared.Connection.Enums;
-using Mmo.Shared.Connection.Messages;
-using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Messages;
 
@@ -153,251 +149,16 @@ public sealed class MessageContext : IMessageContext
     /// <inheritdoc />
     public T? GetOptionalService<T>() where T : class => Services.GetService<T>();
 
-    // ═══════════════════════════════════════════════════════════════
-    // PUBLIC METHODS - IMessageContext - Send Methods (Queued)
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <inheritdoc />
-    public void Send(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-
-        var outgoing = OutgoingMessage.ToClient(Connection, message);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <inheritdoc />
-    public void SendError(string code, string message)
-    {
-        if (string.IsNullOrEmpty(code)) throw new ArgumentNullException(nameof(code));
-
-        Send(new ErrorMessage
-        {
-            Code = code,
-            Message = message ?? string.Empty
-        });
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // IMessageContext - Connection CONTROL
     // ═══════════════════════════════════════════════════════════════
 
-    /// <inheritdoc />
     public void Disconnect(string? reason = null)
     {
-        Send(new Disconnect
-        {
-            Reason = DisconnectReason.ServerShutdown,
-            Message = reason
-        });
+        //todo: to PlayerService
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // SERVER-ONLY: BROADCAST METHODS (QUEUED!)
-    //
-    // Diese Methoden sind NICHT im IMessageContext Interface,
-    // da sie Server-spezifisch sind.
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Queues a message for all players in the current zone.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToZone(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToZone(message, _serverPlayer.RuntimeId.ZoneId);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all players in a specific zone.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    /// <param name="zoneId">The target zone. </param>
-    public void BroadcastToZone(INetworkMessage message, ushort zoneId)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-
-        var outgoing = OutgoingMessage.BroadcastToZone(message, zoneId);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all players in the current zone,
-    ///     except the sender.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToZoneExceptSelf(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToZoneExcept(
-            message,
-            _serverPlayer.RuntimeId.ZoneId,
-            Connection.Id
-        );
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all players in range.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    /// <param name="radius">Maximum distance. </param>
-    public void BroadcastToNearby(INetworkMessage message, float radius)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToNearby(
-            message,
-            _serverPlayer.RuntimeId.ZoneId,
-            _serverPlayer.Entity.Position,
-            radius,
-            Connection.Id
-        );
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all players in range (including self).
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    /// <param name="radius">Maximum distance.</param>
-    public void BroadcastToNearbyIncludingSelf(INetworkMessage message, float radius)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToNearby(
-            message,
-            _serverPlayer.RuntimeId.ZoneId,
-            _serverPlayer.Entity.Position,
-            radius // Don't exclude anyone
-        );
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all party members.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToParty(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer?.PartyId == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToParty(message, _serverPlayer.PartyId.Value);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all party members except the sender.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToPartyExceptSelf(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer?.PartyId == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToPartyExcept(
-            message,
-            _serverPlayer.PartyId.Value,
-            Connection.Id
-        );
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all guild members.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToGuild(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer?.GuildId == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToGuild(message, _serverPlayer.GuildId.Value);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all guild members except the sender.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToGuildExceptSelf(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (_serverPlayer?.GuildId == null) return;
-
-        var outgoing = OutgoingMessage.BroadcastToGuildExcept(
-            message,
-            _serverPlayer.GuildId.Value,
-            Connection.Id
-        );
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for all players on the server.
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    public void BroadcastToAll(INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-
-        var outgoing = OutgoingMessage.BroadcastToAll(message);
-        _gameServer.QueueOutgoingMessage(outgoing);
-    }
-
-    /// <summary>
-    ///     Queues a message for a specific player (by PersistentId).
-    /// </summary>
-    /// <param name="targetId">PersistentId of the target player.</param>
-    /// <param name="message">The message to send. </param>
-    /// <returns>True if the player was found. </returns>
-    public bool SendToPlayer(Guid targetId, INetworkMessage message)
-    {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-
-        if (ZoneManager.TryGetPlayerByPersistentId(targetId, out ServerPlayerCharacter? targetPlayer))
-        {
-            var outgoing = OutgoingMessage.ToClient(targetPlayer.Connection, message);
-            _gameServer.QueueOutgoingMessage(outgoing);
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    ///     Queues a message for a specific player (by name).
-    /// </summary>
-    /// <param name="targetName">Name of the target player.</param>
-    /// <param name="message">The message to send.</param>
-    /// <returns>True if the player was found. </returns>
-    public bool SendToPlayer(string targetName, INetworkMessage message)
-    {
-        if (string.IsNullOrEmpty(targetName)) return false;
-        if (message == null) throw new ArgumentNullException(nameof(message));
-
-        ServerPlayerCharacter? targetPlayer = ZoneManager
-            .GetAllServerPlayers()
-            .FirstOrDefault(p => p.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase));
-
-        if (targetPlayer != null)
-        {
-            var outgoing = OutgoingMessage.ToClient(targetPlayer.Connection, message);
-            _gameServer.QueueOutgoingMessage(outgoing);
-            return true;
-        }
-
-        return false;
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // SERVER-ONLY: UTILITY METHODS
@@ -413,6 +174,7 @@ public sealed class MessageContext : IMessageContext
     /// </summary>
     public bool IsPlayerOnline(string playerName)
     {
+        //Todo: to PlayerService
         if (string.IsNullOrEmpty(playerName)) return false;
 
         return ZoneManager
@@ -426,10 +188,8 @@ public sealed class MessageContext : IMessageContext
     /// <returns>Zone ID or null if not found.</returns>
     public ushort? GetPlayerZone(Guid playerId)
     {
-        if (ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player))
-            return player.RuntimeId.ZoneId;
-
-        return null;
+        //Todo: to PlayerService
+        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player) ? null : player?.RuntimeId.ZoneId;
     }
 
     /// <summary>
@@ -437,6 +197,7 @@ public sealed class MessageContext : IMessageContext
     /// </summary>
     public bool IsInSameZone(Guid otherPlayerId)
     {
+        //Todo: to PlayerService
         if (_serverPlayer == null) return false;
 
         ushort? otherZone = GetPlayerZone(otherPlayerId);
@@ -449,15 +210,15 @@ public sealed class MessageContext : IMessageContext
     /// <returns>Distance or null if not in the same zone.</returns>
     public float? GetDistanceToPlayer(Guid otherPlayerId)
     {
+        //Todo: to PlayerService
         if (_serverPlayer == null) return null;
 
-        if (ZoneManager.TryGetPlayerByPersistentId(otherPlayerId, out ServerPlayerCharacter? otherPlayer))
-        {
-            if (otherPlayer.RuntimeId.ZoneId != _serverPlayer.RuntimeId.ZoneId)
-                return null;
+        if (!ZoneManager.TryGetPlayerByPersistentId(otherPlayerId, out ServerPlayerCharacter? otherPlayer)) return null;
+        if (otherPlayer != null && otherPlayer.RuntimeId.ZoneId != _serverPlayer.RuntimeId.ZoneId)
+            return null;
 
-            return CalculateDistance(_serverPlayer.Entity.Position, otherPlayer.Entity.Position);
-        }
+        if (otherPlayer != null)
+            return _serverPlayer.Entity.Position.CalculateDistance(otherPlayer.Entity.Position);
 
         return null;
     }
@@ -467,86 +228,8 @@ public sealed class MessageContext : IMessageContext
     /// </summary>
     public bool IsPlayerInRange(Guid otherPlayerId, float range)
     {
+        //Todo: to PlayerService
         float? distance = GetDistanceToPlayer(otherPlayerId);
         return distance.HasValue && distance.Value <= range;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // ASYNC TASK SUPPORT
-    // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>
-    ///     Starts an async task and queues the result for the next tick.
-    ///     The task runs in the background and does NOT block the Game Loop.
-    ///     When the task completes, the callback is executed in the Game Loop.
-    /// </summary>
-    /// <typeparam name="T">Result type of the task</typeparam>
-    /// <param name="task">The async task</param>
-    /// <param name="onCompleted">Callback when task completes (executed in Game Loop)</param>
-    /// <param name="onError">Optional: Callback on error</param>
-    public void RunAsync<T>(
-        Task<T> task,
-        Action<MessageContext, T> onCompleted,
-        Action<MessageContext, Exception>? onError = null)
-    {
-        Guid connectionId = ConnectionId;
-
-        task.ContinueWith(t =>
-        {
-            if (t.IsFaulted)
-            {
-                // Queue error callback
-                if (onError != null)
-                    _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
-                else
-                    // Default: Send error message
-                    _gameServer.QueueCompletion(connectionId, ctx =>
-                        ctx.SendError("INTERNAL_ERROR", "An error occurred"));
-            }
-            else if (t.IsCompletedSuccessfully)
-            {
-                // Queue success callback
-                _gameServer.QueueCompletion(connectionId, ctx => onCompleted(ctx, t.Result));
-            }
-            // Cancelled is ignored
-        }, TaskContinuationOptions.ExecuteSynchronously);
-    }
-
-    /// <summary>
-    ///     Simplified version without result.
-    /// </summary>
-    public void RunAsync(
-        Task task,
-        Action<MessageContext> onCompleted,
-        Action<MessageContext, Exception>? onError = null)
-    {
-        Guid connectionId = ConnectionId;
-
-        task.ContinueWith(t =>
-        {
-            if (t.IsFaulted)
-            {
-                if (onError != null)
-                    _gameServer.QueueCompletion(connectionId, ctx => onError(ctx, t.Exception!.InnerException!));
-                else
-                    _gameServer.QueueCompletion(connectionId, ctx =>
-                        ctx.SendError("INTERNAL_ERROR", "An error occurred"));
-            }
-            else if (t.IsCompletedSuccessfully)
-            {
-                _gameServer.QueueCompletion(connectionId, ctx => onCompleted(ctx));
-            }
-        }, TaskContinuationOptions.ExecuteSynchronously);
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS
-    // ═══════════════════════════════════════════════════════════════
-
-    private static float CalculateDistance(Position a, Position b)
-    {
-        float dx = a.X - b.X;
-        float dy = a.Y - b.Y;
-        return MathF.Sqrt(dx * dx + dy * dy);
     }
 }

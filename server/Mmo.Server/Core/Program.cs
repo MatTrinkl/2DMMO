@@ -1,14 +1,24 @@
 using Microsoft.Extensions.DependencyInjection;
-using Mmo.Server.AuthenticationService.Interfaces;
-using Mmo.Server.Connections.Handler;
+using Mmo.Server.AsyncTask.Interface;
+using Mmo.Server.AsyncTask.Services;
+using Mmo.Server.Connections.MessageHandler;
+using Mmo.Server.Entities.Services;
 using Mmo.Server.Logging;
 using Mmo.Server.MessageRouting;
+using Mmo.Server.MessageRouting.Handler;
 using Mmo.Server.MessageRouting.Interfaces;
 using Mmo.Server.Network;
-using Mmo.Server.PlayerService.Interfaces;
+using Mmo.Server.Network.Interfaces;
+using Mmo.Server.Network.Services;
+using Mmo.Server.Player.Interfaces;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Interfaces;
+using Mmo.Server.Zones.MessageHandler;
+using Mmo.Server.Zones.Services;
+using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Server.Core;
 
@@ -148,7 +158,22 @@ public class Program
         services.AddSingleton<IAuthenticationService, AuthenticationService.AuthenticationService>();
 
         // Player
-        services.AddSingleton<IPlayerService, PlayerService.PlayerService>();
+        services.AddSingleton<IPlayerService, Player.Service.PlayerService>();
+
+        //Broadcast
+        services.AddSingleton<IBroadcastService, BroadcastService>();
+
+        //AsyncTask
+        services.AddSingleton<IAsyncTaskService, AsyncTaskService>();
+
+        //Zone
+        services.AddSingleton<IZoneService, ZoneService>();
+
+        //Entity
+        services.AddSingleton<IEntityService, EntityService>();
+
+        //Movement
+        //services.AddSingleton<IMovementService, MovementService>();
 
         // TODO:  Weitere Services
         // services.AddSingleton<IChatService, ChatService>();
@@ -163,9 +188,13 @@ public class Program
         // HANDLERS
         // ════════════════════════════════════════════════════════════
         services.AddSingleton<ConnectionHandler>();
-        // services.AddSingleton<MovementHandler>();
-        // services. AddSingleton<CombatHandler>();
-        // services.AddSingleton<ChatHandler>();
+        services.AddSingleton<ZoneHandler>();
+        services.AddSingleton<ZoneEventHandler>();
+        services.AddSingleton<MovementHandler>();
+        services.AddSingleton<CombatHandler>();
+        services.AddSingleton<ChatHandler>();
+        services.AddSingleton<PingHandler>();
+        // TODO: Future handlers
         // services.AddSingleton<InventoryHandler>();
         // services.AddSingleton<SocialHandler>();
         // services.AddSingleton<AdminHandler>();
@@ -182,10 +211,14 @@ public class Program
 
         Type[] handlerTypes =
         [
-            typeof(ConnectionHandler)
-            // typeof(MovementHandler),
-            // typeof(CombatHandler),
-            // typeof(ChatHandler),
+            typeof(ConnectionHandler),
+            typeof(ZoneHandler),
+            typeof(ZoneEventHandler),
+            typeof(MovementHandler),
+            typeof(CombatHandler),
+            typeof(ChatHandler),
+            typeof(PingHandler)
+            // TODO: Future handlers
             // typeof(InventoryHandler),
             // typeof(SocialHandler),
             // typeof(AdminHandler),
