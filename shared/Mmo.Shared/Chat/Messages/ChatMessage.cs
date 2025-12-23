@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Chat.Messages;
 ///     This class is used when a client sends a Chat Message.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.ChatMessage)]
 public class ChatMessage : INetworkMessage
 {
     /// <summary>

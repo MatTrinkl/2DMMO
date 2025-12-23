@@ -1644,11 +1644,11 @@ MessageType-Enum um Chat-Typen erweitern.
       ChatRateLimit = 12
   }
   ```
-- [ ] MessageSerializer für neue Typen erweitern
+- [x] ~~MessageSerializer für neue Typen erweitern~~ **Veraltet:** MessageSerializer verwendet jetzt attribute-basierte Auto-Registrierung. Neue Message-Types benötigen nur `[NetworkMessage(MessageType.XXX)]` Attribut.
 
 **Akzeptanzkriterien:**
-- [ ] Neue MessageTypes sind definiert
-- [ ] Serialisierung funktioniert
+- [x] Neue MessageTypes sind definiert
+- [x] Serialisierung funktioniert automatisch per Attribut
 
 **Ressourcen:**
 - [Enums erweitern](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum) – Enum-Werte

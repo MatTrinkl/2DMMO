@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Combat.Messages;
 ///     This class is still a Placeholder
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.ActionResult)]
 public class ActionResult : ITimestampedMessage
 {
     /// <summary>

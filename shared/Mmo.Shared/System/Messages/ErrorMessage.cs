@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.System.Messages;
 ///     Allgemeine Fehlermeldung vom Server an den Client.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.ErrorMessage)]
 public class ErrorMessage : INetworkMessage
 {
     /// <summary>

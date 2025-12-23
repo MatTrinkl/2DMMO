@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -9,6 +10,7 @@ namespace Mmo.Shared.Connection.Messages;
 ///     This class informs all clients when a player is disconnected.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.Disconnect)]
 public class Disconnect : INetworkMessage
 {
     /// <summary>

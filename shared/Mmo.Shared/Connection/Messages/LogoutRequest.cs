@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Connection.Messages;
 ///     This class is sent when a logout is requested by a player.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.LogoutRequest)]
 public class LogoutRequest : INetworkMessage
 {
     /// <summary>

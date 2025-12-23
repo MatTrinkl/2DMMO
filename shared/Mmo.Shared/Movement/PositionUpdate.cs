@@ -1,6 +1,7 @@
 using MessagePack;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -10,6 +11,7 @@ namespace Mmo.Shared.Movement;
 ///     This class is sent to update a position of an entity.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.PositionUpdate)]
 public class PositionUpdate : ITimestampedMessage
 {
     /// <summary>

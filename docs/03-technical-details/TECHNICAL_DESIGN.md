@@ -252,7 +252,7 @@ Layer 4: UI (CanvasLayer)          → HUD, Chat
 | **NetworkServer** | 🔄 Geplant | ThreadPool (TcpListener) | TCP-Listener, Connection-Management, Events |
 | **ClientConnection** | 🔄 Geplant | ThreadPool (pro Client) | Read/Write Loop, SendQueue, Deserialisierung |
 | **ZoneManager** | ✅ Implementiert | Game Loop Thread | Zone-State, Entity-Management |
-| **MessageSerializer** | ✅ Implementiert | Beide | MessagePack Serialization/Deserialization |
+| **MessageSerializer** | ✅ Implementiert | Beide | Attribute-basierte Auto-Registrierung (Dictionary, O(1) Lookup, Compiled Delegates) |
 
 ### NetworkEvents (Geplant)
 
