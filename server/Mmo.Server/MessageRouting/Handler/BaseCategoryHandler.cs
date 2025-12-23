@@ -47,7 +47,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Prüft ob dieser Handler einen bestimmten MessageType verarbeiten kann.
+    ///     Checks if this handler can handle a specific MessageType.
     /// </summary>
     public bool CanHandle(MessageType type)
     {
@@ -124,8 +124,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Prüft ob der Spieler authentifiziert ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is authenticated.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireAuthenticated(MessageContext ctx)
     {
@@ -136,8 +136,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler einen Charakter hat.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player has a character.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireCharacter(MessageContext ctx)
     {
@@ -148,14 +148,14 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler authentifiziert ist UND einen Charakter hat.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is authenticated AND has a character.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireInGame(MessageContext ctx) => RequireAuthenticated(ctx) && RequireCharacter(ctx);
 
     /// <summary>
-    ///     Prüft ob der Spieler Game Master ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is a Game Master.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireGameMaster(MessageContext ctx)
     {
@@ -166,8 +166,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler Admin ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is an Admin.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireAdmin(MessageContext ctx)
     {
@@ -178,8 +178,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler NICHT gemutet ist.
-    ///     Sendet automatisch Error wenn gemutet.
+    ///     Checks if the player is NOT muted.
+    ///     Automatically sends error if muted.
     /// </summary>
     protected bool RequireNotMuted(MessageContext ctx)
     {

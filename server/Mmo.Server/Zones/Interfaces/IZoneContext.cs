@@ -60,7 +60,7 @@ public interface IZoneContext
     string? LockReason { get; }
 
     // ═══════════════════════════════════════════════════════════════
-    // INSTANZ-SPEZIFISCH (nur wenn IsInstance)
+    // INSTANCE-SPECIFIC (only when IsInstance)
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Instance ID (only for instances).</summary>

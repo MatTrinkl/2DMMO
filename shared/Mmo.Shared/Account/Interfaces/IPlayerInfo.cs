@@ -46,10 +46,10 @@ public interface IPlayerInfo
     // SOCIAL
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Party-ID (null wenn nicht in Party).</summary>
+    /// <summary>Party ID (null if not in party).</summary>
     Guid? PartyId { get; }
 
-    /// <summary>Guild-ID (null wenn nicht in Guild).</summary>
+    /// <summary>Guild ID (null if not in guild).</summary>
     Guid? GuildId { get; }
 
     // ═══════════════════════════════════════════════════════════════

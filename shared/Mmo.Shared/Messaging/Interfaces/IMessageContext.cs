@@ -53,17 +53,17 @@ public interface IMessageContext
     bool IsAuthenticated { get; }
 
     /// <summary>
-    ///     Hat der Spieler einen aktiven Charakter ausgewählt und gespawnt?
+    ///     Has the player selected and spawned an active character?
     /// </summary>
     bool HasCharacter { get; }
 
     // ═══════════════════════════════════════════════════════════════
-    // PLAYER INFO (abstrahiert, ohne Server-Typen)
+    // PLAYER INFO (abstracted, without server types)
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Informationen über den Spieler.
-    ///     Null wenn nicht authentifiziert oder kein Charakter ausgewählt.
+    ///     Information about the player.
+    ///     Null when not authenticated or no character selected.
     /// </summary>
     IPlayerInfo? PlayerInfo { get; }
 

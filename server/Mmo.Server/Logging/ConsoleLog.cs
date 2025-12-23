@@ -3,8 +3,8 @@ using Mmo.Shared.Core.Interfaces;
 namespace Mmo.Server.Logging;
 
 /// <summary>
-///     Einfache Console-Log Implementation.
-///     Kann später durch Serilog, NLog, etc. ersetzt werden.
+///     Simple console log implementation.
+///     Can be replaced later with Serilog, NLog, etc.
 /// </summary>
 public class ConsoleLog : ILog
 {

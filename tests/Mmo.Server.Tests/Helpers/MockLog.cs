@@ -53,12 +53,12 @@ public class MockLog : ILog
 
         try
         {
-            // Versuche zuerst benannte Platzhalter zu ersetzen
-            // z.B. "{TickRate}" wird durch args[0] ersetzt, "{Tick}" durch args[1], etc.
+            // Try to replace named placeholders first
+            // e.g., "{TickRate}" is replaced with args[0], "{Tick}" with args[1], etc.
             string result = message;
             int argIndex = 0;
 
-            // Finde alle {Name} Platzhalter und ersetze sie der Reihe nach
+            // Find all {Name} placeholders and replace them in order
             int startIndex = 0;
             while (startIndex < result.Length && argIndex < args.Length)
             {

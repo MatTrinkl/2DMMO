@@ -50,7 +50,7 @@ public class ZoneManager(ushort defaultZoneId)
 
     public IEntity? GetEntity(Guid persistentId)
     {
-        // Lookup über IdRegistry - KEINE eigene Liste!
+        // Lookup via IdRegistry - NO own list!
         IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity);
         return entity;
     }

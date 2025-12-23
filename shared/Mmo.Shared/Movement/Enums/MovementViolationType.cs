@@ -1,16 +1,16 @@
 namespace Mmo.Shared.Movement.Enums;
 
 /// <summary>
-///     Arten von Movement-Verletzungen (Anti-Cheat).
+///     Types of movement violations (Anti-Cheat).
 /// </summary>
 public enum MovementViolationType
 {
     None,
-    SpeedHack, // Zu schnell bewegt
-    Teleport, // Position-Sprung ohne Teleport-Request
-    WallClip, // Durch Wand bewegt
-    FlyHack, // Fliegen ohne Erlaubnis
-    NoClip, // Durch Terrain
-    OutOfBounds, // Außerhalb der Zone-Grenzen
-    InvalidPosition // Ungültige Koordinaten (NaN, etc.)
+    SpeedHack, // Moved too fast
+    Teleport, // Position jump without teleport request
+    WallClip, // Moved through wall
+    FlyHack, // Flying without permission
+    NoClip, // Through terrain
+    OutOfBounds, // Outside zone boundaries
+    InvalidPosition // Invalid coordinates (NaN, etc.)
 }

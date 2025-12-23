@@ -17,7 +17,7 @@ public record MovementValidationResult
     /// <summary>Type of violation (for logging/banning).</summary>
     public MovementViolationType? ViolationType { get; init; }
 
-    /// <summary>Schwere der Verletzung (0. 0 - 1.0).</summary>
+    /// <summary>Severity of violation (0.0 - 1.0).</summary>
     public float? ViolationSeverity { get; init; }
 
     // ─── Factory Methods ───

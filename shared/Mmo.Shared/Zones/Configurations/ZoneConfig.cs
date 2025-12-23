@@ -23,7 +23,7 @@ public class ZoneConfig
     /// <summary>Display name (for UI).</summary>
     public string DisplayName { get; set; } = "";
 
-    /// <summary>Beschreibung. </summary>
+    /// <summary>Description.</summary>
     public string Description { get; set; } = "";
 
     // ═══════════════════════════════════════════════════════════════
