@@ -70,7 +70,8 @@ Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klar
 | `PlayerLeft` | Server → Clients | Spieler hat verlassen |
 | `PositionUpdate` | Client → Server | Eigene Position senden |
 | `WorldState` | Server → Clients | Alle Spieler-Positionen |
-| `ChatMessage` | Bidirektional | Chat-Nachricht |
+| `ChatMessageSend` | Client → Server | Chat-Nachricht senden |
+| `ChatBroadcast` | Server → Clients | Chat-Nachricht empfangen |
 
 ### 5. Spieler-Bewegung
 

@@ -535,13 +535,15 @@ var errorResponse = new ReconnectResponse
 
 ## SessionValidate (8)
 
-**Richtung:** 🔄 Server-Internal  
+**Richtung:** 🔀 Server ↔ Server (Internal)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja (Server-to-Server)  
 **Spezielle Rechte:** 👑 Server
 
 ### Beschreibung
 Interne Message zwischen Gateway Server und Zone Server zur Validierung von SessionTokens. Client sendet diese Message NICHT.
+
+**Wichtig**: Dies ist eine Server-interne Message und verwendet NICHT die Client/Server Interface-Hierarchie. Wird über Redis Pub/Sub ausgetauscht.
 
 ### Im Scope ✅
 - Token-Validierung zwischen Servern
