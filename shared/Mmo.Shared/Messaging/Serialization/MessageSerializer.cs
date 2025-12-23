@@ -15,10 +15,10 @@ namespace Mmo.Shared.Messaging.Serialization;
 public static class MessageSerializer
 {
     /// <summary>
-    ///     Registry mapping MessageType to message class Type.
-    ///     O(1) lookup for message deserialization.
+    ///     Registry mapping MessageType to deserialization function.
+    ///     O(1) lookup for message deserialization with pre-compiled delegates.
     /// </summary>
-    private static readonly Dictionary<MessageType, Type> MessageRegistry = new();
+    private static readonly Dictionary<MessageType, Func<ReadOnlyMemory<byte>, INetworkMessage>> MessageRegistry = new();
 
     /// <summary>
     ///     Static constructor that automatically registers all message types with the [NetworkMessage] attribute.
@@ -31,11 +31,34 @@ public static class MessageSerializer
             .Where(t => t.GetCustomAttribute<NetworkMessageAttribute>() != null)
             .ToList();
 
-        // Register each message type
+        // Find the MessagePackSerializer.Deserialize<T> method once
+        var deserializeMethod = typeof(MessagePackSerializer)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.Name == nameof(MessagePackSerializer.Deserialize))
+            .Where(m => m.IsGenericMethodDefinition)
+            .Where(m => m.GetParameters().Length == 3)
+            .Where(m => m.GetParameters()[0].ParameterType == typeof(ReadOnlyMemory<byte>))
+            .FirstOrDefault();
+
+        if (deserializeMethod == null)
+        {
+            throw new InvalidOperationException(
+                "Could not find MessagePackSerializer.Deserialize<T>(ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken) method.");
+        }
+
+        // Register each message type with a pre-compiled delegate
         foreach (var messageType in messageTypes)
         {
             var attribute = messageType.GetCustomAttribute<NetworkMessageAttribute>()!;
-            MessageRegistry[attribute.Type] = messageType;
+            
+            // Create the generic method for this specific message type
+            var genericMethod = deserializeMethod.MakeGenericMethod(messageType);
+            
+            // Create a cached delegate that calls MessagePackSerializer.Deserialize<T>(data, null, default)
+            Func<ReadOnlyMemory<byte>, INetworkMessage> deserializer = data =>
+                (INetworkMessage)genericMethod.Invoke(null, new object?[] { data, null, default(CancellationToken) })!;
+
+            MessageRegistry[attribute.Type] = deserializer;
         }
     }
 
@@ -52,22 +75,11 @@ public static class MessageSerializer
     {
         MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
-        if (!MessageRegistry.TryGetValue(header.Type, out var messageType))
+        if (!MessageRegistry.TryGetValue(header.Type, out var deserializer))
         {
             throw new UnknownMessageTypeException(header.Type);
         }
 
-        // Use reflection to call MessagePackSerializer.Deserialize<T>(data, null, default)
-        // where T is the registered message type
-        var deserializeMethod = typeof(MessagePackSerializer)
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Where(m => m.Name == nameof(MessagePackSerializer.Deserialize))
-            .Where(m => m.IsGenericMethodDefinition)
-            .Where(m => m.GetParameters().Length == 3)
-            .Where(m => m.GetParameters()[0].ParameterType == typeof(ReadOnlyMemory<byte>))
-            .FirstOrDefault()!
-            .MakeGenericMethod(messageType);
-
-        return (INetworkMessage)deserializeMethod.Invoke(null, new object?[] { data, null, default(CancellationToken) })!;
+        return deserializer(data);
     }
 }
