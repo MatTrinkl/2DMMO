@@ -140,7 +140,7 @@ public class MessageRegistryTests
 
             var keyAttribute = typeProperty.GetCustomAttribute<MessagePack.KeyAttribute>();
             Assert.NotNull(keyAttribute);
-            // KeyAttribute uses IntKey property (not Index)
+            // KeyAttribute.IntKey contains the integer key value
             Assert.Equal(0, keyAttribute.IntKey);
         }
     }
