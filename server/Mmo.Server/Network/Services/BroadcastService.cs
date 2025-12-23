@@ -9,6 +9,10 @@ using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Network.Services;
 
+/// <summary>
+///     Service for broadcasting messages to players in zones or specific connections.
+///     Handles both targeted and area-based message distribution.
+/// </summary>
 public class BroadcastService(GameServer gameServer)
     : IBroadcastService
 {

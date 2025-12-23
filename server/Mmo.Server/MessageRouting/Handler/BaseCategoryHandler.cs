@@ -8,13 +8,13 @@ using Mmo.Shared.Messaging.Interfaces;
 namespace Mmo.Server.MessageRouting.Handler;
 
 /// <summary>
-///     Basisklasse für alle Category-Handler.
-///     Jeder Handler verarbeitet eine MessageCategory (100er-Block).
-///     Verwendet O(1) Array-Lookup für Sub-Routing.
-///     WICHTIG:
-///     - Handler-Methoden sind SYNCHRON (void, nicht async)
-///     - Für async Operations:  ctx.RunAsync() verwenden
-///     - Senden nur über ctx.Send() (queued für Output-Phase)
+///     Base class for all category handlers.
+///     Each handler processes one MessageCategory (100-block).
+///     Uses O(1) array lookup for sub-routing.
+///     IMPORTANT:
+///     - Handler methods are SYNCHRONOUS (void, not async)
+///     - For async operations: use ctx.RunAsync()
+///     - Send only via ctx.Send() (queued for Output phase)
 /// </summary>
 public abstract class BaseCategoryHandler : ICategoryHandler
 {
@@ -38,7 +38,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Die Kategorie die dieser Handler verarbeitet.
+    ///     The category this handler processes.
     /// </summary>
     public abstract MessageCategory Category { get; }
 
@@ -47,7 +47,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Prüft ob dieser Handler einen bestimmten MessageType verarbeiten kann.
+    ///     Checks if this handler can handle a specific MessageType.
     /// </summary>
     public bool CanHandle(MessageType type)
     {
@@ -82,7 +82,7 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Wird von Subklassen überschrieben um Handler zu registrieren.
+    ///     Called by subclasses to register handlers.
     /// </summary>
     protected abstract void RegisterHandlers();
 
@@ -91,11 +91,11 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Registriert einen Handler für einen bestimmten MessageType.
+    ///     Registers a handler for a specific MessageType.
     /// </summary>
-    /// <typeparam name="TMessage">Der Message-Typ. </typeparam>
-    /// <param name="type">Der MessageType (muss in dieser Kategorie sein!).</param>
-    /// <param name="handler">Die Handler-Methode.</param>
+    /// <typeparam name="TMessage">The message type.</typeparam>
+    /// <param name="type">The MessageType (must be in this category!).</param>
+    /// <param name="handler">The handler method.</param>
     protected void Register<TMessage>(MessageType type, Action<MessageContext, TMessage> handler)
         where TMessage : INetworkMessage
     {
@@ -124,8 +124,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Prüft ob der Spieler authentifiziert ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is authenticated.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireAuthenticated(MessageContext ctx)
     {
@@ -136,8 +136,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler einen Charakter hat.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player has a character.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireCharacter(MessageContext ctx)
     {
@@ -148,14 +148,14 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler authentifiziert ist UND einen Charakter hat.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is authenticated AND has a character.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireInGame(MessageContext ctx) => RequireAuthenticated(ctx) && RequireCharacter(ctx);
 
     /// <summary>
-    ///     Prüft ob der Spieler Game Master ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is a Game Master.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireGameMaster(MessageContext ctx)
     {
@@ -166,8 +166,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler Admin ist.
-    ///     Sendet automatisch Error wenn nicht.
+    ///     Checks if the player is an Admin.
+    ///     Automatically sends error if not.
     /// </summary>
     protected bool RequireAdmin(MessageContext ctx)
     {
@@ -178,8 +178,8 @@ public abstract class BaseCategoryHandler : ICategoryHandler
     }
 
     /// <summary>
-    ///     Prüft ob der Spieler NICHT gemutet ist.
-    ///     Sendet automatisch Error wenn gemutet.
+    ///     Checks if the player is NOT muted.
+    ///     Automatically sends error if muted.
     /// </summary>
     protected bool RequireNotMuted(MessageContext ctx)
     {

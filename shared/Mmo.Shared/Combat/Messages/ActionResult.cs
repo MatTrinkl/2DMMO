@@ -13,7 +13,7 @@ namespace Mmo.Shared.Combat.Messages;
 public class ActionResult : ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public ActionResult()

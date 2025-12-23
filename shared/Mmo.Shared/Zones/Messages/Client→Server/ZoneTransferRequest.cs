@@ -14,15 +14,15 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 [NetworkMessage(MessageType.ZoneTransferRequest)]
 public record ZoneTransferRequest : INetworkMessage
 {
-    /// <summary>Ziel-Zone ID. </summary>
+    /// <summary>Target zone ID.</summary>
     [Key(1)]
     public required ushort TargetZoneId { get; init; }
 
-    /// <summary>Transfer-Typ (für Validierung/Logging).</summary>
+    /// <summary>Transfer type (for validation/logging).</summary>
     [Key(2)]
     public required ZoneTransferType TransferType { get; init; }
 
-    /// <summary>Optionale Ziel-Position (z.B. bei Portal).</summary>
+    /// <summary>Optional target position (e.g., for portal).</summary>
     [Key(3)]
     public Position? TargetPosition { get; init; }
 

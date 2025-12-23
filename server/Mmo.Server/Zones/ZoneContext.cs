@@ -7,7 +7,7 @@ using Mmo.Shared.Zones.Structs;
 namespace Mmo.Server.Zones;
 
 /// <summary>
-///     Konkrete Implementation von IZoneContext.
+///     Concrete implementation of IZoneContext.
 /// </summary>
 public class ZoneContext(Zone zone, ZoneConfig config, ushort shardId = 0) : IZoneContext
 {

@@ -82,17 +82,17 @@ public class ConnectionHandler(
     /// </summary>
     private void HandleLoginRequest(MessageContext ctx, LoginRequest request)
     {
-        // Speichere was wir brauchen (Connection kann sich nicht ändern)
+        // Store what we need (Connection cannot change)
         Guid connectionId = ctx.Connection.Id;
         ClientConnection connection = ctx.Connection;
 
         // ════════════════════════════════════════════════════════════
-        // ASYNC TASK mit Result
+        // ASYNC TASK with Result
         // ════════════════════════════════════════════════════════════
         _asyncTask.Run(
             connectionId,
 
-            // 1. ASYNC TEIL (läuft auf ThreadPool)
+            // 1. ASYNC PART (runs on ThreadPool)
             async () =>
             {
                 AuthResult authResult = await _authService.AuthenticateAsync(
@@ -119,7 +119,7 @@ public class ConnectionHandler(
                 _log.Info("Login successful for {ConnectionId}: {Username} (AccountId: {AccountId})",
                     ctx.ConnectionId, authResult.Username!, authResult.AccountId);
 
-                // Player spawnen (auch async)
+                // Spawn player (also async)
                 ServerPlayerCharacter player = await _playerService.SpawnPlayerAsync(
                     authResult.AccountId!.Value,
                     request.Username,
@@ -129,10 +129,10 @@ public class ConnectionHandler(
                 return new LoginTaskResult(true, player);
             },
 
-            // 2. COMPLETION CALLBACK (läuft im Game Loop mit frischem ctx)
+            // 2. COMPLETION CALLBACK (runs in Game Loop with fresh ctx)
             (outCtx, result) =>
             {
-                // ctx ist FRISCH - hat jetzt auch ctx.Player falls gespawnt!
+                // ctx is FRESH - now also has ctx.Player if spawned!
                 if (result.Success)
                 {
                     // Send response
@@ -165,7 +165,7 @@ public class ConnectionHandler(
         if (name.Length > 16)
             return "Character name must be at most 16 characters";
 
-        // TODO:  Regex für erlaubte Zeichen
+        // TODO: Regex for allowed characters
         // if (!Regex. IsMatch(name, "^[a-zA-Z]+$"))
         //     return "Character name can only contain letters";
 

@@ -67,12 +67,12 @@ public interface IPlayerSession
     // ════════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     Der aktuell aktive Charakter.  Null wenn keiner ausgewählt.
+    ///     The currently active character. Null if none selected.
     /// </summary>
     ICharacterEntity? Character { get; }
 
     /// <summary>
-    ///     Hat der Spieler einen aktiven Charakter?
+    ///     Does the player have an active character?
     /// </summary>
     bool HasCharacter => Character != null;
 
@@ -81,17 +81,17 @@ public interface IPlayerSession
     // ════════════════════════════════════════════════════════════════
 
     /// <summary>
-    ///     ID der Gruppe/Party (null wenn nicht in Gruppe).
+    ///     ID of the group/party (null if not in group).
     /// </summary>
     Guid? PartyId { get; set; }
 
     /// <summary>
-    ///     ID der Gilde (null wenn nicht in Gilde).
+    ///     ID of the guild (null if not in guild).
     /// </summary>
     Guid? GuildId { get; set; }
 
     /// <summary>
-    ///     ID des Raids (null wenn nicht in Raid).
+    ///     ID of the raid (null if not in raid).
     /// </summary>
     Guid? RaidId { get; set; }
 
@@ -174,12 +174,12 @@ public interface IPlayerSession
     T? Get<T>(string key);
 
     /// <summary>
-    ///     Prüft ob ein Wert existiert.
+    ///     Checks if a value exists.
     /// </summary>
     bool Has(string key);
 
     /// <summary>
-    ///     Entfernt einen Wert aus der Session.
+    ///     Removes a value from the session.
     /// </summary>
     void Remove(string key);
 }

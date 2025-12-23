@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages;
 public class LogoutRequest : INetworkMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public LogoutRequest()

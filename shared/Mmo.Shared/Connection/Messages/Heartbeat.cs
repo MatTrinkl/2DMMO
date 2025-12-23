@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages;
 public class Heartbeat : ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public Heartbeat()

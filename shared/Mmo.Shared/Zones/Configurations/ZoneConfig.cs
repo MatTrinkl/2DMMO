@@ -5,8 +5,8 @@ using Mmo.Shared.Zones.Enums;
 namespace Mmo.Shared.Zones.Configurations;
 
 /// <summary>
-///     Statische Zone-Definition.  Wird aus Config geladen.
-///     Ändert sich NICHT zur Laufzeit.
+///     Static zone definition. Loaded from config.
+///     Does NOT change at runtime.
 /// </summary>
 public class ZoneConfig
 {
@@ -14,16 +14,16 @@ public class ZoneConfig
     // IDENTITY
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Eindeutige Zone-ID.</summary>
+    /// <summary>Unique zone ID.</summary>
     public ushort ZoneId { get; set; }
 
-    /// <summary>Interner Name (für Code).</summary>
+    /// <summary>Internal name (for code).</summary>
     public string InternalName { get; set; } = "";
 
-    /// <summary>Anzeigename (für UI).</summary>
+    /// <summary>Display name (for UI).</summary>
     public string DisplayName { get; set; } = "";
 
-    /// <summary>Beschreibung. </summary>
+    /// <summary>Description.</summary>
     public string Description { get; set; } = "";
 
     // ═══════════════════════════════════════════════════════════════
@@ -45,7 +45,7 @@ public class ZoneConfig
     /// <summary>Max. Spieler (0 = unbegrenzt).</summary>
     public int MaxPlayers { get; set; } = 0;
 
-    /// <summary>Welche Fraktion "besitzt" die Zone? (null = neutral).</summary>
+    /// <summary>Which faction "owns" the zone? (null = neutral).</summary>
     public Faction? OwningFaction { get; set; }
 
     // ═══════════════════════════════════════════════════════════════

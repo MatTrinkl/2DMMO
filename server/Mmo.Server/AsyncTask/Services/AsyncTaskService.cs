@@ -5,6 +5,10 @@ using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.AsyncTask.Services;
 
+/// <summary>
+///     Service for executing asynchronous tasks with callbacks in the game loop.
+///     Ensures that callbacks run with fresh message context on the main game thread.
+/// </summary>
 public class AsyncTaskService(GameServer gameServer, ILog log) : IAsyncTaskService
 {
     public void Run<TResult>(
@@ -23,13 +27,13 @@ public class AsyncTaskService(GameServer gameServer, ILog log) : IAsyncTaskServi
             catch (Exception ex)
             {
                 log.Error(ex, "Async task failed for {ConnectionId}", connectionId);
-                return; // Kein Callback bei Fehler
+                return; // No callback on error
             }
 
-            // Queue Callback mit Result → wird im Game Loop ausgeführt
+            // Queue callback with result → will be executed in Game Loop
             gameServer.QueueCompletion(connectionId, ctx =>
             {
-                // ctx ist FRISCH vom GameServer erstellt!
+                // ctx is FRESH from GameServer created!
                 onComplete(ctx, result);
             });
         });

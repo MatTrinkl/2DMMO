@@ -10,6 +10,9 @@ using Mmo.Shared.Zones.Messages.Server_Client;
 
 namespace Mmo.Server.Zones.MessageHandler;
 
+/// <summary>
+///     Handler for zone-related messages (zone transfers, zone queries).
+/// </summary>
 public class ZoneHandler(IZoneService zoneService, ILog log) : BaseCategoryHandler(log)
 {
     public override MessageCategory Category => MessageCategory.Zone;

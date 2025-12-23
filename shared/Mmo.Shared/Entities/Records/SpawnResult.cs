@@ -5,16 +5,16 @@ namespace Mmo.Shared.Entities.Records;
 /// </summary>
 public record SpawnResult
 {
-    /// <summary>Ob das Spawning erfolgreich war. </summary>
+    /// <summary>Whether the spawning was successful.</summary>
     public bool Success { get; init; }
 
-    /// <summary>Die zugewiesene LocalId in der Zone (nur bei Erfolg).</summary>
+    /// <summary>The assigned LocalId in the zone (only on success).</summary>
     public ushort? LocalId { get; init; }
 
-    /// <summary>Die ZoneId wo die Entity gespawnt wurde (nur bei Erfolg).</summary>
+    /// <summary>The ZoneId where the entity was spawned (only on success).</summary>
     public ushort? ZoneId { get; init; }
 
-    /// <summary>Error-Code bei Fehlschlag. </summary>
+    /// <summary>Error code on failure.</summary>
     public string? Error { get; init; }
 
     // ─── Factory Methods ───

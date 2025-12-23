@@ -53,12 +53,12 @@ public class MockLog : ILog
 
         try
         {
-            // Versuche zuerst benannte Platzhalter zu ersetzen
-            // z.B. "{TickRate}" wird durch args[0] ersetzt, "{Tick}" durch args[1], etc.
+            // Try to replace named placeholders first
+            // e.g., "{TickRate}" is replaced with args[0], "{Tick}" with args[1], etc.
             string result = message;
             int argIndex = 0;
 
-            // Finde alle {Name} Platzhalter und ersetze sie der Reihe nach
+            // Find all {Name} placeholders and replace them in order
             int startIndex = 0;
             while (startIndex < result.Length && argIndex < args.Length)
             {
@@ -78,7 +78,7 @@ public class MockLog : ILog
                 // Extrahiere den Platzhalter (z.B. "TickRate" oder "0")
                 string placeholder = result.Substring(openBrace, closeBrace - openBrace + 1);
 
-                // Ersetze mit dem entsprechenden Argument
+                // Replace with the corresponding argument
                 string replacement = args[argIndex]?.ToString() ?? "null";
                 result = result.Remove(openBrace, closeBrace - openBrace + 1)
                     .Insert(openBrace, replacement);
@@ -91,7 +91,7 @@ public class MockLog : ILog
         }
         catch
         {
-            // Fallback:  Gib einfach die Message mit den Args als String zurück
+            // Fallback: Just return the message with args as string
             return $"{message} [{string.Join(", ", args)}]";
         }
     }

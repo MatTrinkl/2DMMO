@@ -14,7 +14,7 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 public class ZoneState : ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public ZoneState()

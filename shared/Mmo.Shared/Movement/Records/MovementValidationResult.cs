@@ -8,16 +8,16 @@ namespace Mmo.Shared.Movement.Records;
 /// </summary>
 public record MovementValidationResult
 {
-    /// <summary>Ob die Bewegung gültig ist.</summary>
+    /// <summary>Whether the movement is valid.</summary>
     public bool IsValid { get; init; }
 
-    /// <summary>Korrigierte Position (bei Cheat-Verdacht).</summary>
+    /// <summary>Corrected position (in case of cheat suspicion).</summary>
     public Position? CorrectedPosition { get; init; }
 
-    /// <summary>Art der Verletzung (für Logging/Banning).</summary>
+    /// <summary>Type of violation (for logging/banning).</summary>
     public MovementViolationType? ViolationType { get; init; }
 
-    /// <summary>Schwere der Verletzung (0. 0 - 1.0).</summary>
+    /// <summary>Severity of violation (0.0 - 1.0).</summary>
     public float? ViolationSeverity { get; init; }
 
     // ─── Factory Methods ───

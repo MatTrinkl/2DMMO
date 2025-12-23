@@ -13,7 +13,7 @@ public interface IPlayerInfo
     // IDENTITY
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Persistente Charakter-ID (aus Datenbank).</summary>
+    /// <summary>Persistent character ID (from database).</summary>
     Guid PersistentId { get; }
 
     /// <summary>Account-ID.</summary>
@@ -46,25 +46,25 @@ public interface IPlayerInfo
     // SOCIAL
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Party-ID (null wenn nicht in Party).</summary>
+    /// <summary>Party ID (null if not in party).</summary>
     Guid? PartyId { get; }
 
-    /// <summary>Guild-ID (null wenn nicht in Guild).</summary>
+    /// <summary>Guild ID (null if not in guild).</summary>
     Guid? GuildId { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Ist PvP-Flag aktiv?</summary>
+    /// <summary>Is PvP flag active?</summary>
     bool IsPvpFlagged { get; }
 
-    /// <summary>Ist der Spieler im Kampf?</summary>
+    /// <summary>Is the player in combat?</summary>
     bool IsInCombat { get; }
 
-    /// <summary>Ist der Spieler gemutet?</summary>
+    /// <summary>Is the player muted?</summary>
     bool IsMuted { get; }
 
-    /// <summary>Ist der Spieler AFK?</summary>
+    /// <summary>Is the player AFK?</summary>
     bool IsAfk { get; }
 }
