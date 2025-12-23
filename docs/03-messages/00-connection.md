@@ -60,7 +60,7 @@ Initiiert den Login-Prozess. Der Client sendet Credentials (Username/Password od
 |------|-----|--------------|---------|
 | Username | string | Account-Name (3-16 Zeichen) | Ja* |
 | Password | string | Passwort (Hash) | Ja* |
-| SessionToken | string | Wiederverbindungs-Token | Ja* |
+| ~~SessionToken~~ | ~~string~~ | ~~Wiederverbindungs-Token~~ | Wird durch 6 ReconnectRequest ersetzt |
 | ClientVersion | string | z.B. "0.1.0" | Ja |
 | HardwareId | string | Eindeutige Hardware-ID | Ja |
 
