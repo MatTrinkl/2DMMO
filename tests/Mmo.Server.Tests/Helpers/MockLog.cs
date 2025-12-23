@@ -78,7 +78,7 @@ public class MockLog : ILog
                 // Extrahiere den Platzhalter (z.B. "TickRate" oder "0")
                 string placeholder = result.Substring(openBrace, closeBrace - openBrace + 1);
 
-                // Ersetze mit dem entsprechenden Argument
+                // Replace with the corresponding argument
                 string replacement = args[argIndex]?.ToString() ?? "null";
                 result = result.Remove(openBrace, closeBrace - openBrace + 1)
                     .Insert(openBrace, replacement);
@@ -91,7 +91,7 @@ public class MockLog : ILog
         }
         catch
         {
-            // Fallback:  Gib einfach die Message mit den Args als String zurück
+            // Fallback: Just return the message with args as string
             return $"{message} [{string.Join(", ", args)}]";
         }
     }

@@ -2,7 +2,7 @@ using Mmo.Server.PlayerService;
 
 namespace Mmo.Server.Connections.Records;
 
-// Result-Record für den Task
+// Result record for the task
 public record LoginTaskResult(
     bool Success,
     ServerPlayerCharacter? Player = null,

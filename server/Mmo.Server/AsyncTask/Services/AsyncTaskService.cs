@@ -23,13 +23,13 @@ public class AsyncTaskService(GameServer gameServer, ILog log) : IAsyncTaskServi
             catch (Exception ex)
             {
                 log.Error(ex, "Async task failed for {ConnectionId}", connectionId);
-                return; // Kein Callback bei Fehler
+                return; // No callback on error
             }
 
-            // Queue Callback mit Result → wird im Game Loop ausgeführt
+            // Queue callback with result → will be executed in Game Loop
             gameServer.QueueCompletion(connectionId, ctx =>
             {
-                // ctx ist FRISCH vom GameServer erstellt!
+                // ctx is FRESH from GameServer created!
                 onComplete(ctx, result);
             });
         });

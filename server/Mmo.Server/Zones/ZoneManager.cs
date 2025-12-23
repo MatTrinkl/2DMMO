@@ -8,8 +8,8 @@ namespace Mmo.Server.Zones;
 
 public class ZoneManager(ushort defaultZoneId)
 {
-    // NUR ServerPlayerCharacter - für Connection-Mapping
-    // IEntity-Lookups gehen über IdRegistry!
+    // ONLY ServerPlayerCharacter - for Connection mapping
+    // IEntity lookups go through IdRegistry!
     private readonly ConcurrentDictionary<Guid, ServerPlayerCharacter> _playersByConnectionId = new();
     private readonly ConcurrentDictionary<ushort, Zone> _zones = new();
 
@@ -56,7 +56,7 @@ public class ZoneManager(ushort defaultZoneId)
         Zone? zone = GetZone(zoneId);
         if (zone == null) return [];
 
-        // Zone hat nur IDs, Entities kommen aus IdRegistry
+        // Zone only has IDs, entities come from IdRegistry
         return zone.Value.GetEntityIds()
             .Select(id => IdRegistry.Instance.TryGetEntity(id, out IEntity? e) ? e : null)
             .Where(e => e != null)!;
@@ -98,7 +98,7 @@ public class ZoneManager(ushort defaultZoneId)
 
 
     // ═══════════════════════════════════════════════════════════════
-    // INTERNAL - Nur für Services
+    // INTERNAL - Only for Services
     // ═══════════════════════════════════════════════════════════════
 
     internal void RegisterServerPlayer(ServerPlayerCharacter serverPlayer)

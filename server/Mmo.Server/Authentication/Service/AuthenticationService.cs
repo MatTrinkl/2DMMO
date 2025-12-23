@@ -19,19 +19,19 @@ public class AuthenticationService(ILog log) : IAuthenticationService
 
         await Task.Delay(1); // Simulate async DB call
 
-        // PROTOTYPE: Akzeptiere jeden Login
+        // PROTOTYPE: Accept any login
         log.Info("Authentication successful for user: {Username}", username);
 
         return new AuthResult(
             true,
-            Guid.NewGuid(), // TODO:  Echte Account-ID aus DB
+            Guid.NewGuid(), // TODO: Real Account-ID from DB
             username
         );
     }
 
     public async Task<AuthResult> ValidateSessionAsync(Guid sessionToken)
     {
-        // TODO: Session aus Redis/DB validieren
+        // TODO: Validate session from Redis/DB
         await Task.Delay(1);
 
         return new AuthResult(false, Error: "Session validation not implemented");
@@ -39,7 +39,7 @@ public class AuthenticationService(ILog log) : IAuthenticationService
 
     public async Task InvalidateSessionAsync(Guid sessionToken)
     {
-        // TODO: Session in Redis/DB invalidieren
+        // TODO: Invalidate session in Redis/DB
         await Task.Delay(1);
 
         log.Info("Session invalidated:  {SessionToken}", sessionToken);
@@ -57,11 +57,11 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         if (username.Length > 20)
             return "Username must be at most 20 characters";
 
-        // TODO: Regex für erlaubte Zeichen
+        // TODO: Regex for allowed characters
         // if (!Regex.IsMatch(request.Username, "^[a-zA-Z0-9_]+$"))
         //     return "Username can only contain letters, numbers, and underscores";
 
-        // TODO: Password-Validierung
+        // TODO: Password validation
         // if (string.IsNullOrWhiteSpace(request.Password))
         //     return "Password cannot be empty";
 

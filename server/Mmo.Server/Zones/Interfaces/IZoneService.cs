@@ -10,7 +10,7 @@ public interface IZoneService
     IEnumerable<ZoneInfo> GetAllZones();
     bool ZoneExists(ushort zoneId);
 
-    // Zone Transitions (mit Validierung!)
+    // Zone Transitions (with validation!)
     ZoneTransferResult RequestZoneTransferAsync(Guid playerId,
         ushort targetZoneId,
         Position? targetPosition = null);

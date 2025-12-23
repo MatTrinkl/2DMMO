@@ -1,16 +1,16 @@
 namespace Mmo.Server.Connections.Enums;
 
 /// <summary>
-///     Verbindungsstatus.
+///     Connection status.
 /// </summary>
 public enum ConnectionState
 {
-    /// <summary>Verbunden, aber nicht authentifiziert.</summary>
+    /// <summary>Connected, but not authenticated.</summary>
     Connected = 0,
 
-    /// <summary>Authentifiziert, wartet auf Character-Auswahl.</summary>
+    /// <summary>Authenticated, waiting for character selection.</summary>
     Authenticated = 1,
 
-    /// <summary>Im Spiel (Charakter ausgewählt und gespawnt).</summary>
+    /// <summary>In game (character selected and spawned).</summary>
     InGame = 2
 }

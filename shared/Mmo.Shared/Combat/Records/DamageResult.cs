@@ -4,14 +4,14 @@ using Mmo.Shared.Core.Records;
 namespace Mmo.Shared.Combat.Records;
 
 /// <summary>
-///     Ergebnis einer Schadensberechnung.
+///     Result of a damage calculation.
 /// </summary>
 public readonly record struct DamageResult(
-    int RawDamage, // Ursprünglicher Schaden
-    int MitigatedDamage, // Nach Armor/Resistances
-    int AbsorbedDamage, // Von Schilden absorbiert
-    int ActualDamage, // Tatsächlich erlittener Schaden
-    int Overkill, // Überschuss (bei Tod)
+    int RawDamage, // Original damage
+    int MitigatedDamage, // After Armor/Resistances
+    int AbsorbedDamage, // Absorbed by shields
+    int ActualDamage, // Actual damage taken
+    int Overkill, // Excess (on death)
     bool IsCritical,
     bool IsBlocked,
     bool IsDodged,
@@ -22,12 +22,12 @@ public readonly record struct DamageResult(
 );
 
 /// <summary>
-///     Ergebnis einer Heilung.
+///     Result of a heal.
 /// </summary>
 public readonly record struct HealResult(
-    int RawHeal, // Ursprüngliche Heilung
-    int ActualHeal, // Tatsächliche Heilung
-    int Overheal, // Überheilung
+    int RawHeal, // Original heal
+    int ActualHeal, // Actual heal
+    int Overheal, // Overheal
     bool IsCritical
 );
 

@@ -12,19 +12,19 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneTransferResponse)]
 public record ZoneTransferResponse : INetworkMessage
 {
-    /// <summary>Ob der Transfer erfolgreich war.</summary>
+    /// <summary>Whether the transfer was successful.</summary>
     [Key(1)]
     public required bool Success { get; init; }
 
-    /// <summary>Die neue Zone-ID (nur bei Erfolg).</summary>
+    /// <summary>The new zone ID (only on success).</summary>
     [Key(2)]
     public ushort? NewZoneId { get; init; }
 
-    /// <summary>Error-Code bei Fehlschlag.</summary>
+    /// <summary>Error code on failure.</summary>
     [Key(3)]
     public string? Error { get; init; }
 
-    /// <summary>Benutzerfreundliche Fehlermeldung. </summary>
+    /// <summary>User-friendly error message.</summary>
     [Key(4)]
     public string? ErrorMessage { get; init; }
 

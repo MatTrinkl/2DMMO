@@ -7,19 +7,19 @@ namespace Mmo.Shared.Movement.Records;
 /// </summary>
 public record TeleportResult
 {
-    /// <summary>Ob der Teleport erfolgreich war.</summary>
+    /// <summary>Whether the teleport was successful.</summary>
     public bool Success { get; init; }
 
-    /// <summary>Die finale Position nach dem Teleport.</summary>
+    /// <summary>The final position after the teleport.</summary>
     public Position? FinalPosition { get; init; }
 
-    /// <summary>Die Zone nach dem Teleport (bei Cross-Zone Teleport).</summary>
+    /// <summary>The zone after the teleport (in case of cross-zone teleport).</summary>
     public ushort? NewZoneId { get; init; }
 
-    /// <summary>Ob ein Zone-Wechsel stattfand.</summary>
+    /// <summary>Whether a zone change occurred.</summary>
     public bool ZoneChanged { get; init; }
 
-    /// <summary>Error-Code bei Fehlschlag.</summary>
+    /// <summary>Error code on failure.</summary>
     public string? Error { get; init; }
 
     // ─── Factory Methods ───

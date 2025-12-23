@@ -11,8 +11,8 @@ using Mmo.Shared.Entities.Structs;
 namespace Mmo.Shared.Combat.Entities;
 
 /// <summary>
-///     Abstrakte Basisklasse für alle Entities die kämpfen können.
-///     Implementiert die gemeinsame Combat-Logik.
+///     Abstract base class for all entities that can fight.
+///     Implements the shared combat logic.
 /// </summary>
 [MessagePackObject]
 public abstract class CombatEntity : ICombatEntity
@@ -182,7 +182,7 @@ public abstract class CombatEntity : ICombatEntity
                 damageType
             );
 
-        // Armor Mitigation (nur für Physical)
+        // Armor Mitigation (only for Physical)
         int mitigated = damageType == DamageType.Physical
             ? CalculateArmorMitigation(damage)
             : damage;
@@ -269,7 +269,7 @@ public abstract class CombatEntity : ICombatEntity
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // PROTECTED HELPERS (für Subklassen zum Überschreiben)
+    // PROTECTED HELPERS (for subclasses to override)
     // ═══════════════════════════════════════════════════════════════
 
     protected virtual int CalculateArmorMitigation(int rawDamage)

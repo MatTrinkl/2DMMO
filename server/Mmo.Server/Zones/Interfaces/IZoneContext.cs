@@ -5,8 +5,8 @@ using Mmo.Shared.Zones.Enums;
 namespace Mmo.Server.Zones.Interfaces;
 
 /// <summary>
-///     Runtime-Kontext einer Zone.  Nur auf dem Server.
-///     Enthält dynamischen Zustand der sich ständig ändert.
+///     Runtime context of a zone. Server-only.
+///     Contains dynamic state that constantly changes.
 /// </summary>
 public interface IZoneContext
 {
@@ -14,7 +14,7 @@ public interface IZoneContext
     // CONFIG (statisch - Referenz auf ZoneConfig)
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Statische Zone-Konfiguration.</summary>
+    /// <summary>Static zone configuration.</summary>
     ZoneConfig Config { get; }
 
     // ═══════════════════════════════════════════════════════════════
@@ -30,48 +30,48 @@ public interface IZoneContext
     /// <summary>PvP-Typ.</summary>
     PvpZoneType PvpType => Config.PvpType;
 
-    /// <summary>Ist Sanctuary?</summary>
+    /// <summary>Is Sanctuary?</summary>
     bool IsSanctuary => Config.IsSanctuary;
 
     // ═══════════════════════════════════════════════════════════════
     // RUNTIME STATE (dynamisch)
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Aktuelle Shard-ID.</summary>
+    /// <summary>Current shard ID.</summary>
     ushort ShardId { get; }
 
 
-    /// <summary>Aktuelles Wetter.</summary>
+    /// <summary>Current weather.</summary>
     WeatherType CurrentWeather { get; }
 
-    /// <summary>Aktuelle Tageszeit (0.0 - 24.0).</summary>
+    /// <summary>Current time of day (0.0 - 24.0).</summary>
     float TimeOfDay { get; }
 
-    /// <summary>Ist es Nacht?  (20: 00 - 06:00)</summary>
+    /// <summary>Is it night? (20:00 - 06:00)</summary>
     bool IsNight => TimeOfDay >= 20f || TimeOfDay < 6f;
 
-    /// <summary>Welche Fraktion kontrolliert die Zone aktuell?</summary>
+    /// <summary>Which faction currently controls the zone?</summary>
     Faction? ControllingFaction { get; }
 
-    /// <summary>Ist die Zone gerade gesperrt?  (Wartung, Event, etc. )</summary>
+    /// <summary>Is the zone currently locked? (Maintenance, Event, etc.)</summary>
     bool IsLocked { get; }
 
-    /// <summary>Grund für Sperre.</summary>
+    /// <summary>Reason for lock.</summary>
     string? LockReason { get; }
 
     // ═══════════════════════════════════════════════════════════════
     // INSTANZ-SPEZIFISCH (nur wenn IsInstance)
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Instanz-ID (nur bei Instanzen).</summary>
+    /// <summary>Instance ID (only for instances).</summary>
     Guid? InstanceId { get; }
 
-    /// <summary>Instanz-Besitzer (Gruppe/Raid-Leader).</summary>
+    /// <summary>Instance owner (Group/Raid Leader).</summary>
     Guid? InstanceOwnerId { get; }
 
-    /// <summary>Wann wurde die Instanz erstellt?</summary>
+    /// <summary>When was the instance created?</summary>
     DateTime? InstanceCreatedAt { get; }
 
-    /// <summary>Wann läuft die Instanz ab? </summary>
+    /// <summary>When does the instance expire?</summary>
     DateTime? InstanceExpiresAt { get; }
 }

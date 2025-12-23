@@ -13,7 +13,7 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 public class LeaveZone : INetworkMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public LeaveZone()

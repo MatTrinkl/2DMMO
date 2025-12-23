@@ -6,14 +6,14 @@ using Mmo.Shared.Messaging.Interfaces;
 namespace Mmo.Shared.System.Messages;
 
 /// <summary>
-///     Allgemeine Fehlermeldung vom Server an den Client.
+///     General error message from server to client.
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ErrorMessage)]
 public class ErrorMessage : INetworkMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public ErrorMessage()
@@ -23,10 +23,10 @@ public class ErrorMessage : INetworkMessage
     /// <summary>
     ///     Creates a new Ping Message. Client->Server
     /// </summary>
-    /// <param name="code"> Fehler-Code (maschinenlesbar). Z.B. "AUTH_FAILED", "INVALID_INPUT", "NOT_FOUND", "RATE_LIMITED".</param>
-    /// <param name="message">Benutzerfreundliche Fehlermeldung (lokalisierbar).</param>
-    /// <param name="details">Optionale zusätzliche Details (für Debugging).</param>
-    /// <param name="field">Optionaler Verweis auf das fehlerhafte Feld (für Formulare).</param>
+    /// <param name="code">Error code (machine-readable). E.g. "AUTH_FAILED", "INVALID_INPUT", "NOT_FOUND", "RATE_LIMITED".</param>
+    /// <param name="message">User-friendly error message (localizable).</param>
+    /// <param name="details">Optional additional details (for debugging).</param>
+    /// <param name="field">Optional reference to the erroneous field (for forms).</param>
     public ErrorMessage(string code, string message, string? details, string? field)
     {
         Code = code;
@@ -36,26 +36,26 @@ public class ErrorMessage : INetworkMessage
     }
 
     /// <summary>
-    ///     Fehler-Code (maschinenlesbar).
-    ///     Z.B. "AUTH_FAILED", "INVALID_INPUT", "NOT_FOUND", "RATE_LIMITED".
+    ///     Error code (machine-readable).
+    ///     E.g. "AUTH_FAILED", "INVALID_INPUT", "NOT_FOUND", "RATE_LIMITED".
     /// </summary>
     [Key(1)]
     public string Code { get; set; } = "";
 
     /// <summary>
-    ///     Benutzerfreundliche Fehlermeldung (lokalisierbar).
+    ///     User-friendly error message (localizable).
     /// </summary>
     [Key(2)]
     public string Message { get; set; } = "";
 
     /// <summary>
-    ///     Optionale zusätzliche Details (für Debugging).
+    ///     Optional additional details (for debugging).
     /// </summary>
     [Key(3)]
     public string? Details { get; set; }
 
     /// <summary>
-    ///     Optionaler Verweis auf das fehlerhafte Feld (für Formulare).
+    ///     Optional reference to the erroneous field (for forms).
     /// </summary>
     [Key(4)]
     public string? Field { get; set; }

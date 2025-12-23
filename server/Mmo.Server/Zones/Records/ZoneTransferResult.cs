@@ -7,16 +7,16 @@ namespace Mmo.Server.Zones.Records;
 /// </summary>
 public record ZoneTransferResult
 {
-    /// <summary>Ob der Transfer erfolgreich war. </summary>
+    /// <summary>Whether the transfer was successful.</summary>
     public bool Success { get; init; }
 
-    /// <summary>Die neue Zone-ID (nur bei Erfolg).</summary>
+    /// <summary>The new zone ID (only on success).</summary>
     public ushort? NewZoneId { get; init; }
 
-    /// <summary>Die Spawn-Position in der neuen Zone. </summary>
+    /// <summary>The spawn position in the new zone.</summary>
     public Position? SpawnPosition { get; init; }
 
-    /// <summary>Error-Code bei Fehlschlag.</summary>
+    /// <summary>Error code on failure.</summary>
     public string? Error { get; init; }
 
     // ─── Factory Methods ───

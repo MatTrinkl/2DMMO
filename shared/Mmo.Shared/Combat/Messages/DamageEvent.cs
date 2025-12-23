@@ -13,7 +13,7 @@ namespace Mmo.Shared.Combat.Messages;
 public class DamageEvent : ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used bei <see cref="MessagePackSerializer" />.
+    ///     The constructor used by <see cref="MessagePackSerializer" />.
     /// </summary>
     [SerializationConstructor]
     public DamageEvent()
