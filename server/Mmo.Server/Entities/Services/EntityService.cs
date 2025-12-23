@@ -8,6 +8,10 @@ using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Entities.Services;
 
+/// <summary>
+///     Service for managing and querying entities across zones.
+///     Provides spatial queries and entity lifecycle management.
+/// </summary>
 public class EntityService : IEntityService
 {
     private readonly ILog _log;

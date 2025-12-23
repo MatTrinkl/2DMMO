@@ -6,6 +6,10 @@ using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Zones;
 
+/// <summary>
+///     Manages zones and their associated entities and players.
+///     Maintains mappings between connections, players, and zones.
+/// </summary>
 public class ZoneManager(ushort defaultZoneId)
 {
     // ONLY ServerPlayerCharacter - for Connection mapping

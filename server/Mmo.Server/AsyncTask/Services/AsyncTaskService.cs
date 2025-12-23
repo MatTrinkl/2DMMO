@@ -5,6 +5,10 @@ using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.AsyncTask.Services;
 
+/// <summary>
+///     Service for executing asynchronous tasks with callbacks in the game loop.
+///     Ensures that callbacks run with fresh message context on the main game thread.
+/// </summary>
 public class AsyncTaskService(GameServer gameServer, ILog log) : IAsyncTaskService
 {
     public void Run<TResult>(

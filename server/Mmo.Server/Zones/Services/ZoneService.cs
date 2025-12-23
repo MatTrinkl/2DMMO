@@ -9,6 +9,9 @@ using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Zones.Services;
 
+/// <summary>
+///     Service for managing zone information, transitions, and population tracking.
+/// </summary>
 public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, ILog log)
     : IZoneService
 {
