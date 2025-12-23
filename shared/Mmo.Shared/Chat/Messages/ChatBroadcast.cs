@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Chat.Messages;
 ///     This Message is send to all clients after the server got a chat message.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.ChatBroadcast)]
 public class ChatBroadcast : INetworkMessage
 {
     /// <summary>

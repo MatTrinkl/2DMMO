@@ -1,10 +1,12 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Shared.System.Messages;
 
 [MessagePackObject]
+[NetworkMessage(MessageType.Pong)]
 public class Pong : ITimestampedMessage
 {
     /// <summary>

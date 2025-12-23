@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -10,6 +11,7 @@ namespace Mmo.Shared.Movement;
 ///     Uses PersistentId for stable entity identification across zone transfers.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.PositionBroadcast)]
 public class PositionBroadcast : ITimestampedMessage
 {
     /// <summary>

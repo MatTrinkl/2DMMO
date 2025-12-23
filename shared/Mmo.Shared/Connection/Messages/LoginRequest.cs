@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Connection.Messages;
 ///     This class sends a login request to the server.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.LoginRequest)]
 public class LoginRequest : INetworkMessage
 {
     /// <summary>

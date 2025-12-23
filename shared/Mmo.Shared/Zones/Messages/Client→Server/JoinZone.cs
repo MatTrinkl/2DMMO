@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -8,6 +9,7 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 ///     This class is sent when a player requests to join a zone. TODO: ZoneId.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.JoinZone)]
 public class JoinZone : INetworkMessage
 {
     /// <summary>

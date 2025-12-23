@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -9,6 +10,7 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 ///     This class updates the state of a zone. It's like a position update of all entities at ones.
 /// </summary>
 [MessagePackObject]
+[NetworkMessage(MessageType.ZoneState)]
 public class ZoneState : ITimestampedMessage
 {
     /// <summary>

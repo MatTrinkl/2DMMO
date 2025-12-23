@@ -1,10 +1,12 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Shared.Chat.Messages;
 
 [MessagePackObject]
+[NetworkMessage(MessageType.ChatWhisper)]
 public class ChatWhisper : INetworkMessage
 {
     /// <summary>

@@ -1,25 +1,44 @@
+using System.Reflection;
 using MessagePack;
-using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Combat.Messages;
-using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Exceptions;
 using Mmo.Shared.Messaging.Helper;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Movement;
-using Mmo.Shared.System.Messages;
-using Mmo.Shared.Zones.Messages.Client_Server;
-using Mmo.Shared.Zones.Messages.Server_Brodcast;
-using Mmo.Shared.Zones.Messages.Server_Client;
-using Messages_Ping = Mmo.Shared.System.Messages.Ping;
 
 namespace Mmo.Shared.Messaging.Serialization;
 
 /// <summary>
 ///     This class Serializes and deserializes a message based on its <see cref="MessageType" />.
+///     Uses an attribute-based registry system for automatic message type registration.
 /// </summary>
 public static class MessageSerializer
 {
+    /// <summary>
+    ///     Registry mapping MessageType to message class Type.
+    ///     O(1) lookup for message deserialization.
+    /// </summary>
+    private static readonly Dictionary<MessageType, Type> MessageRegistry = new();
+
+    /// <summary>
+    ///     Static constructor that automatically registers all message types with the [NetworkMessage] attribute.
+    /// </summary>
+    static MessageSerializer()
+    {
+        // Find all types in the assembly that have the NetworkMessageAttribute
+        var assembly = typeof(INetworkMessage).Assembly;
+        var messageTypes = assembly.GetTypes()
+            .Where(t => t.GetCustomAttribute<NetworkMessageAttribute>() != null)
+            .ToList();
+
+        // Register each message type
+        foreach (var messageType in messageTypes)
+        {
+            var attribute = messageType.GetCustomAttribute<NetworkMessageAttribute>()!;
+            MessageRegistry[attribute.Type] = messageType;
+        }
+    }
+
     /// <summary>
     ///     Serializes a message to bytes with type prefix
     ///     {MessageTye} needs to be Key(0).
@@ -27,41 +46,28 @@ public static class MessageSerializer
     public static byte[] Serialize<T>(T message) where T : INetworkMessage => MessagePackSerializer.Serialize(message);
 
     /// <summary>
-    ///     Deserializes a message based on its type
+    ///     Deserializes a message based on its type using the registered message types.
     /// </summary>
     public static INetworkMessage Deserialize(ReadOnlyMemory<byte> data)
     {
         MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
-        return header.Type switch
+        if (!MessageRegistry.TryGetValue(header.Type, out var messageType))
         {
-            MessageType.LoginRequest => MessagePackSerializer.Deserialize<LoginRequest>(data),
-            MessageType.LoginResponse => MessagePackSerializer.Deserialize<LoginResponse>(data),
-            MessageType.LogoutRequest => MessagePackSerializer.Deserialize<LogoutRequest>(data),
-            MessageType.Heartbeat => MessagePackSerializer.Deserialize<Heartbeat>(data),
-            MessageType.Disconnect => MessagePackSerializer.Deserialize<Disconnect>(data),
+            throw new UnknownMessageTypeException(header.Type);
+        }
 
-            MessageType.JoinZone => MessagePackSerializer.Deserialize<JoinZone>(data),
-            MessageType.LeaveZone => MessagePackSerializer.Deserialize<LeaveZone>(data),
-            MessageType.ZoneState => MessagePackSerializer.Deserialize<ZoneState>(data),
-            MessageType.PlayerJoinedZone => MessagePackSerializer.Deserialize<PlayerJoinedZone>(data),
-            MessageType.PlayerLeftZone => MessagePackSerializer.Deserialize<PlayerLeftZone>(data),
+        // Use reflection to call MessagePackSerializer.Deserialize<T>(data, null, default)
+        // where T is the registered message type
+        var deserializeMethod = typeof(MessagePackSerializer)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.Name == nameof(MessagePackSerializer.Deserialize))
+            .Where(m => m.IsGenericMethodDefinition)
+            .Where(m => m.GetParameters().Length == 3)
+            .Where(m => m.GetParameters()[0].ParameterType == typeof(ReadOnlyMemory<byte>))
+            .FirstOrDefault()!
+            .MakeGenericMethod(messageType);
 
-            MessageType.PositionUpdate => MessagePackSerializer.Deserialize<PositionUpdate>(data),
-            MessageType.PositionBroadcast => MessagePackSerializer.Deserialize<PositionBroadcast>(data),
-
-            MessageType.ActionRequest => MessagePackSerializer.Deserialize<ActionRequest>(data),
-            MessageType.ActionResult => MessagePackSerializer.Deserialize<ActionResult>(data),
-            MessageType.DamageEvent => MessagePackSerializer.Deserialize<DamageEvent>(data),
-            MessageType.DeathEvent => MessagePackSerializer.Deserialize<DeathEvent>(data),
-
-            MessageType.ChatMessage => MessagePackSerializer.Deserialize<ChatMessage>(data),
-            MessageType.ChatBroadcast => MessagePackSerializer.Deserialize<ChatBroadcast>(data),
-            MessageType.ChatWhisper => MessagePackSerializer.Deserialize<ChatWhisper>(data),
-
-            MessageType.Ping => MessagePackSerializer.Deserialize<Messages_Ping>(data),
-            MessageType.Pong => MessagePackSerializer.Deserialize<Pong>(data),
-            _ => throw new UnknownMessageTypeException(header.Type)
-        };
+        return (INetworkMessage)deserializeMethod.Invoke(null, new object?[] { data, null, default(CancellationToken) })!;
     }
 }
