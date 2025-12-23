@@ -270,16 +270,16 @@ var logoutRequest = new LogoutRequest
 
 ## Heartbeat (4)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server  
 **Frequenz:** ⚡ High-Frequency (alle 5 Sekunden)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Keep-Alive Message um Connection aktiv zu halten. Client sendet alle 5 Sekunden, Server antwortet sofort. Misst auch Latency.
+Keep-Alive Message um Connection aktiv zu halten. Client sendet alle 5 Sekunden Heartbeat an Server. Server antwortet mit `Pong` (901) Message oder dediziertem `HeartbeatAck`. Misst auch Latency.
 
 ### Im Scope ✅
-- Connection Keep-Alive
+- Connection Keep-Alive (Client → Server)
 - Latency Measurement
 - Packet Loss Detection
 
@@ -294,11 +294,13 @@ Keep-Alive Message um Connection aktiv zu halten. Client sendet alle 5 Sekunden,
 | SequenceNumber | uint | Aufsteigende Nummer | Ja |
 
 ### Erwartete Response
-- Server sendet `Heartbeat` (4) zurück mit gleichem Timestamp und SequenceNumber
+- Server sendet `Pong` (901) zurück mit Timestamp und SequenceNumber
+- Alternativ: Dediziertes `HeartbeatAck` (falls implementiert)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
+| `Pong` | 901 | Server-Response auf Heartbeat |
 | `Ping` | 900 | Für manuelle Latency-Tests |
 | `LatencyReport` | 902 | Aggregierte Latency-Statistiken |
 | `ConnectionQuality` | 904 | Quality-of-Service Metrics |
@@ -306,27 +308,20 @@ Keep-Alive Message um Connection aktiv zu halten. Client sendet alle 5 Sekunden,
 ### Beispiel Payload
 ```csharp
 // Client → Server
-var heartbeatRequest = new Heartbeat
+var heartbeat = new Heartbeat
 {
     Type = MessageType.Heartbeat,
     Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
     SequenceNumber = currentSequence++
-};
-
-// Server → Client (Echo)
-var heartbeatResponse = new Heartbeat
-{
-    Type = MessageType.Heartbeat,
-    Timestamp = receivedTimestamp, // Echo back
-    SequenceNumber = receivedSequence // Echo back
 };
 ```
 
 ### Notizen
 - **HEARTBEAT_INTERVAL**: 5 Sekunden (Client sendet)
 - **HEARTBEAT_TIMEOUT**: 15 Sekunden (3 fehlgeschlagene Heartbeats = Disconnect)
-- RTT (Round-Trip-Time) = `Current Time - Timestamp` (in Millisekunden)
+- RTT (Round-Trip-Time) = `Current Time - Pong.Timestamp` (in Millisekunden)
 - Fehlende Sequence Numbers zeigen Packet Loss
+- **Wichtig**: Dies ist KEINE bidirektionale Message mehr - Client sendet Heartbeat, Server antwortet mit Pong
 
 ---
 
@@ -1005,17 +1000,18 @@ Detaillierte Account-Informationen.
 
 ## EncryptionHandshake (19)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server  
 **Frequenz:** Einmalig  
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 3 Feature** - TLS-Encryption Handshake für sichere Verbindung.
+**Phase 3 Feature** - TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
 
 ### Notizen
 - Im Prototyp: Nicht implementiert (TCP ohne TLS)
 - Phase 3: TLS 1.3 für alle Verbindungen
+- Server antwortet mit separater `EncryptionHandshakeResponse` Message (nicht bidirektional)
 
 ---
 

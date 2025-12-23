@@ -117,7 +117,12 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
    }
    ```
 
-2. **Message-Klasse erstellen** mit `[NetworkMessage]` Attribut:
+2. **Korrekte Interface-Wahl** - **WICHTIG für Security**:
+   - **Client → Server** (Input, Requests): Verwende `IClientMessage` oder `ITimestampedClientMessage`
+   - **Server → Client** (Responses, State): Verwende `IServerMessage` oder `ITimestampedServerMessage`
+   - **NIE** bidirektional - jede Message hat exakt EINE Richtung
+
+3. **Message-Klasse erstellen** mit `[NetworkMessage]` Attribut:
    ```csharp
    using MessagePack;
    using Mmo.Shared.Messaging.Attributes;
@@ -128,7 +133,7 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
    
    [MessagePackObject]
    [NetworkMessage(MessageType.NewMessageType)]  // ← Auto-Registrierung
-   public class NewMessageType : INetworkMessage
+   public class NewMessageType : IClientMessage  // ← Korrekte Interface-Wahl!
    {
        [Key(0)]
        public MessageType Type => MessageType.NewMessageType;
@@ -141,14 +146,15 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
    }
    ```
 
-3. **Fertig!** Die Message wird beim Programmstart automatisch registriert.
+4. **Fertig!** Die Message wird beim Programmstart automatisch registriert.
 
 ### Wichtige Anforderungen
 
 ✅ **MUSS vorhanden sein:**
 - `[MessagePackObject]` Attribut auf der Klasse
 - `[NetworkMessage(MessageType.XXX)]` Attribut auf der Klasse
-- `INetworkMessage` Interface implementieren
+- **Korrektes Interface**: `IClientMessage` (Client→Server) ODER `IServerMessage` (Server→Client)
+- Für timestamped Messages: `ITimestampedClientMessage` oder `ITimestampedServerMessage`
 - `Type` Property mit `[Key(0)]` Attribut
 - Alle Properties mit aufsteigenden `[Key(n)]` Attributen
 
@@ -233,7 +239,7 @@ Jede Message folgt diesem Template:
 ```markdown
 ## MessageName (ID)
 
-**Richtung:** 📤 Client → Server | 📥 Server → Client | 📡 Broadcast | 🔄 Bidirektional
+**Richtung:** 📤 Client → Server | 📥 Server → Client | 📡 Broadcast
 **Frequenz:** Einmalig | Selten | Häufig | ⚡ High-Frequency
 **Authentifizierung:** 🔒 Ja | Nein
 **Spezielle Rechte:** 👑 [Welche] | Keine
@@ -264,6 +270,12 @@ Jede Message folgt diesem Template:
 var message = new MessageName { ... };
 ```
 ```
+
+**Hinweis zu Richtungen:**
+- **📤 Client → Server**: Client sendet Request/Input an Server (verwendet `IClientMessage`)
+- **📥 Server → Client**: Server sendet Response/State an Client (verwendet `IServerMessage`)
+- **📡 Broadcast**: Server sendet an mehrere Clients gleichzeitig (verwendet `IServerMessage`)
+- **🚫 KEINE bidirektionalen Messages** - jede Message hat exakt EINE Richtung!
 
 ---
 

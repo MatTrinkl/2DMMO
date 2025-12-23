@@ -204,7 +204,7 @@ public enum DisconnectReason : byte
     Banned = 12,                // Gebannt
     
     // Error Cases (20-29)
-    ProtocolError = 20,         // Ungültige Message
+    ProtocolError = 20,         // Ungültige Message (z.B. Client hat unerlaubten MessageType gesendet)
     AuthenticationFailed = 21,  // Login fehlgeschlagen
     DuplicateConnection = 22,   // Spieler bereits verbunden
     
@@ -270,6 +270,110 @@ public enum DisconnectReason : byte
 4. **Zone Join:** Client joint eine Zone, erhält ZoneState mit allen Entities
 5. **Game Loop:** Kontinuierlicher Austausch von Updates (25 Hz)
 6. **Disconnect:** Client trennt, Server räumt auf und informiert andere Spieler
+
+---
+
+## Server-Side Message Validation
+
+### Whitelist-Konzept
+
+Der Server verwendet eine **Whitelist** für erlaubte MessageTypes vom Client. Nur Messages mit `IClientMessage` Interface dürfen vom Client gesendet werden.
+
+```csharp
+// Beispiel: Whitelist-Validierung
+public class MessageValidator
+{
+    private static readonly HashSet<MessageType> ClientAllowedTypes = new()
+    {
+        // Connection Messages
+        MessageType.LoginRequest,
+        MessageType.LogoutRequest,
+        MessageType.Heartbeat,
+        MessageType.ReconnectRequest,
+        
+        // Zone Messages
+        MessageType.JoinZone,
+        MessageType.LeaveZone,
+        
+        // Movement Messages
+        MessageType.PositionUpdate,
+        MessageType.TeleportRequest,
+        
+        // ... weitere Client→Server Messages
+    };
+    
+    public static bool IsClientMessageAllowed(MessageType type)
+    {
+        return ClientAllowedTypes.Contains(type);
+    }
+    
+    public static ValidationResult ValidateIncomingMessage(INetworkMessage message)
+    {
+        // 1. Prüfe ob MessageType vom Client erlaubt ist
+        if (!IsClientMessageAllowed(message.Type))
+        {
+            return ValidationResult.Fail(
+                DisconnectReason.ProtocolError,
+                $"Client sent disallowed MessageType: {message.Type}"
+            );
+        }
+        
+        // 2. Prüfe ob Message IClientMessage implementiert
+        if (message is not IClientMessage)
+        {
+            return ValidationResult.Fail(
+                DisconnectReason.ProtocolError,
+                "Message must implement IClientMessage"
+            );
+        }
+        
+        return ValidationResult.Success();
+    }
+}
+```
+
+### Automatische Whitelist-Generierung
+
+Die Whitelist kann automatisch aus allen Types generiert werden, die `IClientMessage` implementieren:
+
+```csharp
+// Beim Server-Start: Scanne alle IClientMessage Types
+var clientMessageTypes = Assembly.GetAssembly(typeof(IClientMessage))
+    .GetTypes()
+    .Where(t => typeof(IClientMessage).IsAssignableFrom(t) && !t.IsInterface)
+    .Select(t => GetMessageType(t))  // Extract MessageType from [NetworkMessage] attribute
+    .ToHashSet();
+```
+
+### Validierungs-Pipeline
+
+```
+Client Message ──► Deserialize ──► Whitelist-Check ──► Interface-Check ──► Handler
+                        │                 │                   │
+                        │                 │                   │
+                        ▼                 ▼                   ▼
+                   Length Check    ClientAllowedTypes   IClientMessage?
+                   Type Valid           .Contains()
+                        │                 │                   │
+                        │                 │                   │
+                        └─────────────────┴───────────────────┘
+                                          │
+                                          ▼
+                                   ProtocolError = Disconnect
+```
+
+### Error Handling
+
+Wenn ein Client eine nicht-erlaubte Message sendet:
+
+1. **Log**: Security-Warning mit PlayerId, IP, MessageType
+2. **Disconnect**: Client wird mit `DisconnectReason.ProtocolError` getrennt
+3. **Metrics**: Zähler für Sicherheitsverstöße inkrementieren
+4. **Optional**: Bei wiederholten Verstößen → IP-Ban
+
+**Wichtig**: Server sendet **KEINE** Error-Response zum Client zurück. Der Client wird sofort getrennt, um weitere Angriffe zu verhindern.
+
+Weitere Details: [MESSAGE_SECURITY.md](MESSAGE_SECURITY.md) | [Sicherheit](SECURITY.md)
 
 ---
 

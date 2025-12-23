@@ -1696,16 +1696,18 @@ var appearanceChange = new AppearanceChangeMessage
 
 ## AppearancePreview (618)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server (Request) | 📥 Server → Client (Response)  
 **Frequenz:** Häufig (während Customization)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-Client/Server synchronisieren Appearance-Preview während Customization im Barbershop. Der Client sendet Preview-Changes, Server validiert, Client zeigt Preview ohne zu committen.
+Client sendet `AppearancePreviewRequest` an Server mit gewünschten Änderungen. Server validiert und sendet `AppearancePreviewResponse` zurück. Client zeigt Preview ohne zu committen.
 
 Dies erlaubt dem Spieler verschiedene Optionen auszuprobieren bevor er Gold ausgibt.
+
+**Wichtig**: Verwendet zwei separate Message-Typen - `AppearancePreviewRequest` (Client→Server) und `AppearancePreviewResponse` (Server→Client).
 
 ### Im Scope ✅
 - Preview-Modus aktivieren

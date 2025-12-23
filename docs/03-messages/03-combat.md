@@ -1217,14 +1217,16 @@ Absorption-Shield wurde vollständig aufgebraucht.
 
 ## Resurrection (331)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server (Request) | 📡 Broadcast (Event)  
 **Frequenz:** Selten  
 **Authentifizierung:** 🔒 Ja
 
 ### Beschreibung
 
-**Request (Client → Server)**: Spieler möchte respawnen oder akzeptiert Battle-Rez.  
-**Event (Server → All)**: Spieler wurde wiederbelebt.
+**Request (Client → Server)**: Spieler möchte respawnen oder akzeptiert Battle-Rez. Verwendet `ResurrectionRequest` Message.  
+**Event (Server → All)**: Spieler wurde wiederbelebt. Verwendet separate `ResurrectionEvent` Broadcast Message.
+
+**Wichtig**: Dies sind ZWEI separate Messages, nicht eine bidirektionale Message.
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |

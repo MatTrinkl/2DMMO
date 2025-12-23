@@ -320,13 +320,15 @@ var whisperDeliver = new ChatWhisperResponse
 
 ## ChatParty (404)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Party/Group-Chat. Alle Party-Members empfangen die Message. Nutzt Channel-System intern.
+Party/Group-Chat. Client sendet Message an Server, Server broadcastet an alle Party-Members. Nutzt Channel-System intern.
+
+**Wichtig**: Verwendet zwei separate Message-Typen - `ChatPartySend` (Client→Server) und `ChatPartyBroadcast` (Server→Clients).
 
 ### Im Scope ✅
 - Party-Chat für alle Members
@@ -347,13 +349,15 @@ Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="pa
 
 ## ChatGuild (405)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Guild-Chat für alle Guild-Members. Persistent Chat-Channel.
+Guild-Chat für alle Guild-Members. Client sendet Message an Server, Server broadcastet an alle Guild-Members. Persistent Chat-Channel.
+
+**Wichtig**: Verwendet zwei separate Message-Typen - `ChatGuildSend` (Client→Server) und `ChatGuildBroadcast` (Server→Clients).
 
 ### Im Scope ✅
 - Guild-weite Kommunikation
@@ -373,13 +377,15 @@ Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="gu
 
 ## ChatRaid (406)
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Raid-Chat für große Gruppen (>5 Spieler).
+**Phase 2 Feature** - Raid-Chat für große Gruppen (>5 Spieler). Client sendet Message an Server, Server broadcastet an alle Raid-Members.
+
+**Wichtig**: Verwendet zwei separate Message-Typen - `ChatRaidSend` (Client→Server) und `ChatRaidBroadcast` (Server→Clients).
 
 ### Payload
 Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="raid"
