@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.System.Enums;
@@ -6,6 +7,7 @@ using Mmo.Shared.System.Enums;
 namespace Mmo.Shared.System.Messages;
 
 [MessagePackObject]
+[NetworkMessage(MessageType.ServerAnnouncement)]
 public class ServerAnnouncement : ITimestampedMessage
 {
     /// <summary>
