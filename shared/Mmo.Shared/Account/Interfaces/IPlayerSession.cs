@@ -181,6 +181,5 @@ public interface IPlayerSession
     /// <summary>
     ///     Removes a value from the session.
     /// </summary>
-    /// </summary>
     void Remove(string key);
 }
