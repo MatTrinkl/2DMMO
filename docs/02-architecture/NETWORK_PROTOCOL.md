@@ -66,8 +66,9 @@ Jede Nachricht über TCP hat folgendes Format:
 **Implementierung:**
 
 ```csharp
-// Alle Messages haben Type bei Key(0)
+// Alle Messages benötigen [NetworkMessage] Attribute für Auto-Registration
 [MessagePackObject]
+[NetworkMessage(MessageType.LoginRequest)]  // ← WICHTIG: Registriert Type automatisch
 public class LoginRequest : INetworkMessage
 {
     [Key(0)]
@@ -80,15 +81,14 @@ public class LoginRequest : INetworkMessage
     public string Password { get; set; }
 }
 
-// Deserialisierung: Type wird automatisch erkannt
+// Deserialisierung: Type wird automatisch per Dictionary-Lookup erkannt
+// MessageSerializer scannt beim Start alle Types mit [NetworkMessage] Attribut
 MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(payload);
-INetworkMessage message = header.Type switch
-{
-    MessageType.LoginRequest => MessagePackSerializer.Deserialize<LoginRequest>(payload),
-    MessageType.PositionUpdate => MessagePackSerializer.Deserialize<PositionUpdate>(payload),
-    // ...
-};
+INetworkMessage message = MessageSerializer.Deserialize(payload);  // O(1) Lookup
 ```
+
+**Wichtig:** Neue Message-Types benötigen NUR das `[NetworkMessage]` Attribut. 
+Der `MessageSerializer` registriert sie automatisch beim Start.
 
 ---
 
@@ -139,7 +139,7 @@ Das Networking-System besteht aus mehreren Schlüssel-Komponenten, die zusammena
 | **GameServer** | ✅ Implementiert | Game Loop (25 Hz), Input/Update/Output Phasen | `server/Mmo.Server/GameLoop/GameServer.cs` |
 | **NetworkServer** | 🔄 Geplant | TCP-Listener, Connection-Management, Events | `server/Mmo.Server/Networking/NetworkServer.cs` |
 | **ClientConnection** | 🔄 Geplant | Pro-Client TCP-Handling, Read/Write, SendQueue | `server/Mmo.Server/Networking/ClientConnection.cs` |
-| **MessageSerializer** | ✅ Implementiert | MessagePack Serialization/Deserialization | `shared/Mmo.Shared/Serialization/MessageSerializer.cs` |
+| **MessageSerializer** | ✅ Implementiert | Attribute-basierte Message-Registrierung (Dictionary, O(1) Lookup) | `shared/Mmo.Shared/Serialization/MessageSerializer.cs` |
 | **ZoneManager** | ✅ Implementiert | Zone-State, Entity-Management | `server/Mmo.Server/Zones/ZoneManager.cs` |
 
 ### NetworkEvents (Geplant)

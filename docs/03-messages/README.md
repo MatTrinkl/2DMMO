@@ -100,6 +100,82 @@ Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
 
 ---
 
+## ➕ Neue Messages Hinzufügen
+
+### Automatische Registrierung
+
+Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes Auto-Registrierungs-System**. Neue Message-Types benötigen **KEINE** manuellen Änderungen am MessageSerializer mehr.
+
+### Schritt-für-Schritt Anleitung
+
+1. **Message-Type in Enum definieren** (`shared/Mmo.Shared/Messaging/Enums/MessageType.cs`):
+   ```csharp
+   public enum MessageType : byte
+   {
+       // ... existing types ...
+       NewMessageType = 123,  // Wähle freie ID in passender Kategorie
+   }
+   ```
+
+2. **Message-Klasse erstellen** mit `[NetworkMessage]` Attribut:
+   ```csharp
+   using MessagePack;
+   using Mmo.Shared.Messaging.Attributes;
+   using Mmo.Shared.Messaging.Enums;
+   using Mmo.Shared.Messaging.Interfaces;
+   
+   namespace Mmo.Shared.YourCategory.Messages;
+   
+   [MessagePackObject]
+   [NetworkMessage(MessageType.NewMessageType)]  // ← Auto-Registrierung
+   public class NewMessageType : INetworkMessage
+   {
+       [Key(0)]
+       public MessageType Type => MessageType.NewMessageType;
+       
+       [Key(1)]
+       public string SomeField { get; set; }
+       
+       [Key(2)]
+       public int AnotherField { get; set; }
+   }
+   ```
+
+3. **Fertig!** Die Message wird beim Programmstart automatisch registriert.
+
+### Wichtige Anforderungen
+
+✅ **MUSS vorhanden sein:**
+- `[MessagePackObject]` Attribut auf der Klasse
+- `[NetworkMessage(MessageType.XXX)]` Attribut auf der Klasse
+- `INetworkMessage` Interface implementieren
+- `Type` Property mit `[Key(0)]` Attribut
+- Alle Properties mit aufsteigenden `[Key(n)]` Attributen
+
+❌ **NICHT MEHR nötig:**
+- ~~MessageSerializer.Deserialize() erweitern~~
+- ~~Switch-Case Statement updaten~~
+- ~~Manuelle Registrierung~~
+
+### Performance
+
+- **O(1) Lookup** per Dictionary
+- **Compiled Expression Delegates** für Near-Native Performance
+- **Validation beim Start**: Duplikate und fehlende Attribute werden erkannt
+
+### Fehlerbehebung
+
+**Fehler: "Type XXX has [NetworkMessage] but does not implement INetworkMessage"**
+→ Füge `INetworkMessage` Interface hinzu
+
+**Fehler: "Following types implement INetworkMessage but are missing [NetworkMessage] attribute"**
+→ Füge `[NetworkMessage(MessageType.XXX)]` Attribut hinzu
+
+**Fehler: "Duplicate MessageType registration detected"**
+→ Zwei Klassen verwenden den gleichen MessageType - wähle eine andere ID
+
+---
+
 ## 🔍 Schnellsuche
 
 ### Nach Funktion
