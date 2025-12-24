@@ -286,6 +286,7 @@ var message = new MessageName { ... };
 - **[Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md)** - Message Processing
 - **[Sicherheit](../02-architecture/SECURITY.md)** - Input Validation für Messages
 - **[Game Loop](../02-architecture/GAME_LOOP.md)** - Wann Messages verarbeitet werden
+- **[Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)** - Broadcast-Messages bei Spieler-Disconnects
 
 ---
 

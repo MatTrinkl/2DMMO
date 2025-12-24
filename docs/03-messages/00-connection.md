@@ -263,8 +263,12 @@ var logoutRequest = new LogoutRequest
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
-- Andere Spieler sehen `PlayerLeftZone` Broadcast
+- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
+- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
+- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
+- **Phase 2:** Freunde sehen `FriendOffline` (2108)
 - SessionToken bleibt gültig für Reconnect
+- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
@@ -407,9 +411,15 @@ var banDisconnect = new Disconnect
 | `VERSION_MISMATCH` | false | Client muss updaten |
 
 ### Notizen
+- Server hat 5 Sekunden Zeit um State zu speichern
+- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
+- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
+- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
+- **Phase 2:** Freunde sehen `FriendOffline` (2108)
 - Client sollte Reconnect-Delay respektieren
 - Bei `CanReconnect=false`: SessionToken wird invalidiert
 - Nach Disconnect: Client zeigt Message im UI
+- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
