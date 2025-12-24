@@ -62,6 +62,89 @@ MessageType (ushort) ──► Category = Type / 100 ──► Handler[Category]
 
 ---
 
+## 🔒 Message Direction & Security
+
+### Interface-Hierarchie
+
+Alle Netzwerk-Nachrichten im 2DMMO folgen einer **strikten Richtungstrennung** aus Sicherheitsgründen. Es gibt **KEINE bidirektionalen Messages**.
+
+```
+INetworkMessage (Basis-Interface)
+├── IClientMessage : INetworkMessage         (Client → Server)
+│   └── ITimestampedClientMessage : IClientMessage, ITimestampedMessage
+└── IServerMessage : INetworkMessage         (Server → Client)
+    └── ITimestampedServerMessage : IServerMessage, ITimestampedMessage
+```
+
+**Wichtig:** `ITimestampedMessage` bleibt als Marker-Interface bestehen, wird aber **NUR** in Kombination mit `IClientMessage` oder `IServerMessage` verwendet.
+
+### Warum KEINE bidirektionalen Messages?
+
+Die strikte Richtungstrennung ist eine **kritische Sicherheitsmaßnahme**:
+
+1. **Server-Whitelist Validierung**: Server akzeptiert nur `IClientMessage` Types
+2. **Verhindert Message-Spoofing**: Client kann keine Server-Messages senden
+3. **Klare Verantwortlichkeiten**: Jede Message hat exakt eine Richtung
+4. **Einfachere Code-Reviews**: Richtung ist aus Interface ersichtlich
+
+### Korrekte Interface-Wahl
+
+**Client → Server (Input, Requests)**:
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.PositionUpdate)]
+public class PositionUpdate : ITimestampedClientMessage
+{
+    [Key(0)]
+    public MessageType Type => MessageType.PositionUpdate;
+    
+    [Key(1)]
+    public long Timestamp { get; set; }
+    
+    [Key(2)]
+    public float X { get; set; }
+    // ...
+}
+```
+
+**Server → Client (State Updates, Responses)**:
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.PositionBroadcast)]
+public class PositionBroadcast : ITimestampedServerMessage
+{
+    [Key(0)]
+    public MessageType Type => MessageType.PositionBroadcast;
+    
+    [Key(1)]
+    public long Timestamp { get; set; }
+    
+    [Key(2)]
+    public int PlayerId { get; set; }
+    // ...
+}
+```
+
+### Ping/Pong Pattern (NICHT bidirektional!)
+
+**Falsch** ❌: Eine bidirektionale "Ping" Message
+
+**Richtig** ✅: Zwei separate Messages:
+- `Ping` (900) → `ITimestampedClientMessage` (Client → Server)
+- `Pong` (901) → `ITimestampedServerMessage` (Server → Client)
+
+### Heartbeat Pattern
+
+**Falsch** ❌: Bidirektionale "Heartbeat" Message
+
+**Richtig** ✅: 
+- `Heartbeat` (4) → `IClientMessage` (Client → Server)
+- Server antwortet mit `Pong` (901) oder dediziertem `HeartbeatAck`
+
+Weitere Details zur Message-Security: [MESSAGE_SECURITY.md](MESSAGE_SECURITY.md)
+
+---
+
 ## 📊 Message Categories
 
 | Category | Range | Beschreibung | Phase |

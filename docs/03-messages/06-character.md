@@ -1694,77 +1694,132 @@ var appearanceChange = new AppearanceChangeMessage
 
 ---
 
-## AppearancePreview (618)
+## AppearancePreview (618) - Request
 
-**Richtung:** 🔄 Bidirektional  
+**Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig (während Customization)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-Client/Server synchronisieren Appearance-Preview während Customization im Barbershop. Der Client sendet Preview-Changes, Server validiert, Client zeigt Preview ohne zu committen.
-
-Dies erlaubt dem Spieler verschiedene Optionen auszuprobieren bevor er Gold ausgibt.
+Client sendet gewünschte Appearance-Änderungen als Preview an Server. Server validiert Optionen OHNE zu speichern oder Gold zu chargen. Dies erlaubt dem Spieler verschiedene Looks auszuprobieren bevor er bezahlt.
 
 ### Im Scope ✅
-- Preview-Modus aktivieren
-- Preview-Changes senden
-- Validation ohne Cost
-- Client-Side Rendering
+- Kostenlose Preview von Appearance-Optionen
+- Validation ohne Commitment
+- Mehrere Preview-Requests hintereinander
+- Real-time Customization
 
 ### Nicht im Scope ❌
 - Actual Change → verwende `AppearanceChange` (617)
 - Gold-Charge → nur bei final Confirm
+- Speichern → nur bei Confirm
 
-### Request/Response Payload
-
-**Preview Request (Client → Server):**
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| AppearanceOptions | Dictionary<string, int> | Preview-Options | Ja |
+| AppearanceOptions | Dictionary<string, int> | Key: Option-Name (z.B. "HairStyle"), Value: Option-ID | Ja |
 
-**Preview Validation (Server → Client):**
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Valid | bool | Options sind valid | Ja |
-| InvalidOptions | List<string> | Invalid Option-Names | Nein |
+### AppearanceOptions Keys
+```
+HairStyle: 0-50
+HairColor: 0-30
+FaceType: 0-20
+SkinColor: 0-20
+EyeColor: 0-15
+FacialHair: 0-30 (nur für bestimmte Races)
+Tattoo: 0-10 (optional)
+Piercings: 0-5 (optional)
+```
 
 ### Erwartete Response
-- **Bei Success:** Preview Validation
-- **Bei Fehler:** `ErrorMessage` mit invalid options
+- **Immer:** `AppearancePreview` Response (618) mit Validierungs-Result
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| `AppearanceChange` | 617 | Confirm Changes |
+| `AppearancePreview` Response | 618 | Server validiert Preview |
+| `AppearanceChange` | 617 | Finale Änderung committen |
+| `BarberOpen` | 1348 | Barbershop-Interface öffnen |
 
 ### Beispiel Payload
 ```csharp
-// Client → Server
-var preview = new AppearancePreviewMessage
+var previewRequest = new AppearancePreview
 {
     Type = MessageType.AppearancePreview,
     AppearanceOptions = new Dictionary<string, int>
     {
         { "HairStyle", 12 },
-        { "HairColor", 7 }
+        { "HairColor", 7 },
+        { "FacialHair", 3 }
     }
-};
-
-// Server → Client
-var validation = new AppearancePreviewValidationMessage
-{
-    Type = MessageType.AppearancePreview,
-    Valid = true
 };
 ```
 
 ### Notizen
-- **No Cost**: Preview ist kostenlos
-- **Validation**: Server validiert Options aber charged nicht
-- **UI**: Real-time 3D Preview
-- **Performance**: Throttle Preview-Updates (max 10/second)
+- **No Cost**: Preview ist immer kostenlos
+- **Throttling**: Max 10 Preview-Requests pro Sekunde (Client-Side)
+- **Barbershop**: Muss am Barbershop NPC sein um Preview zu verwenden
+- **Validation**: Server prüft ob Optionen für Race/Gender valid sind
+- **Performance**: Client rendert Preview lokal, Server nur Validation
+
+---
+
+## AppearancePreview (618) - Response
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig (während Customization)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Server validiert Preview-Request und sendet Validierungs-Result zurück. Bei ungültigen Optionen werden die invaliden Keys zurückgesendet.
+
+### Im Scope ✅
+- Validierungs-Status (valid/invalid)
+- Liste ungültiger Optionen
+- Grund für Invalidität (optional)
+
+### Nicht im Scope ❌
+- Actual Change → verwende `AppearanceChange` (617)
+- Cost-Information → wird bei Barbershop-Open gesendet
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Valid | bool | Alle Optionen sind valid? | Ja |
+| InvalidOptions | List<string> | Liste ungültiger Option-Keys (z.B. ["HairStyle", "FacialHair"]) | Nein |
+| InvalidReasons | Dictionary<string, string> | Key: Option-Name, Value: Fehler-Grund | Nein |
+
+### Beispiel Payload
+```csharp
+// Erfolgreiche Validation
+var previewValid = new AppearancePreview
+{
+    Type = MessageType.AppearancePreview,
+    Valid = true
+};
+
+// Fehlgeschlagene Validation
+var previewInvalid = new AppearancePreview
+{
+    Type = MessageType.AppearancePreview,
+    Valid = false,
+    InvalidOptions = new List<string> { "FacialHair" },
+    InvalidReasons = new Dictionary<string, string>
+    {
+        { "FacialHair", "Not available for female characters" }
+    }
+};
+```
+
+### Notizen
+- **Fast Response**: Server antwortet sofort (< 50ms)
+- **Client-Side Rendering**: Client zeigt Preview basierend auf Request, nicht Response
+- **Error-Highlighting**: Client highlightet invalide Optionen in UI basierend auf Response
+- **Retry**: Bei invalid Options kann Client neue Preview-Request senden
 
 ---
 
