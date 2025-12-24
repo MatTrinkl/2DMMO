@@ -1215,31 +1215,155 @@ Absorption-Shield wurde vollständig aufgebraucht.
 
 ---
 
-## Resurrection (331)
+## Resurrection (331) - Request
 
-**Richtung:** 📤 Client → Server (Request) | 📡 Broadcast (Event)  
+**Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-**Request (Client → Server)**: Spieler möchte respawnen oder akzeptiert Battle-Rez. Verwendet `ResurrectionRequest` Message.  
-**Event (Server → All)**: Spieler wurde wiederbelebt. Verwendet separate `ResurrectionEvent` Broadcast Message.
+Spieler möchte respawnen (an Graveyard) oder akzeptiert eine Battle-Resurrection von einem anderen Spieler. Server validiert Request und führt Resurrection durch.
 
-**Wichtig**: Dies sind ZWEI separate Messages, nicht eine bidirektionale Message.
+### Im Scope ✅
+- Graveyard-Respawn (nach Tod)
+- Battle-Rez akzeptieren (während Combat)
+- Spirit-Healer Resurrection
+
+### Nicht im Scope ❌
+- Selbst-Rez → nur bestimmte Klassen (Phase 2)
+- Auto-Rez → verwende `ResurrectionSickness` (4143)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| RezType | enum | GraveyardRespawn/AcceptBattleRez | Ja |
+| RezType | enum | GraveyardRespawn, AcceptBattleRez, SpiritHealer | Ja |
+| SourceId | int | ID des Rezzing-Spielers (nur bei AcceptBattleRez) | Nein |
+
+### RezType Enum
+```csharp
+public enum RezType : byte
+{
+    GraveyardRespawn = 0,  // Normale Respawn am Graveyard
+    AcceptBattleRez = 1,    // Battle-Rez akzeptieren
+    SpiritHealer = 2        // Beim Spirit Healer wiederbeleben (Resurrection Sickness)
+}
+```
+
+### Erwartete Response
+- **Bei Erfolg:** `Resurrection` Event (331) Broadcast an nahestehende Spieler
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `Resurrection` Event | 331 | Server broadcastet Rez |
+| `DeathNotification` | 4100 | Vorangegangen vor Rez |
+| `ResurrectionOffer` | 4130 | Spieler bietet Battle-Rez an |
+| `ResurrectionSickness` | 4143 | Debuff nach Spirit-Healer-Rez |
+
+### Beispiel Payload
+```csharp
+// Graveyard Respawn
+var graveyardRez = new Resurrection
+{
+    Type = MessageType.Resurrection,
+    RezType = RezType.GraveyardRespawn
+};
+
+// Battle-Rez akzeptieren
+var battleRez = new Resurrection
+{
+    Type = MessageType.Resurrection,
+    RezType = RezType.AcceptBattleRez,
+    SourceId = 98765  // Spieler der Battle-Rez castet
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `NOT_DEAD` | Spieler ist nicht tot | - |
+| `IN_COMBAT` | Kann nicht am Graveyard respawnen während Combat | Battle-Rez verwenden |
+| `REZ_EXPIRED` | Battle-Rez ist abgelaufen | Neuen Battle-Rez anfordern |
+| `INVALID_REZ_SOURCE` | Ungültige SourceId | - |
+
+### Notizen
+- **Graveyard-Respawn**: Teleportiert zum nächsten Graveyard, 50% HP/Mana
+- **Battle-Rez**: Während Combat, sofort, HP/Mana vom Caster abhängig
+- **Spirit-Healer**: Sofort, aber mit Resurrection Sickness (10 Minuten Debuff)
+- **Cooldown**: Battle-Rez hat Cooldown (variiert nach Klasse)
+
+---
+
+## Resurrection (331) - Event
+
+**Richtung:** 📡 Broadcast (Server → Nearby Players)  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Server broadcastet Resurrection-Event an alle Spieler in der Nähe. Zeigt an dass ein Spieler wiederbelebt wurde. Client spielt Resurrection-Animation und Sound.
+
+### Im Scope ✅
+- Resurrection-Notification an nahestehende Spieler
+- Resurrecter-Information (wer hat revived)
+- HP/Mana nach Resurrection
+- Animation-Trigger
+
+### Nicht im Scope ❌
+- Ressource-Update → verwende `ResourceUpdate` (604)
+- Combat-State-Update → verwende `CombatEnd` (311)
 
 ### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| TargetId | int | Wiederbelebte Entity | Ja |
-| SourceId | int | Resurrecter (0 = Graveyard) | Nein |
-| HealthPercent | float | HP nach Rez (z.B. 0.5 = 50%) | Ja |
-| ManaPercent | float | Mana nach Rez | Ja |
+| TargetId | int | Character-ID des Wiederbelebten | Ja |
+| SourceId | int | Character-ID des Resurrecter (0 = Graveyard/Spirit-Healer) | Ja |
+| RezType | enum | Typ der Resurrection | Ja |
+| HealthPercent | float | HP nach Rez (0.0-1.0, z.B. 0.5 = 50%) | Ja |
+| ManaPercent | float | Mana nach Rez (0.0-1.0) | Ja |
+| X | float | Position X (Respawn-Punkt) | Ja |
+| Y | float | Position Y | Ja |
+
+### Beispiel Payload
+```csharp
+// Graveyard Respawn
+var graveyardRezEvent = new Resurrection
+{
+    Type = MessageType.Resurrection,
+    TargetId = 12345,
+    SourceId = 0,  // Graveyard
+    RezType = RezType.GraveyardRespawn,
+    HealthPercent = 0.5f,  // 50% HP
+    ManaPercent = 0.5f,    // 50% Mana
+    X = 100.0f,
+    Y = 200.0f
+};
+
+// Battle-Rez
+var battleRezEvent = new Resurrection
+{
+    Type = MessageType.Resurrection,
+    TargetId = 12345,
+    SourceId = 98765,  // Priest der rezzt
+    RezType = RezType.AcceptBattleRez,
+    HealthPercent = 0.3f,  // 30% HP
+    ManaPercent = 0.2f,    // 20% Mana
+    X = 150.0f,
+    Y = 250.0f
+};
+```
+
+### Notizen
+- **Animation**: Client spielt Resurrection-Effekt an Position (X, Y)
+- **Sound**: Heiliger Sound-Effekt beim Rez
+- **Visual-Range**: Nur Spieler in Sichtweite erhalten Event
+- **Combat-State**: Resurrecteter Player ist nach Battle-Rez wieder in Combat
+- **Resurrection-Sickness**: Bei Spirit-Healer-Rez wird zusätzlich `DebuffApplied` (1504) gesendet
 
 ---
 

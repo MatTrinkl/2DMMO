@@ -318,80 +318,351 @@ var whisperDeliver = new ChatWhisperResponse
 
 ---
 
-## ChatParty (404)
+## ChatParty (404) - Request
 
-**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
+**Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** Keine (muss in Party sein)
 
 ### Beschreibung
-Party/Group-Chat. Client sendet Message an Server, Server broadcastet an alle Party-Members. Nutzt Channel-System intern.
-
-**Wichtig**: Verwendet zwei separate Message-Typen - `ChatPartySend` (Client→Server) und `ChatPartyBroadcast` (Server→Clients).
+Client sendet Party-Chat-Message. Server validiert Party-Membership und broadcastet an alle Party-Members.
 
 ### Im Scope ✅
 - Party-Chat für alle Members
-- Auto-Leave bei Party-Leave
+- Auto-Membership-Check
+- Rate-Limiting und Profanity-Filter
 
 ### Nicht im Scope ❌
 - Raid-Chat → verwende `ChatRaid` (406)
-- Custom-Channels → verwende `ChatMessage` (400) mit ChannelType="custom"
+- Whisper innerhalb Party → verwende `ChatWhisper` (402)
 
-### Payload
-Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="party"
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Message | string | Text-Message (max 500 Zeichen) | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** `ChatParty` Broadcast (404) an alle Party-Members
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `ChatParty` Broadcast | 404 | Server broadcastet an Party |
+| `ChatMessage` | 400 | Alternative mit ChannelType="party" |
+| `PartyUpdate` | 704 | Party-Membership-Info |
+
+### Beispiel Payload
+```csharp
+var partyChat = new ChatParty
+{
+    Type = MessageType.ChatParty,
+    Message = "Ready for boss pull!"
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `NOT_IN_PARTY` | Spieler ist nicht in einer Party | Party joinen |
+| `RATE_LIMITED` | Zu viele Messages | Warten |
+| `PROFANITY_DETECTED` | Profanity-Filter | Message anpassen |
+| `MESSAGE_TOO_LONG` | >500 Zeichen | Kürzen |
 
 ### Notizen
-- **Auto-Join**: Automatisch beim Party-Join
-- **Auto-Leave**: Automatisch beim Party-Leave oder Disband
+- **Auto-Join**: Automatisch beim Party-Join verfügbar
+- **Auto-Leave**: Channel wird bei Party-Leave automatisch verlassen
+- **Rate-Limit**: 30 Messages/Minute
+- **Alternative**: Kann auch via `ChatMessage` (400) mit ChannelType="party" gesendet werden
 
 ---
 
-## ChatGuild (405)
+## ChatParty (404) - Broadcast
 
-**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
+**Richtung:** 📡 Broadcast (Server → Party Members)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Guild-Chat für alle Guild-Members. Client sendet Message an Server, Server broadcastet an alle Guild-Members. Persistent Chat-Channel.
+Server broadcastet Party-Chat-Message an alle Members der Party. Enthält Sender-Info und Message-Text.
 
-**Wichtig**: Verwendet zwei separate Message-Typen - `ChatGuildSend` (Client→Server) und `ChatGuildBroadcast` (Server→Clients).
+### Im Scope ✅
+- Broadcast an alle Party-Members
+- Sender-Informationen (Name, Level, Klasse)
+- Gefilterte Message
+- Timestamp
+
+### Nicht im Scope ❌
+- Delivery-Confirmation → keine Read-Receipts
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SenderId | long | Character-ID des Senders | Ja |
+| SenderName | string | Character-Name | Ja |
+| SenderLevel | int | Level (für UI-Anzeige) | Ja |
+| SenderClass | int | Klassen-ID | Ja |
+| Message | string | Text-Message (gefiltert) | Ja |
+| Timestamp | long | Server Unix Timestamp | Ja |
+
+### Beispiel Payload
+```csharp
+var partyBcast = new ChatParty
+{
+    Type = MessageType.ChatParty,
+    SenderId = 98765,
+    SenderName = "Aragorn",
+    SenderLevel = 10,
+    SenderClass = 2, // Warrior
+    Message = "Ready for boss pull!",
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+```
+
+### Notizen
+- **UI-Formatting**: Spezielle Farbe für Party-Chat (z.B. Blau)
+- **History**: Client speichert letzte 100 Party-Messages
+- **Offline-Members**: Erhalten Message nicht (kein Queueing)
+
+---
+
+## ChatGuild (405) - Request
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine (muss in Guild sein)
+
+### Beschreibung
+Client sendet Guild-Chat-Message. Server validiert Guild-Membership und Permissions, dann broadcastet an alle Online-Guild-Members.
 
 ### Im Scope ✅
 - Guild-weite Kommunikation
-- Ranks können Chat-Permissions haben
+- Permissions-Check (Guild-Ranks können Chat deaktiviert haben)
+- Rate-Limiting und Profanity-Filter
+- Persistent Channel (bleibt auch bei Logout aktiv)
 
 ### Nicht im Scope ❌
-- Officer-Chat → Phase 2 Feature
+- Officer-Chat → Phase 2 Feature (separater Channel)
+- Guild-Announcements → verwende `GuildMOTD` (808)
 
-### Payload
-Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="guild"
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Message | string | Text-Message (max 500 Zeichen) | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** `ChatGuild` Broadcast (405) an alle Online-Guild-Members
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `ChatGuild` Broadcast | 405 | Server broadcastet an Guild |
+| `ChatMessage` | 400 | Alternative mit ChannelType="guild" |
+| `GuildUpdate` | 804 | Guild-Membership-Info |
+| `GuildMOTD` | 808 | Guild Message-of-the-Day |
+
+### Beispiel Payload
+```csharp
+var guildChat = new ChatGuild
+{
+    Type = MessageType.ChatGuild,
+    Message = "Anyone wants to join raid tonight at 20:00?"
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `NOT_IN_GUILD` | Spieler ist nicht in einer Guild | Guild joinen |
+| `NO_GUILD_CHAT_PERMISSION` | Rank hat keine Chat-Permission | Permission vom GM anfordern |
+| `RATE_LIMITED` | Zu viele Messages | Warten |
+| `PROFANITY_DETECTED` | Profanity-Filter | Message anpassen |
+| `MESSAGE_TOO_LONG` | >500 Zeichen | Kürzen |
+| `GUILD_CHAT_MUTED` | Von Officer gemuted | Auf Unmute warten |
 
 ### Notizen
 - **Permissions**: Guild-Ranks können "Use Guild Chat" Permission haben
 - **History**: Server speichert letzte 100 Messages (Phase 2)
+- **Auto-Join**: Automatisch bei Guild-Membership
+- **Rate-Limit**: 30 Messages/Minute
+- **Alternative**: Kann auch via `ChatMessage` (400) mit ChannelType="guild" gesendet werden
 
 ---
 
-## ChatRaid (406)
+## ChatGuild (405) - Broadcast
 
-**Richtung:** 📤 Client → Server (Send) | 📡 Broadcast (Receive)  
+**Richtung:** 📡 Broadcast (Server → Guild Members)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Raid-Chat für große Gruppen (>5 Spieler). Client sendet Message an Server, Server broadcastet an alle Raid-Members.
+Server broadcastet Guild-Chat-Message an alle Online-Members der Guild. Enthält Sender-Info, Rank und Message-Text.
 
-**Wichtig**: Verwendet zwei separate Message-Typen - `ChatRaidSend` (Client→Server) und `ChatRaidBroadcast` (Server→Clients).
+### Im Scope ✅
+- Broadcast an alle Online-Guild-Members
+- Sender-Informationen (Name, Level, Klasse, Rank)
+- Gefilterte Message
+- Timestamp
 
-### Payload
-Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="raid"
+### Nicht im Scope ❌
+- Offline-Message-Queue → Phase 2 Feature
+- Officer-Chat → Phase 2 (separater Channel)
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SenderId | long | Character-ID des Senders | Ja |
+| SenderName | string | Character-Name | Ja |
+| SenderLevel | int | Level (für UI-Anzeige) | Ja |
+| SenderClass | int | Klassen-ID | Ja |
+| SenderGuildRank | int | Guild-Rank (0=GM, 1=Officer, etc.) | Ja |
+| Message | string | Text-Message (gefiltert) | Ja |
+| Timestamp | long | Server Unix Timestamp | Ja |
+
+### Beispiel Payload
+```csharp
+var guildBcast = new ChatGuild
+{
+    Type = MessageType.ChatGuild,
+    SenderId = 98765,
+    SenderName = "Aragorn",
+    SenderLevel = 10,
+    SenderClass = 2, // Warrior
+    SenderGuildRank = 1, // Officer
+    Message = "Anyone wants to join raid tonight at 20:00?",
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **UI-Formatting**: Spezielle Farbe für Guild-Chat (z.B. Grün)
+- **Rank-Display**: Client zeigt Rank-Badge neben Name
+- **History**: Client speichert letzte 100 Guild-Messages
+- **Offline-Members**: Erhalten Message nicht in Phase 1 (Phase 2: Message-Queue)
+- **Cross-Zone**: Funktioniert Zone-übergreifend (über Redis Pub/Sub)
+
+---
+
+## ChatRaid (406) - Request
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine (muss in Raid sein)
+
+### Beschreibung
+**Phase 2 Feature** - Client sendet Raid-Chat-Message. Server validiert Raid-Membership und broadcastet an alle Raid-Members. Für große Gruppen (>5 Spieler).
+
+### Im Scope ✅
+- Raid-weite Kommunikation (bis 40 Spieler)
+- Multiple Raid-Groups
+- Rate-Limiting und Profanity-Filter
+
+### Nicht im Scope ❌
+- Party-Chat → verwende `ChatParty` (404) für kleine Gruppen
+- Raid-Warning (Leader-Only) → Phase 2 Feature
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Message | string | Text-Message (max 500 Zeichen) | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** `ChatRaid` Broadcast (406) an alle Raid-Members
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `ChatRaid` Broadcast | 406 | Server broadcastet an Raid |
+| `ChatMessage` | 400 | Alternative mit ChannelType="raid" |
+| `RaidConvert` | 2430 | Party zu Raid konvertieren |
+
+### Beispiel Payload
+```csharp
+var raidChat = new ChatRaid
+{
+    Type = MessageType.ChatRaid,
+    Message = "Group 2, prepare for next boss pull!"
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `NOT_IN_RAID` | Spieler ist nicht in einem Raid | Raid joinen oder erstellen |
+| `RATE_LIMITED` | Zu viele Messages | Warten |
+| `PROFANITY_DETECTED` | Profanity-Filter | Message anpassen |
+| `MESSAGE_TOO_LONG` | >500 Zeichen | Kürzen |
+
+### Notizen
+- **Phase 2**: Nicht im Prototyp verfügbar
+- **Auto-Join**: Automatisch bei Raid-Join verfügbar
+- **Auto-Leave**: Channel wird bei Raid-Leave automatisch verlassen
+- **Rate-Limit**: 30 Messages/Minute
+- **Raid-Size**: Bis zu 40 Spieler (8 Gruppen à 5 Spieler)
+- **Alternative**: Kann auch via `ChatMessage` (400) mit ChannelType="raid" gesendet werden
+
+---
+
+## ChatRaid (406) - Broadcast
+
+**Richtung:** 📡 Broadcast (Server → Raid Members)  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Server broadcastet Raid-Chat-Message an alle Members des Raids. Enthält Sender-Info, Group-Nummer und Message-Text.
+
+### Im Scope ✅
+- Broadcast an alle Raid-Members (bis 40 Spieler)
+- Sender-Informationen (Name, Level, Klasse, Group)
+- Gefilterte Message
+- Timestamp
+
+### Nicht im Scope ❌
+- Raid-Warning → Phase 2 (Leader-Only Broadcast)
+- Group-Specific Chat → verwende Party-Chat
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SenderId | long | Character-ID des Senders | Ja |
+| SenderName | string | Character-Name | Ja |
+| SenderLevel | int | Level (für UI-Anzeige) | Ja |
+| SenderClass | int | Klassen-ID | Ja |
+| SenderGroupNumber | int | Raid-Group-Nummer (1-8) | Ja |
+| Message | string | Text-Message (gefiltert) | Ja |
+| Timestamp | long | Server Unix Timestamp | Ja |
+
+### Beispiel Payload
+```csharp
+var raidBcast = new ChatRaid
+{
+    Type = MessageType.ChatRaid,
+    SenderId = 98765,
+    SenderName = "Aragorn",
+    SenderLevel = 10,
+    SenderClass = 2, // Warrior
+    SenderGroupNumber = 2,
+    Message = "Group 2, prepare for next boss pull!",
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+```
+
+### Notizen
+- **Phase 2**: Nicht im Prototyp verfügbar
+- **UI-Formatting**: Spezielle Farbe für Raid-Chat (z.B. Orange)
+- **Group-Display**: Client zeigt Group-Nummer in Klammern, z.B. "[G2] Aragorn: ..."
+- **History**: Client speichert letzte 100 Raid-Messages
+- **Offline-Members**: Erhalten Message nicht (kein Queueing)
+- **Performance**: Optimiert für 40 Spieler (broadcast via Raid-Server)
 
 ---
 
