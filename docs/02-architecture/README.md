@@ -2,8 +2,8 @@
 
 ## 2DMMO – Technische Architektur
 
-**Version:** 1.3.0  
-**Letzte Aktualisierung:** 2025-12-22  
+**Version:** 1.4.0  
+**Letzte Aktualisierung:** 2025-12-23  
 **Status:** Finalisiert für Prototyp-Phase
 
 ---
@@ -26,8 +26,9 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 8 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
 | 9 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
 | 10 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
-| 11 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 12 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 11 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
+| 12 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 13 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
 
 ---
 
@@ -122,6 +123,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 1.4.0 | 2025-12-23 | Hinzugefügt: Rate-Limiting Dokumentation |
 | 1.3.0 | 2025-12-22 | Hinzugefügt: Handler/Service-Pattern Dokumentation |
 | 1.2.0 | 2025-12-09 | Hinzugefügt: ID-System Dokumentation |
 | 1.1.0 | 2025-12-02 | Refactoring: Aufteilung in Unterseiten |
