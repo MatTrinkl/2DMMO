@@ -2,9 +2,9 @@
 
 ## 2DMMO – Technische Architektur
 
-**Version:** 1.4.0  
-**Letzte Aktualisierung:** 2025-12-23  
-**Status:** Finalisiert für Prototyp-Phase
+**Version:** 2.0.0  
+**Letzte Aktualisierung:** 2025-12-25  
+**Status:** Finalisiert für Prototyp-Phase + S2S-Planung
 
 ---
 
@@ -29,6 +29,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 11 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
 | 12 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
 | 13 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 14 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
 
 ---
 
@@ -123,6 +124,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 2.0.0 | 2025-12-25 | Hinzugefügt: Server-zu-Server Kommunikation & Load-Balancing Dokumentation |
 | 1.4.0 | 2025-12-23 | Hinzugefügt: Rate-Limiting Dokumentation |
 | 1.3.0 | 2025-12-22 | Hinzugefügt: Handler/Service-Pattern Dokumentation |
 | 1.2.0 | 2025-12-09 | Hinzugefügt: ID-System Dokumentation |

@@ -543,12 +543,22 @@ var errorResponse = new ReconnectResponse
 
 ---
 
-## SessionValidate (8)
+## SessionValidate (8) - ⚠️ DEPRECATED
 
 **Richtung:** 🔀 Server ↔ Server (Internal)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja (Server-to-Server)  
-**Spezielle Rechte:** 👑 Server
+**Spezielle Rechte:** 👑 Server  
+**Status:** ⚠️ **DEPRECATED** - Ersetzt durch `S2S_SessionValidate (5000)`
+
+### Deprecation Notice
+
+Diese Message ist **veraltet** und wird durch das neue **Server-zu-Server (S2S) Message-System** ersetzt.
+
+**Migration:**
+- **Alt:** `SessionValidate (8)` im Connection-Range (0-99)
+- **Neu:** `S2S_SessionValidate (5000)` im S2S-Range (5000-5999)
+- **Siehe:** [SERVER_TO_SERVER.md](../../02-architecture/SERVER_TO_SERVER.md#51-s2s_sessionvalidate-5000)
 
 ### Beschreibung
 Interne Message zwischen Gateway Server und Zone Server zur Validierung von SessionTokens. Client sendet diese Message NICHT.
@@ -572,6 +582,8 @@ Interne Message zwischen Gateway Server und Zone Server zur Validierung von Sess
 - **NUR FÜR SERVER-TO-SERVER KOMMUNIKATION**
 - Client sollte diese Message niemals senden oder empfangen
 - Implementiert über Redis Pub/Sub
+- **Für neue Implementierungen verwende `S2S_SessionValidate (5000)`**
+- **Backward-Compatibility**: Wird noch unterstützt, aber neue Systeme sollten S2S-Messages verwenden
 
 ---
 
