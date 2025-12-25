@@ -25,6 +25,14 @@
 - [PartyLootMode (720)](#partylootmode-720)
 - [PartyReadyCheck (730)](#partyreadycheck-730)
 - [PartyReadyCheckResponse (731)](#partyreadycheckresponse-731)
+- [PartyInviteResponse (740)](#partyinviteresponse-740)
+- [PartyAcceptResponse (741)](#partyacceptresponse-741)
+- [PartyLeaveResponse (742)](#partyleaveresponse-742)
+- [PartyKickResponse (743)](#partykickresponse-743)
+- [PartyPromoteResponse (744)](#partypromoteresponse-744)
+- [PartyDisbandResponse (745)](#partydisbandresponse-745)
+- [PartyLootModeResponse (746)](#partylootmoderesponse-746)
+- [PartyReadyCheckStartResponse (747)](#partyreadycheckstartresponse-747)
 
 ---
 
@@ -78,8 +86,10 @@ Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party 
 | TargetName | string | Einzuladender Spieler-Name | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Server sendet `PartyInviteReceived` (701) an Target
-- **Bei Fehler:** `ErrorMessage` (910)
+- `PartyInviteResponse` (740)
+
+### Folge-Messages bei Erfolg
+- `PartyInviteReceived` (701) an Target-Spieler
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -226,8 +236,10 @@ Client akzeptiert Party-Invite. Server validiert ob Invite noch gültig, Party n
 | InviterId | long | Inviter Character-ID | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyJoin` (704) Broadcast an alle Party-Members (inkl. Self)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `PartyAcceptResponse` (741)
+
+### Folge-Messages bei Erfolg
+- `PartyJoin` (704) Broadcast an alle Party-Members (inkl. Self)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -380,8 +392,11 @@ Client verlässt Party freiwillig. Server broadcastet Leave-Event an verbleibend
 Keine zusätzlichen Felder (nur MessageType)
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyLeaveNotification` Broadcast an verbleibende Members
-- **Bei Leader-Leave:** `PartyPromote` (707) für neuen Leader
+- `PartyLeaveResponse` (742)
+
+### Folge-Messages bei Erfolg
+- `PartyLeaveNotification` Broadcast an verbleibende Members
+- `PartyPromote` (707) falls Leader leaved (neuer Leader wird gewählt)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -451,8 +466,10 @@ Party-Leader kicked Member aus der Party. Server validiert Leader-Status und fü
 | Reason | string | Optional Kick-Grund | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyKickNotification` an alle Members (inkl. Kicked Player)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `PartyKickResponse` (743)
+
+### Folge-Messages bei Erfolg
+- `PartyKickNotification` an alle Members (inkl. Kicked Player)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -506,8 +523,10 @@ Party-Leader übergibt Leadership an anderen Member. Server validiert und führt
 | PlayerId | long | Neuer Leader | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyPromoteNotification` an alle Members
-- **Bei Fehler:** `ErrorMessage` (910)
+- `PartyPromoteResponse` (744)
+
+### Folge-Messages bei Erfolg
+- `PartyPromoteNotification` an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -551,7 +570,10 @@ Party-Leader löst Party komplett auf. Alle Members werden gekickt.
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyDisbandNotification` an alle Members
+- `PartyDisbandResponse` (745)
+
+### Folge-Messages bei Erfolg
+- `PartyDisbandNotification` an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -712,7 +734,10 @@ var memberOffline = new PartyMemberOffline
 | MasterLooterId | long | Master-Looter (nur bei mode=master) | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyLootModeChanged` Broadcast
+- `PartyLootModeResponse` (746)
+
+### Folge-Messages bei Erfolg
+- `PartyLootModeChanged` Broadcast an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -763,7 +788,10 @@ Party-Leader startet Ready-Check. Alle Members müssen "Ready" klicken.
 | Question | string | Optional Question (z.B. "Ready for boss?") | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `PartyReadyCheckStart` Broadcast an alle Members
+- `PartyReadyCheckStartResponse` (747)
+
+### Folge-Messages bei Erfolg
+- `PartyReadyCheckStart` Broadcast an alle Members
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -821,6 +849,213 @@ var readyResponse = new PartyReadyCheckResponse
 
 ---
 
+## PartyInviteResponse (740)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyInvite Request. Bestätigt erfolgreiche Einladungs-Versendung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Invite versendet? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetName | string | Eingeladener Spieler | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `PLAYER_NOT_FOUND` | Target nicht online |
+| `ALREADY_IN_PARTY` | Target ist bereits in Party |
+| `PARTY_FULL` | Party ist voll (5/5) |
+| `PLAYER_BLOCKED_YOU` | Target hat Inviter blockiert |
+| `PLAYER_DECLINED_INVITES` | Target hat Invites deaktiviert |
+| `INVITE_ALREADY_PENDING` | Invite bereits gesendet |
+| `NOT_PARTY_LEADER` | Nur Leader darf inviten |
+
+---
+
+## PartyAcceptResponse (741)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyAccept Request. Bestätigt erfolgreichen Party-Beitritt oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Join erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| PartySize | int | Aktuelle Party-Größe | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INVITE_EXPIRED` | Invite ist abgelaufen (60s Timeout) |
+| `PARTY_FULL` | Party wurde voll während Accept |
+| `INVITE_CANCELLED` | Inviter hat Invite zurückgezogen |
+
+---
+
+## PartyLeaveResponse (742)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyLeave Request. Bestätigt erfolgreichen Party-Austritt.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Leave erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+---
+
+## PartyKickResponse (743)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyKick Request. Bestätigt erfolgreichen Kick oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Kick erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| KickedPlayerName | string | Name des gekickten Spielers | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_PARTY_LEADER` | Nur Leader darf kicken |
+| `PLAYER_NOT_IN_PARTY` | Target nicht in Party |
+| `CANNOT_KICK_SELF` | Leader kann sich nicht selbst kicken (use Leave) |
+
+---
+
+## PartyPromoteResponse (744)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyPromote Request. Bestätigt erfolgreiche Leader-Übergabe oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Promote erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| NewLeaderName | string | Name des neuen Leaders | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_PARTY_LEADER` | Nur Leader darf promoten |
+| `PLAYER_NOT_IN_PARTY` | Target nicht in Party |
+
+---
+
+## PartyDisbandResponse (745)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyDisband Request. Bestätigt erfolgreiche Party-Auflösung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Disband erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_PARTY_LEADER` | Nur Leader darf disband |
+
+---
+
+## PartyLootModeResponse (746)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf PartyLootMode Request. Bestätigt erfolgreiche Loot-Mode-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| LootMode | string | Neuer Loot-Mode | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_PARTY_LEADER` | Nur Leader darf ändern |
+| `INVALID_LOOT_MODE` | Ungültiger Mode |
+| `PLAYER_NOT_IN_PARTY` | Master-Looter nicht in Party |
+
+---
+
+## PartyReadyCheckStartResponse (747)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf PartyReadyCheck Request. Bestätigt erfolgreichen Ready-Check-Start oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Start erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ReadyCheckId | uint | ID des Ready-Checks | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_PARTY_LEADER` | Nur Leader kann starten |
+| `READY_CHECK_ACTIVE` | Ein Ready-Check läuft bereits |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Chat (04)**: Party-Chat → `ChatParty` (404)
@@ -831,7 +1066,7 @@ var readyResponse = new PartyReadyCheckResponse
 ---
 
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (14/14 Messages)
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (22/22 Messages)
 
 [← Zurück zur Übersicht](README.md)
