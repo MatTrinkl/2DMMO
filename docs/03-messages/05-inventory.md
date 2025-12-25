@@ -23,6 +23,14 @@
 - [ItemLock (509)](#itemlock-509)
 - [BagExpand (510)](#bagexpand-510)
 - [InventoryFullNotification (511)](#inventoryfullnotification-511)
+- [ItemMoveResponse (520)](#itemmoveresponse-520)
+- [ItemSplitResponse (521)](#itemsplitresponse-521)
+- [ItemUseResponse (522)](#itemuseresponse-522)
+- [ItemDeleteResponse (523)](#itemdeleteresponse-523)
+- [ItemStackResponse (524)](#itemstackresponse-524)
+- [ItemSortResponse (525)](#itemsortresponse-525)
+- [ItemLockResponse (526)](#itemlockresponse-526)
+- [BagExpandResponse (527)](#bagexpandresponse-527)
 
 ---
 
@@ -368,8 +376,10 @@ Client möchte Item zwischen Slots verschieben (Drag&Drop). Server validiert ob 
 | AutoStack | bool | Auto-Merge wenn Target gleicher Type | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemMoveSuccess` Event (Server-defined) oder implizit durch `ItemRemove` + `ItemAdd`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ItemMoveResponse` (520)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) + `ItemAdd` (501) für Position-Update
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -472,8 +482,11 @@ Client möchte einen Stack in zwei Stacks aufteilen. Wird verwendet um z.B. 20 P
 | Quantity | int | Zu bewegende Anzahl | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemRemove` (502) für Source + `ItemAdd` (501) für Target
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ItemSplitResponse` (521)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) für Source-Stack
+- `ItemAdd` (501) für neuen Split-Stack
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -538,8 +551,11 @@ Client möchte Item verwenden (Potion, Food, Scroll, Quest-Item). Server validie
 | TargetId | int | Target-Entity (0=self) | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemRemove` (502) + Effect-Message (z.B. `HealEvent` 304)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ItemUseResponse` (522)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) falls Item consumed
+- Effect-Message (z.B. `HealEvent` 304)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -640,8 +656,10 @@ Client löscht Item permanent. Verwendet für Greyitems oder ungewollte Items. S
 | Confirmation | bool | Bestätigung (für wichtige Items) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemRemove` (502)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ItemDeleteResponse` (523)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) für gelöschtes Item
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -696,8 +714,10 @@ var itemDelete = new ItemDelete
 Keine zusätzlichen Felder (nur MessageType)
 
 ### Erwartete Response
-- **Bei Erfolg:** Mehrere `ItemRemove` (502) + `ItemAdd` (501) Messages
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ItemStackResponse` (524)
+
+### Folge-Messages bei Erfolg
+- Mehrere `ItemRemove` (502) + `ItemAdd` (501) für Stack-Merge
 
 ### Beispiel Payload
 ```csharp
@@ -734,7 +754,10 @@ var itemStack = new ItemStack
 | BagId | byte | Bag-ID (-1=alle) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Mehrere `ItemMove` Notifications
+- `ItemSortResponse` (525)
+
+### Folge-Messages bei Erfolg
+- Mehrere `ItemMove` Notifications für sortierte Items
 
 ### Beispiel Payload
 ```csharp
@@ -773,7 +796,10 @@ Client locked/unlocked Item. Gelocked Items können nicht versehentlich gelösch
 | Locked | bool | true=lock, false=unlock | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemLockChanged` Event
+- `ItemLockResponse` (526)
+
+### Folge-Messages bei Erfolg
+- `ItemLockChanged` Event
 
 ### Beispiel Payload
 ```csharp
@@ -819,8 +845,10 @@ Client erweitert Backpack-Größe oder equipped größeren Bag. Backpack kann vo
 | NewSize | byte | Neue Größe (nur bei type=backpack) | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `BagExpandSuccess` + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `BagExpandResponse` (527)
+
+### Folge-Messages bei Erfolg
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -896,6 +924,209 @@ var inventoryFull = new InventoryFullNotification
 
 ---
 
+## ItemMoveResponse (520)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemMove Request. Bestätigt erfolgreiche Item-Bewegung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Move erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `SLOT_OCCUPIED` | Ziel-Slot bereits belegt |
+| `ITEM_LOCKED` | Item ist gelockt |
+| `INVALID_SLOT` | Ungültiger Slot |
+
+---
+
+## ItemSplitResponse (521)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemSplit Request. Bestätigt erfolgreichen Stack-Split oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Split erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INVALID_AMOUNT` | Amount > Stack-Size oder < 1 |
+| `NOT_STACKABLE` | Item ist nicht stackable |
+| `SLOT_OCCUPIED` | Ziel-Slot belegt |
+
+---
+
+## ItemUseResponse (522)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemUse Request. Bestätigt erfolgreiche Item-Nutzung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Use erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Verwendetes Item | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ON_COOLDOWN` | Item auf Cooldown |
+| `INSUFFICIENT_LEVEL` | Level zu niedrig |
+| `IN_COMBAT` | Nicht im Kampf nutzbar |
+| `WRONG_CLASS` | Falsche Klasse |
+
+---
+
+## ItemDeleteResponse (523)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemDelete Request. Bestätigt erfolgreiche Item-Löschung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Delete erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ITEM_LOCKED` | Item ist gelockt |
+| `ITEM_NOT_FOUND` | Item nicht gefunden |
+
+---
+
+## ItemStackResponse (524)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemStack Request. Bestätigt erfolgreiches Stack-Merge oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Stack erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_STACKABLE` | Items nicht stackable |
+| `DIFFERENT_ITEMS` | Unterschiedliche Items |
+
+---
+
+## ItemSortResponse (525)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemSort Request. Bestätigt erfolgreiche Sortierung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Sort erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+---
+
+## ItemLockResponse (526)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ItemLock Request. Bestätigt erfolgreiche Lock-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Lock-Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| IsLocked | bool | Neuer Lock-Status | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ITEM_NOT_FOUND` | Item nicht gefunden |
+
+---
+
+## BagExpandResponse (527)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf BagExpand Request. Bestätigt erfolgreiche Bag-Erweiterung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Expansion erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| BagSlot | int | Erweiterte Bag | Bei Erfolg |
+| NewSlotCount | int | Neue Slot-Anzahl | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `MAX_SLOTS_REACHED` | Maximum bereits erreicht |
+| `INVALID_BAG` | Ungültiger Bag-Slot |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Equipment (39)**: Equipped Items → `EquipItem` (3901), `UnequipItem` (3902)
@@ -907,7 +1138,7 @@ var inventoryFull = new InventoryFullNotification
 ---
 
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (12/12 Messages)
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (20/20 Messages)
 
 [← Zurück zur Übersicht](README.md)
