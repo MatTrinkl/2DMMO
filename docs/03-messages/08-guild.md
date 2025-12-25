@@ -28,6 +28,18 @@
 - [GuildBankDeposit (830)](#guildbankdeposit-830)
 - [GuildBankWithdraw (831)](#guildbankwithdraw-831)
 - [GuildBankLog (832)](#guildbanklog-832)
+- [GuildCreateResponse (840)](#guildcreateresponse-840)
+- [GuildInviteResponse (841)](#guildinviteresponse-841)
+- [GuildLeaveResponse (842)](#guildleaveresponse-842)
+- [GuildKickResponse (843)](#guildkickresponse-843)
+- [GuildDisbandResponse (844)](#guilddisbandresponse-844)
+- [GuildPromoteResponse (845)](#guildpromoteresponse-845)
+- [GuildDemoteResponse (846)](#guilddemoteresponse-846)
+- [GuildRankEditResponse (847)](#guildrankeditresponse-847)
+- [GuildMOTDResponse (848)](#guildmotdresponse-848)
+- [GuildMessageResponse (849)](#guildmessageresponse-849)
+- [GuildBankDepositResponse (850)](#guildbankdepositresponse-850)
+- [GuildBankWithdrawResponse (851)](#guildbankwithdrawresponse-851)
 
 ---
 
@@ -88,8 +100,11 @@ Im Prototyp wird die Guild sofort erstellt. In Phase 2 ist ein Charter-System ge
 | Tag | string | Guild-Tag (2-4 Zeichen, uppercase) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildCreateSuccess` + `GuildJoin` (803) + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildCreateResponse` (840)
+
+### Folge-Messages bei Erfolg
+- `GuildJoin` (803) Auto-Join des Creators
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -186,8 +201,10 @@ Guild-Member mit Invite-Permission sendet Guild-Einladung an Spieler. Target erh
 | TargetName | string | Einzuladender Spieler-Name | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Server sendet `GuildInviteReceived` (802) an Target
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildInviteResponse` (841)
+
+### Folge-Messages bei Erfolg
+- `GuildInviteReceived` (802) an Target-Spieler
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -344,8 +361,10 @@ Member verlässt Guild freiwillig. GM kann Guild nur via `GuildDisband` (806) ve
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildLeaveNotification` Broadcast
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildLeaveResponse` (842)
+
+### Folge-Messages bei Erfolg
+- `GuildLeaveNotification` Broadcast an verbleibende Members
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -401,8 +420,10 @@ Member mit Remove-Permission kicked anderen Member. Kann nur Members mit niedrig
 | Reason | string | Optional Kick-Grund | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildKickNotification` an alle Members
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildKickResponse` (843)
+
+### Folge-Messages bei Erfolg
+- `GuildKickNotification` an alle Members (inkl. Kicked Player)
 
 ### Beispiel Payload
 ```csharp
@@ -451,7 +472,10 @@ Guild Master löst Guild komplett auf. Alle Members werden entfernt, Guild-Bank-
 | Confirmation | string | Muss Guild-Name sein | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildDisbandNotification` an alle Members
+- `GuildDisbandResponse` (844)
+
+### Folge-Messages bei Erfolg
+- `GuildDisbandNotification` an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -499,8 +523,10 @@ Member mit Promote-Permission erhöht Rank eines Members. Kann nur zu niedrigere
 | NewRank | byte | Neuer Rank (0-9) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildPromoteNotification` an alle Members
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildPromoteResponse` (845)
+
+### Folge-Messages bei Erfolg
+- `GuildPromoteNotification` an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -558,8 +584,10 @@ Member mit Demote-Permission verringert Rank eines Members. Kann nur Members mit
 | NewRank | byte | Neuer Rank (0-9) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildDemoteNotification` an alle Members
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildDemoteResponse` (846)
+
+### Folge-Messages bei Erfolg
+- `GuildDemoteNotification` an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -619,7 +647,10 @@ GM editiert Rank-Konfiguration (Name, Permissions). Permissions bestimmen was Me
 - ... etc.
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildRankEditSuccess` + Broadcast an alle Members
+- `GuildRankEditResponse` (847)
+
+### Folge-Messages bei Erfolg
+- Broadcast an alle Members mit neuen Rank-Permissions
 
 ### Beispiel Payload
 ```csharp
@@ -667,7 +698,10 @@ Member mit Edit-Guild-Info-Permission setzt Message-of-the-Day. Wird allen Membe
 | MOTD | string | Message-of-the-Day (max 256) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GuildMOTDUpdate` Broadcast an alle Members
+- `GuildMOTDResponse` (848)
+
+### Folge-Messages bei Erfolg
+- `GuildMOTDUpdate` Broadcast an alle Members
 
 ### Beispiel Payload
 ```csharp
@@ -825,7 +859,10 @@ Guild-Chat-Message. Alternative zu `ChatGuild` (405). Server broadcastet an alle
 | Message | string | Text-Message (max 500) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Broadcast an alle Online-Guild-Members
+- `GuildMessageResponse` (849)
+
+### Folge-Messages bei Erfolg
+- Broadcast an alle Online-Guild-Members
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -867,8 +904,11 @@ Member deposited Item in Guild-Bank. Erfordert Permission für spezifischen Bank
 | Quantity | int | Anzahl (für Stacks) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemRemove` (502) + `GuildBankUpdate`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildBankDepositResponse` (850)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) aus Player-Inventory
+- `GuildBankUpdate` mit aktualisierten Bank-Daten
 
 ### Beispiel Payload
 ```csharp
@@ -925,8 +965,11 @@ Member withdraws Item aus Guild-Bank. Erfordert Withdraw-Permission für Tab.
 | Quantity | int | Anzahl | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemAdd` (501) + `GuildBankUpdate`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `GuildBankWithdrawResponse` (851)
+
+### Folge-Messages bei Erfolg
+- `ItemAdd` (501) zu Player-Inventory
+- `GuildBankUpdate` mit aktualisierten Bank-Daten
 
 ### Beispiel Payload
 ```csharp
@@ -1018,6 +1061,335 @@ var bankLog = new GuildBankLog
 
 ---
 
+## GuildCreateResponse (840)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildCreate Request. Bestätigt erfolgreiche Guild-Erstellung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erstellung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| GuildId | long | ID der neuen Guild | Bei Erfolg |
+| GuildName | string | Guild-Name | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NAME_TAKEN` | Guild-Name bereits vergeben |
+| `TAG_TAKEN` | Guild-Tag bereits vergeben |
+| `INSUFFICIENT_GOLD` | Nicht genug Gold (100 Gold benötigt) |
+| `ALREADY_IN_GUILD` | Spieler ist bereits in Guild |
+| `INVALID_NAME` | Name verstößt gegen Regeln |
+| `INVALID_TAG` | Tag nicht 2-4 Zeichen oder ungültig |
+
+---
+
+## GuildInviteResponse (841)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildInvite Request. Bestätigt erfolgreiche Einladungs-Versendung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Invite versendet? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetName | string | Eingeladener Spieler | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `PLAYER_NOT_FOUND` | Target nicht online |
+| `ALREADY_IN_GUILD` | Target ist bereits in Guild |
+| `GUILD_FULL` | Guild ist voll (100/100) |
+| `NO_PERMISSION` | Keine Invite-Permission |
+| `PLAYER_BLOCKED_YOU` | Target hat Inviter blockiert |
+| `INVITE_ALREADY_PENDING` | Invite bereits gesendet |
+
+---
+
+## GuildLeaveResponse (842)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildLeave Request. Bestätigt erfolgreichen Guild-Austritt oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Leave erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `IS_GUILD_MASTER` | GM muss Guild erst übergeben oder disband |
+
+---
+
+## GuildKickResponse (843)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildKick Request. Bestätigt erfolgreichen Kick oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Kick erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| KickedPlayerName | string | Name des gekickten Spielers | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine Kick-Permission |
+| `PLAYER_NOT_IN_GUILD` | Target nicht in Guild |
+| `CANNOT_KICK_GM` | Guild Master kann nicht gekickt werden |
+| `INSUFFICIENT_RANK` | Kann höhere Ranks nicht kicken |
+
+---
+
+## GuildDisbandResponse (844)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildDisband Request. Bestätigt erfolgreiche Guild-Auflösung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Disband erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_GUILD_MASTER` | Nur GM darf disband |
+
+---
+
+## GuildPromoteResponse (845)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildPromote Request. Bestätigt erfolgreiche Beförderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Promote erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| PlayerName | string | Beförderter Spieler | Bei Erfolg |
+| NewRank | int | Neuer Rank | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine Promote-Permission |
+| `PLAYER_NOT_IN_GUILD` | Target nicht in Guild |
+| `ALREADY_MAX_RANK` | Target bereits Rank 0 |
+| `INSUFFICIENT_RANK` | Kann nicht über eigenen Rank promoten |
+
+---
+
+## GuildDemoteResponse (846)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildDemote Request. Bestätigt erfolgreiche Degradierung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Demote erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| PlayerName | string | Degradierter Spieler | Bei Erfolg |
+| NewRank | int | Neuer Rank | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine Demote-Permission |
+| `PLAYER_NOT_IN_GUILD` | Target nicht in Guild |
+| `ALREADY_MIN_RANK` | Target bereits Rank 9 |
+| `CANNOT_DEMOTE_GM` | Guild Master kann nicht demoted werden |
+
+---
+
+## GuildRankEditResponse (847)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildRankEdit Request. Bestätigt erfolgreiche Rank-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| RankId | int | Geänderter Rank | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Nur GM darf Ranks editieren |
+| `INVALID_RANK` | Rank 0 (GM) kann nicht editiert werden |
+
+---
+
+## GuildMOTDResponse (848)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildMOTD Request. Bestätigt erfolgreiche MOTD-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine MOTD-Permission |
+| `MESSAGE_TOO_LONG` | MOTD >500 Zeichen |
+
+---
+
+## GuildMessageResponse (849)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildMessage Request. Bestätigt erfolgreiche Message-Übermittlung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Message übermittelt? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_IN_GUILD` | Nicht in Guild |
+| `RATE_LIMITED` | Zu viele Messages |
+
+---
+
+## GuildBankDepositResponse (850)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildBankDeposit Request. Bestätigt erfolgreiche Einzahlung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Deposit erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TabIndex | int | Bank-Tab | Bei Erfolg |
+| SlotIndex | int | Slot im Tab | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine Bank-Deposit-Permission für Tab |
+| `TAB_FULL` | Bank-Tab ist voll |
+| `ITEM_NOT_FOUND` | Item nicht in Inventory |
+| `ITEM_SOULBOUND` | Soulbound-Items können nicht deposited werden |
+
+---
+
+## GuildBankWithdrawResponse (851)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf GuildBankWithdraw Request. Bestätigt erfolgreiche Abhebung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Withdraw erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TabIndex | int | Bank-Tab | Bei Erfolg |
+| SlotIndex | int | Slot im Tab | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Keine Bank-Withdraw-Permission für Tab |
+| `INVENTORY_FULL` | Player-Inventory ist voll |
+| `ITEM_NOT_FOUND` | Item nicht in Bank |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Chat (04)**: Guild-Chat → `ChatGuild` (405)
@@ -1028,7 +1400,7 @@ var bankLog = new GuildBankLog
 ---
 
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (17/17 Messages)
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (29/29 Messages)
 
 [← Zurück zur Übersicht](README.md)
