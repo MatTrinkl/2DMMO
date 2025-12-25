@@ -47,6 +47,8 @@ Das Movement-System basiert auf **Client-Side Prediction** mit **Server-Authorit
 - [PullEvent (217)](#pullevent-217)
 - [RootEvent (218)](#rootevent-218)
 - [StunMovement (219)](#stunmovement-219)
+- [TeleportResponse (220)](#teleportresponse-220)
+- [JumpResponse (221)](#jumpresponse-221)
 
 ---
 
@@ -324,8 +326,12 @@ Client bittet um Teleport zu einer Position (Hearthstone, Portal, Spell, Fast-Tr
 | SourceObjectId | int | Portal/NPC-ID falls relevant | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TeleportExecute` (204) → dann `JoinZone` (100) falls andere Zone
-- **Bei Fehler:** `ErrorMessage` (910) mit Code
+- `TeleportResponse` (220)
+
+### Folge-Messages bei Erfolg
+- `TeleportExecute` (204) für Position-Set
+- `JoinZone` (100) falls Ziel in anderer Zone
+- `ZoneState` (102) für Zone-Informationen bei Zone-Wechsel
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -525,8 +531,10 @@ Client initiiert Sprung. Server validiert ob Sprung erlaubt ist (nicht in Air, n
 | JumpPower | float | Jump-Kraft (1.0 = Normal) | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `JumpBroadcast` (207) an alle in Range
-- **Bei Fehler:** `ErrorMessage` (910) oder ignorieren
+- `JumpResponse` (221)
+
+### Folge-Messages bei Erfolg
+- `JumpBroadcast` (207) an alle Spieler in Range
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -1224,6 +1232,154 @@ var stun = new StunMovement
 - **Sound**: "Bonk" Sound
 - **PvP**: Diminishing Returns apply (Stun-Duration reduziert bei wiederholtem Stun)
 - **Immunity**: Boss-Mechanics können Stun-Immunity haben
+
+---
+
+## TeleportResponse (220)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf TeleportRequest. Bestätigt erfolgreichen Teleport oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Ziel-Zone und Position bei Erfolg
+- Error-Code bei Fehler
+
+### Nicht im Scope ❌
+- Tatsächlicher Teleport → erfolgt via `TeleportExecute` (204)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Teleport erlaubt? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetZoneId | int | Ziel-Zone-ID | Bei Erfolg |
+| TargetX | float | Ziel-Position X | Bei Erfolg |
+| TargetY | float | Ziel-Position Y | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `TeleportRequest` | 203 | Request zu dieser Response |
+| `TeleportExecute` | 204 | Folgt bei Erfolg |
+| `JoinZone` | 100 | Folgt bei Zone-Wechsel |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new TeleportResponse
+{
+    Type = MessageType.TeleportResponse,
+    Success = true,
+    TargetZoneId = 1002,
+    TargetX = 150.0f,
+    TargetY = 200.0f
+};
+
+// Fehler
+var errorResponse = new TeleportResponse
+{
+    Type = MessageType.TeleportResponse,
+    Success = false,
+    ErrorCode = "COOLDOWN_ACTIVE",
+    ErrorMessage = "Hearthstone is on cooldown. Available in 1500 seconds."
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `COOLDOWN_ACTIVE` | Hearthstone auf Cooldown |
+| `INVALID_TARGET` | Ziel nicht erreichbar |
+| `IN_COMBAT` | Im Kampf |
+| `INSUFFICIENT_MANA` | Nicht genug Mana (Spell-Teleport) |
+
+### Notizen
+- Nach erfolgreicher Response folgt `TeleportExecute` (204)
+- Bei Zone-Wechsel folgt zusätzlich `JoinZone` (100)
+- Loading-Screen wird zwischen Response und Execute angezeigt
+
+---
+
+## JumpResponse (221)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf JumpRequest. Bestätigt erfolgreichen Sprung oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Error-Code bei Fehler
+- Stamina-Cost Bestätigung
+
+### Nicht im Scope ❌
+- Broadcast an andere Spieler → erfolgt via `JumpBroadcast` (207)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Sprung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| SequenceNumber | uint | Matching Client Sequence | Ja |
+| StaminaCost | int | Verbrauchte Stamina | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `JumpRequest` | 206 | Request zu dieser Response |
+| `JumpBroadcast` | 207 | Folgt bei Erfolg an andere Spieler |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new JumpResponse
+{
+    Type = MessageType.JumpResponse,
+    Success = true,
+    SequenceNumber = 12345,
+    StaminaCost = 10
+};
+
+// Fehler
+var errorResponse = new JumpResponse
+{
+    Type = MessageType.JumpResponse,
+    Success = false,
+    ErrorCode = "ROOTED",
+    ErrorMessage = "Cannot jump while rooted",
+    SequenceNumber = 12345
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ALREADY_JUMPING` | In der Luft |
+| `ROOTED` | Verwurzelt |
+| `STUNNED` | Stunned |
+| `NO_STAMINA` | Keine Stamina |
+
+### Notizen
+- Nach erfolgreicher Response folgt `JumpBroadcast` (207) an andere Spieler
+- SequenceNumber ermöglicht Client, Prediction zu korrigieren
+- Stamina-Cost wird vom Server bestimmt (Anti-Cheat)
 
 ---
 

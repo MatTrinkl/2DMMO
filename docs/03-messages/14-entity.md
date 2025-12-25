@@ -21,6 +21,7 @@
 - [EntityTarget (1420)](#entitytarget-1420)
 - [EntityAggro (1421)](#entityaggro-1421)
 - [EntityEmote (1430)](#entityemote-1430)
+- [EntityTargetResponse (1440)](#entitytargetresponse-1440)
 
 ---
 
@@ -584,7 +585,10 @@ Client setzt Target (für Combat, Interact, Inspect). Server validiert und broad
 | TargetEntityId | int | Target-Entity (0 = clear target) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `EntityTargetUpdate` Broadcast
+- `EntityTargetResponse` (1440)
+
+### Folge-Messages bei Erfolg
+- `EntityTargetUpdate` Broadcast an nahe Spieler
 
 ### Beispiel Payload
 ```csharp
@@ -687,6 +691,32 @@ var emote = new EntityEmote
 
 ---
 
+## EntityTargetResponse (1440)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf EntityTarget Request. Bestätigt erfolgreiche Entity-Target-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Target-Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| EntityId | int | Entity die Target geändert hat | Bei Erfolg |
+| NewTargetId | int | Neues Target | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INVALID_TARGET` | Target kann nicht selektiert werden |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Movement (02)**: Player-Movement → `PlayerMove` (200), `PlayerTeleport` (207)
@@ -698,7 +728,7 @@ var emote = new EntityEmote
 ---
 
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (10/10 Messages)
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (11/11 Messages)
 
 [← Zurück zur Übersicht](README.md)

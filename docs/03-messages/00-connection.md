@@ -31,6 +31,10 @@
 - [AccountDataResponse (18)](#accountdataresponse-18)
 - [EncryptionHandshake (19)](#encryptionhandshake-19)
 - [CompressionToggle (20)](#compressiontoggle-20)
+- [CharacterSelectResponse (21)](#characterselectresponse-21)
+- [CharacterCreateResponse (22)](#charactercreateresponse-22)
+- [CharacterDeleteResponse (23)](#characterdeleteresponse-23)
+- [ServerSelectResponse (24)](#serverselectresponse-24)
 
 ---
 
@@ -612,14 +616,18 @@ Client wählt einen Character aus der Character-Liste. Server lädt Character-Da
 | CharacterId | long | ID des zu wählenden Characters | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `JoinZone` (100) für Character-Spawn
-- **Bei Fehler:** `ErrorMessage` (910)
+- `CharacterSelectResponse` (21)
+
+### Folge-Messages bei Erfolg
+- `JoinZone` (100) für Character-Spawn in Zone
+- `ZoneState` (102) für vollständige Zone-Informationen
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
+| `CharacterSelectResponse` | 21 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt verfügbare Characters |
-| `JoinZone` | 100 | Nächster Schritt nach Auswahl |
+| `JoinZone` | 100 | Folgt nach erfolgreicher Auswahl |
 | `CharacterCreate` | 10 | Character erstellen |
 
 ### Beispiel Payload
@@ -643,6 +651,80 @@ var selectRequest = new CharacterSelect
 - Server lädt Character aus DB (kann 1-2 Sekunden dauern)
 - Loading-Screen im Client während Ladezeit
 - Nach Erfolg: Client empfängt `ZoneState` (102) Message
+
+---
+
+## CharacterSelectResponse (21)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Einmalig pro Character-Auswahl  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf CharacterSelect Request. Bestätigt erfolgreiche Character-Auswahl oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Character-ID und Spawn-Zone bei Erfolg
+- Error-Code bei Fehler
+
+### Nicht im Scope ❌
+- Vollständiger Character-State → wird in `CharacterInfo` (600) gesendet
+- Zone-Daten → verwende `ZoneState` (102)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Auswahl erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| CharacterId | long | ID des gewählten Characters | Bei Erfolg |
+| SpawnZoneId | ushort | Zone in der gespawnt wird | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CharacterSelect` | 9 | Request zu dieser Response |
+| `JoinZone` | 100 | Folgt nach erfolgreicher Response |
+| `ZoneState` | 102 | Enthält Zone-Informationen |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new CharacterSelectResponse
+{
+    Type = MessageType.CharacterSelectResponse,
+    Success = true,
+    CharacterId = 98765,
+    SpawnZoneId = 1001
+};
+
+// Fehler
+var errorResponse = new CharacterSelectResponse
+{
+    Type = MessageType.CharacterSelectResponse,
+    Success = false,
+    ErrorCode = "CHARACTER_NOT_FOUND",
+    ErrorMessage = "Character does not exist or has been deleted"
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `CHARACTER_NOT_FOUND` | Character-ID existiert nicht |
+| `CHARACTER_NOT_OWNED` | Character gehört nicht dem Account |
+| `CHARACTER_IN_USE` | Character bereits eingeloggt |
+| `CHARACTER_DELETED` | Character wurde gelöscht |
+
+### Notizen
+- Nach erfolgreicher Response folgt `JoinZone` (100) Message
+- Dann folgt `ZoneState` (102) mit vollständigen Zone-Informationen
+- Loading-Screen wird zwischen Response und JoinZone angezeigt
 
 ---
 
@@ -675,12 +757,15 @@ Erstellt einen neuen Character für den Account. Server validiert Namen, Rasse, 
 | AppearanceData | byte[] | Serialisierte Appearance-Daten | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `CharacterListResponse` (13) mit neuem Character
-- **Bei Fehler:** `ErrorMessage` (910)
+- `CharacterCreateResponse` (22)
+
+### Folge-Messages bei Erfolg
+- `CharacterListResponse` (13) mit aktualisierter Character-Liste
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
+| `CharacterCreateResponse` | 22 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt erstellten Character |
 | `CharacterDelete` | 11 | Character löschen |
 
@@ -721,6 +806,79 @@ var createRequest = new CharacterCreate
 
 ---
 
+## CharacterCreateResponse (22)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf CharacterCreate Request. Bestätigt erfolgreiche Character-Erstellung oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Neue Character-ID bei Erfolg
+- Error-Code bei Fehler
+
+### Nicht im Scope ❌
+- Vollständige Character-Liste → Server sendet separate `CharacterListResponse` (13)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erstellung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| CharacterId | long | ID des neuen Characters | Bei Erfolg |
+| Name | string | Character-Name | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CharacterCreate` | 10 | Request zu dieser Response |
+| `CharacterListResponse` | 13 | Folgt mit aktualisierter Liste |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new CharacterCreateResponse
+{
+    Type = MessageType.CharacterCreateResponse,
+    Success = true,
+    CharacterId = 98765,
+    Name = "Aragorn"
+};
+
+// Fehler
+var errorResponse = new CharacterCreateResponse
+{
+    Type = MessageType.CharacterCreateResponse,
+    Success = false,
+    ErrorCode = "NAME_TAKEN",
+    ErrorMessage = "Character name is already in use"
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NAME_TAKEN` | Name bereits vergeben |
+| `NAME_INVALID` | Name verstößt gegen Regeln |
+| `MAX_CHARACTERS_REACHED` | Max. Characters erreicht (Standard: 5) |
+| `INVALID_RACE` | Ungültige Rassen-ID |
+| `INVALID_CLASS` | Ungültige Klassen-ID |
+| `INVALID_RACE_CLASS_COMBO` | Kombination nicht erlaubt |
+
+### Notizen
+- Nach erfolgreicher Response sendet Server `CharacterListResponse` (13) mit aktualisierter Liste
+- Character-Erstellung kann 1-2 Sekunden dauern (DB-Write)
+
+---
+
 ## CharacterDelete (11)
 
 **Richtung:** 📤 Client → Server  
@@ -747,8 +905,10 @@ Löscht einen Character permanent. Sicherheits-Mechanismus: Character wird erst 
 | Confirmation | string | Muss "DELETE" sein | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `CharacterListResponse` (13) mit markiertem Character
-- **Bei Fehler:** `ErrorMessage` (910)
+- `CharacterDeleteResponse` (23)
+
+### Folge-Messages bei Erfolg
+- `CharacterListResponse` (13) mit aktualisierter Character-Liste
 
 ### Beispiel Payload
 ```csharp
@@ -774,6 +934,78 @@ var deleteRequest = new CharacterDelete
 - Abbruch möglich: Löschung kann rückgängig gemacht werden (Support-Request)
 - Nach 24h: Hard-Delete aus DB
 - Guild-Leader können NICHT gelöscht werden (müssen Guild übergeben)
+
+---
+
+## CharacterDeleteResponse (23)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf CharacterDelete Request. Bestätigt erfolgreiche Markierung zum Löschen oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Lösch-Zeitpunkt bei Erfolg
+- Error-Code bei Fehler
+
+### Nicht im Scope ❌
+- Vollständige Character-Liste → Server sendet separate `CharacterListResponse` (13)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Markierung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| CharacterId | long | ID des markierten Characters | Bei Erfolg |
+| DeletionTime | long | Unix Timestamp wann gelöscht wird (24h) | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CharacterDelete` | 11 | Request zu dieser Response |
+| `CharacterListResponse` | 13 | Folgt mit aktualisierter Liste |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new CharacterDeleteResponse
+{
+    Type = MessageType.CharacterDeleteResponse,
+    Success = true,
+    CharacterId = 98765,
+    DeletionTime = DateTimeOffset.UtcNow.AddHours(24).ToUnixTimeSeconds()
+};
+
+// Fehler
+var errorResponse = new CharacterDeleteResponse
+{
+    Type = MessageType.CharacterDeleteResponse,
+    Success = false,
+    ErrorCode = "CHARACTER_IN_GUILD",
+    ErrorMessage = "Character is guild leader. Transfer guild ownership first."
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `CHARACTER_NOT_FOUND` | Character existiert nicht |
+| `CHARACTER_NOT_OWNED` | Character gehört nicht dem Account |
+| `INVALID_CONFIRMATION` | Confirmation fehlt oder falsch |
+| `CHARACTER_IN_GUILD` | Character ist Guild-Leader |
+
+### Notizen
+- Nach erfolgreicher Response sendet Server `CharacterListResponse` (13) mit markiertem Character
+- Character kann 24h lang nicht gespielt werden
+- Nach 24h wird Character permanent gelöscht (Hard-Delete)
 
 ---
 
@@ -915,12 +1147,89 @@ Wählt einen Game-Server (Realm) aus. Nur relevant wenn mehrere Realms existiere
 | RealmId | int | ID des Realms | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Connection wird zu gewähltem Realm transferiert
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ServerSelectResponse` (24)
+
+### Folge-Messages bei Erfolg
+- Connection wird zu gewähltem Realm transferiert
+- Nach Transfer: Neuer Login-Flow auf dem Ziel-Realm
 
 ### Notizen
 - Im Prototyp: Nur 1 Realm → Message wird nicht aktiv verwendet
 - Phase 2: Multi-Realm Support
+
+---
+
+## ServerSelectResponse (24)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ServerSelect Request. Bestätigt Realm-Auswahl oder gibt Fehler zurück.
+
+### Im Scope ✅
+- Erfolgs-Status (Success/Failure)
+- Realm-Informationen bei Erfolg
+- Error-Code bei Fehler
+
+### Nicht im Scope ❌
+- Realm-Liste → verwende `RealmListResponse` (16)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Realm-Auswahl erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| RealmId | int | ID des gewählten Realms | Bei Erfolg |
+| RealmName | string | Name des Realms | Bei Erfolg |
+| TransferToken | string | Token für Realm-Transfer | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `ServerSelect` | 14 | Request zu dieser Response |
+| `RealmListResponse` | 16 | Liste verfügbarer Realms |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new ServerSelectResponse
+{
+    Type = MessageType.ServerSelectResponse,
+    Success = true,
+    RealmId = 1,
+    RealmName = "Azeroth-EU",
+    TransferToken = "a3f7c2b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+};
+
+// Fehler
+var errorResponse = new ServerSelectResponse
+{
+    Type = MessageType.ServerSelectResponse,
+    Success = false,
+    ErrorCode = "REALM_FULL",
+    ErrorMessage = "Realm is currently full. Please try again later."
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `REALM_NOT_FOUND` | Realm existiert nicht |
+| `REALM_OFFLINE` | Realm ist offline |
+| `REALM_FULL` | Realm ist voll |
+| `REALM_LOCKED` | Realm ist gesperrt (Maintenance) |
+
+### Notizen
+- Im Prototyp: Nur 1 Realm → Message wird nicht aktiv verwendet
+- Phase 2: Multi-Realm Support mit Connection-Transfer
+- Bei Erfolg: Client verbindet sich zum neuen Realm mit TransferToken
 
 ---
 

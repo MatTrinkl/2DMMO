@@ -24,6 +24,11 @@
 - [TrainerLearn (1321)](#trainerlearn-1321)
 - [RepairAll (1330)](#repairall-1330)
 - [FlightMasterOpen (1340)](#flightmasteropen-1340)
+- [VendorBuyResponse (1350)](#vendorbuyresponse-1350)
+- [VendorSellResponse (1351)](#vendorsellresponse-1351)
+- [VendorBuybackResponse (1352)](#vendorbuybackresponse-1352)
+- [TrainerLearnResponse (1353)](#trainerlearnresponse-1353)
+- [RepairAllResponse (1354)](#repairallresponse-1354)
 
 ---
 
@@ -377,8 +382,11 @@ Client kauft Item vom Vendor. Server validiert Gold, Stock, Inventory-Space.
 | Quantity | int | Anzahl | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemAdd` (501) + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `VendorBuyResponse` (1340)
+
+### Folge-Messages bei Erfolg
+- `ItemAdd` (501) zu Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -425,8 +433,11 @@ Client verkauft Item an Vendor. Item wandert in Buyback-Tab.
 | Quantity | int | Anzahl | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemRemove` (502) + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `VendorSellResponse` (1341)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) aus Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -471,8 +482,11 @@ Client kauft versehentlich verkauftes Item zurück aus Buyback-Tab.
 | BuybackIndex | byte | Index in Buyback-Tab (0-11) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ItemAdd` (501) + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `VendorBuyResponse` (1340)
+
+### Folge-Messages bei Erfolg
+- `ItemAdd` (501) zu Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -604,8 +618,11 @@ var trainerOpen = new TrainerOpen
 | SkillId | uint | Skill-ID | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `SkillLearned` Event + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `TrainerLearnResponse` (1343)
+
+### Folge-Messages bei Erfolg
+- `SkillLearned` Event
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -646,8 +663,11 @@ Client repariert alle equipped Items beim Repair-Vendor.
 | NPCId | int | Repair-Vendor-ID | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `GoldUpdate` (3703) + Durability-Updates
-- **Bei Fehler:** `ErrorMessage` (910)
+- `RepairAllResponse` (1344)
+
+### Folge-Messages bei Erfolg
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+- Durability-Updates für reparierte Items
 
 ### Beispiel Payload
 ```csharp
@@ -729,6 +749,148 @@ var flightMaster = new FlightMasterOpen
 
 ---
 
+## VendorBuyResponse (1350)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorBuy Request. Bestätigt erfolgreichen Kauf oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Kauf erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Gekauftes Item | Bei Erfolg |
+| Quantity | int | Gekaufte Anzahl | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `INVENTORY_FULL` | Inventory ist voll |
+| `ITEM_NOT_AVAILABLE` | Item nicht verfügbar |
+| `MAX_QUANTITY_EXCEEDED` | Zu viele auf einmal |
+
+---
+
+## VendorSellResponse (1351)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorSell Request. Bestätigt erfolgreichen Verkauf oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Verkauf erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Verkauftes Item | Bei Erfolg |
+| Quantity | int | Verkaufte Anzahl | Bei Erfolg |
+| GoldReceived | int | Erhaltenes Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ITEM_NOT_SELLABLE` | Item kann nicht verkauft werden |
+| `ITEM_NOT_FOUND` | Item nicht in Inventory |
+
+---
+
+## VendorBuybackResponse (1352)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorBuyback Request. Bestätigt erfolgreichen Buyback oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Buyback erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Zurückgekauftes Item | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `ITEM_NOT_IN_BUYBACK` | Item nicht in Buyback-Liste |
+| `INVENTORY_FULL` | Inventory ist voll |
+
+---
+
+## TrainerLearnResponse (1353)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf TrainerLearn Request. Bestätigt erfolgreiches Skill-Learning oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Learning erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| SkillId | uint | Gelernter Skill | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `INSUFFICIENT_LEVEL` | Level zu niedrig |
+| `SKILL_ALREADY_KNOWN` | Skill bereits gelernt |
+| `WRONG_CLASS` | Falsche Klasse |
+
+---
+
+## RepairAllResponse (1354)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf RepairAll Request. Bestätigt erfolgreiche Reparatur oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Reparatur erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+| ItemsRepaired | int | Anzahl reparierter Items | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `NO_ITEMS_TO_REPAIR` | Keine beschädigten Items |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Entity (14)**: Entity-Interaction → `EntityInteract` (1410)
@@ -740,7 +902,7 @@ var flightMaster = new FlightMasterOpen
 ---
 
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (13/13 Messages)
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (18/18 Messages)
 
 [← Zurück zur Übersicht](README.md)

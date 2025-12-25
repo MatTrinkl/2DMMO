@@ -24,6 +24,12 @@
 - [TitleChange (630)](#titlechange-630)
 - [AppearanceUpdate (631)](#appearanceupdate-631)
 - [RestedXPUpdate (640)](#restedxpupdate-640)
+- [AttributeIncreaseResponse (650)](#attributeincreaseresponse-650)
+- [CharacterCustomizeResponse (651)](#charactercustomizeresponse-651)
+- [TalentLearnResponse (652)](#talentlearnresponse-652)
+- [TalentResetResponse (653)](#talentresetresponse-653)
+- [SpecializationChangeResponse (654)](#specializationchangeresponse-654)
+- [TitleChangeResponse (655)](#titlechangeresponse-655)
 
 ---
 
@@ -506,8 +512,10 @@ Client möchte verfügbare Stat-Points in Attribute investieren. Server validier
 | Points | int | Anzahl Points zu investieren (1-10) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `AttributeIncreaseSuccess` + `StatsUpdate` (601)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `AttributeIncreaseResponse` (650)
+
+### Folge-Messages bei Erfolg
+- `StatsUpdate` (601) mit neuen Derived Stats
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -601,8 +609,11 @@ Client ändert Character-Appearance (Hairstyle, Hair-Color, etc.). Erfordert Bar
 | SkinColor | uint | Neue RGB-Color (race-restricted) | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `CharacterCustomizeSuccess` + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `CharacterCustomizeResponse` (651)
+
+### Folge-Messages bei Erfolg
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+- `AppearanceUpdate` (631) Broadcast an nahe Spieler
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -664,8 +675,10 @@ var customize = new CharacterCustomize
 | Rank | byte | Talent-Rank (1-5) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TalentLearnSuccess`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `TalentLearnResponse` (652)
+
+### Folge-Messages bei Erfolg
+- Talent-Tree UI wird aktualisiert
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -718,8 +731,10 @@ var talentLearn = new TalentLearn
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Bei Erfolg:** `TalentResetSuccess` + `GoldUpdate` (3703)
-- **Bei Fehler:** `ErrorMessage` (910)
+- `TalentResetResponse` (653)
+
+### Folge-Messages bei Erfolg
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
 
 ### Beispiel Payload
 ```csharp
@@ -763,8 +778,10 @@ var talentReset = new TalentReset
 | NewSpecializationId | byte | Neue Spec-ID | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `SpecializationChangeSuccess` + `TalentResetSuccess`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `SpecializationChangeResponse` (654)
+
+### Folge-Messages bei Erfolg
+- Talents werden automatisch zurückgesetzt
 
 ### Beispiel Payload
 ```csharp
@@ -809,8 +826,7 @@ var specChange = new SpecializationChange
 | TitleId | uint | Title-ID (0=kein Title) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TitleChangeSuccess`
-- **Bei Fehler:** `ErrorMessage` (910)
+- `TitleChangeResponse` (655)
 
 ### Beispiel Payload
 ```csharp
@@ -905,6 +921,237 @@ var restedXPUpdate = new RestedXPUpdate
 - **Accrual**: 5% eines Levels pro 8h Offline (in Inn/City)
 - **Max**: 1.5 Level
 - **Bonus**: +50% XP
+
+---
+
+## AttributeIncreaseResponse (650)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf AttributeIncrease Request. Bestätigt erfolgreiche Stat-Point-Investition oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Investition erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| Attribute | string | Erhöhtes Attribut | Bei Erfolg |
+| PointsSpent | int | Investierte Points | Bei Erfolg |
+| NewValue | int | Neuer Attribut-Wert | Bei Erfolg |
+| RemainingPoints | int | Verbleibende Stat-Points | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `AttributeIncrease` | 605 | Request zu dieser Response |
+| `StatsUpdate` | 601 | Folgt mit neuen Derived Stats |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new AttributeIncreaseResponse
+{
+    Type = MessageType.AttributeIncreaseResponse,
+    Success = true,
+    Attribute = "strength",
+    PointsSpent = 5,
+    NewValue = 30,
+    RemainingPoints = 15
+};
+
+// Fehler
+var errorResponse = new AttributeIncreaseResponse
+{
+    Type = MessageType.AttributeIncreaseResponse,
+    Success = false,
+    ErrorCode = "INSUFFICIENT_POINTS",
+    ErrorMessage = "Not enough stat points available"
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_POINTS` | Nicht genug Stat-Points |
+| `INVALID_ATTRIBUTE` | Ungültiger Attribute-Name |
+| `MAX_ATTRIBUTE_REACHED` | Attribute-Cap erreicht (999) |
+| `INVALID_POINTS` | Points < 1 oder > 10 |
+
+---
+
+## CharacterCustomizeResponse (651)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf CharacterCustomize Request. Bestätigt erfolgreiche Appearance-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Customization erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Erwartete Response
+- Keine (ist selbst Response)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CharacterCustomize` | 610 | Request zu dieser Response |
+| `GoldUpdate` | 3703 | Folgt mit neuem Gold-Betrag |
+| `AppearanceUpdate` | 631 | Broadcast an nahe Spieler |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new CharacterCustomizeResponse
+{
+    Type = MessageType.CharacterCustomizeResponse,
+    Success = true,
+    GoldCost = 10
+};
+
+// Fehler
+var errorResponse = new CharacterCustomizeResponse
+{
+    Type = MessageType.CharacterCustomizeResponse,
+    Success = false,
+    ErrorCode = "INSUFFICIENT_GOLD",
+    ErrorMessage = "Not enough gold. Required: 10 gold"
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `INVALID_HAIRSTYLE` | Hairstyle für Race nicht verfügbar |
+| `INVALID_SKINCOLOR` | Skin-Color für Race nicht erlaubt |
+| `NOT_AT_BARBER` | Nicht bei Barber-NPC |
+
+---
+
+## TalentLearnResponse (652)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf TalentLearn Request. Bestätigt erfolgreiche Talent-Aktivierung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Talent gelernt? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TalentId | uint | Gelernte Talent-ID | Bei Erfolg |
+| Rank | byte | Neue Rank | Bei Erfolg |
+| RemainingPoints | int | Verbleibende Talent-Points | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_POINTS` | Nicht genug Talent-Points |
+| `TALENT_LOCKED` | Voraussetzungen nicht erfüllt |
+| `MAX_RANK_REACHED` | Talent bereits max Rank |
+| `INVALID_SPECIALIZATION` | Talent für andere Spec |
+
+---
+
+## TalentResetResponse (653)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf TalentReset Request. Bestätigt erfolgreichen Reset oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Reset erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+| RefundedPoints | int | Zurückgegebene Talent-Points | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `NO_TALENTS_LEARNED` | Keine Talents gelernt |
+
+---
+
+## SpecializationChangeResponse (654)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf SpecializationChange Request. Bestätigt erfolgreichen Spec-Wechsel oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Spec-Wechsel erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| NewSpecializationId | byte | Neue Spec-ID | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INVALID_SPECIALIZATION` | Spec für Class nicht verfügbar |
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+
+---
+
+## TitleChangeResponse (655)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+**Phase 2 Feature** - Antwort auf TitleChange Request. Bestätigt erfolgreichen Title-Wechsel oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Title-Wechsel erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TitleId | uint | Neue Title-ID (0=kein Title) | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `TITLE_NOT_UNLOCKED` | Title nicht freigeschaltet |
+| `INVALID_TITLE` | Title existiert nicht |
 
 ---
 

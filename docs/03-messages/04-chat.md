@@ -62,6 +62,12 @@ Das Chat-System unterstützt:
 - [ChatMOTD (428)](#chatmotd-428)
 - [ChatFilter (429)](#chatfilter-429)
 - [ChatSpamWarning (430)](#chatspamwarning-430)
+- [ChatMessageResponse (440)](#chatmessageresponse-440)
+- [ChatChannelJoinResponse (441)](#chatchanneljoinresponse-441)
+- [ChatChannelCreateResponse (442)](#chatchannelcreateresponse-442)
+- [ChatChannelDeleteResponse (443)](#chatchanneldeleteresponse-443)
+- [ChatChannelPasswordResponse (444)](#chatchannelpasswordresponse-444)
+- [ChatChannelMuteResponse (445)](#chatchannelmuteresponse-445)
 
 ---
 
@@ -94,8 +100,10 @@ Universelle Chat-Message für alle Channel-Types. Client sendet Message, Server 
 | ChannelName | string | Name für Custom-Channels | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ChatBroadcast` (401) an Channel-Teilnehmer
-- **Bei Fehler:** `ErrorMessage` (910) mit Code
+- `ChatMessageResponse` (440)
+
+### Folge-Messages bei Erfolg
+- `ChatBroadcast` (401) an Channel-Teilnehmer
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -1030,8 +1038,10 @@ Client joined Custom-Channel (z.B. "Trade", "LFG-Dungeon", "Roleplaying").
 | Password | string | Password falls Protected | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** Client empfängt `ChatBroadcast` für diesen Channel
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ChatChannelJoinResponse` (441)
+
+### Folge-Messages bei Erfolg
+- Client empfängt `ChatBroadcast` für diesen Channel
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -1160,8 +1170,10 @@ Erstellt neuen Custom-Channel. Creator wird automatisch Owner.
 | Password | string | Optional Password | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** Client wird Auto-Joined als Owner
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ChatChannelCreateResponse` (442)
+
+### Folge-Messages bei Erfolg
+- Client wird automatisch als Owner dem Channel hinzugefügt
 
 ### Beispiel Payload
 ```csharp
@@ -1203,8 +1215,10 @@ Owner deleted Channel. Alle Members werden gekickt.
 | ChannelName | string | Channel-Name | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Alle Members werden informiert und Auto-Leaved
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ChatChannelDeleteResponse` (443)
+
+### Folge-Messages bei Erfolg
+- Alle Members werden informiert und automatisch aus dem Channel entfernt
 
 ### Beispiel Payload
 ```csharp
@@ -1240,7 +1254,7 @@ Owner ändert oder setzt Channel-Password.
 | NewPassword | string | Neues Password (leer = remove Password) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Password gesetzt/geändert/entfernt
+- `ChatChannelPasswordResponse` (444)
 
 ### Beispiel Payload
 ```csharp
@@ -1282,7 +1296,10 @@ Owner/Moderator muted Member im Channel. Member kann lesen aber nicht schreiben.
 | Reason | string | Optional Grund | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** Target wird gemuted
+- `ChatChannelMuteResponse` (445)
+
+### Folge-Messages bei Erfolg
+- Target wird über Mute informiert
 
 ### Beispiel Payload
 ```csharp
@@ -1592,7 +1609,173 @@ var spamWarning = new ChatSpamWarning
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+## ChatMessageResponse (440)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatMessage Request. Bestätigt erfolgreiche Message-Übermittlung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Message übermittelt? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelType | string | Channel-Type | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `RATE_LIMITED` | Zu viele Messages |
+| `PROFANITY_DETECTED` | Profanity-Filter |
+| `NOT_IN_CHANNEL` | Nicht im Channel |
+| `MUTED` | Spieler ist gemuted |
+| `MESSAGE_TOO_LONG` | >500 Zeichen |
+
+---
+
+## ChatChannelJoinResponse (441)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatChannelJoin Request. Bestätigt erfolgreichen Channel-Beitritt oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Join erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelName | string | Channel-Name | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `CHANNEL_NOT_FOUND` | Channel existiert nicht |
+| `WRONG_PASSWORD` | Falsches Password |
+| `CHANNEL_FULL` | Max Members erreicht |
+| `BANNED` | Vom Channel gebannt |
+
+---
+
+## ChatChannelCreateResponse (442)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatChannelCreate Request. Bestätigt erfolgreiche Channel-Erstellung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erstellung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelName | string | Channel-Name | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NAME_TAKEN` | Channel existiert bereits |
+| `INVALID_NAME` | Name ungültig |
+| `MAX_CHANNELS_CREATED` | Max Channels erreicht (3 pro Spieler) |
+
+---
+
+## ChatChannelDeleteResponse (443)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatChannelDelete Request. Bestätigt erfolgreiche Channel-Löschung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Löschung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelName | string | Channel-Name | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_OWNER` | Nur Owner kann deleten |
+| `CHANNEL_NOT_FOUND` | Channel existiert nicht |
+
+---
+
+## ChatChannelPasswordResponse (444)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatChannelPassword Request. Bestätigt erfolgreiche Password-Änderung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Änderung erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelName | string | Channel-Name | Bei Erfolg |
+| PasswordSet | bool | Password gesetzt (true) oder entfernt (false) | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_OWNER` | Nur Owner kann Password ändern |
+| `CHANNEL_NOT_FOUND` | Channel existiert nicht |
+
+---
+
+## ChatChannelMuteResponse (445)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ChatChannelMute Request. Bestätigt erfolgreiche Mute-Action oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Mute erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ChannelName | string | Channel-Name | Bei Erfolg |
+| TargetName | string | Gemuteter Spieler | Bei Erfolg |
+| Duration | int | Dauer in Minuten | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_PERMISSION` | Nicht Owner/Moderator |
+| `PLAYER_NOT_IN_CHANNEL` | Target nicht im Channel |
+| `CANNOT_MUTE_OWNER` | Owner kann nicht gemuted werden |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
+**Version**: 1.1.0
 
 [← Zurück zur Übersicht](README.md)

@@ -28,6 +28,12 @@
 - [TabTarget (1214)](#tabtarget-1214)
 - [NearestEnemyTarget (1215)](#nearestenemytarget-1215)
 - [NearestFriendTarget (1216)](#nearestfriendtarget-1216)
+- [TargetSelectResponse (1220)](#targetselectresponse-1220)
+- [AssistTargetResponse (1221)](#assisttargetresponse-1221)
+- [MarkTargetResponse (1222)](#marktargetresponse-1222)
+- [TabTargetResponse (1223)](#tabtargetresponse-1223)
+- [NearestEnemyTargetResponse (1224)](#nearestenemytargetresponse-1224)
+- [NearestFriendTargetResponse (1225)](#nearestfriendtargetresponse-1225)
 
 ---
 
@@ -73,8 +79,11 @@ Client teilt Server mit dass Entity targetiert wurde. Server sendet Target-Info 
 | EntityId | int | Entity-ID des Targets | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
-- **Bei Fehler:** `ErrorMessage` (910) wenn Entity nicht existiert
+- `TargetSelectResponse` (1220)
+
+### Folge-Messages bei Erfolg
+- `TargetUpdate` (1202) mit neuer Target-ID
+- `TargetInfoResponse` (1204) mit Target-Details
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -394,8 +403,11 @@ Targetiert das Target von anderem Spieler (Assist). Für koordinierte Angriffe i
 | AssistEntityId | int | Entity-ID des zu assistierenden Spielers | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
-- **Bei Fehler:** Wenn Spieler kein Target hat
+- `AssistTargetResponse` (1221)
+
+### Folge-Messages bei Erfolg
+- `TargetUpdate` (1202) mit Assist-Target
+- `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
 ```csharp
@@ -435,7 +447,10 @@ Markiert Target mit Raid-Marker (Skull, Cross, Square, etc.). Sichtbar für ganz
 | MarkType | byte | Marker-Typ (0-7: Skull, Cross, Square, Moon, Triangle, Diamond, Circle, Star) | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** Broadcast an Party/Raid
+- `MarkTargetResponse` (1222)
+
+### Folge-Messages bei Erfolg
+- Broadcast an Party/Raid Members
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -544,7 +559,11 @@ Targetiert nächste Entity in Tab-Order (links nach rechts, nah nach fern).
 | Reverse | bool | Rückwärts (SHIFT+TAB)? | Nein |
 
 ### Erwartete Response
-- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+- `TabTargetResponse` (1223)
+
+### Folge-Messages bei Erfolg
+- `TargetUpdate` (1202) mit nächstem Target
+- `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
 ```csharp
@@ -576,7 +595,11 @@ Targetiert nächsten feindlichen Entity (nur Distance, kein Angle).
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+- `NearestEnemyTargetResponse` (1224)
+
+### Folge-Messages bei Erfolg
+- `TargetUpdate` (1202) mit nächstem Enemy
+- `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
 ```csharp
@@ -607,7 +630,11 @@ Targetiert nächsten freundlichen Entity (für Heals/Buffs).
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+- `NearestFriendTargetResponse` (1225)
+
+### Folge-Messages bei Erfolg
+- `TargetUpdate` (1202) mit nächstem Friend
+- `TargetInfoResponse` (1204) mit Target-Details
 
 ### Notizen
 - **Use-Case**: Emergency-Heals, Quick-Rez
@@ -616,7 +643,161 @@ Keine zusätzlichen Felder
 
 ---
 
+## TargetSelectResponse (1220)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf TargetSelect Request. Bestätigt erfolgreiche Target-Selektion oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Target-Selektion erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetId | int | Selektierte Entity-ID | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ENTITY_NOT_FOUND` | Entity existiert nicht |
+| `OUT_OF_RANGE` | Entity zu weit entfernt |
+
+---
+
+## AssistTargetResponse (1221)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf AssistTarget Request. Bestätigt erfolgreiche Assist-Target-Selektion oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Assist erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| AssistTargetId | int | Target des Assist-Targets | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_TARGET` | Assist-Target hat kein Target |
+
+---
+
+## MarkTargetResponse (1222)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf MarkTarget Request. Bestätigt erfolgreiche Target-Markierung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Mark erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| MarkIcon | int | Mark-Icon (0-8) | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NOT_IN_PARTY` | Nicht in Party/Raid |
+| `NOT_PARTY_LEADER` | Nur Leader darf marken |
+
+---
+
+## TabTargetResponse (1223)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf TabTarget Request. Bestätigt erfolgreiche Tab-Target-Selektion oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Tab-Target erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetId | int | Neues Target | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_TARGETS_IN_RANGE` | Keine Targets verfügbar |
+
+---
+
+## NearestEnemyTargetResponse (1224)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf NearestEnemyTarget Request. Bestätigt erfolgreiche Enemy-Target-Selektion oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Target-Selektion erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetId | int | Nächster Enemy | Bei Erfolg |
+| Distance | float | Distanz zum Enemy | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_ENEMIES_IN_RANGE` | Keine Enemies in Reichweite |
+
+---
+
+## NearestFriendTargetResponse (1225)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf NearestFriendTarget Request. Bestätigt erfolgreiche Friend-Target-Selektion oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Target-Selektion erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetId | int | Nächster Friend | Bei Erfolg |
+| Distance | float | Distanz zum Friend | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `NO_FRIENDS_IN_RANGE` | Keine Friends in Reichweite |
+
+---
+
 **Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+**Version**: 1.1.0
 
 [← Zurück zur Übersicht](README.md)
