@@ -98,6 +98,21 @@ Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
 | **Reserved** | 4800-4899 | [48-reserved.md](48-reserved.md) | - | ⚪ Reserviert |
 | **Debug** | 4900-4999 | [49-debug.md](49-debug.md) | 5 | 🟣 Dev |
 
+### Server-to-Server (Internal)
+
+⚠️ **Wichtig**: Diese Messages sind **AUSSCHLIESSLICH für Server-zu-Server Kommunikation**. Clients senden oder empfangen diese Messages **NIEMALS**.
+
+| Kategorie | Range | Datei | Messages | Status |
+|-----------|-------|-------|----------|--------|
+| **S2S Core** | 5000-5099 | [50-server-to-server.md](50-server-to-server.md) | 7 | 🟡 Phase 2 |
+| **S2S Transfer** | 5100-5199 | [50-server-to-server.md](50-server-to-server.md) | 9 | 🟡 Phase 2 |
+| **S2S Cross-Zone** | 5200-5299 | [50-server-to-server.md](50-server-to-server.md) | 9 | 🟡 Phase 2 |
+| **S2S Matchmaking** | 5300-5399 | [50-server-to-server.md](50-server-to-server.md) | 10 | 🟡 Phase 2 |
+| **S2S Economy** | 5400-5499 | [50-server-to-server.md](50-server-to-server.md) | 7 | 🔵 Phase 3 |
+| **S2S Admin** | 5500-5599 | [50-server-to-server.md](50-server-to-server.md) | 12 | 🟡 Phase 2 |
+
+**Siehe auch:** [SERVER_TO_SERVER.md](../02-architecture/SERVER_TO_SERVER.md) für vollständige S2S-Architektur-Dokumentation
+
 ---
 
 ## ➕ Neue Messages Hinzufügen
@@ -287,20 +302,22 @@ var message = new MessageName { ... };
 - **[Sicherheit](../02-architecture/SECURITY.md)** - Input Validation für Messages
 - **[Game Loop](../02-architecture/GAME_LOOP.md)** - Wann Messages verarbeitet werden
 - **[Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)** - Broadcast-Messages bei Spieler-Disconnects
+- **[Server-zu-Server Kommunikation](../02-architecture/SERVER_TO_SERVER.md)** - S2S-Architektur & Load-Balancing
 
 ---
 
 ## 📊 Statistiken
 
-- **Gesamt Messages**: ~1100
+- **Gesamt Messages**: ~1170
 - **Prototyp (Implementiert)**: 114 Messages
-- **Phase 2 (In Arbeit)**: 620 Messages
-- **Phase 3 (Geplant)**: 320 Messages
+- **Phase 2 (In Arbeit)**: 674 Messages (inkl. 54 S2S)
+- **Phase 3 (Geplant)**: 332 Messages (inkl. 12 S2S)
+- **Server-to-Server (S2S)**: 70 Messages (5000-5999)
 - **Reserviert**: 200 IDs
 - **Debug**: 5 Messages
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0  
+**Letzte Aktualisierung**: 2025-12-25  
+**Version**: 2.0.0  
 **Maintainer**: 2DMMO Team

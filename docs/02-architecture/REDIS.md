@@ -2,8 +2,8 @@
 
 ## 2DMMO – Redis Cache & Pub/Sub
 
-**Version:** 1.1.0  
-**Letzte Aktualisierung:** 2025-12-02  
+**Version:** 2.0.0  
+**Letzte Aktualisierung:** 2025-12-25  
 **Teil von:** [Architektur-Dokumentation](README.md)
 
 ---
@@ -116,12 +116,41 @@ player:{playerId}
 
 ### Pub/Sub Channels
 
+#### Client-Facing Channels
+
 | Channel | Zweck |
 |---------|-------|
 | `channel:zone:{zoneId}` | Zone-weite Events (Spawns, Deaths) |
 | `channel:player:{playerId}` | Whispers, Party-Invites |
 | `channel:guild:{guildId}` | Guild-Chat, Guild-Events |
 | `channel:global` | Server-Broadcasts |
+
+#### Server-to-Server Channels
+
+**Siehe auch:** [SERVER_TO_SERVER.md](SERVER_TO_SERVER.md) für vollständige S2S-Architektur
+
+| Channel Pattern | Zweck |
+|-----------------|-------|
+| `s2s:session:validate` | Session-Token Validierung (Gateway ↔ Zone) |
+| `s2s:session:validate:response` | Validierungs-Responses |
+| `s2s:server:{serverId}` | Server-spezifische Messages |
+| `s2s:server:broadcast` | An alle Server (Handshake, Shutdown, Admin) |
+| `s2s:transfer:zone:{zoneId}` | Zone-Transfer Requests |
+| `s2s:transfer:shard:{shardId}` | Shard-Transfer Requests |
+| `s2s:transfer:instance` | Instance-Management |
+| `s2s:player:{playerId}` | Cross-Zone Player Messages (Whisper, Invites) |
+| `s2s:guild:{guildId}` | Cross-Zone Guild Messages |
+| `s2s:party:{partyId}` | Cross-Zone Party Messages |
+| `s2s:matchmaking` | Matchmaking-Service Queue/Dequeue |
+| `s2s:auction` | Auction-House-Service |
+| `s2s:mail` | Mail-Service |
+| `s2s:admin` | Admin-Commands |
+| `s2s:alerts` | Monitoring-Alerts |
+| `s2s:metrics` | Server-Metriken (Heartbeat, Performance) |
+
+**Channel-Naming-Konvention:**
+- Client-Channels: `channel:{scope}:{id}`
+- Server-Channels: `s2s:{category}[:{id}]`
 
 ---
 
@@ -131,6 +160,7 @@ player:{playerId}
 - [Server-Komponenten](SERVER_COMPONENTS.md) - Redis-Integration
 - [Game Loop](GAME_LOOP.md) - Persistence Phase
 - [Datenbank-Strategie](DATABASE.md) - Write-Through Details
+- [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) - S2S Messages & Load-Balancing
 
 ---
 
