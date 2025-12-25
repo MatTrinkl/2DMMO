@@ -1,51 +1,84 @@
-# 💵 economy Messages (3700-3799)
+# 💰 Economy / Currency Messages (3700-3799)
 
 **Kategorie:** 37  
 **Range:** 3700-3799  
 **Phase:** Phase 2  
-**Status:** 🟡
+**Status:** 🟡 Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
 ---
 
+## 📋 Inhaltsverzeichnis
+
+- [CurrencyUpdate (3700)](#currencyupdate-3700)
+- [CurrencyListRequest (3701)](#currencylistrequest-3701)
+- [CurrencyListResponse (3702)](#currencylistresponse-3702)
+- [GoldUpdate (3703)](#goldupdate-3703)
+- [GoldTransaction (3704)](#goldtransaction-3704)
+- [CurrencyExchange (3710)](#currencyexchange-3710)
+- [CurrencyExchangeResult (3711)](#currencyexchangeresult-3711)
+- [TokenPurchase (3720)](#tokenpurchase-3720)
+- [TokenPurchaseResult (3721)](#tokenpurchaseresult-3721)
+- [BountyPlace (3730)](#bountyplace-3730)
+- [BountyClaim (3732)](#bountyclaim-3732)
+
+---
+
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **economy** Funktionalität im 2DMMO.
+Diese Kategorie umfasst alle Messages für **Economy- und Währungssysteme** im 2DMMO.
 
-Economy: Currency, Gold, Tokens und Bounties.
+Das Economy-System implementiert:
+- Multi-Currency System (Gold, Tokens, Premium-Currency)
+- Currency-Exchange zwischen verschiedenen Währungen
+- Gold-Transactions und Auditing
+- Token-System (gekauft mit Real-Money)
+- Bounty-System (Spieler-Kopfgelder)
+- Currency-Caps und Limits
 
----
-
-## 📝 Message-Liste
-
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
-
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
+**Server Authority**: Alle Currency-Transactions sind server-authoritative.
 
 ---
 
-## 🎯 Wichtige Messages
+## CurrencyUpdate (3700)
 
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Beschreibung
+Update einer Währung.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CurrencyId | uint | Währungs-ID | Ja |
+| NewAmount | int | Neuer Betrag | Ja |
+| Change | int | Änderung | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## GoldUpdate (3703)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Gold-Betrag hat sich geändert.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NewGold | long | Neuer Gold-Betrag (Copper) | Ja |
+| Change | long | Änderung | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)
