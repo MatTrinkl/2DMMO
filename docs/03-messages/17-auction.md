@@ -1,9 +1,8 @@
-# 🏪 auction Messages (1700-1799)
+# 🏪 Auction Messages (1700-1799)
 
 **Kategorie:** 17  
 **Range:** 1700-1799  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,84 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **auction** Funktionalität im 2DMMO.
-
-Auction House: Search, Bid, Buyout, Listings und Price-History.
+Auction-House für Player-to-Player Trading.
 
 ---
 
-## 📝 Message-Liste
+## AuctionCreate (1700)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemSlot | byte | Item-Slot | Ja |
+| Quantity | int | Anzahl | Ja |
+| StartPrice | long | Start-Preis (Copper) | Ja |
+| BuyoutPrice | long | Buyout (optional) | Nein |
+| Duration | int | Duration (Stunden) | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## AuctionSearch (1701)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SearchTerm | string | Search-Term | Nein |
+| Category | string | Item-Category | Nein |
+| MinLevel | int | Min-Level | Nein |
+| MaxLevel | int | Max-Level | Nein |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## AuctionSearchResult (1702)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Auctions | List<AuctionListing> | Gefundene Auctions | Ja |
+
+---
+
+## AuctionBid (1710)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| AuctionId | string | Auction-ID | Ja |
+| BidAmount | long | Bid-Betrag (Copper) | Ja |
+
+---
+
+## AuctionBuyout (1711)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| AuctionId | string | Auction-ID | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

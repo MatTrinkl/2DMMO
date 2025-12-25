@@ -1,9 +1,8 @@
-# 🗺️ map Messages (3400-3499)
+# 🗺️ Map Messages (3400-3499)
 
 **Kategorie:** 34  
 **Range:** 3400-3499  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,70 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **map** Funktionalität im 2DMMO.
-
-Map-System: Exploration, Waypoints, Flight-Paths und Markers.
+Map-System mit Minimap, Worldmap, und POIs.
 
 ---
 
-## 📝 Message-Liste
+## MapReveal (3400)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ZoneId | uint | Zone-ID | Ja |
+| AreaId | uint | Area-ID | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## MapPing (3401)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| X | float | Map X | Ja |
+| Y | float | Map Y | Ja |
+| PingType | string | "alert", "assist", "defend" | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## MapPOIAdd (3410)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| POIId | uint | POI-ID | Ja |
+| X | float | Position X | Ja |
+| Y | float | Position Y | Ja |
+| Type | string | "quest", "vendor", "dungeon" | Ja |
+
+---
+
+## WaypointSet (3420)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| X | float | Waypoint X | Ja |
+| Y | float | Waypoint Y | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

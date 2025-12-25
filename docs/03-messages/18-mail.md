@@ -1,9 +1,8 @@
-# 📬 mail Messages (1800-1899)
+# 📬 Mail Messages (1800-1899)
 
 **Kategorie:** 18  
 **Range:** 1800-1899  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,70 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **mail** Funktionalität im 2DMMO.
-
-Mail-System: Inbox, Send, Attachments, COD und Expiration.
+Mail-System mit Attachments und Gold-Transfer.
 
 ---
 
-## 📝 Message-Liste
+## MailSend (1800)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Recipient | string | Empfänger-Name | Ja |
+| Subject | string | Betreff | Ja |
+| Body | string | Mail-Text | Ja |
+| Gold | long | Attached Gold | Nein |
+| Items | List<uint> | Attached Item-IDs | Nein |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## MailReceive (1801)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MailId | string | Mail-ID | Ja |
+| Sender | string | Sender-Name | Ja |
+| Subject | string | Betreff | Ja |
+| HasAttachment | bool | Hat Attachments? | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## MailOpen (1802)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MailId | string | Mail-ID | Ja |
+
+---
+
+## MailTakeAttachment (1806)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MailId | string | Mail-ID | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

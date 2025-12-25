@@ -1,9 +1,8 @@
-# 🌍 world Messages (2600-2699)
+# 🌍 World Messages (2600-2699)
 
 **Kategorie:** 26  
 **Range:** 2600-2699  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,56 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **world** Funktionalität im 2DMMO.
-
-World-State: Weather, Time, World-Events und Server-First Announcements.
+World-Events und Dynamic-Content.
 
 ---
 
-## 📝 Message-Liste
+## WorldEventStart (2600)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EventId | uint | Event-ID | Ja |
+| Title | string | Event-Name | Ja |
+| Duration | int | Duration (Sekunden) | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## WorldBossSpawn (2610)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BossId | uint | Boss-ID | Ja |
+| X | float | Position X | Ja |
+| Y | float | Position Y | Ja |
+| ZoneId | uint | Zone-ID | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## WorldStateUpdate (2620)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| StateId | uint | State-ID | Ja |
+| Value | int | Neuer Wert | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

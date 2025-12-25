@@ -1,9 +1,8 @@
-# 🔨 crafting Messages (1600-1699)
+# 🔨 Crafting Messages (1600-1699)
 
 **Kategorie:** 16  
 **Range:** 1600-1699  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,67 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **crafting** Funktionalität im 2DMMO.
-
-Crafting und Professions: Recipes, Progress, Gathering und Skill-Ups.
+Crafting-System mit Recipes und Professions.
 
 ---
 
-## 📝 Message-Liste
+## CraftRecipe (1600)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| RecipeId | uint | Recipe-ID | Ja |
+| Quantity | int | Anzahl zu craften | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## CraftResult (1601)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Craft erfolgreich? | Ja |
+| ItemId | uint | Gecraftetes Item | Bei Success |
+| ErrorCode | string | Error | Bei Fehler |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## RecipeLearn (1610)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| RecipeId | uint | Zu lernendes Recipe | Ja |
+
+---
+
+## ProfessionSkillUp (1620)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Profession | string | "blacksmith", "enchanter", "alchemist" | Ja |
+| NewSkill | int | Neuer Skill-Level | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

@@ -1,9 +1,8 @@
-# 🏛️ instance Messages (2400-2499)
+# 🏛️ Instance Messages (2400-2499)
 
 **Kategorie:** 24  
 **Range:** 2400-2499  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,61 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **instance** Funktionalität im 2DMMO.
-
-Instancing, Dungeons, Raids: Create, Join, Lockouts und Encounters.
+Instanced-Dungeons und Raids.
 
 ---
 
-## 📝 Message-Liste
+## InstanceEnter (2400)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| InstanceId | uint | Instance-ID | Ja |
+| Difficulty | string | "normal", "heroic", "mythic" | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## InstanceLeave (2401)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## InstanceLockout (2410)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| InstanceId | uint | Instance-ID | Ja |
+| ResetTime | long | Unix Timestamp | Ja |
+
+---
+
+## InstanceProgress (2411)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BossesKilled | int | Getötete Bosse | Ja |
+| TotalBosses | int | Total Bosse | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

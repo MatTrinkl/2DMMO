@@ -1,9 +1,8 @@
-# ⚙️ settings Messages (3000-3099)
+# ⚙️ Settings Messages (3000-3099)
 
 **Kategorie:** 30  
 **Range:** 3000-3099  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,38 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **settings** Funktionalität im 2DMMO.
-
-Settings-Sync: Keybindings, UI-Layout, Macros und Addon-Data.
+Client-Settings synchronisiert mit Server.
 
 ---
 
-## 📝 Message-Liste
+## SettingsSync (3000)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten (Login)  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Settings | Dictionary<string, string> | Key-Value Settings | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## SettingsUpdate (3001)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Key | string | Setting-Key | Ja |
+| Value | string | Setting-Value | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

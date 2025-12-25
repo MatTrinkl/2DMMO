@@ -1,9 +1,9 @@
-# ⚪ reserved Messages (4800-4899)
+# ⚪ Reserved Messages (4800-4899)
 
 **Kategorie:** 48  
 **Range:** 4800-4899  
 **Phase:** Reserved  
-**Status:** ⚪
+**Status:** ⚪ Reserviert
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,31 +11,23 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **reserved** Funktionalität im 2DMMO.
+Diese Kategorie ist **reserviert für zukünftige Features**.
 
-Reservierter Block für zukünftige Features.
-
----
-
-## 📝 Message-Liste
-
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
-
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
+Aktuell sind keine Messages in diesem Range definiert.
 
 ---
 
-## 🎯 Wichtige Messages
+## 🔮 Mögliche zukünftige Features
 
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+- **Minigame-System** (Poker, Dice, Card-Games)
+- **Toybox-System** (Toys, Fun-Items, Cosmetic-Effects)
+- **Weather-System** (Dynamic Weather, Weather-Effects)
+- **Calendar-System** (In-Game-Calendar, Reminders)
+- **Journal-System** (Player-Notes, Quest-Journal)
+- **Screenshot-System** (In-Game-Screenshots, Filters)
+- **Mentorship-System** (Mentor-Mentee, Referrals)
+- **Guild-Alliances** (Multi-Guild-Alliances)
+- **Cross-Server-Features** (Cross-Server-Parties, Realms)
 
 ---
 
@@ -45,7 +37,7 @@ Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+**Letzte Aktualisierung**: 2025-12-25  
+**Version**: 2.0.0
 
 [← Zurück zur Übersicht](README.md)

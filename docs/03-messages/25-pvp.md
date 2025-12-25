@@ -1,9 +1,8 @@
-# ⚔️ pvp Messages (2500-2599)
+# ⚔️ PvP Messages (2500-2599)
 
 **Kategorie:** 25  
 **Range:** 2500-2599  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,80 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **pvp** Funktionalität im 2DMMO.
-
-PvP-System: Flagging, Honor, Arena, Battlegrounds und Rankings.
+PvP-System mit Arenas und Battlegrounds.
 
 ---
 
-## 📝 Message-Liste
+## PvPFlagToggle (2500)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** �� Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Enabled | bool | PvP aktivieren? | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## PvPKill (2501)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| KillerId | int | Killer-ID | Ja |
+| VictimId | int | Victim-ID | Ja |
+| HonorGain | int | Honor-Points | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## ArenaQueue (2510)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ArenaType | string | "2v2", "3v3", "5v5" | Ja |
+
+---
+
+## ArenaMatch (2511)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MatchId | string | Match-ID | Ja |
+| Team1 | List<int> | Team 1 Player-IDs | Ja |
+| Team2 | List<int> | Team 2 Player-IDs | Ja |
+
+---
+
+## BattlegroundQueue (2520)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BattlegroundId | uint | BG-ID | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

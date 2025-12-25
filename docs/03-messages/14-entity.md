@@ -1,9 +1,8 @@
-# 👾 entity Messages (1400-1499)
+# 👾 Entity Messages (1400-1499)
 
 **Kategorie:** 14  
 **Range:** 1400-1499  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,73 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **entity** Funktionalität im 2DMMO.
-
-Entity-Spawning und Synchronisation für Spieler, NPCs und Objekte.
+Generic Entity-System für alle Game-Objects.
 
 ---
 
-## 📝 Message-Liste
+## EntitySpawn (1400)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+| EntityType | string | "player", "npc", "monster", "object" | Ja |
+| X | float | Position X | Ja |
+| Y | float | Position Y | Ja |
+| Name | string | Entity-Name | Nein |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## EntityDespawn (1401)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## EntityMove (1402)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** ⚡ Extrem häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+| X | float | Neue Position X | Ja |
+| Y | float | Neue Position Y | Ja |
+| VelocityX | float | Velocity X | Ja |
+| VelocityY | float | Velocity Y | Ja |
+
+---
+
+## EntityUpdate (1403)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+| HP | int | Health | Nein |
+| MaxHP | int | Max Health | Nein |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

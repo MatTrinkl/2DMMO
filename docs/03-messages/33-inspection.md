@@ -1,9 +1,8 @@
-# 🔍 inspection Messages (3300-3399)
+# 🔍 Inspection Messages (3300-3399)
 
 **Kategorie:** 33  
 **Range:** 3300-3399  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,39 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **inspection** Funktionalität im 2DMMO.
-
-Character-Inspection: Equipment, Talents, Achievements und Statistics.
+Character-Inspection (Equipment, Stats).
 
 ---
 
-## 📝 Message-Liste
+## InspectRequest (3300)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TargetId | int | Zu inspizierender Spieler | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## InspectResponse (3301)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| PlayerId | int | Player-ID | Ja |
+| Equipment | List<EquipSlotInfo> | Equipment | Ja |
+| Stats | CharacterStats | Stats | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

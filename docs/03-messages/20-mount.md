@@ -1,9 +1,8 @@
-# 🐴 mount Messages (2000-2099)
+# 🐴 Mount Messages (2000-2099)
 
 **Kategorie:** 20  
 **Range:** 2000-2099  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,59 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **mount** Funktionalität im 2DMMO.
-
-Mounts, Pets und Companions: Summon, Dismiss und Commands.
+Mount-System für schnelleres Reisen.
 
 ---
 
-## 📝 Message-Liste
+## MountSummon (2000)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MountId | uint | Mount-ID | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## MountDismount (2001)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## MountSpeed (2002)
+
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| PlayerId | int | Player-ID | Ja |
+| SpeedMultiplier | float | Speed (z.B. 1.6 = 60% faster) | Ja |
+
+---
+
+## MountLearn (2010)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MountId | uint | Zu lernendes Mount | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

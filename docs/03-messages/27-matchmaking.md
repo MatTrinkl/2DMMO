@@ -1,9 +1,8 @@
-# 🔍 matchmaking Messages (2700-2799)
+# 🎮 Matchmaking Messages (2700-2799)
 
 **Kategorie:** 27  
 **Range:** 2700-2799  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,52 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **matchmaking** Funktionalität im 2DMMO.
-
-Matchmaking und Queue-System für Dungeons, Raids und PvP.
+Matchmaking für Dungeons, PvP, und Raids.
 
 ---
 
-## 📝 Message-Liste
+## MatchmakingQueue (2700)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| QueueType | string | "dungeon", "pvp", "raid" | Ja |
+| Role | string | "tank", "healer", "dps" | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## MatchFound (2701)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MatchId | string | Match-ID | Ja |
+| AcceptTimeout | int | Sekunden zum Accept | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## MatchAccept (2702)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| MatchId | string | Match-ID | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)
