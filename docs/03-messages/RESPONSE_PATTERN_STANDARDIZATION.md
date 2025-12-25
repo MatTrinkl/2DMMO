@@ -33,7 +33,7 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 
 ## ✅ Abgeschlossene Dateien
 
-### 00-connection.md (IDs 21-24)
+### 00-connection.md (IDs 21-24) ✅
 
 | Request | Neue Response | ID | Status |
 |---------|---------------|-----|--------|
@@ -42,14 +42,25 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | CharacterDelete | CharacterDeleteResponse | 23 | ✅ |
 | ServerSelect | ServerSelectResponse | 24 | ✅ |
 
-### 02-movement.md (IDs 220-221)
+### 02-movement.md (IDs 220-221) ✅
 
 | Request | Neue Response | ID | Status |
 |---------|---------------|-----|--------|
 | TeleportRequest | TeleportResponse | 220 | ✅ |
 | JumpRequest | JumpResponse | 221 | ✅ |
 
-### 06-character.md (IDs 650-655)
+### 04-chat.md (IDs 440-445) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| ChatMessage | ChatMessageResponse | 440 | ✅ |
+| ChatChannelJoin | ChatChannelJoinResponse | 441 | ✅ |
+| ChatChannelCreate | ChatChannelCreateResponse | 442 | ✅ |
+| ChatChannelDelete | ChatChannelDeleteResponse | 443 | ✅ |
+| ChatChannelPassword | ChatChannelPasswordResponse | 444 | ✅ |
+| ChatChannelMute | ChatChannelMuteResponse | 445 | ✅ |
+
+### 06-character.md (IDs 650-655) ✅
 
 | Request | Neue Response | ID | Status |
 |---------|---------------|-----|--------|
@@ -60,7 +71,20 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | SpecializationChange | SpecializationChangeResponse | 654 | ✅ |
 | TitleChange | TitleChangeResponse | 655 | ✅ |
 
-**Fortschritt:** 12 neue Response-Messages definiert
+### 07-party.md (IDs 740-747) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| PartyInvite | PartyInviteResponse | 740 | ✅ |
+| PartyAccept | PartyAcceptResponse | 741 | ✅ |
+| PartyLeave | PartyLeaveResponse | 742 | ✅ |
+| PartyKick | PartyKickResponse | 743 | ✅ |
+| PartyPromote | PartyPromoteResponse | 744 | ✅ |
+| PartyDisband | PartyDisbandResponse | 745 | ✅ |
+| PartyLootMode | PartyLootModeResponse | 746 | ✅ |
+| PartyReadyCheck | PartyReadyCheckStartResponse | 747 | ✅ |
+
+**Fortschritt:** 26 neue Response-Messages definiert
 
 ---
 
@@ -274,9 +298,11 @@ var errorResponse = new [MessageName]Response
 
 ## 📊 Fortschritt
 
-- **Abgeschlossene Dateien:** 3/20+ (15%)
-- **Neue Response-Messages definiert:** 12
-- **Verbleibende Response-Messages:** ~40-50 (geschätzt)
+- **Abgeschlossene Dateien:** 5/20+ (25%)
+- **Neue Response-Messages definiert:** 26
+- **Verbleibende Response-Messages:** ~25-30 (geschätzt)
+
+**Status:** 🟢 In Bearbeitung - Fortschritt läuft gut!
 
 ---
 
