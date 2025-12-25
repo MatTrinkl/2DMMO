@@ -1,9 +1,8 @@
-# 😄 emote Messages (2200-2299)
+# 😄 Emote Messages (2200-2299)
 
 **Kategorie:** 22  
 **Range:** 2200-2299  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,39 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **emote** Funktionalität im 2DMMO.
-
-Emotes, Animations, Cosmetics und Toys.
+Emote-System für Charakter-Animationen.
 
 ---
 
-## 📝 Message-Liste
+## EmotePlay (2200)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EmoteId | uint | Emote-ID | Ja |
+| TargetId | int | Target (optional) | Nein |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## EmoteBroadcast (2201)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| PlayerId | int | Player-ID | Ja |
+| EmoteId | uint | Emote-ID | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

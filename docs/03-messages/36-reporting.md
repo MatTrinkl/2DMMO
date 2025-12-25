@@ -1,9 +1,8 @@
-# 🚨 reporting Messages (3600-3699)
+# 🚩 Reporting Messages (3600-3699)
 
 **Kategorie:** 36  
 **Range:** 3600-3699  
-**Phase:** Phase 2  
-**Status:** 🟡
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,40 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **reporting** Funktionalität im 2DMMO.
-
-Reporting und Moderation: Player-Reports, Bugs und Feedback.
+Reporting-System für Moderation.
 
 ---
 
-## 📝 Message-Liste
+## PlayerReport (3600)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TargetName | string | Reported Player | Ja |
+| Reason | string | "spam", "harassment", "cheating", "inappropriate_name" | Ja |
+| Description | string | Details | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## ReportConfirmation (3601)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ReportId | string | Report-ID | Ja |
+| Timestamp | long | Unix Timestamp | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

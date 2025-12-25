@@ -1,9 +1,8 @@
-# 🗣️ npc Messages (1300-1399)
+# 🤖 NPC Messages (1300-1399)
 
 **Kategorie:** 13  
 **Range:** 1300-1399  
-**Phase:** Phase 2  
-**Status:** ��
+**Phase:** Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,96 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **npc** Funktionalität im 2DMMO.
-
-NPC-Interaktion: Dialog, Vendor, Trainer, Quest-Giver und Service-NPCs.
+NPC-Interaction und Dialog-System.
 
 ---
 
-## 📝 Message-Liste
+## NPCInteract (1300)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC Entity-ID | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## NPCDialogOpen (1301)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC-ID | Ja |
+| DialogText | string | Dialog-Text | Ja |
+| Options | List<DialogOption> | Dialog-Optionen | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## NPCDialogSelect (1302)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC-ID | Ja |
+| OptionId | uint | Gewählte Option | Ja |
+
+---
+
+## VendorOpen (1310)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-NPC-ID | Ja |
+| Items | List<VendorItem> | Verkaufte Items | Ja |
+
+---
+
+## VendorBuy (1311)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-ID | Ja |
+| ItemId | uint | Item-ID | Ja |
+| Quantity | int | Anzahl | Ja |
+
+---
+
+## VendorSell (1312)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| InventorySlot | byte | Zu verkaufendes Item | Ja |
+| Quantity | int | Anzahl | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

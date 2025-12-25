@@ -1,9 +1,8 @@
-# 🏦 bank Messages (4000-4099)
+# 🏦 Bank Messages (4000-4099)
 
 **Kategorie:** 40  
 **Range:** 4000-4099  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,79 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **bank** Funktionalität im 2DMMO.
-
-Bank und Storage: Personal-Bank, Guild-Bank und Void-Storage.
+Bank-System für zusätzlichen Storage.
 
 ---
 
-## 📝 Message-Liste
+## BankOpen (4000)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Banker-NPC-ID | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## BankSync (4001)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Items | List<BankItem> | Bank-Items | Ja |
+| TotalSlots | int | Total Slots | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## BankDeposit (4010)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| InventorySlot | byte | Inventory-Slot | Ja |
+| Quantity | int | Anzahl | Ja |
+
+---
+
+## BankWithdraw (4011)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BankSlot | byte | Bank-Slot | Ja |
+| Quantity | int | Anzahl | Ja |
+
+---
+
+## BankExpand (4020)
+
+**Richtung:** �� Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TabIndex | byte | Bank-Tab | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

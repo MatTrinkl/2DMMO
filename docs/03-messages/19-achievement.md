@@ -1,9 +1,8 @@
-# 🏆 achievement Messages (1900-1999)
+# 🏆 Achievement Messages (1900-1999)
 
 **Kategorie:** 19  
 **Range:** 1900-1999  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,54 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **achievement** Funktionalität im 2DMMO.
-
-Achievements, Titles und Progress-Tracking.
+Achievement-System mit Progress-Tracking und Rewards.
 
 ---
 
-## 📝 Message-Liste
+## AchievementUnlock (1900)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| AchievementId | uint | Achievement-ID | Ja |
+| Title | string | Achievement-Name | Ja |
+| Points | int | Achievement-Points | Ja |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## AchievementProgress (1901)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📡 Broadcast  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| AchievementId | uint | Achievement-ID | Ja |
+| Progress | int | Current Progress | Ja |
+| Required | int | Required Progress | Ja |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## AchievementList (1902)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Achievements | List<AchievementInfo> | Achievements | Ja |
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)

@@ -1,9 +1,8 @@
-# 📊 leaderboard Messages (2800-2899)
+# 🏅 Leaderboard Messages (2800-2899)
 
 **Kategorie:** 28  
 **Range:** 2800-2899  
-**Phase:** Phase 3  
-**Status:** 🔵
+**Phase:** Phase 3
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,41 +10,45 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **leaderboard** Funktionalität im 2DMMO.
-
-Leaderboards, Rankings und Season-System.
+Leaderboards und Rankings.
 
 ---
 
-## 📝 Message-Liste
+## LeaderboardRequest (2800)
 
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja
 
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
-
----
-
-## 🎯 Wichtige Messages
-
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
-
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| LeaderboardType | string | "pvp", "pve", "arena" | Ja |
+| Bracket | string | "2v2", "3v3", "5v5" | Nein |
 
 ---
 
-## 🔗 Verwandte Kategorien
+## LeaderboardResponse (2801)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Entries | List<LeaderboardEntry> | Top-Entries | Ja |
+
+**LeaderboardEntry**:
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| Rank | int | Rank |
+| PlayerName | string | Name |
+| Rating | int | Rating/Score |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)
