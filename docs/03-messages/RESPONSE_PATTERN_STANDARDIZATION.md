@@ -49,6 +49,15 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | TeleportRequest | TeleportResponse | 220 | ✅ |
 | JumpRequest | JumpResponse | 221 | ✅ |
 
+### 03-combat.md (IDs 321-322) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| ThreatListRequest | ThreatListResponse | 321 | ✅ |
+| ResurrectionRequest | ResurrectionResponse | 322 | ✅ |
+
+**Notiz:** ActionResult (301) bereits korrekt mit Success-Pattern!
+
 ### 04-chat.md (IDs 440-445) ✅
 
 | Request | Neue Response | ID | Status |
@@ -59,6 +68,19 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | ChatChannelDelete | ChatChannelDeleteResponse | 443 | ✅ |
 | ChatChannelPassword | ChatChannelPasswordResponse | 444 | ✅ |
 | ChatChannelMute | ChatChannelMuteResponse | 445 | ✅ |
+
+### 05-inventory.md (IDs 520-527) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| ItemMove | ItemMoveResponse | 520 | ✅ |
+| ItemSplit | ItemSplitResponse | 521 | ✅ |
+| ItemUse | ItemUseResponse | 522 | ✅ |
+| ItemDelete | ItemDeleteResponse | 523 | ✅ |
+| ItemStack | ItemStackResponse | 524 | ✅ |
+| ItemSort | ItemSortResponse | 525 | ✅ |
+| ItemLock | ItemLockResponse | 526 | ✅ |
+| BagExpand | BagExpandResponse | 527 | ✅ |
 
 ### 06-character.md (IDs 650-655) ✅
 
@@ -84,7 +106,51 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | PartyLootMode | PartyLootModeResponse | 746 | ✅ |
 | PartyReadyCheck | PartyReadyCheckStartResponse | 747 | ✅ |
 
-**Fortschritt:** 26 neue Response-Messages definiert
+### 08-guild.md (IDs 840-851) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| GuildCreate | GuildCreateResponse | 840 | ✅ |
+| GuildInvite | GuildInviteResponse | 841 | ✅ |
+| GuildLeave | GuildLeaveResponse | 842 | ✅ |
+| GuildKick | GuildKickResponse | 843 | ✅ |
+| GuildDisband | GuildDisbandResponse | 844 | ✅ |
+| GuildPromote | GuildPromoteResponse | 845 | ✅ |
+| GuildDemote | GuildDemoteResponse | 846 | ✅ |
+| GuildRankEdit | GuildRankEditResponse | 847 | ✅ |
+| GuildMOTD | GuildMOTDResponse | 848 | ✅ |
+| GuildMessage | GuildMessageResponse | 849 | ✅ |
+| GuildBankDeposit | GuildBankDepositResponse | 850 | ✅ |
+| GuildBankWithdraw | GuildBankWithdrawResponse | 851 | ✅ |
+
+### 12-targeting.md (IDs 1220-1225) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| TargetSelect | TargetSelectResponse | 1220 | ✅ |
+| AssistTarget | AssistTargetResponse | 1221 | ✅ |
+| MarkTarget | MarkTargetResponse | 1222 | ✅ |
+| TabTarget | TabTargetResponse | 1223 | ✅ |
+| NearestEnemyTarget | NearestEnemyTargetResponse | 1224 | ✅ |
+| NearestFriendTarget | NearestFriendTargetResponse | 1225 | ✅ |
+
+### 13-npc.md (IDs 1350-1354) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| VendorBuy | VendorBuyResponse | 1350 | ✅ |
+| VendorSell | VendorSellResponse | 1351 | ✅ |
+| VendorBuyback | VendorBuybackResponse | 1352 | ✅ |
+| TrainerLearn | TrainerLearnResponse | 1353 | ✅ |
+| RepairAll | RepairAllResponse | 1354 | ✅ |
+
+### 14-entity.md (IDs 1440) ✅
+
+| Request | Neue Response | ID | Status |
+|---------|---------------|-----|--------|
+| EntityTarget | EntityTargetResponse | 1440 | ✅ |
+
+**Fortschritt:** 60 neue Response-Messages definiert
 
 ---
 
@@ -298,11 +364,11 @@ var errorResponse = new [MessageName]Response
 
 ## 📊 Fortschritt
 
-- **Abgeschlossene Dateien:** 5/20+ (25%)
-- **Neue Response-Messages definiert:** 26
-- **Verbleibende Response-Messages:** ~25-30 (geschätzt)
+- **Abgeschlossene Dateien:** 11/20+ (55%)
+- **Neue Response-Messages definiert:** 60
+- **Verbleibende Response-Messages:** ~5-10 (optionale Kategorien)
 
-**Status:** 🟢 In Bearbeitung - Fortschritt läuft gut!
+**Status:** 🟢 Hauptarbeit Abgeschlossen! Alle wichtigen Kategorien standardisiert.
 
 ---
 

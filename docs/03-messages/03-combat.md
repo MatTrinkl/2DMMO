@@ -64,8 +64,10 @@ Diese Message ist das Herzstück des combat-Systems. Der Client sendet die gewü
 | SequenceNumber | uint | Client Sequence für Prediction | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ActionResult` (301) + Follow-up Events (`DamageEvent` 302, `HealEvent` 304, etc.)
-- **Bei Fehler:** `ErrorMessage` (910) mit Code
+- `ActionResult` (301) - bereits korrekt mit Success-Pattern!
+
+### Folge-Messages bei Erfolg
+- `DamageEvent` (302), `HealEvent` (304), etc. je nach Action
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -823,7 +825,10 @@ Client fragt Threat-Table eines NPC ab (für Threat-Meter).
 | TargetId | int | NPC-ID | Ja |
 
 ### Erwartete Response
-- **Bei Erfolg:** `ThreatUpdate` (312)
+- `ThreatListResponse` (321)
+
+### Folge-Messages bei Erfolg
+- `ThreatUpdate` (312) mit Threat-Liste
 
 ---
 
@@ -1252,8 +1257,10 @@ public enum RezType : byte
 ```
 
 ### Erwartete Response
-- **Bei Erfolg:** `Resurrection` Event (331) Broadcast an nahestehende Spieler
-- **Bei Fehler:** `ErrorMessage` (910)
+- `ResurrectionResponse` (322)
+
+### Folge-Messages bei Erfolg
+- `Resurrection` Event (331) Broadcast an nahestehende Spieler
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
@@ -1386,6 +1393,60 @@ Full Combat-State Synchronisation (nach Reconnect oder Zone-Transfer).
 
 ---
 
+## ThreatListResponse (321)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf ThreatListRequest. Liefert die Threat-Liste einer Entity.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Request erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| EntityId | int | Entity deren Threat-Liste | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ENTITY_NOT_FOUND` | Entity existiert nicht |
+| `NO_THREAT_DATA` | Keine Threat-Daten verfügbar |
+
+---
+
+## ResurrectionResponse (322)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf Resurrection Request. Bestätigt erfolgreiche Wiederbelebung oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Resurrection erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetId | int | Wiederbelebter Spieler | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `TARGET_NOT_DEAD` | Target ist nicht tot |
+| `OUT_OF_RANGE` | Zu weit entfernt |
+| `INSUFFICIENT_MANA` | Nicht genug Mana |
+| `IN_COMBAT` | Im Kampf |
+
+---
+
 ## 🔗 Verwandte Kategorien
 
 - **Movement (02)**: Crowd Control Effects (Root, Stun) → `RootEvent` (218), `StunMovement` (219)
@@ -1396,8 +1457,8 @@ Full Combat-State Synchronisation (nach Reconnect oder Zone-Transfer).
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 2.0.0  
-**Status**: ✅ Vollständig dokumentiert (33/33 Messages)
+**Letzte Aktualisierung**: 2025-12-25  
+**Version**: 2.1.0  
+**Status**: ✅ Vollständig dokumentiert (35/35 Messages)
 
 [← Zurück zur Übersicht](README.md)
