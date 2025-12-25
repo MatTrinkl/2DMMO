@@ -1,51 +1,622 @@
-# 🎯 targeting Messages (1200-1299)
+# 🎯 Targeting Messages (1200-1299)
 
 **Kategorie:** 12  
 **Range:** 1200-1299  
 **Phase:** Phase 2  
-**Status:** 🟡
+**Status:** 🟡 Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
 ---
 
+## 📋 Inhaltsverzeichnis
+
+- [TargetSelect (1200)](#targetselect-1200)
+- [TargetClear (1201)](#targetclear-1201)
+- [TargetUpdate (1202)](#targetupdate-1202)
+- [TargetInfoRequest (1203)](#targetinforequest-1203)
+- [TargetInfoResponse (1204)](#targetinforesponse-1204)
+- [TargetOfTarget (1205)](#targetoftarget-1205)
+- [TargetOfTargetUpdate (1206)](#targetoftargetupdate-1206)
+- [FocusTarget (1207)](#focustarget-1207)
+- [FocusClear (1208)](#focusclear-1208)
+- [AssistTarget (1209)](#assisttarget-1209)
+- [MarkTarget (1210)](#marktarget-1210)
+- [MarkClear (1211)](#markclear-1211)
+- [MarkClearAll (1212)](#markclearall-1212)
+- [MouseoverTarget (1213)](#mouseovertarget-1213)
+- [TabTarget (1214)](#tabtarget-1214)
+- [NearestEnemyTarget (1215)](#nearestenemytarget-1215)
+- [NearestFriendTarget (1216)](#nearestfriendtarget-1216)
+
+---
+
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **targeting** Funktionalität im 2DMMO.
+Diese Kategorie umfasst alle Messages für das **Targeting-System** im 2DMMO.
 
-Target-Selection, Focus-Target, Marking und Assist-Funktionalität.
+Das Targeting-System implementiert:
+- Target-Selektion (Click, Tab, Nearest, Mouseover)
+- Target-Information Abfrage
+- Focus-Target (sekundäres Target)
+- Target-of-Target (ToT) Mechanik
+- Raid-Marker und Target-Marking
+- Assist-Functionality für Gruppen
 
----
-
-## 📝 Message-Liste
-
-Siehe [MESSAGES.md](../02-architecture/MESSAGES.md) für die vollständige Liste aller MessageTypes in dieser Kategorie.
-
-### Implementierungs-Status
-
-- **Prototyp**: Grundlegende Funktionalität implementiert
-- **Phase 2**: Erweiterte Features geplant  
-- **Phase 3**: Zukünftige Erweiterungen
+**Client Authority**: Target-Selection ist primär client-seitig. Server validiert Target für Actions und sendet Target-Info.
 
 ---
 
-## 🎯 Wichtige Messages
+## TargetSelect (1200)
 
-Die wichtigsten Messages in dieser Kategorie werden im Laufe der Entwicklung hier detailliert dokumentiert.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
-Für die aktuelle MessageType-Definition siehe:
-- [MessageType.cs](../../../shared/Mmo.Shared/Enums/MessageType.cs)
-- [MESSAGES.md](../02-architecture/MESSAGES.md)
+### Beschreibung
+Client teilt Server mit dass Entity targetiert wurde. Server sendet Target-Info zurück und trackt Target für Abilities.
+
+### Im Scope ✅
+- Entity targetieren (Spieler, NPC, Object)
+- Target-Info-Request
+- Server-seitige Target-Tracking
+
+### Nicht im Scope ❌
+- Auto-Targeting → verwende `TabTarget` (1214) oder `NearestEnemyTarget` (1215)
+- Focus-Target → verwende `FocusTarget` (1207)
+- Target-Info ohne Targeting → verwende `TargetInfoRequest` (1203)
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID des Targets | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+- **Bei Fehler:** `ErrorMessage` (910) wenn Entity nicht existiert
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `TargetUpdate` | 1202 | Server bestätigt Target-Change |
+| `TargetInfoResponse` | 1204 | Target-Details |
+| `TargetClear` | 1201 | Target aufheben |
+
+### Beispiel Payload
+```csharp
+var targetSelect = new TargetSelect
+{
+    Type = MessageType.TargetSelect,
+    EntityId = 50001
+};
+```
+
+### Notizen
+- **Range**: Keine Range-Limit für Targeting (nur für Actions)
+- **Dead Entities**: Tote Entities können targetiert werden (für Rez, Loot)
+- **Friendly Fire**: Eigene Faction kann targetiert werden
+- **UI**: Client zeigt Target-Frame
 
 ---
 
-## 🔗 Verwandte Kategorien
+## TargetClear (1201)
 
-Siehe [Message-Referenz Übersicht](README.md) für Links zu verwandten Message-Kategorien.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client löscht aktuelles Target. Server cleared Target-Tracking.
+
+### Request Payload
+Keine zusätzlichen Felder
+
+### Erwartete Response
+- **Immer:** `TargetUpdate` (1202) mit EntityId=0
+
+### Beispiel Payload
+```csharp
+var targetClear = new TargetClear
+{
+    Type = MessageType.TargetClear
+};
+```
+
+### Notizen
+- **Hotkey**: Standard Keybind: ESC
+- **Auto-Clear**: Bei Target-Death oder Despawn
+- **Combat**: Clearen im Combat ist erlaubt
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
+## TargetUpdate (1202)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server bestätigt Target-Change. Client updated UI.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Neue Target Entity-ID (0 = kein Target) | Ja |
+
+### Beispiel Payload
+```csharp
+var targetUpdate = new TargetUpdate
+{
+    Type = MessageType.TargetUpdate,
+    EntityId = 50001 // 0 für Target Clear
+};
+```
+
+### Notizen
+- **EntityId=0**: Bedeutet kein Target
+- **UI**: Client zeigt/versteckt Target-Frame
+
+---
+
+## TargetInfoRequest (1203)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Fordert detaillierte Info über Entity an ohne zu targetieren. Für Mouseover-Tooltips.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+
+### Erwartete Response
+- **Immer:** `TargetInfoResponse` (1204)
+
+### Beispiel Payload
+```csharp
+var infoRequest = new TargetInfoRequest
+{
+    Type = MessageType.TargetInfoRequest,
+    EntityId = 50002
+};
+```
+
+### Notizen
+- **Mouseover**: Für Tooltip-Info ohne Target-Change
+- **Rate-Limit**: Max 10 Requests/Sekunde
+
+---
+
+## TargetInfoResponse (1204)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Detaillierte Entity-Informationen. Enthält Name, Level, Health, Faction, etc.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+| Name | string | Entity-Name | Ja |
+| Level | int | Level | Ja |
+| EntityType | string | "player", "npc", "object" | Ja |
+| Health | int | Current Health | Ja |
+| MaxHealth | int | Max Health | Ja |
+| HealthPercent | float | Health % (0.0-1.0) | Ja |
+| Faction | string | Fraktions-Name | Ja |
+| IsHostile | bool | Ist feindlich? | Ja |
+| IsDead | bool | Ist tot? | Ja |
+| Title | string | Titel (bei Spielern) | Nein |
+| GuildName | string | Guild-Name (bei Spielern) | Nein |
+
+### Beispiel Payload
+```csharp
+var infoResponse = new TargetInfoResponse
+{
+    Type = MessageType.TargetInfoResponse,
+    EntityId = 50001,
+    Name = "Aragorn",
+    Level = 10,
+    EntityType = "player",
+    Health = 850,
+    MaxHealth = 1000,
+    HealthPercent = 0.85f,
+    Faction = "Alliance",
+    IsHostile = false,
+    IsDead = false,
+    Title = "Ranger of the North",
+    GuildName = "Fellowship"
+};
+```
+
+### Notizen
+- **Privacy**: Gewisse Infos nur bei Friendly/Guild
+- **Health**: Boss-Health als Prozent (nicht absolute Werte)
+- **Caching**: Client kann cachen für Performance
+
+---
+
+## TargetOfTarget (1205)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client fragt nach Target-of-Target (ToT). Was targetiert mein Target?
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID | Ja |
+
+### Erwartete Response
+- **Immer:** `TargetOfTargetUpdate` (1206)
+
+### Beispiel Payload
+```csharp
+var totRequest = new TargetOfTarget
+{
+    Type = MessageType.TargetOfTarget,
+    EntityId = 50001
+};
+```
+
+### Notizen
+- **Use-Case**: Tank sieht wen Boss targetiert
+- **UI**: ToT-Frame im Target-Frame
+
+---
+
+## TargetOfTargetUpdate (1206)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Target-of-Target Information. Server sendet automatisch bei Target-Changes.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SourceEntityId | int | Original Entity | Ja |
+| TargetEntityId | int | Was Source targetiert (0 = kein Target) | Ja |
+| TargetName | string | Name des ToT | Nein |
+
+### Beispiel Payload
+```csharp
+var totUpdate = new TargetOfTargetUpdate
+{
+    Type = MessageType.TargetOfTargetUpdate,
+    SourceEntityId = 50001,
+    TargetEntityId = 50002,
+    TargetName = "Legolas"
+};
+```
+
+### Notizen
+- **Auto-Update**: Server sendet bei ToT-Change
+- **TargetEntityId=0**: Bedeutet kein Target
+
+---
+
+## FocusTarget (1207)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Setzt Focus-Target (sekundäres Target). Bleibt auch wenn Main-Target wechselt.
+
+### Im Scope ✅
+- Focus-Target setzen
+- Persistent Target (bleibt bei Main-Target-Change)
+- Abilities auf Focus casten
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity-ID für Focus | Ja |
+
+### Erwartete Response
+- **Immer:** Server trackt Focus, keine explizite Response
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `FocusClear` | 1208 | Focus aufheben |
+| `TargetSelect` | 1200 | Main-Target |
+
+### Beispiel Payload
+```csharp
+var focusTarget = new FocusTarget
+{
+    Type = MessageType.FocusTarget,
+    EntityId = 60001 // NPC/Boss
+};
+```
+
+### Notizen
+- **Use-Case**: Boss-Mechanics tracken während Add-Targeting
+- **Abilities**: Können mit @focus Modifier auf Focus gecastet werden
+- **UI**: Separates Focus-Frame
+
+---
+
+## FocusClear (1208)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Löscht Focus-Target.
+
+### Request Payload
+Keine zusätzlichen Felder
+
+### Notizen
+- **Hotkey**: Standard Keybind: SHIFT+F
+- **Auto-Clear**: Bei Focus-Death oder Despawn
+
+---
+
+## AssistTarget (1209)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Targetiert das Target von anderem Spieler (Assist). Für koordinierte Angriffe in Gruppen.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| AssistEntityId | int | Entity-ID des zu assistierenden Spielers | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+- **Bei Fehler:** Wenn Spieler kein Target hat
+
+### Beispiel Payload
+```csharp
+var assist = new AssistTarget
+{
+    Type = MessageType.AssistTarget,
+    AssistEntityId = 50001 // Assist Aragorn
+};
+```
+
+### Notizen
+- **Use-Case**: Tank ruft Target, DPS assisten
+- **Hotkey**: Standard Keybind: F (Assist Party-Leader)
+- **Macro**: Oft in Macros verwendet
+
+---
+
+## MarkTarget (1210)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
+
+### Beschreibung
+Markiert Target mit Raid-Marker (Skull, Cross, Square, etc.). Sichtbar für ganze Party/Raid.
+
+### Im Scope ✅
+- Raid-Marker setzen (8 Symbole)
+- Kill-Order markieren
+- CC-Targets markieren
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Zu markierende Entity | Ja |
+| MarkType | byte | Marker-Typ (0-7: Skull, Cross, Square, Moon, Triangle, Diamond, Circle, Star) | Ja |
+
+### Erwartete Response
+- **Bei Erfolg:** Broadcast an Party/Raid
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `MarkClear` | 1211 | Marker entfernen |
+| `MarkClearAll` | 1212 | Alle Marker entfernen |
+
+### Beispiel Payload
+```csharp
+var mark = new MarkTarget
+{
+    Type = MessageType.MarkTarget,
+    EntityId = 60001,
+    MarkType = 0 // Skull (Kill-Target)
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `NOT_LEADER` | Nicht Party/Raid-Leader | Ignorieren |
+| `NOT_IN_PARTY` | Nicht in Party/Raid | Ignorieren |
+
+### Notizen
+- **Permission**: Nur Leader können markieren
+- **Visual**: Icon über Entity-Kopf
+- **Use-Case**: Kill-Order, CC-Assignment, Tank-Swap
+
+---
+
+## MarkClear (1211)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
+
+### Beschreibung
+Entfernt Raid-Marker von Entity.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity mit zu entfernendem Marker | Ja |
+
+### Notizen
+- **Permission**: Nur Leader
+- **Auto-Clear**: Bei Entity-Death
+
+---
+
+## MarkClearAll (1212)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
+
+### Beschreibung
+Entfernt alle Raid-Marker.
+
+### Request Payload
+Keine zusätzlichen Felder
+
+### Notizen
+- **Use-Case**: Nach Boss-Kill, vor neuem Pull
+- **Hotkey**: Oft auf Macro gebunden
+
+---
+
+## MouseoverTarget (1213)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** ⚡ High-Frequency  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client informiert über Mouseover-Entity. Für Mouseover-Macros und @mouseover Abilities.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| EntityId | int | Entity unter Maus | Ja |
+
+### Notizen
+- **High-Frequency**: Nur bei Mouseover-Change senden
+- **Rate-Limit**: Max 20/Sekunde
+- **Use-Case**: @mouseover Healing-Macros
+
+---
+
+## TabTarget (1214)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Targetiert nächste Entity in Tab-Order (links nach rechts, nah nach fern).
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Reverse | bool | Rückwärts (SHIFT+TAB)? | Nein |
+
+### Erwartete Response
+- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+
+### Beispiel Payload
+```csharp
+var tabTarget = new TabTarget
+{
+    Type = MessageType.TabTarget,
+    Reverse = false
+};
+```
+
+### Notizen
+- **Hotkey**: TAB (forward), SHIFT+TAB (reverse)
+- **Filter**: Nur lebende Enemies
+- **Sort**: Nach Angle dann Distance
+
+---
+
+## NearestEnemyTarget (1215)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Targetiert nächsten feindlichen Entity (nur Distance, kein Angle).
+
+### Request Payload
+Keine zusätzlichen Felder
+
+### Erwartete Response
+- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+
+### Beispiel Payload
+```csharp
+var nearestEnemy = new NearestEnemyTarget
+{
+    Type = MessageType.NearestEnemyTarget
+};
+```
+
+### Notizen
+- **Use-Case**: Aggro-Übernahme, Quick-Target
+- **Filter**: Nur hostile, lebende Entities
+- **Sort**: Nur nach Distance (nicht Angle)
+
+---
+
+## NearestFriendTarget (1216)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Targetiert nächsten freundlichen Entity (für Heals/Buffs).
+
+### Request Payload
+Keine zusätzlichen Felder
+
+### Erwartete Response
+- **Bei Erfolg:** `TargetUpdate` (1202) + `TargetInfoResponse` (1204)
+
+### Notizen
+- **Use-Case**: Emergency-Heals, Quick-Rez
+- **Filter**: Nur friendly, lebende Entities
+- **Sort**: Nach Distance
+
+---
+
+**Letzte Aktualisierung**: 2025-12-25  
 **Version**: 1.0.0
 
 [← Zurück zur Übersicht](README.md)
