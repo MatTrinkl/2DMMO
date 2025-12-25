@@ -511,7 +511,7 @@ Antwort auf ReconnectRequest. Bestätigt erfolgreiche Wiederverbindung oder gibt
 | Success | bool | Reconnect erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Failed | Nein |
 | ErrorMessage | string | Menschenlesbare Message | Nein |
-| ZoneId | int | Aktuelle Zone-ID | Bei Erfolg |
+| ZoneId | ushort | Aktuelle Zone-ID | Bei Erfolg |
 | LastServerSequence | uint | Letzte Server Sequence Number | Bei Erfolg |
 | ResyncRequired | bool | Muss Client vollständig resynced werden? | Bei Erfolg |
 
@@ -835,7 +835,7 @@ Liste aller Characters des Accounts mit Basic-Informationen für Character-Selec
 | Race | int | Rassen-ID |
 | Class | int | Klassen-ID |
 | Level | int | Aktuelles Level |
-| ZoneId | int | Letzte Zone |
+| ZoneId | ushort | Letzte Zone |
 | LastPlayed | long | Unix Timestamp |
 | PendingDeletion | bool | Zum Löschen markiert? |
 | DeletionTime | long | Wann wird gelöscht (Unix Timestamp) |
