@@ -131,7 +131,7 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // GAME SYSTEMS
         // ════════════════════════════════════════════════════════════
-        services.AddSingleton<ZoneManager>(_ => new ZoneManager(defaultZoneId: 1));
+        services.AddSingleton<ZoneManager>(_ => new ZoneManager(1));
         services.AddSingleton<MessageRouter>();
 
         services.AddSingleton<GameServer>(sp =>

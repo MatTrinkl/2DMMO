@@ -19,7 +19,8 @@ public static class MessageSerializer
     ///     Registry mapping MessageType to deserialization function.
     ///     O(1) lookup for message deserialization with compiled expression delegates.
     /// </summary>
-    private static readonly Dictionary<MessageType, Func<ReadOnlyMemory<byte>, INetworkMessage>> _messageRegistry = new();
+    private static readonly Dictionary<MessageType, Func<ReadOnlyMemory<byte>, INetworkMessage>> _messageRegistry =
+        new();
 
     /// <summary>
     ///     Static constructor that automatically registers all message types with the [NetworkMessage] attribute.
@@ -28,7 +29,7 @@ public static class MessageSerializer
     static MessageSerializer()
     {
         // Find all types in the Mmo.Shared assembly that have the NetworkMessageAttribute
-        var assembly = typeof(INetworkMessage).Assembly;
+        Assembly assembly = typeof(INetworkMessage).Assembly;
         var messageTypes = assembly.GetTypes()
             .Where(t => t.GetCustomAttribute<NetworkMessageAttribute>() != null)
             .ToList();
@@ -43,33 +44,32 @@ public static class MessageSerializer
 
         if (unregisteredTypes.Any())
         {
-            var unregisteredNames = string.Join(", ", unregisteredTypes.Select(t => t.FullName));
+            string unregisteredNames = string.Join(", ", unregisteredTypes.Select(t => t.FullName));
             throw new InvalidOperationException(
                 $"The following types implement INetworkMessage but are missing the [NetworkMessage] attribute: {unregisteredNames}. " +
                 $"All message types must have the [NetworkMessage] attribute to be registered for deserialization.");
         }
 
         // Register each message type with a compiled expression delegate
-        foreach (var messageType in messageTypes)
+        foreach (Type messageType in messageTypes)
         {
             // Validate that the type implements INetworkMessage
             if (!typeof(INetworkMessage).IsAssignableFrom(messageType))
-            {
                 throw new InvalidOperationException(
                     $"Type {messageType.FullName} has [NetworkMessage] attribute but does not implement INetworkMessage interface.");
-            }
 
-            var attribute = messageType.GetCustomAttribute<NetworkMessageAttribute>()!;
+            NetworkMessageAttribute attribute = messageType.GetCustomAttribute<NetworkMessageAttribute>()!;
 
             // Check for duplicate registrations
-            if (_messageRegistry.TryGetValue(attribute.Type, out var existingDeserializer))
+            if (_messageRegistry.TryGetValue(attribute.Type,
+                    out Func<ReadOnlyMemory<byte>, INetworkMessage>? existingDeserializer))
             {
                 // Find the type that was previously registered for this MessageType
-                var existingType = messageTypes
+                Type? existingType = messageTypes
                     .FirstOrDefault(t => t != messageType &&
                                          t.GetCustomAttribute<NetworkMessageAttribute>()?.Type == attribute.Type);
 
-                var existingTypeName = existingType?.FullName ?? "<unknown>";
+                string existingTypeName = existingType?.FullName ?? "<unknown>";
 
                 throw new InvalidOperationException(
                     $"Duplicate MessageType registration detected: {attribute.Type} is registered for both {existingTypeName} and {messageType.FullName}");
@@ -77,7 +77,7 @@ public static class MessageSerializer
 
             // Create an optimized compiled expression delegate for deserialization
             // This avoids reflection overhead at runtime
-            var deserializer = CreateDeserializer(messageType);
+            Func<ReadOnlyMemory<byte>, INetworkMessage> deserializer = CreateDeserializer(messageType);
             _messageRegistry[attribute.Type] = deserializer;
         }
     }
@@ -90,14 +90,14 @@ public static class MessageSerializer
     {
         // Find the MessagePackSerializer.Deserialize<T> method with signature:
         // T Deserialize<T>(ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken)
-        var deserializeMethod = typeof(MessagePackSerializer)
+        MethodInfo? deserializeMethod = typeof(MessagePackSerializer)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Where(m => m.Name == nameof(MessagePackSerializer.Deserialize))
             .Where(m => m.IsGenericMethodDefinition)
             .Where(m => m.GetParameters().Length == 3)
             .Where(m =>
             {
-                var parameters = m.GetParameters();
+                ParameterInfo[] parameters = m.GetParameters();
                 return parameters[0].ParameterType == typeof(ReadOnlyMemory<byte>) &&
                        parameters[1].ParameterType == typeof(MessagePackSerializerOptions) &&
                        parameters[2].ParameterType == typeof(CancellationToken);
@@ -105,22 +105,20 @@ public static class MessageSerializer
             .FirstOrDefault();
 
         if (deserializeMethod == null)
-        {
             throw new InvalidOperationException(
                 "Could not find MessagePackSerializer.Deserialize<T>(ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken) method. " +
                 "This may indicate an incompatible version of MessagePack. Expected signature: T Deserialize<T>(ReadOnlyMemory<byte>, MessagePackSerializerOptions, CancellationToken).");
-        }
 
         // Create the generic method for this specific message type
-        var genericMethod = deserializeMethod.MakeGenericMethod(messageType);
+        MethodInfo genericMethod = deserializeMethod.MakeGenericMethod(messageType);
 
         // Build an expression tree: (data) => (INetworkMessage)MessagePackSerializer.Deserialize<T>(data, null, default)
-        var dataParam = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "data");
-        var nullOptions = Expression.Constant(null, typeof(MessagePackSerializerOptions));
-        var defaultToken = Expression.Default(typeof(CancellationToken));
+        ParameterExpression dataParam = Expression.Parameter(typeof(ReadOnlyMemory<byte>), "data");
+        ConstantExpression nullOptions = Expression.Constant(null, typeof(MessagePackSerializerOptions));
+        DefaultExpression defaultToken = Expression.Default(typeof(CancellationToken));
 
-        var methodCall = Expression.Call(genericMethod, dataParam, nullOptions, defaultToken);
-        var castToInterface = Expression.Convert(methodCall, typeof(INetworkMessage));
+        MethodCallExpression methodCall = Expression.Call(genericMethod, dataParam, nullOptions, defaultToken);
+        UnaryExpression castToInterface = Expression.Convert(methodCall, typeof(INetworkMessage));
 
         var lambda = Expression.Lambda<Func<ReadOnlyMemory<byte>, INetworkMessage>>(castToInterface, dataParam);
 
@@ -141,10 +139,8 @@ public static class MessageSerializer
     {
         MessageHeader header = MessagePackSerializer.Deserialize<MessageHeader>(data);
 
-        if (!_messageRegistry.TryGetValue(header.Type, out var deserializer))
-        {
+        if (!_messageRegistry.TryGetValue(header.Type, out Func<ReadOnlyMemory<byte>, INetworkMessage>? deserializer))
             throw new UnknownMessageTypeException(header.Type);
-        }
 
         return deserializer(data);
     }

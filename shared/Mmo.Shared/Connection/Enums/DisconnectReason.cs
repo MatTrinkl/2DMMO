@@ -22,20 +22,24 @@ public enum DisconnectReason
 
     /// <summary>Protocol violation or invalid data.</summary>
     ProtocolError,
+
     /// <summary>
-    /// Client was banned from the server.
+    ///     Client was banned from the server.
     /// </summary>
     Banned,
+
     /// <summary>
-    /// The server is shutting down for maintenance.
+    ///     The server is shutting down for maintenance.
     /// </summary>
     Maintenance,
+
     /// <summary>
-    /// There is another session with the same account.
+    ///     There is another session with the same account.
     /// </summary>
     DuplicateLogin,
+
     /// <summary>
-    /// The client have an incapable version of the game.
+    ///     The client have an incapable version of the game.
     /// </summary>
     VersionMismatch
 }

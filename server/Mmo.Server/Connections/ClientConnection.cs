@@ -242,10 +242,7 @@ public sealed class ClientConnection : IDisposable
                     // Deserialize message
                     INetworkMessage message = MessageSerializer.Deserialize(
                         new ReadOnlyMemory<byte>(bodyBuffer, 0, messageLength));
-                    if (message.GetType() != typeof(IClientMessage))
-                    {
-                        Disconnect(DisconnectReason.ProtocolError);
-                    }
+                    if (message is not IClientMessage) Disconnect(DisconnectReason.ProtocolError);
 
                     LastActivity = DateTimeOffset.UtcNow;
                     MessagesReceived++;
@@ -283,7 +280,7 @@ public sealed class ClientConnection : IDisposable
             return;
         try
         {
-            var forceDisconnectMessage = new ForceDisconnect()
+            var forceDisconnectMessage = new ForceDisconnect
                 { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
             Send(forceDisconnectMessage);
             _cts.Cancel();
@@ -297,8 +294,7 @@ public sealed class ClientConnection : IDisposable
         }
         finally
         {
-            OnDisconnected?. Invoke(this, message ??  reason. ToString());
-            Dispose();
+            OnDisconnected?.Invoke(this, message ?? reason.ToString());
         }
     }
 

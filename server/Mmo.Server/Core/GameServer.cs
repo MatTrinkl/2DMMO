@@ -9,7 +9,6 @@ using Mmo.Server.Network;
 using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Enums;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Constants;

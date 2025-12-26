@@ -4,38 +4,38 @@ using Mmo.Shared.Connection.Enums;
 namespace Mmo.Shared.Connection.Records;
 
 /// <summary>
-/// Contains the core information of a realm.
+///     Contains the core information of a realm.
 /// </summary>
 [MessagePackObject]
-public record RealmInfo()
+public record RealmInfo
 {
     /// <summary>
-    /// The ID of a realm.
+    ///     The ID of a realm.
     /// </summary>
     [property: Key(0)]
-    int RealmId { get; set; }
+    private int RealmId { get; set; }
 
     /// <summary>
-    /// The Name of the realm
+    ///     The Name of the realm
     /// </summary>
     [property: Key(1)]
-    string? Name { get; set; }
+    private string? Name { get; set; }
 
     /// <summary>
-    /// Type of the realm
+    ///     Type of the realm
     /// </summary>
     [property: Key(2)]
-    RealmType Type { get; set; }
+    private RealmType Type { get; set; }
 
     /// <summary>
-    /// The population of the realm.
+    ///     The population of the realm.
     /// </summary>
     [property: Key(3)]
-    RealmPopulationStatus Population { get; set; }
+    private RealmPopulationStatus Population { get; set; }
 
     /// <summary>
-    /// Is the realm online?
+    ///     Is the realm online?
     /// </summary>
     [property: Key(4)]
-    bool Online { get; set; }
+    private bool Online { get; set; }
 }

@@ -1,5 +1,4 @@
 using MessagePack;
-using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;

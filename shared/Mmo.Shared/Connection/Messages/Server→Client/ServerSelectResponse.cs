@@ -16,31 +16,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 public class ServerSelectResponse : IResponseMessage<ServerSelectResponseErrorCodes>
 {
     /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ServerSelectResponse;
-
-    /// <inheritdoc/>
-    [Key(1)]
-    public bool Success { get; init; }
-
-    /// <inheritdoc/>
-    [Key(2)]
-    public GlobalErrorCode GlobalError { get; init; }
-
-    /// <summary>
-    ///     The ErrorCode if <see cref="Success" /> is false and the attempted was not successful.
-    /// </summary>
-    [Key(3)]
-    public ServerSelectResponseErrorCodes? ErrorCode { get; init; }
-
-    /// <inheritdoc/>
-    [Key(4)]
-    public string? ErrorMessage { get; init; }
-
-    /// <summary>
-    ///    The realm the client is switching to.
+    ///     The realm the client is switching to.
     /// </summary>
     [Key(5)]
     public int? RealmId { get; set; }
@@ -56,4 +32,28 @@ public class ServerSelectResponse : IResponseMessage<ServerSelectResponseErrorCo
     /// </summary>
     [Key(7)]
     public string? TransferToken { get; set; }
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.ServerSelectResponse;
+
+    /// <inheritdoc />
+    [Key(1)]
+    public bool Success { get; init; }
+
+    /// <inheritdoc />
+    [Key(2)]
+    public GlobalErrorCode GlobalError { get; init; }
+
+    /// <summary>
+    ///     The ErrorCode if <see cref="Success" /> is false and the attempted was not successful.
+    /// </summary>
+    [Key(3)]
+    public ServerSelectResponseErrorCodes? ErrorCode { get; init; }
+
+    /// <inheritdoc />
+    [Key(4)]
+    public string? ErrorMessage { get; init; }
 }

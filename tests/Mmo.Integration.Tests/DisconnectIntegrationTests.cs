@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
-using Mmo.Shared. Connection. Enums;
-using Mmo.Shared.Connection.Messages. Server_Client;
+using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Connection.Messages.Server_Client;
 
-namespace Mmo. Integration.Tests;
+namespace Mmo.Integration.Tests;
 
 /// <summary>
-/// Integration tests for disconnect scenarios against a real server.
-/// These tests run against the Docker container.
+///     Integration tests for disconnect scenarios against a real server.
+///     These tests run against the Docker container.
 /// </summary>
 [Collection("Integration")]
 public class DisconnectIntegrationTests : IAsyncLifetime
@@ -28,7 +28,7 @@ public class DisconnectIntegrationTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        _clientFactory?. Dispose();
+        _clientFactory?.Dispose();
         return Task.CompletedTask;
     }
 
@@ -40,11 +40,11 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task Client_CanDisconnect_Gracefully()
     {
         // Arrange
-        var client = await _clientFactory! .CreateAuthenticatedClientAsync(timeout: _fixture. DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.IsConnected.Should().BeTrue();
 
         // Act
-        client. Dispose();
+        client.Dispose();
 
         // Assert
         client.IsConnected.Should().BeFalse("client should be disconnected after dispose");
@@ -54,21 +54,20 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task Client_CanReconnect_AfterGracefulDisconnect()
     {
         // Arrange
-        var username = $"reconnect_test_{Guid.NewGuid():N}";
-        var client1 = await _clientFactory!.CreateAuthenticatedClientAsync(
-            username: username,
+        string username = $"reconnect_test_{Guid.NewGuid():N}";
+        TestClient client1 = await _clientFactory!.CreateAuthenticatedClientAsync(
+            username,
             timeout: _fixture.DefaultTimeout);
 
-        var originalPlayerId = client1.AccountId;
         client1.Dispose();
 
         // Wait a bit for server to process disconnect
         await Task.Delay(500);
 
         // Act - Reconnect with same username
-        var client2 = await _clientFactory. CreateAuthenticatedClientAsync(
-            username: username,
-            timeout: _fixture. DefaultTimeout);
+        TestClient client2 = await _clientFactory.CreateAuthenticatedClientAsync(
+            username,
+            timeout: _fixture.DefaultTimeout);
 
         // Assert
         client2.IsConnected.Should().BeTrue();
@@ -86,7 +85,7 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task Client_ReceivesForceDisconnect_OnServerShutdown()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.ClearMessages();
 
         // Note: This test requires the server to send a ForceDisconnect
@@ -94,32 +93,29 @@ public class DisconnectIntegrationTests : IAsyncLifetime
         // For now, we just verify the client can receive ForceDisconnect messages
 
         // Act - Wait for potential ForceDisconnect (or timeout)
-        var forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(2));
+        ForceDisconnect? forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(2));
 
         // Assert - This may be null if server doesn't send ForceDisconnect during test
         // The important thing is the client can handle it
-        if (forceDisconnect != null)
-        {
-            forceDisconnect. Reason.Should().NotBe(default(DisconnectReason));
-        }
+        if (forceDisconnect != null) forceDisconnect.Reason.Should().NotBe(default);
 
         // Cleanup
-        client. Dispose();
+        client.Dispose();
     }
 
     [Fact]
     public async Task Client_ConnectionDrops_WhenServerSendsForceDisconnect()
     {
         // Arrange
-        var client = await _clientFactory! .CreateAuthenticatedClientAsync(timeout:  _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.IsConnected.Should().BeTrue();
 
         // Note: To fully test this, the server needs an admin command to kick players
         // This test verifies the client handles connection drops gracefully
 
         // Cleanup
-        client. Dispose();
-        client.IsConnected. Should().BeFalse();
+        client.Dispose();
+        client.IsConnected.Should().BeFalse();
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -130,7 +126,7 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task Client_TimesOut_WhenNoHeartbeat()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAndConnectAsync(_fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAndConnectAsync(_fixture.DefaultTimeout);
 
         // Don't send login or heartbeat - just connect
         // Server should eventually timeout this connection
@@ -150,7 +146,7 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task Client_ReceivesForceDisconnect_OnHeartbeatTimeout()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture. DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.ClearMessages();
 
         // Act - Wait for heartbeat timeout (server default is 30s)
@@ -158,9 +154,9 @@ public class DisconnectIntegrationTests : IAsyncLifetime
         await Task.Delay(TimeSpan.FromSeconds(35));
 
         // Assert
-        var forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan. FromSeconds(5));
+        ForceDisconnect? forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(5));
         forceDisconnect.Should().NotBeNull();
-        forceDisconnect! .Reason.Should().Be(DisconnectReason.Timeout);
+        forceDisconnect!.Reason.Should().Be(DisconnectReason.Timeout);
 
         // Cleanup
         client.Dispose();
@@ -174,27 +170,27 @@ public class DisconnectIntegrationTests : IAsyncLifetime
     public async Task OldClient_ReceivesForceDisconnect_WhenSameUserLogsInAgain()
     {
         // Arrange
-        var username = $"duplicate_test_{Guid.NewGuid():N}";
+        string username = $"duplicate_test_{Guid.NewGuid():N}";
 
-        var client1 = await _clientFactory!.CreateAuthenticatedClientAsync(
-            username: username,
+        TestClient client1 = await _clientFactory!.CreateAuthenticatedClientAsync(
+            username,
             timeout: _fixture.DefaultTimeout);
         client1.ClearMessages();
 
         // Act - Login with same username from another client
-        var client2 = await _clientFactory.CreateAuthenticatedClientAsync(
-            username: username,
-            timeout:  _fixture.DefaultTimeout);
+        TestClient client2 = await _clientFactory.CreateAuthenticatedClientAsync(
+            username,
+            timeout: _fixture.DefaultTimeout);
 
         // Wait for client1 to receive ForceDisconnect
-        var forceDisconnect = await client1.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(5));
+        ForceDisconnect? forceDisconnect = await client1.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(5));
 
         // Assert
         if (forceDisconnect != null)
         {
             // Server should kick old connection when same user logs in again
-            forceDisconnect.Reason. Should().Be(DisconnectReason.DuplicateLogin);
-            forceDisconnect. CanReconnect.Should().BeTrue();
+            forceDisconnect.Reason.Should().Be(DisconnectReason.DuplicateLogin);
+            forceDisconnect.CanReconnect.Should().BeTrue();
         }
 
         // Cleanup
@@ -213,17 +209,14 @@ public class DisconnectIntegrationTests : IAsyncLifetime
         // For example, via rate limiting or admin command
 
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.ClearMessages();
 
         // Act - Wait for any ForceDisconnect
-        var forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(2));
+        ForceDisconnect? forceDisconnect = await client.WaitForMessageAsync<ForceDisconnect>(TimeSpan.FromSeconds(2));
 
         // Assert
-        if (forceDisconnect?. ReconnectDelay != null)
-        {
-            forceDisconnect.ReconnectDelay.Should().BeGreaterOrEqualTo(0);
-        }
+        if (forceDisconnect?.ReconnectDelay != null) forceDisconnect.ReconnectDelay.Should().BeGreaterOrEqualTo(0);
 
         // Cleanup
         client.Dispose();
@@ -242,12 +235,12 @@ public class DisconnectIntegrationTests : IAsyncLifetime
         // Arrange
         var forceDisconnect = new ForceDisconnect
         {
-            Reason = DisconnectReason. Banned,
+            Reason = DisconnectReason.Banned,
             Message = "You have been banned"
         };
 
         // Assert
-        forceDisconnect. CanReconnect. Should().BeFalse();
+        forceDisconnect.CanReconnect.Should().BeFalse();
     }
 
     [Fact]
@@ -256,7 +249,7 @@ public class DisconnectIntegrationTests : IAsyncLifetime
         // Arrange
         var forceDisconnect = new ForceDisconnect
         {
-            Reason = DisconnectReason. Kicked,
+            Reason = DisconnectReason.Kicked,
             Message = "Kicked by admin",
             ReconnectDelay = 60
         };

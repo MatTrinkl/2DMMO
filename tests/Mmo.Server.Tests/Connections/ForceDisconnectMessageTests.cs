@@ -41,7 +41,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Equal(original.Reason, deserialized.Reason);
@@ -64,7 +64,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Equal(reason, deserialized.Reason);
@@ -135,7 +135,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Equal(60000, deserialized.ReconnectDelay);
@@ -154,7 +154,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Null(deserialized.ReconnectDelay);
@@ -172,7 +172,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Equal(0, deserialized.ReconnectDelay);
@@ -194,7 +194,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Null(deserialized.Message);
@@ -212,7 +212,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert - CanReconnect is computed from Reason, not serialized
         Assert.True(deserialized.CanReconnect);
@@ -233,7 +233,7 @@ public class ForceDisconnectMessageTests
 
         // Act
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         // Assert
         Assert.Equal("", deserialized.Message);

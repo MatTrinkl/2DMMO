@@ -1,12 +1,12 @@
 using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 
 namespace Mmo.Integration.Tests;
 
 /// <summary>
-/// Integration tests for single client scenarios.
+///     Integration tests for single client scenarios.
 /// </summary>
 [Collection("Integration")]
 public class SingleClientTests : IAsyncLifetime
@@ -35,10 +35,10 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_CanConnect_ToServer()
     {
         // Arrange
-        var client = _clientFactory!.CreateClient();
+        TestClient client = _clientFactory!.CreateClient();
 
         // Act
-        var connected = await client.ConnectAsync(_fixture.DefaultTimeout);
+        bool connected = await client.ConnectAsync(_fixture.DefaultTimeout);
 
         // Assert
         connected.Should().BeTrue("client should connect to server");
@@ -52,12 +52,12 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_CanAuthenticate_WithValidCredentials()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAndConnectAsync(_fixture.DefaultTimeout);
-        var username = "test_user_1";
-        var password = "test_password";
+        TestClient client = await _clientFactory!.CreateAndConnectAsync(_fixture.DefaultTimeout);
+        string username = "test_user_1";
+        string password = "test_password";
 
         // Act
-        var loginResponse = await client.LoginAsync(username, password, _fixture.DefaultTimeout);
+        LoginResponse? loginResponse = await client.LoginAsync(username, password, _fixture.DefaultTimeout);
 
         // Assert
         loginResponse.Should().NotBeNull("server should send login response");
@@ -73,7 +73,7 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_CanSpawnCharacter_AfterLogin()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
 
         // Assert
         client.AccountId.Should().NotBe(Guid.Empty, "authenticated client should have player ID");
@@ -87,7 +87,7 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_ReceivesZoneState_AfterSpawn()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
 
         // Act - Wait a bit for zone state
         await Task.Delay(1000);
@@ -107,14 +107,14 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_ReceivesHeartbeat_AfterConnection()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client.ClearMessages();
 
         // Act - Wait for heartbeat (server sends every 5 seconds)
         await Task.Delay(6000);
 
         // Assert
-        var heartbeats = client.GetMessages<Heartbeat>();
+        List<Heartbeat> heartbeats = client.GetMessages<Heartbeat>();
         heartbeats.Should().NotBeEmpty("client should receive heartbeat from server");
 
         // Cleanup
@@ -125,8 +125,8 @@ public class SingleClientTests : IAsyncLifetime
     public async Task Client_CanDisconnect_Gracefully()
     {
         // Arrange
-        var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
-        var wasConnected = client.IsConnected;
+        TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
+        bool wasConnected = client.IsConnected;
 
         // Act
         client.Dispose();

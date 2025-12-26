@@ -16,6 +16,13 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 public class Heartbeat : IClientMessage, ITimestampedMessage
 {
     /// <summary>
+    ///     The concurrent number of Heartbeats send to the server. With this the server can monitor how long is between to
+    ///     beats and if packages are lost.
+    /// </summary>
+    [Key(2)]
+    public uint SequenceNumber { get; init; } = 0;
+
+    /// <summary>
     ///     The Message Type of this Message.
     /// </summary>
     [Key(0)]
@@ -26,10 +33,4 @@ public class Heartbeat : IClientMessage, ITimestampedMessage
     /// </summary>
     [Key(1)]
     public long Timestamp { get; init; } = NetworkTime.Now;
-
-    /// <summary>
-    /// The concurrent number of Heartbeats send to the server. With this the server can monitor how long is between to beats and if packages are lost.
-    /// </summary>
-    [Key(2)]
-    public uint SequenceNumber { get; init; } = 0;
 }

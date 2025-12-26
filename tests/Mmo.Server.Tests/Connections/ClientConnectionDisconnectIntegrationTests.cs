@@ -48,7 +48,8 @@ public class ClientConnectionDisconnectIntegrationTests : IDisposable
 
         // Assert
         Assert.True(eventFired);
-        Assert.Equal("Player requested logout", receivedReason); // Your implementation always passes "Connection closed"
+        Assert.Equal("Player requested logout",
+            receivedReason); // Your implementation always passes "Connection closed"
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public class ClientConnectionDisconnectIntegrationTests : IDisposable
         connection.OnDisconnected += (_, _) => eventFired = true;
 
         // Act
-        connection.Disconnect(DisconnectReason.Kicked, "Kicked by admin", reconnectDelayMs: 60000);
+        connection.Disconnect(DisconnectReason.Kicked, "Kicked by admin", 60000);
 
         // Assert
         Assert.True(eventFired);

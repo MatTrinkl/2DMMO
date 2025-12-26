@@ -97,7 +97,8 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message)
+        where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (characterInPartyAndToExcluded.PartyId == null) return;
@@ -116,7 +117,8 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter clientInGuildAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter clientInGuildAndToExcluded, T message)
+        where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (clientInGuildAndToExcluded?.GuildId == null) return;

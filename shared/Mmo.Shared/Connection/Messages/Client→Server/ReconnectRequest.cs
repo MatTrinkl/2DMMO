@@ -10,18 +10,12 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 ///     This class sends a reconnect request to the server.
 ///     Client -> Server
 ///     Ones per Session.
-///     Response: <see cref="ReconnectResponse"/> with Success=true or ErrorCode.
+///     Response: <see cref="ReconnectResponse" /> with Success=true or ErrorCode.
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ReconnectRequest)]
 public class ReconnectRequest : IClientMessage
 {
-    /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ReconnectRequest;
-
     /// <summary>
     ///     SessionToken of the Player
     ///     This one is active for 30 days.
@@ -30,14 +24,20 @@ public class ReconnectRequest : IClientMessage
     public string SessionToken { get; set; } = "";
 
     /// <summary>
-    ///     Last recived <see cref="Heartbeat.SequenceNumber"/>. Its safed with the session token locally.
+    ///     Last recived <see cref="Heartbeat.SequenceNumber" />. Its safed with the session token locally.
     /// </summary>
     [Key(2)]
     public uint LastSequenceNumber { get; set; }
 
     /// <summary>
-    /// Currently Placeholder. Todo: Upgrade to real version checking.
+    ///     Currently Placeholder. Todo: Upgrade to real version checking.
     /// </summary>
     [Key(3)]
     public string ClientVersion { get; set; } = "a0.0.1";
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.ReconnectRequest;
 }

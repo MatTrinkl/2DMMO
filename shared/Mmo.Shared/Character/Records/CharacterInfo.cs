@@ -15,9 +15,18 @@ namespace Mmo.Shared.Character.Records;
 /// <param name="Class">The character's class.</param>
 /// <param name="ZoneId">The ID of the zone where the character last logged out.</param>
 /// <param name="LastPosition">The character's last known position.</param>
-/// <param name="LastPlayed">The time in milliseconds when the character was played the last time. Use <see cref="NetworkTime.ToDateTime(long)"/></param> for conversion.
+/// <param name="LastPlayed">
+///     The time in milliseconds when the character was played the last time. Use
+///     <see cref="NetworkTime.ToDateTime(long)" />
+/// </param>
+/// for conversion.
 /// <param name="PendingDeletion">Is true if the character is currently soft deleted.</param>
-/// <param name="DeletionTime">The time in milliseconds when the character was deleted (24 hours soft deletion). Use <see cref="NetworkTime.ToDateTime(long)"/></param> for conversion.</param>
+/// <param name="DeletionTime">
+///     The time in milliseconds when the character was deleted (24 hours soft deletion). Use
+///     <see cref="NetworkTime.ToDateTime(long)" />
+/// </param>
+/// for conversion.
+/// </param>
 [MessagePackObject]
 public record CharacterInfo(
     [property: Key(0)] Guid CharacterId,

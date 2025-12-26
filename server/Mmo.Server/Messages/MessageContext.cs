@@ -189,7 +189,9 @@ public sealed class MessageContext : IMessageContext
     public ushort? GetPlayerZone(Guid playerId)
     {
         //Todo: to PlayerService
-        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player) ? null : player?.RuntimeId.ZoneId;
+        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player)
+            ? null
+            : player?.RuntimeId.ZoneId;
     }
 
     /// <summary>

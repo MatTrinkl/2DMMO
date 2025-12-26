@@ -14,5 +14,5 @@ public record LoginTaskResult(
     bool Success,
     ServerPlayerCharacter? Player = null,
     LoginResponseErrorCode? ErrorCode = null,
-    string? ErrorMessage=null
+    string? ErrorMessage = null
 );

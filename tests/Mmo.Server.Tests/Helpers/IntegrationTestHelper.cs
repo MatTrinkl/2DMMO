@@ -200,7 +200,8 @@ internal class MockBroadcastService : IBroadcastService
     {
     }
 
-    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message)
+        where T : INetworkMessage
     {
     }
 
@@ -208,7 +209,8 @@ internal class MockBroadcastService : IBroadcastService
     {
     }
 
-    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message)
+        where T : INetworkMessage
     {
     }
 }
