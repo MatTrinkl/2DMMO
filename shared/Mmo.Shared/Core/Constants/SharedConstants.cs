@@ -66,5 +66,5 @@ public static class SharedConstants
     /// <summary>
     ///     The maximum numbers of players on one server/shard later.
     /// </summary>
-    public static readonly int MaxConnection = 1000;
+    public const int MaxConnection = 1000;
 }

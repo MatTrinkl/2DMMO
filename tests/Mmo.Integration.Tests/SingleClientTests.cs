@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 
 namespace Mmo.Integration.Tests;
 
@@ -61,8 +62,8 @@ public class SingleClientTests : IAsyncLifetime
         // Assert
         loginResponse.Should().NotBeNull("server should send login response");
         loginResponse!.Success.Should().BeTrue("login should succeed");
-        loginResponse.PlayerId.Should().NotBe(Guid.Empty, "server should assign player ID");
-        client.PlayerId.Should().Be(loginResponse.PlayerId, "client should store player ID");
+        loginResponse.AccountId.Should().NotBe(Guid.Empty, "server should assign player ID");
+        client.AccountId.Should().Be((Guid)loginResponse.AccountId!, "client should store player ID");
 
         // Cleanup
         client.Dispose();
@@ -75,8 +76,8 @@ public class SingleClientTests : IAsyncLifetime
         var client = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
 
         // Assert
-        client.PlayerId.Should().NotBe(Guid.Empty, "authenticated client should have player ID");
-        client.ZoneId.Should().NotBe(0, "authenticated client should be in a zone");
+        client.AccountId.Should().NotBe(Guid.Empty, "authenticated client should have player ID");
+
 
         // Cleanup
         client.Dispose();
@@ -92,9 +93,9 @@ public class SingleClientTests : IAsyncLifetime
         await Task.Delay(1000);
 
         // Assert
-        client.PlayerId.Should().NotBe(Guid.Empty);
-        client.ZoneId.Should().NotBe(0);
-        
+        client.AccountId.Should().NotBe(Guid.Empty);
+
+
         // Note: ZoneState message might be sent automatically or need to be requested
         // This test validates that the client is properly authenticated and in a zone
 

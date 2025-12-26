@@ -21,5 +21,21 @@ public enum DisconnectReason
     Kicked,
 
     /// <summary>Protocol violation or invalid data.</summary>
-    ProtocolError
+    ProtocolError,
+    /// <summary>
+    /// Client was banned from the server.
+    /// </summary>
+    Banned,
+    /// <summary>
+    /// The server is shutting down for maintenance.
+    /// </summary>
+    Maintenance,
+    /// <summary>
+    /// There is another session with the same account.
+    /// </summary>
+    DuplicateLogin,
+    /// <summary>
+    /// The client have an incapable version of the game.
+    /// </summary>
+    VersionMismatch
 }

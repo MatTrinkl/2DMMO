@@ -1,4 +1,5 @@
 using Mmo.Server.PlayerService;
+using Mmo.Shared.Connection.Enums;
 
 namespace Mmo.Server.Connections.Records;
 
@@ -7,9 +8,11 @@ namespace Mmo.Server.Connections.Records;
 /// </summary>
 /// <param name="Success">Whether the login was successful.</param>
 /// <param name="Player">The spawned player character (only on success).</param>
-/// <param name="Error">Error message (only on failure).</param>
+/// <param name="ErrorCode">Error Code (only on failure).</param>
+/// <param name="ErrorMessage">Error message (only on failure).</param>
 public record LoginTaskResult(
     bool Success,
     ServerPlayerCharacter? Player = null,
-    string? Error = null
+    LoginResponseErrorCode? ErrorCode = null,
+    string? ErrorMessage=null
 );

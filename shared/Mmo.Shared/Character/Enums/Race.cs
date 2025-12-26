@@ -2,6 +2,7 @@ namespace Mmo.Shared.Character.Enums;
 
 /// <summary>
 ///     Represents the playable races in the game.
+///     Todo: not really implemented
 /// </summary>
 public enum Race : byte
 {

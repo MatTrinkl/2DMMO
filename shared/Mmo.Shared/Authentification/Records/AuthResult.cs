@@ -1,4 +1,5 @@
 using Mmo.Shared.Account.Enums;
+using Mmo.Shared.Connection.Enums;
 
 namespace Mmo.Shared.Authentification.Records;
 
@@ -10,5 +11,6 @@ public record AuthResult(
     Guid? AccountId = null,
     string? Username = null,
     AccountFlags Flags = AccountFlags.None,
-    string? Error = null
+    LoginResponseErrorCode? ErrorCode = null,
+    string? ErrorMessage = null
 );

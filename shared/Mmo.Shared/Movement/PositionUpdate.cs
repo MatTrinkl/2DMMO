@@ -57,5 +57,5 @@ public class PositionUpdate : ITimestampedMessage
     ///     The timestamp of the message.
     /// </summary>
     [Key(1)]
-    public long Timestamp { get; set; }
+    public long Timestamp { get; init; }
 }

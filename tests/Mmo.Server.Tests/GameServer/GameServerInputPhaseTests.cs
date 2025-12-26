@@ -2,6 +2,7 @@ using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Movement;
 using Mmo.Shared.System.Messages;
@@ -72,7 +73,8 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send LoginRequest (handled by ConnectionHandler)
-        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("TestUser", "password123"));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new LoginRequest() { Username = "TestUser", Password = "password123" });
 
         // Start and run
         gameServer.Start();
@@ -147,7 +149,7 @@ public class GameServerInputPhaseTests
 
         // Send Heartbeat
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new Heartbeat(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Guid.NewGuid()));
+            new Heartbeat());
 
         // Start and run
         gameServer.Start();
@@ -203,12 +205,12 @@ public class GameServerInputPhaseTests
 
         // Send various message types
         var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("Player1", "password123"));
+        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest() { Username = "Player1", Password = "password123" });
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Test"));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(1, 1)));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat(123456789, Guid.NewGuid()));
+        _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat());
 
         // Start and run
         gameServer.Start();

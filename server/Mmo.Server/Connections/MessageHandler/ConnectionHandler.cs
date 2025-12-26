@@ -9,6 +9,8 @@ using Mmo.Server.PlayerService;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Authentification.Records;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
@@ -102,10 +104,11 @@ public class ConnectionHandler(
 
                 if (!authResult.Success)
                 {
-                    _log.Error(authResult.Error!, "Auth service error for {ConnectionId}", ctx.ConnectionId);
+                    _log.Error(authResult.ErrorCode!.ToString(), "Auth service error for {ConnectionId}", ctx.ConnectionId);
                     _broadcast.SendError(ctx.Connection, "AUTH_SERVICE_ERROR",
                         "Authentication service unavailable.  Please try again later.", null, null);
-                    return new LoginTaskResult(false, Error: authResult.Error);
+                    return new LoginTaskResult(false, ErrorCode: authResult.ErrorCode,
+                        ErrorMessage: authResult.ErrorMessage);
                 }
 
                 // Authentication successful - Update connection state
@@ -138,15 +141,22 @@ public class ConnectionHandler(
                     // Send response
                     // TODO: Add session token, character list, and server info to response
                     _broadcast.SendToPlayer(outCtx.Connection,
-                        new LoginResponse(true, outCtx.ConnectionId, outCtx.ServerPlayer!.RuntimeId.ZoneId, null));
+                        new LoginResponse()
+                        {
+                            Success = true, AccountId = outCtx.PlayerInfo!.AccountId,
+                            AccountName = outCtx.PlayerInfo.Name, IsPremium = false, SessionToken = "TempToken"
+                        });
 
                     _log.Info("Player {Name} logged in", outCtx.ServerPlayer!.Name);
                 }
                 else
                 {
-                    _log.Warn("Login failed for {ConnectionId}: {Error}", ctx.ConnectionId, result.Error!);
+                    _log.Warn("Login failed for {ConnectionId}: {Error}", ctx.ConnectionId, result.ErrorCode!);
                     _broadcast.SendToPlayer(outCtx.Connection,
-                        new LoginResponse(false, outCtx.ConnectionId, 0, result.Error));
+                        new LoginResponse()
+                        {
+                            Success = false, ErrorCode = result.ErrorCode, ErrorMessage = result.ErrorMessage
+                        });
                 }
             }
         );

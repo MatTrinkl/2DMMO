@@ -10,6 +10,8 @@ using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
@@ -697,7 +699,7 @@ public class GameServer : IDisposable
             try
             {
                 // Send disconnect message
-                var disconnectMsg = new Disconnect
+                var disconnectMsg = new ForceDisconnect
                 {
                     Reason = DisconnectReason.ServerShutdown,
                     Message = reason

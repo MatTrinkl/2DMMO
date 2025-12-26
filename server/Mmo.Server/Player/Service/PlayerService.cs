@@ -5,6 +5,7 @@ using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Zones;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Character.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
