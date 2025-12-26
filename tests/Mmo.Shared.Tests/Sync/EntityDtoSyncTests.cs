@@ -168,4 +168,44 @@ public class EntityDtoSyncTests
         dtoType.GetProperty("Experience").Should().BeNull();
         dtoType.GetProperty("Gold").Should().BeNull();
     }
+
+    [Fact]
+    public void PlayerEntityDto_MessagePack_Serialization_RoundTrip()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var entity = new PlayerEntity(characterId, accountId, "TestPlayer", new Position(100.5f, 200.7f))
+        {
+            Level = 5,
+            CurrentHealth = 250,
+            MaxHealth = 500,
+            Race = Race.Human,
+            Class = CharacterClass.Warrior,
+            Gender = Gender.Male,
+            Title = "The Brave"
+        };
+        entity.SetEntityId(42, 100);
+
+        var dto = PlayerEntityDto.FromEntity(entity);
+
+        // Act
+        var serialized = MessagePack.MessagePackSerializer.Serialize(dto);
+        var deserialized = MessagePack.MessagePackSerializer.Deserialize<PlayerEntityDto>(serialized);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized.RuntimeId.Should().Be(dto.RuntimeId);
+        deserialized.PersistentId.Should().Be(dto.PersistentId);
+        deserialized.DisplayName.Should().Be(dto.DisplayName);
+        deserialized.Level.Should().Be(dto.Level);
+        deserialized.CurrentHealth.Should().Be(dto.CurrentHealth);
+        deserialized.MaxHealth.Should().Be(dto.MaxHealth);
+        deserialized.Race.Should().Be(dto.Race);
+        deserialized.Class.Should().Be(dto.Class);
+        deserialized.Gender.Should().Be(dto.Gender);
+        deserialized.Title.Should().Be(dto.Title);
+        deserialized.CharacterId.Should().Be(dto.CharacterId);
+        deserialized.AccountId.Should().Be(dto.AccountId);
+    }
 }
