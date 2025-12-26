@@ -1,3 +1,5 @@
+using Mmo.Shared.Networking;
+
 namespace Mmo.Shared.Messaging.Interfaces;
 
 /// <summary>
@@ -7,7 +9,7 @@ namespace Mmo.Shared.Messaging.Interfaces;
 public interface ITimestampedMessage : INetworkMessage
 {
     /// <summary>
-    ///     The timestamp of the message.
+    ///     The timestamp of the message. Use <see cref="NetworkTime.Now"/> when creating the Message.
     /// </summary>
-    long Timestamp { get; set; }
+    long Timestamp { get; init; }
 }

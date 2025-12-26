@@ -2,6 +2,7 @@ using FluentAssertions;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
@@ -39,7 +40,7 @@ public class MessageTests
     public void LoginRequest_HasCorrectMessageType()
     {
         // Arrange
-        var loginRequest = new LoginRequest("testuser", "testpass");
+        var loginRequest = new LoginRequest() { Username = "testuser", Password = "testpass" };
 
         // Assert
         loginRequest.Type.Should().Be(MessageType.LoginRequest);

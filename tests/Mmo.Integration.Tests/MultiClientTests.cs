@@ -40,7 +40,7 @@ public class MultiClientTests : IAsyncLifetime
         // Assert
         client1.IsConnected.Should().BeTrue("first client should be connected");
         client2.IsConnected.Should().BeTrue("second client should be connected");
-        client1.PlayerId.Should().NotBe(client2.PlayerId, "clients should have different player IDs");
+        client1.AccountId.Should().NotBe(client2.AccountId, "clients should have different player IDs");
 
         // Cleanup
         client1.Dispose();
@@ -53,17 +53,17 @@ public class MultiClientTests : IAsyncLifetime
         // Arrange
         var client1 = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         client1.ClearMessages();
-        
+
         // Act - Second client connects to same zone
         var client2 = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
-        
+
         // Wait for broadcast
         await Task.Delay(1000);
 
         // Assert
         var playerJoinedMessages = client1.GetMessages<PlayerJoinedZone>();
         playerJoinedMessages.Should().NotBeEmpty("first client should receive PlayerJoined event");
-        
+
         // The joined player should be client2
         var joinedEvent = playerJoinedMessages.FirstOrDefault();
         if (joinedEvent != null)
@@ -82,13 +82,13 @@ public class MultiClientTests : IAsyncLifetime
         // Arrange
         var client1 = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
         var client2 = await _clientFactory!.CreateAuthenticatedClientAsync(timeout: _fixture.DefaultTimeout);
-        
+
         await Task.Delay(1000);
         client1.ClearMessages();
 
         // Act - Client 2 disconnects
         client2.Dispose();
-        
+
         // Wait for broadcast
         await Task.Delay(1000);
 
@@ -111,15 +111,15 @@ public class MultiClientTests : IAsyncLifetime
 
         // Assert
         clients.Should().HaveCount(clientCount, "all clients should connect successfully");
-        
+
         foreach (var client in clients)
         {
             client.IsConnected.Should().BeTrue("each client should be connected");
-            client.PlayerId.Should().NotBe(Guid.Empty, "each client should have a player ID");
+            client.AccountId.Should().NotBe(Guid.Empty, "each client should have a player ID");
         }
 
         // All player IDs should be unique
-        var playerIds = clients.Select(c => c.PlayerId).ToList();
+        var playerIds = clients.Select(c => c.AccountId).ToList();
         playerIds.Should().OnlyHaveUniqueItems("each client should have a unique player ID");
 
         // Cleanup
@@ -135,18 +135,16 @@ public class MultiClientTests : IAsyncLifetime
         // Arrange
         var client1 = await _clientFactory!.CreateAuthenticatedClientAsync("player1", timeout: _fixture.DefaultTimeout);
         await Task.Delay(500);
-        
+
         client1.ClearMessages();
-        
+
         // Act
         var client2 = await _clientFactory!.CreateAuthenticatedClientAsync("player2", timeout: _fixture.DefaultTimeout);
-        
+
         // Wait for messages to propagate
         await Task.Delay(1000);
 
-        // Assert
-        client1.ZoneId.Should().Be(client2.ZoneId, "both clients should be in the same zone");
-        
+
         var joinedMessages = client1.GetMessages<PlayerJoinedZone>();
         joinedMessages.Should().NotBeEmpty("client1 should see client2 joining");
 
@@ -160,7 +158,7 @@ public class MultiClientTests : IAsyncLifetime
     {
         // Arrange & Act
         var tasks = new List<Task>();
-        
+
         for (int i = 0; i < 10; i++)
         {
             tasks.Add(Task.Run(async () =>
@@ -173,7 +171,7 @@ public class MultiClientTests : IAsyncLifetime
 
         // Assert - wait for all tasks to complete
         await Task.WhenAll(tasks);
-        
+
         // If we get here without exceptions, the test passes
         tasks.Should().HaveCount(10, "all tasks should complete");
     }

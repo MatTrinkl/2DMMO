@@ -5,6 +5,7 @@ using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -85,7 +86,7 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var loginRequest = new LoginRequest("test", "pass");
+        var loginRequest = new LoginRequest() { Username = "test", Password = "pass" };
 
         // Create a real MessageContext using test helpers
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
@@ -107,7 +108,7 @@ public class MessageRouterTests : IDisposable
     {
         // Arrange
         var router = new MessageRouter(_mockLog);
-        var loginRequest = new LoginRequest("test", "pass");
+        var loginRequest = new LoginRequest() { Username = "test", Password = "pass" };
 
         // Create a real MessageContext using test helpers
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
@@ -133,7 +134,7 @@ public class MessageRouterTests : IDisposable
         mockHandler.Setup(h => h.CanHandle(It.IsAny<MessageType>())).Returns(false);
         router.RegisterHandler(mockHandler.Object);
 
-        var loginRequest = new LoginRequest("test", "pass");
+        var loginRequest = new LoginRequest() { Username = "test", Password = "pass" };
 
         // Create a real MessageContext using test helpers
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
@@ -159,7 +160,7 @@ public class MessageRouterTests : IDisposable
         mockHandler.Setup(h => h.CanHandle(MessageType.LoginRequest)).Returns(true);
         router.RegisterHandler(mockHandler.Object);
 
-        var loginRequest = new LoginRequest("test", "pass");
+        var loginRequest = new LoginRequest() { Username = "test", Password = "pass" };
 
         // Create a real MessageContext using test helpers
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);
@@ -189,7 +190,7 @@ public class MessageRouterTests : IDisposable
             .Throws(new InvalidOperationException("Test exception"));
         router.RegisterHandler(mockHandler.Object);
 
-        var loginRequest = new LoginRequest("test", "pass");
+        var loginRequest = new LoginRequest() { Username = "test", Password = "pass" };
 
         // Create a real MessageContext using test helpers
         Core.GameServer gameServer = TestHelpers.CreateTestGameServer(_mockLog);

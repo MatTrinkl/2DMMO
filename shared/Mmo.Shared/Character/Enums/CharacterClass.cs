@@ -2,6 +2,7 @@ namespace Mmo.Shared.Character.Enums;
 
 /// <summary>
 ///     Represents the character class selection for players.
+///     Todo: not really implemented
 /// </summary>
 public enum CharacterClass : byte
 {

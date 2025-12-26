@@ -3,6 +3,8 @@ using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -25,7 +27,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_LoginRequest_RoundTrip()
     {
-        var original = new LoginRequest("testuser", "password123");
+        var original = new LoginRequest() { Username = "testuser", Password = "password123" };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
@@ -39,8 +41,8 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_LoginResponse_RoundTrip()
     {
-        var playerId = Guid.NewGuid();
-        var original = new LoginResponse(true, playerId, 0, null);
+        var accountId = Guid.NewGuid();
+        var original = new LoginResponse(){Success = true,AccountId = accountId, AccountName = "Test"};
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginResponse deserialized = MessagePackSerializer.Deserialize<LoginResponse>(serialized);
@@ -48,38 +50,36 @@ public class MessageSerializerTests
         Assert.NotNull(deserialized);
         Assert.Equal(MessageType.LoginResponse, deserialized.Type);
         Assert.True(deserialized.Success);
-        Assert.Equal(playerId, deserialized.PlayerId);
-        Assert.Equal(0, deserialized.ZoneId);
+        Assert.Equal(accountId, deserialized.AccountId);
+        Assert.Equal("Test", deserialized.AccountName);
         Assert.Null(deserialized.ErrorMessage);
     }
 
     [Fact]
     public void Serialize_Heartbeat_RoundTrip()
     {
-        var playerId = Guid.NewGuid();
-        var original = new Heartbeat(12345L, playerId);
+        uint sessionSequenceNumber = 77;
+        var original = new Heartbeat(){SequenceNumber = sessionSequenceNumber};
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         Heartbeat deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
 
         Assert.NotNull(deserialized);
-        Assert.Equal(MessageType.Heartbeat, deserialized.Type);
-        Assert.Equal(12345L, deserialized.Timestamp);
-        Assert.Equal(playerId, deserialized.PlayerId);
+        Assert.Equal(original.Timestamp, deserialized.Timestamp);
+        Assert.Equal(sessionSequenceNumber, deserialized.SequenceNumber);
     }
 
     [Fact]
     public void Serialize_Disconnect_RoundTrip()
     {
         var playerId = Guid.NewGuid();
-        var original = new Disconnect(playerId, DisconnectReason.ClientDisconnected);
+        var original = new ForceDisconnect() { Reason = DisconnectReason.ClientDisconnected };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
-        Disconnect deserialized = MessagePackSerializer.Deserialize<Disconnect>(serialized);
+        ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
 
         Assert.NotNull(deserialized);
-        Assert.Equal(MessageType.Disconnect, deserialized.Type);
-        Assert.Equal(playerId, deserialized.PlayerId);
+        Assert.Equal(MessageType.ForceDisconnect, deserialized.Type);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -226,7 +226,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_EmptyStrings_RoundTrip()
     {
-        var original = new LoginRequest("", "");
+        var original = new LoginRequest() { Username = "", Password = "" };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
@@ -246,20 +246,6 @@ public class MessageSerializerTests
 
         Assert.NotNull(deserialized);
         Assert.Equal(Guid.Empty, deserialized.PlayerId);
-    }
-
-    [Fact]
-    public void Serialize_LongTimestamp_RoundTrip()
-    {
-        var playerId = Guid.NewGuid();
-        var original = new Heartbeat(long.MaxValue, playerId);
-
-        byte[] serialized = MessagePackSerializer.Serialize(original);
-        Heartbeat deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
-
-        Assert.NotNull(deserialized);
-        Assert.Equal(long.MaxValue, deserialized.Timestamp);
-        Assert.Equal(playerId, deserialized.PlayerId);
     }
 
     [Fact]
@@ -283,7 +269,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_LoginRequest_ReturnsCorrectType()
     {
-        var original = new LoginRequest("user", "pass");
+        var original = new LoginRequest() { Username = "user", Password = "pass" };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -296,7 +282,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_LoginResponse_ReturnsCorrectType()
     {
-        var original = new LoginResponse(true, Guid.NewGuid(), 1, null);
+        var original = new LoginResponse(){Success = true, AccountId = Guid.NewGuid()};
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -307,7 +293,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_Heartbeat_ReturnsCorrectType()
     {
-        var original = new Heartbeat(12345L, Guid.NewGuid());
+        var original = new Heartbeat();
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -318,18 +304,18 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_Disconnect_ReturnsCorrectType()
     {
-        var original = new Disconnect(Guid.NewGuid(), DisconnectReason.ServerShutdown);
+        var original = new ForceDisconnect(){Reason = DisconnectReason.Timeout};
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
-        Assert.IsType<Disconnect>(deserialized);
+        Assert.IsType<ForceDisconnect>(deserialized);
     }
 
     [Fact]
     public void MessageSerializer_Deserialize_LogoutRequest_ReturnsCorrectType()
     {
-        var original = new LogoutRequest(Guid.NewGuid());
+        var original = new LogoutRequest();
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -432,7 +418,7 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_CorruptedData_ThrowsException()
     {
         // Create a message with corrupted data
-        var original = new LoginRequest("user", "pass");
+        var original = new LoginRequest() { Username = "user", Password = "pass" };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         // Corrupt the data by setting the MessageType byte to an invalid value (byte.MaxValue = 255)

@@ -1,5 +1,7 @@
 using System.Net.Sockets;
 using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Messaging.Serialization;
@@ -18,14 +20,16 @@ public class TestClient : IDisposable
     private NetworkStream? _stream;
     private CancellationTokenSource? _cts;
     private Task? _receiveTask;
-    
+
     private readonly List<INetworkMessage> _receivedMessages = new();
     private readonly object _lock = new();
-    
+
     public bool IsConnected => _tcpClient?.Connected ?? false;
-    public Guid PlayerId { get; private set; }
-    public ushort ZoneId { get; private set; }
-    public string Username { get; private set; } = "";
+    public Guid AccountId { get; private set; }
+    public string Username { get; private set; }
+    public string AccountName { get; private set; } = "";
+    public bool IsPremium { get; private set; } = false;
+    public long Timestamp { get; private set; } = 0;
 
     public TestClient(string host, int port)
     {
@@ -43,13 +47,13 @@ public class TestClient : IDisposable
             _tcpClient = new TcpClient();
             using var connectCts = new CancellationTokenSource(timeout);
             await _tcpClient.ConnectAsync(_host, _port, connectCts.Token);
-            
+
             _stream = _tcpClient.GetStream();
             _cts = new CancellationTokenSource();
-            
+
             // Start receiving messages in background
             _receiveTask = Task.Run(() => ReceiveLoop(_cts.Token));
-            
+
             return true;
         }
         catch
@@ -65,18 +69,20 @@ public class TestClient : IDisposable
     public async Task<LoginResponse?> LoginAsync(string username, string password, TimeSpan timeout)
     {
         Username = username;
-        var loginRequest = new LoginRequest(username, password);
+        var loginRequest = new LoginRequest(){Username = username, Password = password};
         await SendMessageAsync(loginRequest);
-        
+
         // Wait for LoginResponse
         var response = await WaitForMessageAsync<LoginResponse>(timeout);
-        
+
         if (response?.Success == true)
         {
-            PlayerId = response.PlayerId;
-            ZoneId = response.ZoneId;
+            AccountId = (Guid)response.AccountId!;
+            AccountName = response.AccountName!;
+            IsPremium = (bool)response.IsPremium!;
+            Timestamp = response.Timestamp;
         }
-        
+
         return response;
     }
 
@@ -89,7 +95,7 @@ public class TestClient : IDisposable
             throw new InvalidOperationException("Not connected to server");
 
         byte[] payload = MessageSerializer.Serialize(message);
-        
+
         // Frame format: [4 Bytes Length][N Bytes Payload]
         // Note: MessageType is already in the payload at Key(0)
         byte[] lengthPrefix = BitConverter.GetBytes(payload.Length);
@@ -105,7 +111,7 @@ public class TestClient : IDisposable
     public async Task<T?> WaitForMessageAsync<T>(TimeSpan timeout) where T : class, INetworkMessage
     {
         var deadline = DateTime.UtcNow + timeout;
-        
+
         while (DateTime.UtcNow < deadline)
         {
             lock (_lock)
@@ -119,10 +125,10 @@ public class TestClient : IDisposable
                     }
                 }
             }
-            
+
             await Task.Delay(50);
         }
-        
+
         return null;
     }
 
@@ -153,7 +159,7 @@ public class TestClient : IDisposable
         if (_stream == null) return;
 
         var headerBuffer = new byte[4];
-        
+
         try
         {
             while (!cancellationToken.IsCancellationRequested && IsConnected)
@@ -165,7 +171,7 @@ public class TestClient : IDisposable
                     int read = await _stream.ReadAsync(headerBuffer.AsMemory(headerBytesRead, 4 - headerBytesRead), cancellationToken);
                     if (read == 0)
                         return; // Connection closed
-                    
+
                     headerBytesRead += read;
                 }
 
@@ -180,16 +186,16 @@ public class TestClient : IDisposable
                 // Read payload
                 byte[] payloadBuffer = new byte[payloadLength];
                 int payloadBytesRead = 0;
-                
+
                 while (payloadBytesRead < payloadLength)
                 {
                     int read = await _stream.ReadAsync(
-                        payloadBuffer.AsMemory(payloadBytesRead, payloadLength - payloadBytesRead), 
+                        payloadBuffer.AsMemory(payloadBytesRead, payloadLength - payloadBytesRead),
                         cancellationToken);
-                    
+
                     if (read == 0)
                         return; // Connection closed
-                    
+
                     payloadBytesRead += read;
                 }
 
@@ -197,7 +203,7 @@ public class TestClient : IDisposable
                 try
                 {
                     var message = MessageSerializer.Deserialize(payloadBuffer);
-                    
+
                     lock (_lock)
                     {
                         _receivedMessages.Add(message);
@@ -229,9 +235,9 @@ public class TestClient : IDisposable
         {
             // CTS already disposed, ignore
         }
-        
+
         _receiveTask?.Wait(TimeSpan.FromSeconds(2));
-        
+
         _stream?.Dispose();
         _tcpClient?.Dispose();
         _cts?.Dispose();

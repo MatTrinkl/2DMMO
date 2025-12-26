@@ -22,7 +22,7 @@ public class AuthenticationServiceTests
         Assert.NotNull(result.AccountId);
         Assert.NotEqual(Guid.Empty, result.AccountId.Value);
         Assert.Equal("TestUser", result.Username);
-        Assert.Null(result.Error);
+        Assert.Null(result.ErrorCode);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class AuthenticationServiceTests
 
         // Assert
         Assert.False(result.Success);
-        Assert.Equal("Session validation not implemented", result.Error);
+        Assert.Equal("Session validation not implemented", result.ErrorMessage);
     }
 
     [Fact]

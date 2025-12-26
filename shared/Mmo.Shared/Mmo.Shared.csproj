@@ -11,8 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Character\Messages\"/>
-    <Folder Include="Character\Records\"/>
+    <Folder Include="Core\Enums\" />
     <Folder Include="Entities\Messages\"/>
     <Folder Include="Groups\"/>
   </ItemGroup>

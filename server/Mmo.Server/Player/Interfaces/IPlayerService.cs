@@ -2,6 +2,7 @@ using Mmo.Server.Connections;
 using Mmo.Server.PlayerService;
 using Mmo.Server.PlayerService.Records;
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Character.Records;
 
 namespace Mmo.Server.Player.Interfaces;
 

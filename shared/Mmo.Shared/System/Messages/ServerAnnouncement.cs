@@ -42,5 +42,5 @@ public class ServerAnnouncement : ITimestampedMessage
 
     [Key(0)] public MessageType Type => MessageType.ServerAnnouncement;
 
-    [Key(1)] public long Timestamp { get; set; }
+    [Key(1)] public long Timestamp { get; init; }
 }
