@@ -67,10 +67,11 @@ public sealed class PlayerEntityDto : IPlayerData
     [Key(17)] public float BaseMovementSpeed { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
-    // From PlayerEntity (Keys 18-35, excluding 25=Experience, 33=Gold)
+    // From PlayerEntity (Keys 19-35, excluding 25=Experience, 33=Gold)
+    // Note: PlayerEntity has Key(18) for CombatResourceType override,
+    // but this DTO is a flat structure (not inheriting), so we skip
+    // Key(18) and continue with PlayerEntity-specific keys starting at 19.
     // ═══════════════════════════════════════════════════════════════
-
-    // Key(18) = CombatResourceType override (already in base at Key 10, but overridden here)
 
     [Key(19)] public Guid CharacterId { get; set; }
 
