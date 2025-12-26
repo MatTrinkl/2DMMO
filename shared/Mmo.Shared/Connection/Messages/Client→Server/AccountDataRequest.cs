@@ -9,7 +9,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// <summary>
 ///     This class requests detailed account information.
 ///     Client->Server
-///     Response is <see cref="AccountDataResponse"/>
+///     Response is <see cref="AccountDataResponse" />
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.AccountDataRequest)]

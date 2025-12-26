@@ -1,15 +1,11 @@
 namespace Mmo.Integration.Tests.Utilities;
 
 /// <summary>
-/// Shared fixture for integration tests.
-/// Provides common configuration and utilities.
+///     Shared fixture for integration tests.
+///     Provides common configuration and utilities.
 /// </summary>
 public class IntegrationTestFixture : IDisposable
 {
-    public string ServerHost { get; }
-    public int ServerPort { get; }
-    public TimeSpan DefaultTimeout { get; }
-
     public IntegrationTestFixture()
     {
         ServerHost = Environment.GetEnvironmentVariable("SERVER_HOST") ?? "localhost";
@@ -17,13 +13,14 @@ public class IntegrationTestFixture : IDisposable
         DefaultTimeout = TimeSpan.FromSeconds(10);
     }
 
-    public TestClientFactory CreateClientFactory()
-    {
-        return new TestClientFactory(ServerHost, ServerPort);
-    }
+    public string ServerHost { get; }
+    public int ServerPort { get; }
+    public TimeSpan DefaultTimeout { get; }
 
     public void Dispose()
     {
         // Cleanup if needed
     }
+
+    public TestClientFactory CreateClientFactory() => new(ServerHost, ServerPort);
 }

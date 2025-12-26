@@ -1,8 +1,8 @@
-﻿using Mmo.Server. Connections;
+﻿using Mmo.Server.Connections;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared. Connection.Enums;
+using Mmo.Shared.Connection.Enums;
 
-namespace Mmo. Server.Tests. Connections;
+namespace Mmo.Server.Tests.Connections;
 
 public class ClientConnectionDisconnectTests
 {
@@ -26,16 +26,13 @@ public class ClientConnectionDisconnectTests
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         bool eventFired = false;
 
-        connection.OnDisconnected += (conn, reason) =>
-        {
-            eventFired = true;
-        };
+        connection.OnDisconnected += (conn, reason) => { eventFired = true; };
 
         // Act
-        connection. Disconnect(DisconnectReason.ClientDisconnected, "Test disconnect");
+        connection.Disconnect(DisconnectReason.ClientDisconnected, "Test disconnect");
 
         // Assert
-        Assert. True(eventFired);
+        Assert.True(eventFired);
     }
 
     [Fact]
@@ -49,10 +46,10 @@ public class ClientConnectionDisconnectTests
         connection.OnDisconnected += (_, _) => eventFired = true;
 
         // Act
-        connection.Disconnect(DisconnectReason. ServerShutdown, null);
+        connection.Disconnect(DisconnectReason.ServerShutdown);
 
         // Assert
-        Assert. True(eventFired);
+        Assert.True(eventFired);
     }
 
     [Fact]
@@ -90,7 +87,7 @@ public class ClientConnectionDisconnectTests
         connection.OnDisconnected += (_, _) => eventFired = true;
 
         // Act
-        connection. Disconnect(reason);
+        connection.Disconnect(reason);
 
         // Assert
         Assert.True(eventFired);
@@ -100,14 +97,14 @@ public class ClientConnectionDisconnectTests
     public void Disconnect_WithReconnectDelay_DoesNotThrow()
     {
         // Arrange
-        var clientId = Guid. NewGuid();
+        var clientId = Guid.NewGuid();
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(clientId);
         bool eventFired = false;
 
         connection.OnDisconnected += (_, _) => eventFired = true;
 
         // Act
-        connection.Disconnect(DisconnectReason.Kicked, "Spam detected", reconnectDelayMs: 30000);
+        connection.Disconnect(DisconnectReason.Kicked, "Spam detected", 30000);
 
         // Assert
         Assert.True(eventFired);

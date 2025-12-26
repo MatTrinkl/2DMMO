@@ -2,7 +2,6 @@ using System.Diagnostics;
 using MessagePack;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Records;
@@ -22,7 +21,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_LoginRequest_CreatesValidByteArray()
     {
-        var message = new LoginRequest() { Username = "TestUser", Password = "TestPassword" };
+        var message = new LoginRequest { Username = "TestUser", Password = "TestPassword" };
 
         byte[] bytes = MessageSerializer.Serialize(message);
 
@@ -34,7 +33,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_Deserialize_LoginRequest_RoundTrip()
     {
-        var original = new LoginRequest() { Username = "TestUser", Password = "TestPassword" };
+        var original = new LoginRequest { Username = "TestUser", Password = "TestPassword" };
 
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginRequest)MessageSerializer.Deserialize(bytes);
@@ -47,7 +46,7 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_LoginResponse_RoundTrip()
     {
         var accountId = Guid.NewGuid();
-        var original = new LoginResponse(){AccountId = accountId,Success = true,AccountName = "Test"};
+        var original = new LoginResponse { AccountId = accountId, Success = true, AccountName = "Test" };
 
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginResponse)MessageSerializer.Deserialize(bytes);
@@ -76,7 +75,7 @@ public class MessageSerializerTests
     [Fact]
     public void Deserialize_ByType_ReturnsCorrectMessageType()
     {
-        var original = new LoginRequest() { Username = "TestUser", Password = "TestPassword" };
+        var original = new LoginRequest { Username = "TestUser", Password = "TestPassword" };
 
         byte[] bytes = MessageSerializer.Serialize(original);
         var deserialized = (LoginRequest)MessageSerializer.Deserialize(bytes);

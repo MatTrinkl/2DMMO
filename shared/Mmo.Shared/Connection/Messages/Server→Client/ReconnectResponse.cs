@@ -16,32 +16,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 public class ReconnectResponse : IResponseMessage<ReconnectResponseErrorCode>
 {
     /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ReconnectResponse;
-
-
-    /// <inheritdoc/>
-    [Key(1)]
-    public bool Success { get; init; }
-
-    /// <inheritdoc/>
-    [Key(2)]
-    public GlobalErrorCode GlobalError { get; init; }
-
-    /// <summary>
-    ///     The ErrorCode if <see cref="Success" /> is false and the attempted was not successful.
-    /// </summary>
-    [Key(3)]
-    public ReconnectResponseErrorCode? ErrorCode { get; init; }
-
-    /// <inheritdoc/>
-    [Key(4)]
-    public string? ErrorMessage { get; init; }
-
-    /// <summary>
-    ///    The last zone where the player entity was active.
+    ///     The last zone where the player entity was active.
     /// </summary>
     [Key(5)]
     public ushort? ZoneId { get; set; }
@@ -57,4 +32,29 @@ public class ReconnectResponse : IResponseMessage<ReconnectResponseErrorCode>
     /// </summary>
     [Key(7)]
     public bool? ResyncRequired { get; set; }
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.ReconnectResponse;
+
+
+    /// <inheritdoc />
+    [Key(1)]
+    public bool Success { get; init; }
+
+    /// <inheritdoc />
+    [Key(2)]
+    public GlobalErrorCode GlobalError { get; init; }
+
+    /// <summary>
+    ///     The ErrorCode if <see cref="Success" /> is false and the attempted was not successful.
+    /// </summary>
+    [Key(3)]
+    public ReconnectResponseErrorCode? ErrorCode { get; init; }
+
+    /// <inheritdoc />
+    [Key(4)]
+    public string? ErrorMessage { get; init; }
 }

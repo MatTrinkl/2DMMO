@@ -1,11 +1,11 @@
 ﻿using FluentAssertions;
-using Mmo.Integration.Tests. Utilities;
+using Mmo.Integration.Tests.Utilities;
 
-namespace Mmo. Integration.Tests;
+namespace Mmo.Integration.Tests;
 
 /// <summary>
-/// Stress tests for disconnect scenarios.
-/// These tests are skipped by default - run manually for load testing.
+///     Stress tests for disconnect scenarios.
+///     These tests are skipped by default - run manually for load testing.
 /// </summary>
 [Collection("Integration")]
 public class DisconnectStressTests : IAsyncLifetime
@@ -26,7 +26,7 @@ public class DisconnectStressTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        _clientFactory?. Dispose();
+        _clientFactory?.Dispose();
         return Task.CompletedTask;
     }
 
@@ -40,12 +40,12 @@ public class DisconnectStressTests : IAsyncLifetime
         // Arrange & Act
         for (int i = 0; i < 50; i++)
         {
-            var client = await _clientFactory!.CreateAndConnectAsync(TimeSpan.FromSeconds(5));
-            client.IsConnected. Should().BeTrue();
-            client. Dispose();
+            TestClient client = await _clientFactory!.CreateAndConnectAsync(TimeSpan.FromSeconds(5));
+            client.IsConnected.Should().BeTrue();
+            client.Dispose();
 
             // Small delay between iterations
-            await Task. Delay(50);
+            await Task.Delay(50);
         }
 
         // Assert - If we get here without exceptions, the test passed
@@ -60,24 +60,16 @@ public class DisconnectStressTests : IAsyncLifetime
 
         // Act - Connect many clients simultaneously
         for (int i = 0; i < clientCount; i++)
-        {
             connectTasks.Add(_clientFactory!.CreateAuthenticatedClientAsync(timeout: TimeSpan.FromSeconds(30)));
-        }
 
-        var clients = await Task. WhenAll(connectTasks);
+        TestClient[] clients = await Task.WhenAll(connectTasks);
 
         // Assert
         clients.Should().HaveCount(clientCount);
-        foreach (var client in clients)
-        {
-            client.IsConnected.Should().BeTrue();
-        }
+        foreach (TestClient client in clients) client.IsConnected.Should().BeTrue();
 
         // Cleanup - Disconnect all
-        foreach (var client in clients)
-        {
-            client.Dispose();
-        }
+        foreach (TestClient client in clients) client.Dispose();
     }
 
     [Fact(Skip = "Stress test - run manually")]
@@ -87,10 +79,10 @@ public class DisconnectStressTests : IAsyncLifetime
         const int iterations = 100;
         var random = new Random();
         var activeClients = new List<TestClient>();
-        var lockObj = new object();
+        object lockObj = new();
 
         // Act - Random connect/disconnect chaos
-        var tasks = Enumerable.Range(0, iterations).Select(async i =>
+        IEnumerable<Task> tasks = Enumerable.Range(0, iterations).Select(async i =>
         {
             await Task.Delay(random.Next(10, 100));
 
@@ -99,11 +91,11 @@ public class DisconnectStressTests : IAsyncLifetime
                 // Connect
                 try
                 {
-                    var client = await _clientFactory!. CreateAuthenticatedClientAsync(
-                        timeout: TimeSpan. FromSeconds(10));
+                    TestClient client = await _clientFactory!.CreateAuthenticatedClientAsync(
+                        timeout: TimeSpan.FromSeconds(10));
                     lock (lockObj)
                     {
-                        activeClients. Add(client);
+                        activeClients.Add(client);
                     }
                 }
                 catch
@@ -114,17 +106,18 @@ public class DisconnectStressTests : IAsyncLifetime
             else
             {
                 // Disconnect random client
-                TestClient?  clientToDisconnect = null;
+                TestClient? clientToDisconnect = null;
                 lock (lockObj)
                 {
-                    if (activeClients. Count > 0)
+                    if (activeClients.Count > 0)
                     {
                         int index = random.Next(activeClients.Count);
                         clientToDisconnect = activeClients[index];
                         activeClients.RemoveAt(index);
                     }
                 }
-                clientToDisconnect?. Dispose();
+
+                clientToDisconnect?.Dispose();
             }
         });
 
@@ -133,10 +126,7 @@ public class DisconnectStressTests : IAsyncLifetime
         // Cleanup
         lock (lockObj)
         {
-            foreach (var client in activeClients)
-            {
-                client. Dispose();
-            }
+            foreach (TestClient client in activeClients) client.Dispose();
         }
     }
 
@@ -145,7 +135,8 @@ public class DisconnectStressTests : IAsyncLifetime
     {
         // Arrange - Create many clients
         const int clientCount = 50;
-        var clients = await _clientFactory!. CreateMultipleClientsAsync(clientCount, TimeSpan. FromSeconds(30));
+        List<TestClient> clients =
+            await _clientFactory!.CreateMultipleClientsAsync(clientCount, TimeSpan.FromSeconds(30));
 
         // Act - Disconnect all at once
         Parallel.ForEach(clients, client => client.Dispose());
@@ -154,19 +145,14 @@ public class DisconnectStressTests : IAsyncLifetime
         await Task.Delay(1000);
 
         // Try to connect new clients immediately
-        var newClients = await _clientFactory. CreateMultipleClientsAsync(clientCount, TimeSpan. FromSeconds(30));
+        List<TestClient> newClients =
+            await _clientFactory.CreateMultipleClientsAsync(clientCount, TimeSpan.FromSeconds(30));
 
         // Assert
-        newClients. Should().HaveCount(clientCount);
-        foreach (var client in newClients)
-        {
-            client.IsConnected.Should().BeTrue();
-        }
+        newClients.Should().HaveCount(clientCount);
+        foreach (TestClient client in newClients) client.IsConnected.Should().BeTrue();
 
         // Cleanup
-        foreach (var client in newClients)
-        {
-            client.Dispose();
-        }
+        foreach (TestClient client in newClients) client.Dispose();
     }
 }
