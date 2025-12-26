@@ -54,22 +54,29 @@ Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zon
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| ZoneId | int | Eindeutige Zone-ID | Ja |
+| ZoneId | ushort | Eindeutige Zone-ID | Ja |
 | ZoneName | string | Name der Zone | Ja |
 | ZoneType | string | "outdoor", "dungeon", "city", "instance" | Ja |
-| SpawnX | float | X-Koordinate | Ja |
-| SpawnY | float | Y-Koordinate | Ja |
-| SpawnZ | float | Z-Koordinate (Höhe) | Ja |
-| CharacterState | CharacterState | Aktueller Character-State | Ja |
+| PlayerData | PlayerEntityDto | Kompletter Character-State | Ja |
 
-**CharacterState**:
+**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für vollständige Referenz):
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
-| Health | int | Aktuelle HP |
-| MaxHealth | int | Maximale HP |
-| Mana | int | Aktuelles Mana |
-| MaxMana | int | Maximales Mana |
+| RuntimeId | EntityIdentity | Runtime Entity-ID |
+| Position | Position | Spawn-Position (X, Y, Z) |
+| DisplayName | string | Character-Name |
 | Level | int | Character-Level |
+| CurrentHealth | int | Aktuelle HP |
+| MaxHealth | int | Maximale HP |
+| CurrentResource | int | Aktuelles Mana/Energy/Rage |
+| MaxResource | int | Maximales Mana/Energy/Rage |
+| CombatResourceType | CombatResourceType | Typ der Ressource |
+| Race | Race | Rasse |
+| Class | CharacterClass | Klasse |
+| Gender | Gender | Geschlecht |
+| ... | ... | (weitere Properties siehe DTO_ARCHITECTURE.md) |
+
+**Hinweis**: `Experience`, `Gold` und `AccountId` sind **NICHT** enthalten (ServerOnly Properties).
 
 ### Erwartete Response
 - Client sendet `PositionUpdate` (200) um Spawn zu bestätigen
@@ -113,16 +120,22 @@ var joinZone = new JoinZone
     ZoneId = 1001,
     ZoneName = "Elwynn Forest",
     ZoneType = "outdoor",
-    SpawnX = 100.5f,
-    SpawnY = 250.0f,
-    SpawnZ = 10.0f,
-    CharacterState = new CharacterState
+    PlayerData = new PlayerEntityDto
     {
-        Health = 850,
+        RuntimeId = new EntityIdentity(1, 1001, 50001, 0, 1),
+        PersistentId = characterGuid,
+        Position = new Position(100.5f, 250.0f, 10.0f, 1001),
+        DisplayName = "Alice",
+        Level = 10,
+        CurrentHealth = 850,
         MaxHealth = 1000,
-        Mana = 200,
-        MaxMana = 300,
-        Level = 10
+        CurrentResource = 200,
+        MaxResource = 300,
+        CombatResourceType = CombatResourceType.Mana,
+        Race = Race.Human,
+        Class = CharacterClass.Mage,
+        Gender = Gender.Female
+        // Experience, Gold, AccountId sind NICHT enthalten (ServerOnly)
     }
 };
 ```
@@ -210,32 +223,33 @@ Kompletter Snapshot des Zone-States. Enthält alle Spieler, NPCs, und relevante 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| ZoneId | int | Zone-ID | Ja |
+| ZoneId | ushort | Zone-ID | Ja |
 | ServerTime | long | Server Unix Timestamp | Ja |
 | Weather | string | "sunny", "rain", "snow", "fog" | Ja |
 | TimeOfDay | float | 0.0-24.0 (Stunden) | Ja |
-| Players | List<PlayerEntity> | Alle Spieler in Zone | Ja |
-| NPCs | List<NpcEntity> | Alle NPCs in Range | Ja |
+| Players | List\<PlayerEntityDto\> | Alle Spieler in Zone | Ja |
+| NPCs | List\<NpcEntityDto\> | Alle NPCs in Range | Ja |
 
-**PlayerEntity**:
+**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md)):
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
-| EntityId | int | Runtime Entity-ID |
-| Name | string | Spieler-Name |
+| RuntimeId | EntityIdentity | Runtime Entity-ID |
+| DisplayName | string | Spieler-Name |
 | Level | int | Level |
-| X | float | Position X |
-| Y | float | Position Y |
-| Race | int | Rassen-ID |
-| Class | int | Klassen-ID |
+| Position | Position | Position (X, Y, Z) |
+| Race | Race | Rasse |
+| Class | CharacterClass | Klasse |
+| CurrentHealth | int | Aktuelle HP |
+| MaxHealth | int | Max HP |
+| ... | ... | (weitere Properties siehe DTO_ARCHITECTURE.md) |
 
-**NpcEntity**:
+**NpcEntityDto** (geplant, aktuell noch NpcEntity):
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
-| EntityId | int | Runtime Entity-ID |
-| NpcId | int | NPC-Template-ID |
-| X | float | Position X |
-| Y | float | Position Y |
-| Health | int | Aktuelles HP (% für Boss) |
+| RuntimeId | EntityIdentity | Runtime Entity-ID |
+| NpcTemplateId | int | NPC-Template-ID |
+| Position | Position | Position (X, Y, Z) |
+| CurrentHealth | int | Aktuelles HP (% für Boss) |
 
 ### Beispiel Payload
 ```csharp
@@ -246,28 +260,30 @@ var zoneState = new ZoneState
     ServerTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
     Weather = "sunny",
     TimeOfDay = 14.5f, // 14:30
-    Players = new List<PlayerEntity>
+    Players = new List<PlayerEntityDto>
     {
-        new PlayerEntity
+        new PlayerEntityDto
         {
-            EntityId = 50001,
-            Name = "Legolas",
+            RuntimeId = new EntityIdentity(1, 1001, 50001, 0, 1),
+            DisplayName = "Legolas",
             Level = 8,
-            X = 105.2f,
-            Y = 248.7f,
-            Race = 2, // Elf
-            Class = 3  // Ranger
+            Position = new Position(105.2f, 248.7f, 10.0f, 1001),
+            Race = Race.Elf,
+            Class = CharacterClass.Ranger,
+            CurrentHealth = 450,
+            MaxHealth = 500
+            // Experience und Gold sind NICHT enthalten (ServerOnly)
         }
     },
-    NPCs = new List<NpcEntity>
+    NPCs = new List<NpcEntityDto>
     {
-        new NpcEntity
+        new NpcEntityDto
         {
-            EntityId = 60001,
-            NpcId = 1234,
-            X = 120.0f,
-            Y = 260.0f,
-            Health = 100 // 100%
+            RuntimeId = new EntityIdentity(1, 1001, 60001, 0, 1234),
+            NpcTemplateId = 1234,
+            Position = new Position(120.0f, 260.0f, 10.0f, 1001),
+            CurrentHealth = 100,
+            MaxHealth = 100
         }
     }
 };
@@ -303,30 +319,39 @@ Broadcast an alle Spieler in Zone wenn ein neuer Spieler spawnt. Ermöglicht Cli
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| EntityId | int | Runtime Entity-ID | Ja |
-| CharacterId | long | Persistente Character-ID | Ja |
-| Name | string | Character-Name | Ja |
-| Level | int | Level | Ja |
-| Race | int | Rassen-ID | Ja |
-| Class | int | Klassen-ID | Ja |
-| X | float | Position X | Ja |
-| Y | float | Position Y | Ja |
-| Z | float | Position Z | Ja |
+| PlayerData | PlayerEntityDto | Komplette Spieler-Informationen | Ja |
+
+**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für vollständige Referenz):
+
+Das DTO enthält alle sichtbaren Informationen über den neuen Spieler:
+- Runtime- und Persistent-IDs
+- Position und Movement
+- Display-Name, Level, Race, Class
+- Health/Resource Status
+- Combat-State
+- **NICHT** enthalten: Experience, Gold, AccountId (ServerOnly)
 
 ### Beispiel Payload
 ```csharp
 var playerJoined = new PlayerJoinedZone
 {
     Type = MessageType.PlayerJoinedZone,
-    EntityId = 50002,
-    CharacterId = 98766,
-    Name = "Gimli",
-    Level = 12,
-    Race = 3, // Dwarf
-    Class = 2, // Warrior
-    X = 98.5f,
-    Y = 255.0f,
-    Z = 10.2f
+    PlayerData = new PlayerEntityDto
+    {
+        RuntimeId = new EntityIdentity(1, 1001, 50002, 0, 1),
+        PersistentId = characterGuid,
+        CharacterId = characterGuid,
+        DisplayName = "Gimli",
+        Level = 12,
+        Race = Race.Dwarf,
+        Class = CharacterClass.Warrior,
+        Position = new Position(98.5f, 255.0f, 10.2f, 1001),
+        CurrentHealth = 800,
+        MaxHealth = 1200,
+        CurrentResource = 100,
+        MaxResource = 100,
+        CombatResourceType = CombatResourceType.Rage
+    }
 };
 ```
 
@@ -364,15 +389,17 @@ Broadcast an alle Spieler wenn ein Spieler die Zone verlässt. Client entfernt d
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| EntityId | int | Entity-ID des Spielers | Ja |
+| PlayerId | Guid | Persistent Player-ID | Ja |
 | Reason | string | "logout", "transfer", "disconnect", "death" | Ja |
+
+**Hinweis:** PlayerId entspricht `PlayerEntityDto.PersistentId` für konsistente ID-Referenzierung.
 
 ### Beispiel Payload
 ```csharp
 var playerLeft = new PlayerLeftZone
 {
     Type = MessageType.PlayerLeftZone,
-    EntityId = 50002,
+    PlayerId = playerGuid, // Persistent ID
     Reason = "transfer"
 };
 ```

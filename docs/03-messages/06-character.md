@@ -23,6 +23,14 @@ Diese Kategorie umfasst alle Messages für **Character-Progression und -Manageme
 
 **Phase 2 Features**: Vollständige character-progression mit Reputation-System, Titles, und Appearance-Customization.
 
+**🔄 DTO-System:**  
+Character-Selection Messages wie `CharacterList` (601) werden in Phase 2 ein `CharacterListItemDto` verwenden:
+- Minimale Character-Infos für Selection-Screen (Name, Level, Race, Class, Location)
+- Keine sensiblen Daten wie AccountId, Gold, oder Experience
+- Optimiert für schnelle Character-Selection UI
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `CharacterListItemDto` Struktur.
+
 ---
 
 ## 📝 Message-Liste

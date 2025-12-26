@@ -11,9 +11,17 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **targeting** Funktionalität im 2DMMO.
+Diese Kategorie umfasst alle Messages für **Targeting** Funktionalität im 2DMMO.
 
 Target-Selection, Focus-Target, Marking und Assist-Funktionalität.
+
+**🔄 DTO-System:**  
+Targeting Messages wie `TargetChanged` (1200) werden in Phase 2 ein `TargetEntityDto` verwenden:
+- Minimale Target-Informationen für UI (Name, Level, Health, Buffs)
+- Keine sensiblen Server-Daten wie AccountId oder Gold
+- Optimiert für Target-Frame UI-Updates
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `TargetEntityDto` Struktur.
 
 ---
 

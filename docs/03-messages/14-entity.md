@@ -11,9 +11,17 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **entity** Funktionalität im 2DMMO.
+Diese Kategorie umfasst alle Messages für **Entity** Funktionalität im 2DMMO.
 
 Entity-Spawning und Synchronisation für Spieler, NPCs und Objekte.
+
+**🔄 DTO-System:**  
+Entity Messages wie `EntitySpawn` (1400) und `EntityUpdate` (1404) werden in Phase 2 mit DTOs arbeiten:
+- `EntitySpawn` sollte `IEntityDto` verwenden (polymorphes Union-Interface)
+- `EntityUpdate` sollte Delta-DTOs verwenden (nur geänderte Properties)
+- Ermöglicht type-sichere Entity-Updates ohne sensible Server-Daten
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details zu `IEntityDto`, `PlayerEntityDto` und `NpcEntityDto`.
 
 ---
 

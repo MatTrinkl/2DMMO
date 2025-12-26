@@ -22,6 +22,9 @@ Diese Kategorie umfasst alle Messages für das **Party/Group-System** im 2DMMO, 
 
 **Maximale Gruppengröße**: 5 Spieler (Party), 40 Spieler (Raid nach Konvertierung)
 
+**🔄 DTO-System:**  
+In Phase 2 wird ein `PartyMemberDto` eingeführt für Party-Listen und Member-Updates. Dies ermöglicht minimale Spieler-Infos ohne sensible Daten. Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
+
 ---
 
 ## PartyInvite (700)

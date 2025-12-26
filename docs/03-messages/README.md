@@ -176,6 +176,31 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
 
 ---
 
+## 🔄 DTO-System
+
+Für Server→Client Messages werden DTOs (Data Transfer Objects) verwendet um:
+- Server-only Daten zu schützen (`[ServerOnly]` Attribute)
+- Konsistente Mappings zu garantieren
+- Compile-Time Sicherheit zu gewährleisten
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
+
+### Verfügbare DTOs
+
+| DTO | Entity | Verwendet in |
+|-----|--------|--------------|
+| `PlayerEntityDto` | `PlayerEntity` | JoinZone (100), ZoneState (102), PlayerJoinedZone (103) |
+| `NpcEntityDto` | `NpcEntity` | ZoneState (102), EntitySpawn (1400) - 🟡 Geplant |
+| `IEntityDto` | Union-Interface | ZoneState polymorphe Liste - 🟡 Geplant |
+
+**Zukünftige DTOs (geplant):**
+- `CombatEntityDto` - für Damage/Heal Events (Combat Messages)
+- `PartyMemberDto` - für Party-Listen (Party Messages)
+- `TargetEntityDto` - für Target-Frame (Targeting Messages)
+- `CharacterListItemDto` - für Character-Selection (Character Messages)
+
+---
+
 ## 🔍 Schnellsuche
 
 ### Nach Funktion
