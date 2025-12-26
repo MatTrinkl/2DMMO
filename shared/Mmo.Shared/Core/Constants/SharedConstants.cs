@@ -58,13 +58,13 @@ public static class SharedConstants
     public const int TimeToConnectionDeadInSeconds = 30;
 
     /// <summary>
+    ///     The maximum numbers of players on one server/shard later.
+    /// </summary>
+    public const int MaxConnection = 1000;
+
+    /// <summary>
     ///     The tick interval in milliseconds (40ms).
     /// </summary>
     public static readonly TimeSpan TickDuration =
         TimeSpan.FromSeconds(1.0 / TickRate);
-
-    /// <summary>
-    ///     The maximum numbers of players on one server/shard later.
-    /// </summary>
-    public const int MaxConnection = 1000;
 }

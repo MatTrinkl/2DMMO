@@ -8,7 +8,6 @@ using Mmo.Server.Player.Interfaces;
 using Mmo.Server.PlayerService;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Authentification.Records;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core;
@@ -104,7 +103,8 @@ public class ConnectionHandler(
 
                 if (!authResult.Success)
                 {
-                    _log.Error(authResult.ErrorCode!.ToString(), "Auth service error for {ConnectionId}", ctx.ConnectionId);
+                    _log.Error(authResult.ErrorCode!.ToString(), "Auth service error for {ConnectionId}",
+                        ctx.ConnectionId);
                     _broadcast.SendError(ctx.Connection, "AUTH_SERVICE_ERROR",
                         "Authentication service unavailable.  Please try again later.", null, null);
                     return new LoginTaskResult(false, ErrorCode: authResult.ErrorCode,
@@ -141,7 +141,7 @@ public class ConnectionHandler(
                     // Send response
                     // TODO: Add session token, character list, and server info to response
                     _broadcast.SendToPlayer(outCtx.Connection,
-                        new LoginResponse()
+                        new LoginResponse
                         {
                             Success = true, AccountId = outCtx.PlayerInfo!.AccountId,
                             AccountName = outCtx.PlayerInfo.Name, IsPremium = false, SessionToken = "TempToken"
@@ -153,7 +153,7 @@ public class ConnectionHandler(
                 {
                     _log.Warn("Login failed for {ConnectionId}: {Error}", ctx.ConnectionId, result.ErrorCode!);
                     _broadcast.SendToPlayer(outCtx.Connection,
-                        new LoginResponse()
+                        new LoginResponse
                         {
                             Success = false, ErrorCode = result.ErrorCode, ErrorMessage = result.ErrorMessage
                         });

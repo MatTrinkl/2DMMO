@@ -1,7 +1,6 @@
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Movement;
@@ -74,7 +73,7 @@ public class GameServerInputPhaseTests
 
         // Send LoginRequest (handled by ConnectionHandler)
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new LoginRequest() { Username = "TestUser", Password = "password123" });
+            new LoginRequest { Username = "TestUser", Password = "password123" });
 
         // Start and run
         gameServer.Start();
@@ -205,7 +204,8 @@ public class GameServerInputPhaseTests
 
         // Send various message types
         var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest() { Username = "Player1", Password = "password123" });
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new LoginRequest { Username = "Player1", Password = "password123" });
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Test"));
         _mockNetworkServer.SimulateMessageReceived(clientId,

@@ -9,18 +9,12 @@ namespace Mmo.Shared.Character.Messages.Client_Server;
 /// <summary>
 ///     This class sends a delete request to the server.
 ///     Client -> Server
-///     Response: <see cref="CharacterDeleteResponse"/>
+///     Response: <see cref="CharacterDeleteResponse" />
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.CharacterDeleteRequest)]
-public class CharacterDeleteRequest : INetworkMessage
+public class CharacterDeleteRequest : IClientMessage
 {
-    /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.CharacterDeleteRequest;
-
     /// <summary>
     ///     The ID of the character to delete.
     /// </summary>
@@ -28,8 +22,14 @@ public class CharacterDeleteRequest : INetworkMessage
     public long CharacterId { get; set; }
 
     /// <summary>
-    /// The confirmation of the deletion. This needs to be "DELETE"
+    ///     The confirmation of the deletion. This needs to be "DELETE"
     /// </summary>
     [Key(2)]
     public string Confirmation { get; set; } = "";
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.CharacterDeleteRequest;
 }

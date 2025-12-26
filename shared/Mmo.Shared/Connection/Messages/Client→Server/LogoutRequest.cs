@@ -13,18 +13,17 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.LogoutRequest)]
-public class LogoutRequest : INetworkMessage
+public class LogoutRequest : IClientMessage
 {
-    /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.LogoutRequest;
-
-
     /// <summary>
     ///     The reason for the logout. Todo: make this to an enum
     /// </summary>
     [Key(2)]
     public string? Reason { get; set; } = "";
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.LogoutRequest;
 }

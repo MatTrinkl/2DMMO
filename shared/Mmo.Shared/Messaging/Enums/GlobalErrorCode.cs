@@ -3,8 +3,8 @@
 namespace Mmo.Shared.Messaging.Enums;
 
 /// <summary>
-/// Global error codes for all responses.
-/// Are checked first, when set then ignore specific ErrorCode.
+///     Global error codes for all responses.
+///     Are checked first, when set then ignore specific ErrorCode.
 /// </summary>
 public enum GlobalErrorCode : byte
 {
@@ -35,7 +35,7 @@ public enum GlobalErrorCode : byte
 
     // ═══ Rate Limiting (40-59) ═══
 
-    /// <summary>To many requests. More Information under: <see cref="RateLimits"/>.</summary>
+    /// <summary>To many requests. More Information under: <see cref="RateLimits" />.</summary>
     RateLimited = 40,
 
     // ═══ Allgemeine Fehler (60-79) ═══

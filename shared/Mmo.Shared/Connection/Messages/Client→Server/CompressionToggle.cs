@@ -1,5 +1,4 @@
 using MessagePack;
-using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -13,7 +12,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.CompressionToggle)]
-public class CompressionToggle : INetworkMessage
+public class CompressionToggle : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

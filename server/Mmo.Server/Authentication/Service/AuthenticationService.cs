@@ -35,7 +35,8 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         // TODO: Validate session from Redis/DB
         await Task.Delay(1);
 
-        return new AuthResult(false, ErrorCode:LoginResponseErrorCode.InvalidCredentials, ErrorMessage: "Session validation not implemented");
+        return new AuthResult(false, ErrorCode: LoginResponseErrorCode.InvalidCredentials,
+            ErrorMessage: "Session validation not implemented");
     }
 
     public async Task InvalidateSessionAsync(Guid sessionToken)

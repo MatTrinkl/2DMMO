@@ -2,7 +2,6 @@ using MessagePack;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Enums;
-using Mmo.Shared.Connection.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Records;
@@ -27,7 +26,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_LoginRequest_RoundTrip()
     {
-        var original = new LoginRequest() { Username = "testuser", Password = "password123" };
+        var original = new LoginRequest { Username = "testuser", Password = "password123" };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
@@ -42,7 +41,7 @@ public class MessageSerializerTests
     public void Serialize_LoginResponse_RoundTrip()
     {
         var accountId = Guid.NewGuid();
-        var original = new LoginResponse(){Success = true,AccountId = accountId, AccountName = "Test"};
+        var original = new LoginResponse { Success = true, AccountId = accountId, AccountName = "Test" };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginResponse deserialized = MessagePackSerializer.Deserialize<LoginResponse>(serialized);
@@ -59,7 +58,7 @@ public class MessageSerializerTests
     public void Serialize_Heartbeat_RoundTrip()
     {
         uint sessionSequenceNumber = 77;
-        var original = new Heartbeat(){SequenceNumber = sessionSequenceNumber};
+        var original = new Heartbeat { SequenceNumber = sessionSequenceNumber };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         Heartbeat deserialized = MessagePackSerializer.Deserialize<Heartbeat>(serialized);
@@ -73,7 +72,7 @@ public class MessageSerializerTests
     public void Serialize_Disconnect_RoundTrip()
     {
         var playerId = Guid.NewGuid();
-        var original = new ForceDisconnect() { Reason = DisconnectReason.ClientDisconnected };
+        var original = new ForceDisconnect { Reason = DisconnectReason.ClientDisconnected };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         ForceDisconnect deserialized = MessagePackSerializer.Deserialize<ForceDisconnect>(serialized);
@@ -226,7 +225,7 @@ public class MessageSerializerTests
     [Fact]
     public void Serialize_EmptyStrings_RoundTrip()
     {
-        var original = new LoginRequest() { Username = "", Password = "" };
+        var original = new LoginRequest { Username = "", Password = "" };
 
         byte[] serialized = MessagePackSerializer.Serialize(original);
         LoginRequest deserialized = MessagePackSerializer.Deserialize<LoginRequest>(serialized);
@@ -269,7 +268,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_LoginRequest_ReturnsCorrectType()
     {
-        var original = new LoginRequest() { Username = "user", Password = "pass" };
+        var original = new LoginRequest { Username = "user", Password = "pass" };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -282,7 +281,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_LoginResponse_ReturnsCorrectType()
     {
-        var original = new LoginResponse(){Success = true, AccountId = Guid.NewGuid()};
+        var original = new LoginResponse { Success = true, AccountId = Guid.NewGuid() };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -304,7 +303,7 @@ public class MessageSerializerTests
     [Fact]
     public void MessageSerializer_Deserialize_Disconnect_ReturnsCorrectType()
     {
-        var original = new ForceDisconnect(){Reason = DisconnectReason.Timeout};
+        var original = new ForceDisconnect { Reason = DisconnectReason.Timeout };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
@@ -418,7 +417,7 @@ public class MessageSerializerTests
     public void MessageSerializer_Deserialize_CorruptedData_ThrowsException()
     {
         // Create a message with corrupted data
-        var original = new LoginRequest() { Username = "user", Password = "pass" };
+        var original = new LoginRequest { Username = "user", Password = "pass" };
         byte[] serialized = MessageSerializer.Serialize(original);
 
         // Corrupt the data by setting the MessageType byte to an invalid value (byte.MaxValue = 255)

@@ -28,8 +28,7 @@ public record ZoneTransferResponse : INetworkMessage
     [Key(4)]
     public string? ErrorMessage { get; init; }
 
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneTransferResponse;
+    [Key(0)] public MessageType Type => MessageType.ZoneTransferResponse;
 
     // ─── Factory Methods ───
 

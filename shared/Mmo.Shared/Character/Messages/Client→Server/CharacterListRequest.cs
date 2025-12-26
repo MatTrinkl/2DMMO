@@ -1,5 +1,4 @@
 using MessagePack;
-using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -13,7 +12,7 @@ namespace Mmo.Shared.Character.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.CharacterListRequest)]
-public class CharacterListRequest : INetworkMessage
+public class CharacterListRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.
