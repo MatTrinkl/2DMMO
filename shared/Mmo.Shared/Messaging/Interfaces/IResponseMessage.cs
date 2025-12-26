@@ -6,7 +6,7 @@ namespace Mmo.Shared.Messaging.Interfaces;
 /// <summary>
 /// Base-Interface for all response messages.
 /// </summary>
-public interface IResponseMessage : INetworkMessage
+public interface IResponseMessage : IServerMessage
 {
     /// <summary>
     /// Was the operation successful.

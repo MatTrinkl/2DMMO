@@ -14,7 +14,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ReconnectRequest)]
-public class ReconnectRequest : INetworkMessage
+public class ReconnectRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

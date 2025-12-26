@@ -14,7 +14,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ServerSelectRequest)]
-public class ServerSelectRequest : INetworkMessage
+public class ServerSelectRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.LogoutRequest)]
-public class LogoutRequest : INetworkMessage
+public class LogoutRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.
