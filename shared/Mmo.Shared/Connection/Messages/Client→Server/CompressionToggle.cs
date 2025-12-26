@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.CompressionToggle)]
-public class CompressionToggle : INetworkMessage
+public class CompressionToggle : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

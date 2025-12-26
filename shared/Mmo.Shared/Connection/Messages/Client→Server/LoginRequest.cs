@@ -12,7 +12,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.LoginRequest)]
-public class LoginRequest : INetworkMessage
+public class LoginRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

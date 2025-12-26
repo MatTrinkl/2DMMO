@@ -14,7 +14,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.AccountDataResponse)]
-public class AccountDataResponse : INetworkMessage
+public class AccountDataResponse : IServerMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

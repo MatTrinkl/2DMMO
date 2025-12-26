@@ -170,6 +170,15 @@ public class MockNetworkServer(ILog log, bool isDisposed, int port = 7777) : Net
         FieldInfo? connectedAtField = typeof(ClientConnection).GetField("<ConnectedAt>k__BackingField",
             BindingFlags.Instance | BindingFlags.NonPublic);
         connectedAtField?.SetValue(connection, DateTimeOffset.UtcNow);
+        // Set _log - FIX für NullReferenceException
+        FieldInfo? logField = typeof(ClientConnection).GetField("_log",
+            BindingFlags. Instance | BindingFlags.NonPublic);
+        logField?.SetValue(connection, new MockLog());
+
+        // Set _disposed = false
+        FieldInfo? disposedField = typeof(ClientConnection).GetField("_disposed",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        disposedField?.SetValue(connection, false);
 
         return connection;
     }

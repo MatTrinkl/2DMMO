@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.Heartbeat)]
-public class Heartbeat : ITimestampedMessage
+public class Heartbeat : IClientMessage, ITimestampedMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

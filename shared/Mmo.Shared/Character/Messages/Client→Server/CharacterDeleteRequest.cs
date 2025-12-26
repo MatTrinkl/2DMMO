@@ -13,7 +13,7 @@ namespace Mmo.Shared.Character.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.CharacterDeleteRequest)]
-public class CharacterDeleteRequest : INetworkMessage
+public class CharacterDeleteRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

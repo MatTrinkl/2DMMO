@@ -14,7 +14,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.RealmListRequest)]
-public class RealmListRequest : INetworkMessage
+public class RealmListRequest : IClientMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

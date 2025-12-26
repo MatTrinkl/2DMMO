@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ForceDisconnect)]
-public class ForceDisconnect : INetworkMessage
+public class ForceDisconnect : IServerMessage
 {
     /// <summary>
     ///     The Message Type of this Message.

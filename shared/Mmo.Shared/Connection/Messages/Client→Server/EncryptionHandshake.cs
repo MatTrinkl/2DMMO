@@ -13,7 +13,7 @@ namespace Mmo.Shared.Connection.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.EncryptionHandshake)]
-public class EncryptionHandshake : ITimestampedMessage
+public class EncryptionHandshake : IClientMessage, ITimestampedMessage
 {
     /// <summary>
     ///     The Message Type of this Message.
@@ -26,5 +26,4 @@ public class EncryptionHandshake : ITimestampedMessage
     /// </summary>
     [Key(1)]
     public long Timestamp { get; init; } = NetworkTime.Now;
-
 }
