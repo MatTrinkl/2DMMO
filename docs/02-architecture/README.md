@@ -2,9 +2,9 @@
 
 ## 2DMMO – Technische Architektur
 
-**Version:** 2.0.0  
-**Letzte Aktualisierung:** 2025-12-25  
-**Status:** Finalisiert für Prototyp-Phase + S2S-Planung
+**Version:** 2.1.0  
+**Letzte Aktualisierung:** 2025-12-26  
+**Status:** Finalisiert für Prototyp-Phase + S2S-Planung + Login-to-Play Flow
 
 ---
 
@@ -22,14 +22,15 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 4 | [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) | Message Handling, Business Logic, Async Operations |
 | 5 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
 | 6 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 7 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| 8 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 9 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 10 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
-| 11 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
-| 12 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 13 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
-| 14 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
+| 7 | [Login-to-Play Flow](LOGIN_TO_PLAY_FLOW.md) | **NEU** - Kompletter Message Flow von Login bis Ready-to-Play |
+| 8 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
+| 9 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
+| 10 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
+| 11 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
+| 12 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
+| 13 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 14 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 15 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
 
 ---
 
@@ -124,6 +125,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 2.1.0 | 2025-12-26 | Hinzugefügt: Login-to-Play Flow Dokumentation mit GetZone Messages |
 | 2.0.0 | 2025-12-25 | Hinzugefügt: Server-zu-Server Kommunikation & Load-Balancing Dokumentation |
 | 1.4.0 | 2025-12-23 | Hinzugefügt: Rate-Limiting Dokumentation |
 | 1.3.0 | 2025-12-22 | Hinzugefügt: Handler/Service-Pattern Dokumentation |
