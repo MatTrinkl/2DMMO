@@ -45,11 +45,17 @@ Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zon
 - Zone-ID und Name
 - Spawn-Position (X, Y, Z)
 - Zone-Type (Outdoor, Dungeon, City, etc.)
-- Initialer Character-State (HP, Mana, etc.)
+- **Vollständiges PlayerEntity mit allen gameplay-relevanten Daten**
+- **Equipment-Snapshot für korrektes Character-Rendering**
+- **Aktive Buffs/Debuffs für UI-Anzeige**
+- **Cooldowns für Ability-Verfügbarkeit**
 
 ### Nicht im Scope ❌
 - Vollständiger ZoneState mit anderen Spielern → verwende `ZoneState` (102)
 - Entity-Liste → Server sendet separate `EntitySpawn` Messages (1400)
+- **Vollständiges Inventory** → verwende `InventorySync` (1100)
+- **Quest-Log** → verwende `QuestSync` (1000)
+- **Skill-Tree Details** → verwende `SkillSync` (800)
 
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -60,16 +66,52 @@ Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zon
 | SpawnX | float | X-Koordinate | Ja |
 | SpawnY | float | Y-Koordinate | Ja |
 | SpawnZ | float | Z-Koordinate (Höhe) | Ja |
-| CharacterState | CharacterState | Aktueller Character-State | Ja |
+| Player | PlayerEntityDto | Vollständiges PlayerEntity für sofortiges Gameplay | Ja |
 
-**CharacterState**:
+**PlayerEntityDto**:
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
-| Health | int | Aktuelle HP |
+| EntityId | int | Runtime Entity-ID in der Zone |
+| PersistentId | Guid | Persistente Character-ID aus DB |
+| Name | string | Character-Name |
+| CurrentHealth | int | Aktuelle HP |
 | MaxHealth | int | Maximale HP |
-| Mana | int | Aktuelles Mana |
+| CurrentMana | int | Aktuelles Mana |
 | MaxMana | int | Maximales Mana |
 | Level | int | Character-Level |
+| Experience | long | Aktuelle XP |
+| ExperienceToNextLevel | long | XP für nächstes Level |
+| Race | byte | Rassen-ID |
+| Class | byte | Klassen-ID |
+| AppearanceData | byte[] | Serialisierte Appearance-Daten |
+| Equipment | EquipmentSnapshotDto | Aktuell getragene Ausrüstung (für Rendering) |
+| ActiveEffects | List<ActiveEffectDto> | Aktive Buffs/Debuffs |
+| Gold | int | Aktuelles Gold |
+| PremiumCurrency | int | Premium-Währung |
+| IsPvpFlagged | bool | PvP-Flag aktiv? |
+| IsInCombat | bool | Im Kampf? |
+| IsResting | bool | Ruht der Spieler? |
+| Cooldowns | Dictionary<int, long> | Aktive Ability-Cooldowns (AbilityId → ExpiryTimestamp) |
+
+**EquipmentSnapshotDto**:
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| HeadItemId | int? | Helm Item-ID |
+| ChestItemId | int? | Brustpanzer Item-ID |
+| LegsItemId | int? | Beinrüstung Item-ID |
+| FeetItemId | int? | Schuhe Item-ID |
+| MainHandItemId | int? | Haupthand-Waffe Item-ID |
+| OffHandItemId | int? | Nebenhand Item-ID |
+| BackItemId | int? | Umhang/Rücken Item-ID |
+
+**ActiveEffectDto**:
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| EffectId | int | Effekt-ID |
+| EffectName | string | Name des Effekts |
+| Stacks | int | Anzahl Stacks |
+| RemainingDuration | float | Verbleibende Dauer (Sekunden) |
+| IsDebuff | bool | Ist es ein negativer Effekt? |
 
 ### Erwartete Response
 - Client sendet `PositionUpdate` (200) um Spawn zu bestätigen
@@ -82,6 +124,10 @@ Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zon
 | `LeaveZone` | 101 | Verlassen der Zone |
 | `CharacterSelect` | 9 | Auslöser für JoinZone |
 | `EntitySpawn` | 1400 | Andere Spieler/NPCs in Zone |
+| `InventorySync` | 1100 | Vollständiges Inventory (separat) |
+| `QuestSync` | 1000 | Quest-Log (separat) |
+| `SkillSync` | 800 | Skill-Tree (separat) |
+| `FriendListResponse` | 2105 | Freundesliste (separat) |
 
 ### Flow-Diagramm
 ```
@@ -116,13 +162,42 @@ var joinZone = new JoinZone
     SpawnX = 100.5f,
     SpawnY = 250.0f,
     SpawnZ = 10.0f,
-    CharacterState = new CharacterState
+    Player = new PlayerEntityDto
     {
-        Health = 850,
+        EntityId = 50001,
+        PersistentId = Guid.Parse("a3f7c2b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c"),
+        Name = "Aragorn",
+        CurrentHealth = 850,
         MaxHealth = 1000,
-        Mana = 200,
+        CurrentMana = 200,
         MaxMana = 300,
-        Level = 10
+        Level = 10,
+        Experience = 45000,
+        ExperienceToNextLevel = 55000,
+        Race = 1, // Human
+        Class = 2, // Warrior
+        AppearanceData = new byte[] { /* ... */ },
+        Equipment = new EquipmentSnapshotDto
+        {
+            HeadItemId = 1001,
+            ChestItemId = 2005,
+            MainHandItemId = 5001
+        },
+        ActiveEffects = new List<ActiveEffectDto>
+        {
+            new ActiveEffectDto 
+            { 
+                EffectId = 101, 
+                EffectName = "Well Rested", 
+                RemainingDuration = 3600,
+                IsDebuff = false 
+            }
+        },
+        Gold = 1250,
+        IsPvpFlagged = false,
+        IsInCombat = false,
+        IsResting = true,
+        Cooldowns = new Dictionary<int, long>()
     }
 };
 ```
@@ -132,6 +207,14 @@ var joinZone = new JoinZone
 - Client lädt Zone-Assets basierend auf ZoneId
 - Nach JoinZone: Server sendet andere Spieler als `EntitySpawn` (1400)
 - Spawn-Position ist entweder: Last-Position, Hearthstone, oder Zone-Default
+- **PlayerEntityDto enthält alle Daten für sofortiges Gameplay** - Client muss keine weiteren Requests für Basis-Daten senden
+- **Nicht enthalten in PlayerEntityDto** (separate Messages):
+  - Vollständiges Inventory → `InventorySync` (1100)
+  - Quest-Log → `QuestSync` (1000)
+  - Skill-Tree → `SkillSync` (800)
+  - Freundesliste → `FriendListResponse` (2105)
+- **Geschätzte Message-Größe**: ~1-2 KB (akzeptabel für seltene Zone-Joins)
+- Bei Reconnect: Cooldowns werden korrekt wiederhergestellt
 
 ---
 
