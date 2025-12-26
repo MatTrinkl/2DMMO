@@ -28,6 +28,8 @@
 - [SubZoneEnter (114)](#subzoneenter-114)
 - [SubZoneLeave (115)](#subzoneleave-115)
 - [ZonePhaseChange (116)](#zonephasechange-116)
+- [GetZoneRequest (117)](#getzonerequest-117)
+- [GetZoneResponse (118)](#getzoneresponse-118)
 
 ---
 
@@ -39,7 +41,9 @@
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zone-ID, Spawn-Position und initiale Informationen. Dies ist die erste Message nach Character-Auswahl.
+Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zone-ID, Spawn-Position und initiale Informationen. 
+
+**Flow:** Nach `CharacterSelectResponse` sendet Client zuerst `GetZoneRequest` (117) um Zone-Metadaten zu laden und Assets vorzubereiten. Wenn bereit, sendet Server dann `JoinZone` mit vollständigem PlayerEntity.
 
 ### Im Scope ✅
 - Zone-ID und Name
@@ -123,6 +127,7 @@ Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zon
 | `ZoneState` | 102 | Enthält kompletten Zone-State |
 | `LeaveZone` | 101 | Verlassen der Zone |
 | `CharacterSelect` | 9 | Auslöser für JoinZone |
+| `GetZoneRequest` | 117 | Wird vor JoinZone gesendet (Zone-Metadaten laden) |
 | `EntitySpawn` | 1400 | Andere Spieler/NPCs in Zone |
 | `InventorySync` | 1100 | Vollständiges Inventory (separat) |
 | `QuestSync` | 1000 | Quest-Log (separat) |
@@ -138,14 +143,29 @@ Client                    Zone Server
   │                          │  Load Character
   │                          │  Find Spawn Point
   │                          │
+  │  CharacterSelectResponse │
+  │  (SpawnZoneId: 1001)     │
+  │◄─────────────────────────│
+  │                          │
+  │  GetZoneRequest (117)    │
+  │  (ZoneId: 1001)          │
+  │─────────────────────────►│
+  │                          │
+  │  GetZoneResponse (118)   │
+  │  with ZoneState          │
+  │◄─────────────────────────│
+  │                          │
+  │  Load Zone Assets        │
+  │  (Textures, Models...)   │
+  │                          │
+  │  Assets Loaded,          │
+  │  Ready to Spawn          │
+  │                          │
   │  JoinZone (100)          │
   │◄─────────────────────────│
   │                          │
   │  PositionUpdate (200)    │
   │─────────────────────────►│
-  │                          │
-  │  ZoneState (102)         │
-  │◄─────────────────────────│
   │                          │
   │  EntitySpawn (1400) x N  │
   │◄─────────────────────────│
@@ -204,9 +224,10 @@ var joinZone = new JoinZone
 
 ### Notizen
 - Loading-Screen im Client während Zone-Load
-- Client lädt Zone-Assets basierend auf ZoneId
+- Client lädt Zone-Assets basierend auf ZoneId (nach `GetZoneRequest`)
 - Nach JoinZone: Server sendet andere Spieler als `EntitySpawn` (1400)
 - Spawn-Position ist entweder: Last-Position, Hearthstone, oder Zone-Default
+- **Empfohlener Flow:** `CharacterSelectResponse` → `GetZoneRequest` → Asset Loading → `JoinZone`
 - **PlayerEntityDto enthält alle Daten für sofortiges Gameplay** - Client muss keine weiteren Requests für Basis-Daten senden
 - **Nicht enthalten in PlayerEntityDto** (separate Messages):
   - Vollständiges Inventory → `InventorySync` (1100)
@@ -809,7 +830,201 @@ var phaseChange = new ZonePhaseChange
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+## GetZoneRequest (117)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client fordert Zone-Metadaten an bevor er in die Zone spawnt. Dies ermöglicht dem Client, Zone-Assets (Textures, Models, etc.) vorzuladen während der Server den Spawn vorbereitet.
+
+### Im Scope ✅
+- Zone-Metadaten abrufen (Name, Type, Weather)
+- Asset-Loading vorbereiten
+- Zone-Info cachen
+
+### Nicht im Scope ❌
+- Spawn-Position → kommt in `JoinZone` (100)
+- PlayerEntity-Daten → kommt in `JoinZone` (100)
+- Andere Spieler/NPCs → kommt in `ZoneState` (102) und `EntitySpawn` (1400)
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ZoneId | int | Zone-ID die angefragt wird | Ja |
+
+### Erwartete Response
+- **Immer:** `GetZoneResponse` (118) mit `ZoneState` (102)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `GetZoneResponse` | 118 | Response mit ZoneState |
+| `CharacterSelectResponse` | 21 | Liefert SpawnZoneId |
+| `ZoneState` | 102 | Enthält Zone-Daten |
+| `JoinZone` | 100 | Folgt nach Asset-Loading |
+
+### Flow-Diagramm
+```
+Client                    Gateway                   Zone Server
+  │                          │                          │
+  │  CharacterSelectResponse │                          │
+  │  (SpawnZoneId: 1001)     │                          │
+  │◄─────────────────────────│                          │
+  │                          │                          │
+  │  GetZoneRequest (117)    │                          │
+  │  ZoneId: 1001            │                          │
+  │─────────────────────────►│                          │
+  │                          │                          │
+  │                          │  Forward Request         │
+  │                          │─────────────────────────►│
+  │                          │                          │
+  │                          │                          │  Load Zone Data
+  │                          │                          │
+  │                          │  ZoneState (102)         │
+  │                          │◄─────────────────────────│
+  │                          │                          │
+  │  GetZoneResponse (118)   │                          │
+  │  with ZoneState          │                          │
+  │◄─────────────────────────│                          │
+  │                          │                          │
+  │  Load Zone Assets        │                          │
+  │  (Textures, Models...)   │                          │
+  │                          │                          │
+  │  Assets loaded           │                          │
+  │  Ready for Spawn         │                          │
+  │                          │                          │
+  │                          │  Player Ready Signal     │
+  │                          │─────────────────────────►│
+  │                          │                          │
+  │                          │  JoinZone (100)          │
+  │                          │◄─────────────────────────│
+  │  JoinZone (100)          │                          │
+  │◄─────────────────────────│                          │
+```
+
+### Beispiel Payload
+```csharp
+var getZoneRequest = new GetZoneRequest
+{
+    Type = MessageType.GetZoneRequest,
+    ZoneId = 1001
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ZONE_NOT_FOUND` | Zone-ID existiert nicht | Client-Fehler, sollte nicht passieren |
+| `ZONE_LOCKED` | Zone gesperrt (Maintenance) | Wartungsmeldung anzeigen |
+| `ACCESS_DENIED` | Keine Berechtigung für Zone | Level/Quest-Anforderung anzeigen |
+
+### Notizen
+- Wird nach `CharacterSelectResponse` gesendet
+- Client erhält ZoneState mit allen statischen Zone-Infos
+- Client lädt Assets während Server Spawn vorbereitet
+- Reduziert wahrgenommene Loading-Time durch paralleles Laden
+- Zone-Daten können client-seitig gecached werden
+
+---
+
+## GetZoneResponse (118)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Response auf `GetZoneRequest` (117). Enthält als Payload eine `ZoneState` (102) Message mit allen Zone-Metadaten.
+
+**Hinweis:** Diese Message ist ein Wrapper um `ZoneState` (102) im Request-Response Pattern. Der eigentliche Payload ist identisch mit `ZoneState`.
+
+### Im Scope ✅
+- Success/Error Status
+- ZoneState bei Erfolg
+- Error-Informationen bei Fehler
+
+### Nicht im Scope ❌
+- Player-spezifische Daten → kommt in `JoinZone` (100)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Request erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Fehlermeldung | Nein |
+| ZoneState | ZoneState | Zone-Daten (siehe Message 102) | Bei Erfolg |
+
+**ZoneState** (siehe [ZoneState (102)](#zonestate-102) für vollständige Spezifikation):
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| ZoneId | int | Zone-ID |
+| ZoneName | string | Name der Zone |
+| ZoneType | string | "outdoor", "dungeon", "city", "instance" |
+| ServerTime | long | Server Unix Timestamp |
+| Weather | string | "sunny", "rain", "snow", "fog" |
+| TimeOfDay | float | 0.0-24.0 (Stunden) |
+| Players | List<PlayerEntity> | **Leer** bei GetZoneResponse |
+| NPCs | List<NpcEntity> | **Leer** bei GetZoneResponse |
+
+**Wichtig:** Bei `GetZoneResponse` sind die `Players` und `NPCs` Listen **leer**, da der Spieler noch nicht in der Zone gespawnt ist. Diese Daten kommen später via separater `EntitySpawn` Messages.
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `GetZoneRequest` | 117 | Request zu dieser Response |
+| `ZoneState` | 102 | Payload dieser Response |
+| `JoinZone` | 100 | Folgt nach dieser Response |
+
+### Beispiel Payload
+```csharp
+// Erfolg
+var successResponse = new GetZoneResponse
+{
+    Type = MessageType.GetZoneResponse,
+    Success = true,
+    ZoneState = new ZoneState
+    {
+        ZoneId = 1001,
+        ZoneName = "Elwynn Forest",
+        ZoneType = "outdoor",
+        ServerTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+        Weather = "sunny",
+        TimeOfDay = 14.5f, // 14:30
+        Players = new List<PlayerEntity>(), // Leer!
+        NPCs = new List<NpcEntity>()        // Leer!
+    }
+};
+
+// Fehler
+var errorResponse = new GetZoneResponse
+{
+    Type = MessageType.GetZoneResponse,
+    Success = false,
+    ErrorCode = "ZONE_LOCKED",
+    ErrorMessage = "Zone ist wegen Wartungsarbeiten gesperrt"
+};
+```
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ZONE_NOT_FOUND` | Zone-ID existiert nicht |
+| `ZONE_LOCKED` | Zone gesperrt (Maintenance) |
+| `ACCESS_DENIED` | Keine Berechtigung für Zone |
+
+### Notizen
+- Wrapper um `ZoneState` (102) für Request-Response Pattern
+- Players und NPCs Listen sind immer leer
+- Client sollte Zone-Daten cachen (basierend auf ZoneId + Version)
+- Nach Erhalt: Client lädt Assets, dann bereit für `JoinZone` (100)
+
+---
+
+**Letzte Aktualisierung**: 2025-12-26  
+**Version**: 1.1.0
 
 [← Zurück zur Übersicht](README.md)
