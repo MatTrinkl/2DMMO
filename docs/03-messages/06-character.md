@@ -52,6 +52,14 @@ Das Character-System implementiert:
 
 **XP-Curve**: Exponential (Level 1→2: 100 XP, Level 59→60: 1.000.000 XP)
 
+**🔄 DTO-System:**  
+Character-Selection Messages wie `CharacterList` (601) werden in Phase 2 ein `CharacterListItemDto` verwenden:
+- Minimale Character-Infos für Selection-Screen (Name, Level, Race, Class, Location)
+- Keine sensiblen Daten wie AccountId, Gold, oder Experience
+- Optimiert für schnelle Character-Selection UI
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `CharacterListItemDto` Struktur.
+
 ---
 
 ## CharacterInfo (600)

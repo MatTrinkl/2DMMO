@@ -281,6 +281,9 @@ var dmgEvent = new DamageEvent
   - **True**: Ignoriert alle Mitigation
 - **Animation**: ActionId triggert Hit-Animation auf Client
 
+**🔄 Zukünftiger DTO-Einsatz:**  
+In Phase 2 wird ein `CombatEntityDto` eingeführt um Target-Informationen zu übertragen. Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
+
 ---
 
 ## DeathEvent (303)
