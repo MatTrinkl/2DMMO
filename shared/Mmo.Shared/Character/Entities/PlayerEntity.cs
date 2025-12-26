@@ -7,6 +7,7 @@ using Mmo.Shared.Combat.Records;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Generators;
 using Mmo.Shared.Movement.Enums;
 using Mmo.Shared.Prefab;
 
@@ -16,7 +17,8 @@ namespace Mmo.Shared.Character.Entities;
 ///     Represents a player character entity in the game world.
 /// </summary>
 [MessagePackObject]
-public class PlayerEntity : CombatEntity, ICharacterEntity
+[GenerateDto]
+public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
 {
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTORS
@@ -94,7 +96,9 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     // ICharacterEntity - Progression
     // ═══════════════════════════════════════════════════════════════
 
-    [Key(25)] public long Experience { get; set; }
+    [Key(25)]
+    [ServerOnly]
+    public long Experience { get; set; }
 
     [IgnoreMember] public long ExperienceToNextLevel => CalculateXpForLevel(Level + 1);
 
@@ -118,7 +122,9 @@ public class PlayerEntity : CombatEntity, ICharacterEntity
     // ICharacterEntity - Currency
     // ═══════════════════════════════════════════════════════════════
 
-    [Key(33)] public long Gold { get; set; } = 0;
+    [Key(33)]
+    [ServerOnly]
+    public long Gold { get; set; } = 0;
 
     // ═══════════════════════════════════════════════════════════════
     // OVERRIDES
