@@ -11,6 +11,7 @@
 
 ## 📋 Inhaltsverzeichnis
 
+-   [Zone Loading Flow (Übersicht)](#-zone-loading-flow-übersicht)
 -   [JoinZone (100)](#joinzone-100)
 -   [LeaveZone (101)](#leavezone-101)
 -   [ZoneState (102)](#zonestate-102)
@@ -30,10 +31,67 @@
 -   [ZonePhaseChange (116)](#zonephasechange-116)
 -   [GetZoneRequest (117)](#getzonerequest-117)
 -   [GetZoneResponse (118)](#getzoneresponse-118)
+-   [ZoneLoadedAck (119)](#zoneloadedack-119)
+
+---
+
+## 🔄 Zone Loading Flow (Übersicht)
+
+Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message enthält alle Daten die der Client zum Spawnen braucht.
+
+### Vereinfachter Flow
+
+```
+Client                         Server
+  │                              │
+  │  CharacterSelectResponse     │
+  │  (SpawnZoneId: 1001)         │
+  │◄─────────────────────────────│
+  │                              │
+  │  GetZoneRequest (117)        │
+  │  "Gib mir Zone 1001"         │
+  │─────────────────────────────►│
+  │                              │
+  │  ZoneState (102)             │  ← ALLES in einer Message!
+  │  ├── Zone-Metadaten          │
+  │  ├── MyPlayer: PlayerEntityDto │
+  │  └── Entities: List<IEntityDto>│
+  │◄─────────────────────────────│
+  │                              │
+  │  [Client buffert + lädt Assets]
+  │                              │
+  │  ZoneLoadedAck (119)         │  ← Client ist ready
+  │─────────────────────────────►│
+  │                              │
+  │  [Server startet Updates]    │
+  │  PositionBroadcast (201)     │
+  │◄─────────────────────────────│
+```
+
+### Message-Übersicht
+
+| Message | ID | Richtung | Status |
+|---------|-----|----------|--------|
+| `GetZoneRequest` | 117 | Client → Server | ✅ Aktiv |
+| `ZoneState` | 102 | Server → Client | ✅ Erweitert (MyPlayer + Entities) |
+| `ZoneLoadedAck` | 119 | Client → Server | ✅ **NEU** |
+| `GetZoneResponse` | 118 | Server → Client | ❌ **OBSOLET** (in ZoneState integriert) |
+| `JoinZone` | 100 | Server → Client | ❌ **OBSOLET** (in ZoneState integriert) |
+
+### Vorteile des neuen Flows
+
+- **4 Messages statt 6+** - Einfacherer Flow
+- **Atomarer State-Snapshot** - Keine Race Conditions
+- **Client-Kontrolle** - ZoneLoadedAck bestätigt Bereitschaft
+- **Server wartet** - Keine Updates während Client lädt
 
 ---
 
 ## JoinZone (100)
+
+> ⚠️ **OBSOLET** - Diese Message wurde in `ZoneState` (102) integriert.
+> `MyPlayer` in `ZoneState` ersetzt die Funktionalität von `JoinZone`.
+> Siehe [Zone Loading Flow](#-zone-loading-flow-übersicht) für den neuen Prozess.
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -270,102 +328,134 @@ var leaveZone = new LeaveZone
 ## ZoneState (102)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten (einmalig nach JoinZone)  
+**Frequenz:** Selten (Initial Load, Zone Transfer, Periodic Sync)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-Kompletter Snapshot des Zone-States. Enthält alle Spieler, NPCs, und relevante Informationen die der Client benötigt. Wird nach `JoinZone` (100) gesendet.
+Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Loading** und enthält:
+- Zone-Metadaten (Name, Typ, Wetter, etc.)
+- **MyPlayer**: Dein Character als PlayerEntityDto
+- **Entities**: Alle anderen Entities in der Zone
 
-### Im Scope ✅
+### StateType Enum
 
--   Liste aller sichtbaren Entities (Spieler + NPCs)
--   Zone-Weather und Time-of-Day
--   Zone-Events (falls aktiv)
+| Wert | Beschreibung |
+|------|--------------|
+| `Initial` (1) | Erster Login, Character spawnt zum ersten Mal |
+| `Transfer` (2) | Zone-Wechsel durch Portal/Teleport |
+| `FullSync` (3) | Periodischer Full-Sync (alle 60s) |
+| `Reconnect` (4) | Nach Verbindungsabbruch |
 
-### Nicht im Scope ❌
+### Payload
 
--   Einzelne Entity-Updates → verwende `EntityUpdate` (1404)
--   Position-Updates → verwende `PositionBroadcast` (201)
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `MessageType.ZoneState` | Ja |
+| Timestamp | long | Server-Timestamp | Ja |
+| ZoneId | ushort | Zone-ID | Ja |
+| ZoneName | string | Name der Zone | Ja |
+| ZoneType | string | "outdoor", "dungeon", "city", "instance" | Ja |
+| Weather | string | "sunny", "rain", "snow", "fog" | Ja |
+| TimeOfDay | float | 0.0-24.0 (Stunden) | Ja |
+| StateType | ZoneStateType | Initial, Transfer, FullSync, Reconnect | Ja |
+| MyPlayer | PlayerEntityDto? | Dein Character (null bei FullSync) | Bei Initial/Transfer |
+| Entities | List\<IEntityDto\> | Alle Entities (max 100 pro Message) | Ja |
+| HasMoreEntities | bool | Gibt es weitere Entity-Batches? | Ja |
+| TotalEntityCount | int | Gesamtzahl Entities in Zone | Ja |
 
-### Response Payload
+### Code-Beispiel
 
-| Feld       | Typ                     | Beschreibung                   | Pflicht |
-| ---------- | ----------------------- | ------------------------------ | ------- |
-| ZoneId     | ushort                  | Zone-ID                        | Ja      |
-| ServerTime | long                    | Server Unix Timestamp          | Ja      |
-| Weather    | string                  | "sunny", "rain", "snow", "fog" | Ja      |
-| TimeOfDay  | float                   | 0.0-24.0 (Stunden)             | Ja      |
-| Players    | List\<PlayerEntityDto\> | Alle Spieler in Zone           | Ja      |
-| NPCs       | List\<NpcEntityDto\>    | Alle NPCs in Range             | Ja      |
+```csharp
+[MessagePackObject]
+public class ZoneState : ITimestampedServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneState;
+    [Key(1)] public long Timestamp { get; set; }
+    
+    // Zone-Metadaten
+    [Key(2)] public ushort ZoneId { get; set; }
+    [Key(3)] public string ZoneName { get; set; }
+    [Key(4)] public string ZoneType { get; set; }
+    [Key(5)] public string Weather { get; set; }
+    [Key(6)] public float TimeOfDay { get; set; }
+    
+    // State-Type
+    [Key(7)] public ZoneStateType StateType { get; set; }
+    
+    // Dein Character (null bei FullSync)
+    [Key(8)] public PlayerEntityDto? MyPlayer { get; set; }
+    
+    // Entities (max ~100 pro Message)
+    [Key(9)] public List<IEntityDto> Entities { get; set; } = new();
+    
+    // Chunking
+    [Key(10)] public bool HasMoreEntities { get; set; }
+    [Key(11)] public int TotalEntityCount { get; set; }
+}
 
-**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md)):
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| RuntimeId | EntityIdentity | Runtime Entity-ID |
-| DisplayName | string | Spieler-Name |
-| Level | int | Level |
-| Position | Position | Position (X, Y, Z) |
-| Race | Race | Rasse |
-| Class | CharacterClass | Klasse |
-| CurrentHealth | int | Aktuelle HP |
-| MaxHealth | int | Max HP |
-| ... | ... | (weitere Properties siehe DTO_ARCHITECTURE.md) |
-
-**NpcEntityDto** (geplant, aktuell noch NpcEntity):
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| RuntimeId | EntityIdentity | Runtime Entity-ID |
-| NpcTemplateId | int | NPC-Template-ID |
-| Position | Position | Position (X, Y, Z) |
-| CurrentHealth | int | Aktuelles HP (% für Boss) |
+public enum ZoneStateType : byte
+{
+    Initial = 1,
+    Transfer = 2,
+    FullSync = 3,
+    Reconnect = 4
+}
+```
 
 ### Beispiel Payload
 
 ```csharp
 var zoneState = new ZoneState
 {
-    Type = MessageType.ZoneState,
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
     ZoneId = 1001,
-    ServerTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+    ZoneName = "Elwynn Forest",
+    ZoneType = "outdoor",
     Weather = "sunny",
-    TimeOfDay = 14.5f, // 14:30
-    Players = new List<PlayerEntityDto>
-    {
-        new PlayerEntityDto
-        {
-            RuntimeId = new EntityIdentity(1, 1001, 50001, 0, 1),
-            DisplayName = "Legolas",
-            Level = 8,
-            Position = new Position(105.2f, 248.7f, 10.0f, 1001),
-            Race = Race.Elf,
-            Class = CharacterClass.Ranger,
-            CurrentHealth = 450,
-            MaxHealth = 500
-            // Experience und Gold sind NICHT enthalten (ServerOnly)
-        }
-    },
-    NPCs = new List<NpcEntityDto>
-    {
-        new NpcEntityDto
-        {
-            RuntimeId = new EntityIdentity(1, 1001, 60001, 0, 1234),
-            NpcTemplateId = 1234,
-            Position = new Position(120.0f, 260.0f, 10.0f, 1001),
-            CurrentHealth = 100,
-            MaxHealth = 100
-        }
-    }
+    TimeOfDay = 14.5f,
+    StateType = ZoneStateType.Initial,
+    MyPlayer = PlayerEntityDto.FromEntity(playerEntity),
+    Entities = zone.GetAllEntities()
+        .Where(e => e.PersistentId != playerEntity.PersistentId)
+        .Select(e => e.ToDto())
+        .Take(100)
+        .ToList(),
+    HasMoreEntities = zone.EntityCount > 100,
+    TotalEntityCount = zone.EntityCount
 };
 ```
 
-### Notizen
+### Chunking bei großen Zonen
 
--   Große Message - kann bei vielen Entities mehrere KB sein
--   Client cached ZoneState lokal
--   Updates erfolgen inkrementell über `EntityUpdate` (1404)
--   Bei Reconnect: Server sendet erneut kompletten ZoneState
+Bei Zonen mit mehr als 100 Entities wird Chunking verwendet:
+
+```
+ZoneState (102)       → MyPlayer + erste 100 Entities + HasMoreEntities=true
+EntityBatch (120)     → nächste 100 Entities
+EntityBatch (120)     → letzte 50 Entities + IsLast=true
+ZoneLoadedAck (119)   → Client ready
+```
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `GetZoneRequest` | 117 | Request der ZoneState auslöst |
+| `ZoneLoadedAck` | 119 | Client-Bestätigung nach ZoneState |
+| `EntityBatch` | 120 | Weitere Entities bei Chunking |
+| `EntitySpawn` | 1400 | Einzelne Entity spawnt später |
+| `EntityDespawn` | 1402 | Entity verlässt Zone |
+
+### Use-Cases
+
+| Use-Case | StateType | MyPlayer | Entities |
+|----------|-----------|----------|----------|
+| Login | Initial | ✅ Dein Character | ✅ Alle |
+| Portal/Teleport | Transfer | ✅ Dein Character | ✅ Alle in neuer Zone |
+| Reconnect | Reconnect | ✅ Restored Character | ✅ Alle |
+| Periodic Sync | FullSync | ❌ null | ✅ Alle (Sync-Check) |
 
 ---
 
@@ -995,6 +1085,11 @@ var getZoneRequest = new GetZoneRequest
 
 ## GetZoneResponse (118)
 
+> ⚠️ **OBSOLET** - Diese Message wurde in `ZoneState` (102) integriert.
+> Siehe [Zone Loading Flow](#-zone-loading-flow-übersicht) für den neuen Prozess.
+
+---
+
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
 **Authentifizierung:** Nein  
@@ -1092,6 +1187,110 @@ var errorResponse = new GetZoneResponse
 -   Players und NPCs Listen sind immer leer
 -   Client sollte Zone-Daten cachen (basierend auf ZoneId + Version)
 -   Nach Erhalt: Client lädt Assets, dann bereit für `JoinZone` (100)
+
+---
+
+## ZoneLoadedAck (119)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten (einmal pro Zone-Load)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Client bestätigt dass Zone-Assets geladen und ZoneState verarbeitet wurde. Server startet erst nach diesem Ack die hochfrequenten Updates (PositionBroadcast, etc.).
+
+### Warum diese Message?
+
+| Ohne ZoneLoadedAck | Mit ZoneLoadedAck |
+|--------------------|-------------------|
+| Server sendet 25Hz Updates während Client lädt | Server wartet auf Client |
+| Bandbreite verschwendet | Bandbreite optimal |
+| Client-Buffer wächst | Kein unnötiger Buffer |
+| Server weiß nicht ob Client ready | Klarer Handshake |
+
+### Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `MessageType.ZoneLoadedAck` | Ja |
+| ZoneId | ushort | Zone-ID zur Validierung | Ja |
+| LoadTimeMs | int | Wie lange hat Loading gedauert? (Metrics) | Nein |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ZoneLoadedAck)]
+public class ZoneLoadedAck : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneLoadedAck;
+    [Key(1)] public ushort ZoneId { get; set; }
+    [Key(2)] public int? LoadTimeMs { get; set; }
+}
+```
+
+### Server-Logik
+
+```csharp
+public void HandleZoneLoadedAck(ClientConnection conn, ZoneLoadedAck ack)
+{
+    var player = GetPlayer(conn);
+    
+    if (player.CurrentZoneId != ack.ZoneId)
+    {
+        _log.Warn("ZoneLoadedAck for wrong zone");
+        return;
+    }
+    
+    player.IsZoneReady = true;
+    
+    // Jetzt hochfrequente Updates senden
+    _log.Info("Player {Name} ready in zone {ZoneId}, load time: {Ms}ms",
+        player.Name, ack.ZoneId, ack.LoadTimeMs);
+}
+```
+
+### Client-Logik
+
+```csharp
+public async Task LoadZoneAsync(ZoneState zoneState)
+{
+    var stopwatch = Stopwatch.StartNew();
+    
+    // Assets laden
+    await LoadZoneAssets(zoneState.ZoneId);
+    
+    // ZoneState anwenden
+    ApplyZoneState(zoneState);
+    
+    // Message-Buffer abarbeiten
+    ProcessMessageBuffer();
+    
+    stopwatch.Stop();
+    
+    // Server informieren
+    SendMessage(new ZoneLoadedAck
+    {
+        ZoneId = zoneState.ZoneId,
+        LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
+    });
+}
+```
+
+### Timeout-Handling
+
+Server wartet maximal 30 Sekunden auf ZoneLoadedAck:
+
+```csharp
+// Server-Side
+if (player.WaitingForZoneAckSince?.AddSeconds(30) < DateTime.UtcNow)
+{
+    // Timeout - Client reagiert nicht
+    DisconnectPlayer(player, DisconnectReason.LoadingTimeout);
+}
+```
 
 ---
 
