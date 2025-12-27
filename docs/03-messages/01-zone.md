@@ -12,6 +12,9 @@
 ## 📋 Inhaltsverzeichnis
 
 -   [Zone Loading Flow (Übersicht)](#-zone-loading-flow-übersicht)
+-   [DTOs](#dtos)
+    -   [ZoneDto](#zonedto)
+    -   [ZoneListItemDto](#zonelistitemdto)
 -   [Aktive Messages](#aktive-messages)
     -   [LeaveZone (101)](#leavezone-101)
     -   [ZoneState (102)](#zonestate-102)
@@ -43,6 +46,36 @@
 
 Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message enthält alle Daten die der Client zum Spawnen braucht.
 
+### Architektur: ZoneDto vs ZoneState
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ZoneDto (statisch, cachebar)                                   │
+│  ├── ZoneId, Name, Type                                         │
+│  ├── RecommendedLevel, IsPvP, Faction                          │
+│  ├── SpawnPoints, Graveyard                                     │
+│  └── Music, Ambience, Bounds                                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ZoneState (dynamisch, Runtime)                                 │
+│  ├── ZoneId (Referenz)                                          │
+│  ├── ZoneInfo:  ZoneDto?  (nur bei erstem Besuch)                │
+│  ├── CurrentWeather, TimeOfDay (dynamisch)                      │
+│  ├── StateType (Initial/Transfer/Reconnect/FullSync)           │
+│  ├── MyPlayer: PlayerEntityDto                                  │
+│  └── Entities: List<IEntityDto>                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Vorteile dieser Trennung:**
+
+-   **Caching:** Client kann `ZoneDto` lokal speichern
+-   **Kleinere Messages:** `ZoneDto` nur bei erstem Besuch einer Zone
+-   **Wiederverwendung:** `ZoneDto` in mehreren Messages nutzbar
+-   **Separate Updates:** Wetter/Zeit ohne vollen ZoneState änderbar
+
 ### Haupt-Flow: Login → Zone
 
 ```
@@ -56,20 +89,22 @@ Client                         Server
   │  ZoneId: 1001                │
   │─────────────────────────────►│
   │                              │
-  │  ZoneState (102)             │  ← ALLES in einer Message!
-  │  ├── Zone-Metadaten          │
-  │  ├── StateType: Initial      │
-  │  ├── MyPlayer:  PlayerEntityDto│
-  │  └── Entities: List<IEntityDto>│
+  │  ZoneState (102)             │
+  │  ├── ZoneInfo: ZoneDto       │  ← Nur bei erstem Besuch!
+  │  ├── CurrentWeather, TimeOfDay│
+  │  ├── StateType:  Initial      │
+  │  ├── MyPlayer: PlayerEntityDto│
+  │  └── Entities:  List<IEntityDto>│
   │◄─────────────────────────────│
   │                              │
   │  [Optional bei >100 Entities]│
   │  EntityBatch (120)           │
   │◄─────────────────────────────│
   │                              │
-  │  [Client buffert + lädt Assets]
+  │  [Client cached ZoneDto]     │
+  │  [Client lädt Assets]        │
   │                              │
-  │  ZoneLoadedAck (119)         │  ← Client ist ready
+  │  ZoneLoadedAck (119)         │
   │─────────────────────────────►│
   │                              │
   │  [Server startet Updates]    │
@@ -77,29 +112,28 @@ Client                         Server
   │◄─────────────────────────────│
 ```
 
-### Zone Transfer Flow: Portal/Teleport/Hearthstone
+### Zone Transfer Flow (Wiederbesuch)
 
 ```
 Client                         Server
   │                              │
   │  ZoneTransferRequest (105)   │
-  │  TargetZoneId: 2001          │
-  │  TransferType: Portal        │
+  │  TargetZoneId: 1001          │  ← Zone bereits besucht
   │─────────────────────────────►│
   │                              │
   │  ZoneTransferResponse (106)  │
   │  Success: true               │
   │◄─────────────────────────────│
   │                              │
-  │  [PlayerLeftZone broadcast   │
-  │   an alte Zone]              │
-  │                              │
   │  ZoneState (102)             │
+  │  ├── ZoneInfo: null          │  ← KEIN ZoneDto (bereits gecached)
+  │  ├── CurrentWeather, TimeOfDay│
   │  ├── StateType: Transfer     │
-  │  ├── MyPlayer: PlayerEntityDto│
-  │  └── Entities:  [...]         │
+  │  ├── MyPlayer:  PlayerEntityDto│
+  │  └── Entities: [...]         │
   │◄─────────────────────────────│
   │                              │
+  │  [Client nutzt cached ZoneDto]│
   │  [Client lädt Assets]        │
   │                              │
   │  ZoneLoadedAck (119)         │
@@ -135,7 +169,7 @@ Client                         Server
   │                              │  [oder TCP Error]
   │                              │
   │                              │  [PlayerLeftZone broadcast]
-  │                              │  Reason:  Disconnect
+  │                              │  Reason: Disconnect
   │                              │
   │                              │  [30s Reconnect-Window]
 ```
@@ -155,7 +189,7 @@ Client                         Server
   │                              │
   │  [Optional: Ghost-Zone]      │
   │  ZoneState (102)             │
-  │  StateType:  Transfer         │
+  │  StateType: Transfer         │
   │◄─────────────────────────────│
 ```
 
@@ -180,6 +214,206 @@ Client                         Server
 | `JoinZone`            | 100 | `ZoneState. MyPlayer` |
 | `ZoneLoadingProgress` | 107 | Client lädt lokal     |
 | `GetZoneResponse`     | 118 | `ZoneState` direkt    |
+
+---
+
+# DTOs
+
+---
+
+## ZoneDto
+
+**Zweck:** Statische Zone-Metadaten die sich selten ändern und client-seitig gecached werden können.
+
+### Felder
+
+| Feld                | Typ       | Beschreibung                              | Pflicht |
+| ------------------- | --------- | ----------------------------------------- | ------- |
+| ZoneId              | ushort    | Eindeutige Zone-ID                        | Ja      |
+| Name                | string    | Anzeigename der Zone                      | Ja      |
+| Type                | ZoneType  | Outdoor, Dungeon, City, etc.              | Ja      |
+| RecommendedMinLevel | int       | Empfohlenes Mindest-Level                 | Ja      |
+| RecommendedMaxLevel | int       | Empfohlenes Höchst-Level                  | Ja      |
+| IsPvPEnabled        | bool      | PvP in dieser Zone erlaubt?               | Ja      |
+| IsContested         | bool      | Umkämpftes Gebiet?                        | Ja      |
+| ControllingFaction  | Faction?  | Kontrollierende Fraktion (null = neutral) | Nein    |
+| IsSanctuary         | bool      | Sicherer Bereich (kein PvP, kein Combat)? | Ja      |
+| DefaultSpawnPoint   | Position  | Standard-Spawn-Position                   | Ja      |
+| GraveyardPosition   | Position? | Friedhof für Wiederbelebung               | Nein    |
+| MusicId             | string    | Musik-Asset-ID für Audio-System           | Ja      |
+| AmbienceId          | string    | Ambiente-Sound-Asset-ID                   | Ja      |
+| MinX                | float     | Westliche Grenze (für Minimap)            | Ja      |
+| MaxX                | float     | Östliche Grenze                           | Ja      |
+| MinY                | float     | Südliche Grenze                           | Ja      |
+| MaxY                | float     | Nördliche Grenze                          | Ja      |
+
+### Enums
+
+```csharp
+public enum ZoneType :  byte
+{
+    Outdoor = 1,        // Offene Welt
+    Dungeon = 2,        // Instanzierter Dungeon
+    City = 3,           // Stadt/Hub
+    Instance = 4,       // Generische Instanz
+    Arena = 5,          // PvP Arena
+    Battleground = 6,   // Großes PvP Schlachtfeld
+    Sanctuary = 7,      // Sicherer Bereich
+    GhostZone = 8       // Geister-Welt nach Tod
+}
+
+public enum Faction : byte
+{
+    Neutral = 0,
+    Alliance = 1,
+    Horde = 2
+}
+```
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+public class ZoneDto
+{
+    [Key(0)] public ushort ZoneId { get; set; }
+    [Key(1)] public string Name { get; set; } = "";
+    [Key(2)] public ZoneType Type { get; set; }
+    [Key(3)] public int RecommendedMinLevel { get; set; }
+    [Key(4)] public int RecommendedMaxLevel { get; set; }
+    [Key(5)] public bool IsPvPEnabled { get; set; }
+    [Key(6)] public bool IsContested { get; set; }
+    [Key(7)] public Faction? ControllingFaction { get; set; }
+    [Key(8)] public bool IsSanctuary { get; set; }
+    [Key(9)] public Position DefaultSpawnPoint { get; set; }
+    [Key(10)] public Position? GraveyardPosition { get; set; }
+    [Key(11)] public string MusicId { get; set; } = "";
+    [Key(12)] public string AmbienceId { get; set; } = "";
+    [Key(13)] public float MinX { get; set; }
+    [Key(14)] public float MaxX { get; set; }
+    [Key(15)] public float MinY { get; set; }
+    [Key(16)] public float MaxY { get; set; }
+
+    public static ZoneDto FromZone(Zone zone) => new()
+    {
+        ZoneId = zone.Id,
+        Name = zone.Name,
+        Type = zone.Type,
+        RecommendedMinLevel = zone.MinLevel,
+        RecommendedMaxLevel = zone.MaxLevel,
+        IsPvPEnabled = zone.IsPvP,
+        IsContested = zone.IsContested,
+        ControllingFaction = zone.ControllingFaction,
+        IsSanctuary = zone.IsSanctuary,
+        DefaultSpawnPoint = zone.DefaultSpawn,
+        GraveyardPosition = zone.Graveyard,
+        MusicId = zone. MusicId,
+        AmbienceId = zone.AmbienceId,
+        MinX = zone. Bounds.MinX,
+        MaxX = zone.Bounds.MaxX,
+        MinY = zone.Bounds.MinY,
+        MaxY = zone.Bounds.MaxY
+    };
+}
+```
+
+### Client-Caching
+
+```csharp
+public class ZoneCache
+{
+    private readonly Dictionary<ushort, ZoneDto> _cache = new();
+
+    public void CacheZone(ZoneDto zone)
+    {
+        _cache[zone.ZoneId] = zone;
+    }
+
+    public ZoneDto?  GetZone(ushort zoneId)
+    {
+        return _cache.TryGetValue(zoneId, out var zone) ? zone : null;
+    }
+
+    public bool HasZone(ushort zoneId) => _cache.ContainsKey(zoneId);
+}
+
+// Verwendung bei ZoneState
+public void OnZoneState(ZoneState state)
+{
+    // ZoneDto cachen wenn vorhanden (erster Besuch)
+    if (state.ZoneInfo != null)
+    {
+        _zoneCache.CacheZone(state.ZoneInfo);
+    }
+
+    // Zone-Infos aus Cache holen
+    var zoneInfo = _zoneCache.GetZone(state.ZoneId);
+    if (zoneInfo == null)
+    {
+        _log.Error("ZoneDto not found and not provided!");
+        return;
+    }
+
+    // Zone initialisieren
+    _audioManager.PlayMusic(zoneInfo.MusicId);
+    _audioManager.PlayAmbience(zoneInfo. AmbienceId);
+    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+
+    // Dynamischen State anwenden
+    _weatherSystem.SetWeather(state.CurrentWeather);
+    _timeSystem.SetTime(state.TimeOfDay);
+}
+```
+
+### Verwendung in Messages
+
+| Message            | Verwendung                                    |
+| ------------------ | --------------------------------------------- |
+| `ZoneState`        | `ZoneInfo:  ZoneDto?` - nur bei erstem Besuch |
+| `ZoneListResponse` | `List<ZoneListItemDto>` enthält `ZoneDto`     |
+| `ZoneDiscovered`   | `Zone: ZoneDto` - neue Zone entdeckt          |
+
+---
+
+## ZoneListItemDto
+
+**Zweck:** Kombination aus statischen Zone-Daten und spieler-spezifischen Informationen für die Zonen-Liste.
+
+### Felder
+
+| Feld                | Typ       | Beschreibung                              | Pflicht |
+| ------------------- | --------- | ----------------------------------------- | ------- |
+| Zone                | ZoneDto   | Statische Zone-Daten                      | Ja      |
+| IsDiscovered        | bool      | Hat der Spieler diese Zone entdeckt?      | Ja      |
+| HasFlightPath       | bool      | Hat der Spieler hier einen Flugpunkt?     | Ja      |
+| FlightPathPosition  | Position? | Position des Flugpunkts (falls vorhanden) | Nein    |
+| CompletedQuestCount | int       | Anzahl abgeschlossener Quests in Zone     | Ja      |
+| TotalQuestCount     | int       | Gesamtzahl Quests in Zone                 | Ja      |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+public class ZoneListItemDto
+{
+    [Key(0)] public ZoneDto Zone { get; set; } = null!;
+    [Key(1)] public bool IsDiscovered { get; set; }
+    [Key(2)] public bool HasFlightPath { get; set; }
+    [Key(3)] public Position?  FlightPathPosition { get; set; }
+    [Key(4)] public int CompletedQuestCount { get; set; }
+    [Key(5)] public int TotalQuestCount { get; set; }
+
+    public static ZoneListItemDto Create(Zone zone, PlayerEntity player) => new()
+    {
+        Zone = ZoneDto.FromZone(zone),
+        IsDiscovered = player. DiscoveredZones.Contains(zone. Id),
+        HasFlightPath = player.UnlockedFlightPaths.Contains(zone.Id),
+        FlightPathPosition = zone.FlightPathPosition,
+        CompletedQuestCount = player.GetCompletedQuestCountForZone(zone.Id),
+        TotalQuestCount = zone.TotalQuestCount
+    };
+}
+```
 
 ---
 
@@ -243,7 +477,7 @@ public enum LeaveReason : byte
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.LeaveZone)]
-public class LeaveZone :  IClientMessage
+public class LeaveZone : IClientMessage
 {
     [Key(0)] public MessageType Type => MessageType.LeaveZone;
     [Key(1)] public LeaveReason Reason { get; set; }
@@ -296,18 +530,19 @@ var switchChar = new LeaveZone
 
 Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Loading** und enthält:
 
--   Zone-Metadaten (Name, Typ, Wetter, etc.)
--   **MyPlayer**: Dein Character als PlayerEntityDto
--   **Entities**: Alle anderen Entities in der Zone (als DTOs)
+-   **ZoneInfo**: Statische Zone-Daten als `ZoneDto` (nur bei erstem Besuch, sonst `null`)
+-   **Dynamischer State**: Wetter, Tageszeit
+-   **MyPlayer**: Dein Character als `PlayerEntityDto`
+-   **Entities**: Alle anderen Entities in der Zone als DTOs
 
 ### StateType Enum
 
-| Wert            | Beschreibung                                       | MyPlayer     |
-| --------------- | -------------------------------------------------- | ------------ |
-| `Initial` (1)   | Erster Login, Character spawnt zum ersten Mal      | ✅ Enthalten |
-| `Transfer` (2)  | Zone-Wechsel durch Portal/Teleport/Hearthstone/Tod | ✅ Enthalten |
-| `Reconnect` (3) | Nach Verbindungsabbruch (innerhalb 30s Window)     | ✅ Enthalten |
-| `FullSync` (4)  | Periodischer Full-Sync (alle 60s)                  | ❌ null      |
+| Wert            | Beschreibung                       | MyPlayer     | ZoneInfo             |
+| --------------- | ---------------------------------- | ------------ | -------------------- |
+| `Initial` (1)   | Erster Login, Character spawnt     | ✅ Enthalten | ✅ Bei erstem Besuch |
+| `Transfer` (2)  | Zone-Wechsel (Portal/Teleport/Tod) | ✅ Enthalten | ✅ Bei erstem Besuch |
+| `Reconnect` (3) | Nach Verbindungsabbruch            | ✅ Enthalten | ❌ null (gecached)   |
+| `FullSync` (4)  | Periodischer Full-Sync             | ❌ null      | ❌ null              |
 
 ### Payload
 
@@ -316,10 +551,9 @@ Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Load
 | Type             | MessageType        | `MessageType.ZoneState`                 | Ja          |
 | Timestamp        | long               | Server-Timestamp (Unix ms)              | Ja          |
 | ZoneId           | ushort             | Zone-ID                                 | Ja          |
-| ZoneName         | string             | Name der Zone                           | Ja          |
-| ZoneType         | ZoneType           | Outdoor, Dungeon, City, Instance, Arena | Ja          |
-| Weather          | WeatherType        | Sunny, Rain, Snow, Fog, Storm           | Ja          |
-| TimeOfDay        | float              | 0.0-24.0 (Stunden)                      | Ja          |
+| ZoneInfo         | ZoneDto?           | Statische Daten (nur bei erstem Besuch) | Conditional |
+| CurrentWeather   | WeatherType        | Aktuelles Wetter                        | Ja          |
+| TimeOfDay        | float              | 0. 0-24.0 (Stunden)                     | Ja          |
 | StateType        | ZoneStateType      | Initial, Transfer, Reconnect, FullSync  | Ja          |
 | MyPlayer         | PlayerEntityDto?   | Dein Character (null bei FullSync)      | Conditional |
 | Entities         | List\<IEntityDto\> | Alle Entities (max 100 pro Message)     | Ja          |
@@ -335,18 +569,6 @@ public enum ZoneStateType : byte
     Transfer = 2,   // Zone-Wechsel (Portal, Teleport, Tod, etc.)
     Reconnect = 3,  // Nach Verbindungsabbruch
     FullSync = 4    // Periodischer Sync
-}
-
-public enum ZoneType : byte
-{
-    Outdoor = 1,
-    Dungeon = 2,
-    City = 3,
-    Instance = 4,
-    Arena = 5,
-    Battleground = 6,
-    Sanctuary = 7,    // Keine PvP-Zone
-    GhostZone = 8     // Nach Tod
 }
 
 public enum WeatherType : byte
@@ -368,52 +590,158 @@ public enum WeatherType : byte
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneState)]
-public class ZoneState :  ITimestampedServerMessage
+public class ZoneState : ITimestampedServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneState;
     [Key(1)] public long Timestamp { get; set; }
 
-    // Zone-Metadaten
+    // Zone-Referenz
     [Key(2)] public ushort ZoneId { get; set; }
-    [Key(3)] public string ZoneName { get; set; } = "";
-    [Key(4)] public ZoneType ZoneType { get; set; }
-    [Key(5)] public WeatherType Weather { get; set; }
-    [Key(6)] public float TimeOfDay { get; set; }
 
-    // State-Type
-    [Key(7)] public ZoneStateType StateType { get; set; }
+    // Statische Zone-Daten (nur bei erstem Besuch, sonst null)
+    [Key(3)] public ZoneDto? ZoneInfo { get; set; }
 
-    // Dein Character (null bei FullSync)
-    [Key(8)] public PlayerEntityDto?  MyPlayer { get; set; }
+    // Dynamischer Zone-State
+    [Key(4)] public WeatherType CurrentWeather { get; set; }
+    [Key(5)] public float TimeOfDay { get; set; }
+    [Key(6)] public ZoneStateType StateType { get; set; }
 
-    // Entities (max ~100 pro Message)
-    [Key(9)] public List<IEntityDto> Entities { get; set; } = new();
+    // Spieler-Daten
+    [Key(7)] public PlayerEntityDto? MyPlayer { get; set; }
 
-    // Chunking
-    [Key(10)] public bool HasMoreEntities { get; set; }
-    [Key(11)] public int TotalEntityCount { get; set; }
+    // Entities
+    [Key(8)] public List<IEntityDto> Entities { get; set; } = new();
+    [Key(9)] public bool HasMoreEntities { get; set; }
+    [Key(10)] public int TotalEntityCount { get; set; }
 }
 ```
 
-### Beispiel Payload
+### Server-Logik
 
 ```csharp
-var zoneState = new ZoneState
+public ZoneState CreateZoneState(PlayerEntity player, Zone zone, ZoneStateType stateType)
+{
+    // ZoneDto nur senden wenn Spieler Zone noch nie besucht hat
+    bool firstVisit = ! player.VisitedZones.Contains(zone.Id);
+
+    // Bei erstem Besuch: Zone als besucht markieren
+    if (firstVisit)
+    {
+        player.VisitedZones.Add(zone.Id);
+    }
+
+    return new ZoneState
+    {
+        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+        ZoneId = zone.Id,
+        ZoneInfo = firstVisit ? ZoneDto.FromZone(zone) : null,
+        CurrentWeather = zone.CurrentWeather,
+        TimeOfDay = zone.TimeOfDay,
+        StateType = stateType,
+        MyPlayer = stateType != ZoneStateType. FullSync
+            ? PlayerEntityDto.FromEntity(player)
+            : null,
+        Entities = zone.GetVisibleEntities(player)
+            .Select(e => e.ToDto())
+            .Take(100)
+            .ToList(),
+        HasMoreEntities = zone. GetVisibleEntityCount(player) > 100,
+        TotalEntityCount = zone.GetVisibleEntityCount(player)
+    };
+}
+```
+
+### Client-Logik
+
+```csharp
+public void OnZoneState(ZoneState state)
+{
+    // 1. ZoneDto cachen wenn vorhanden (erster Besuch)
+    if (state.ZoneInfo != null)
+    {
+        _zoneCache.CacheZone(state.ZoneInfo);
+    }
+
+    // 2. Zone-Infos aus Cache holen
+    var zoneInfo = _zoneCache. GetZone(state.ZoneId);
+    if (zoneInfo == null)
+    {
+        _log.Error("ZoneDto not found for zone {ZoneId}!", state.ZoneId);
+        RequestDisconnect("Missing zone data");
+        return;
+    }
+
+    // 3. Statische Zone-Daten anwenden
+    _audioManager.PlayMusic(zoneInfo.MusicId);
+    _audioManager.PlayAmbience(zoneInfo. AmbienceId);
+    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+    _pvpManager.SetPvPState(zoneInfo.IsPvPEnabled);
+
+    // 4. Dynamischen State anwenden
+    _weatherSystem.SetWeather(state. CurrentWeather);
+    _timeSystem.SetTime(state.TimeOfDay);
+
+    // 5. MyPlayer spawnen (falls vorhanden)
+    if (state.MyPlayer != null)
+    {
+        _playerController.InitializeFromDto(state.MyPlayer);
+    }
+
+    // 6. Entities spawnen
+    foreach (var entityDto in state.Entities)
+    {
+        _entityManager.SpawnFromDto(entityDto);
+    }
+
+    // 7. Auf weitere Batches warten oder Loading starten
+    if (! state.HasMoreEntities)
+    {
+        StartAssetLoadingAndSendAck();
+    }
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Erster Besuch einer Zone (mit ZoneDto)
+var firstVisit = new ZoneState
 {
     Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
     ZoneId = 1001,
-    ZoneName = "Elwynn Forest",
-    ZoneType = ZoneType.Outdoor,
-    Weather = WeatherType. Clear,
-    TimeOfDay = 14.5f, // 14:30
+    ZoneInfo = new ZoneDto
+    {
+        ZoneId = 1001,
+        Name = "Elwynn Forest",
+        Type = ZoneType. Outdoor,
+        RecommendedMinLevel = 1,
+        RecommendedMaxLevel = 10,
+        IsPvPEnabled = false,
+        MusicId = "music_elwynn",
+        AmbienceId = "ambience_forest"
+    },
+    CurrentWeather = WeatherType.Clear,
+    TimeOfDay = 14.5f,
     StateType = ZoneStateType.Initial,
-    MyPlayer = PlayerEntityDto.FromEntity(playerEntity),
-    Entities = zone.GetVisibleEntities(playerEntity)
-        .Select(e => e.ToDto())
-        .Take(100)
-        .ToList(),
-    HasMoreEntities = zone.EntityCount > 100,
-    TotalEntityCount = zone.EntityCount
+    MyPlayer = playerDto,
+    Entities = entityList,
+    HasMoreEntities = false,
+    TotalEntityCount = 45
+};
+
+// Wiederbesuch (ohne ZoneDto - gecached)
+var revisit = new ZoneState
+{
+    Timestamp = DateTimeOffset. UtcNow.ToUnixTimeMilliseconds(),
+    ZoneId = 1001,
+    ZoneInfo = null,  // Bereits gecached!
+    CurrentWeather = WeatherType.Rain,  // Wetter hat sich geändert
+    TimeOfDay = 18.0f,
+    StateType = ZoneStateType.Transfer,
+    MyPlayer = playerDto,
+    Entities = entityList,
+    HasMoreEntities = false,
+    TotalEntityCount = 52
 };
 ```
 
@@ -425,7 +753,8 @@ Bei Zonen mit mehr als 100 Entities wird Chunking verwendet:
 Zone mit 250 Entities:
 
 ZoneState (102)
-├── MyPlayer:  PlayerEntityDto
+├── ZoneInfo:  ZoneDto (bei erstem Besuch)
+├── MyPlayer: PlayerEntityDto
 ├── Entities: [0-99]        (100 Entities)
 ├── HasMoreEntities: true
 └── TotalEntityCount: 250
@@ -445,28 +774,33 @@ ZoneLoadedAck (119)         (Client ist ready)
 
 ### Use-Cases
 
-| Use-Case         | StateType | MyPlayer        | Entities               |
-| ---------------- | --------- | --------------- | ---------------------- |
-| Login            | Initial   | ✅ Vollständig  | ✅ Alle sichtbaren     |
-| Portal/Teleport  | Transfer  | ✅ Aktualisiert | ✅ Alle in neuer Zone  |
-| Hearthstone      | Transfer  | ✅ Aktualisiert | ✅ Alle in Heimat-Zone |
-| Tod → Ghost-Zone | Transfer  | ✅ Als Geist    | ✅ Alle in Ghost-Zone  |
-| Reconnect        | Reconnect | ✅ Restored     | ✅ Alle sichtbaren     |
-| Periodic Sync    | FullSync  | ❌ null         | ✅ Alle (Validation)   |
+| Use-Case               | StateType | MyPlayer | ZoneInfo       | Entities |
+| ---------------------- | --------- | -------- | -------------- | -------- |
+| Login (erste Zone)     | Initial   | ✅       | ✅             | ✅       |
+| Login (bekannte Zone)  | Initial   | ✅       | ❌ null        | ✅       |
+| Portal (neue Zone)     | Transfer  | ✅       | ✅             | ✅       |
+| Portal (bekannte Zone) | Transfer  | ✅       | ❌ null        | ✅       |
+| Hearthstone            | Transfer  | ✅       | ❌ null        | ✅       |
+| Tod → Ghost-Zone       | Transfer  | ✅       | ✅ (falls neu) | ✅       |
+| Reconnect              | Reconnect | ✅       | ❌ null        | ✅       |
+| Periodic Sync          | FullSync  | ❌ null  | ❌ null        | ✅       |
 
 ### Verwandte Messages
 
-| Message          | ID   | Beziehung                               |
-| ---------------- | ---- | --------------------------------------- |
-| `GetZoneRequest` | 117  | Request der ZoneState auslöst           |
-| `ZoneLoadedAck`  | 119  | Client-Bestätigung nach ZoneState       |
-| `EntityBatch`    | 120  | Weitere Entities bei Chunking           |
-| `EntitySpawn`    | 1400 | Einzelne Entity spawnt später (Runtime) |
-| `EntityDespawn`  | 1402 | Entity verlässt Zone (Runtime)          |
+| Message           | ID   | Beziehung                               |
+| ----------------- | ---- | --------------------------------------- |
+| `GetZoneRequest`  | 117  | Request der ZoneState auslöst           |
+| `ZoneLoadedAck`   | 119  | Client-Bestätigung nach ZoneState       |
+| `EntityBatch`     | 120  | Weitere Entities bei Chunking           |
+| `EntitySpawn`     | 1400 | Einzelne Entity spawnt später (Runtime) |
+| `EntityDespawn`   | 1402 | Entity verlässt Zone (Runtime)          |
+| `WeatherUpdate`   | 2600 | Dynamische Wetter-Änderung              |
+| `TimeOfDayUpdate` | 2602 | Zeit-Synchronisation                    |
 
 ### Notizen
 
--   **Message-Größe**: ~2-10 KB (abhängig von Entity-Anzahl)
+-   **Message-Größe**: ~2-10 KB (abhängig von Entity-Anzahl und ZoneDto)
+-   **ZoneDto-Größe**: ~200-500 Bytes
 -   **Chunking-Threshold**: 100 Entities pro Message
 -   **MyPlayer enthält KEINE ServerOnly Properties** (Experience, Gold, AccountId)
 -   Bei `FullSync`: Client vergleicht mit lokalem State für Desync-Detection
@@ -499,7 +833,7 @@ Broadcast an alle Spieler in der Zone wenn ein neuer Spieler spawnt. Der neue Sp
 public class PlayerJoinedZone :  IServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.PlayerJoinedZone;
-    [Key(1)] public PlayerEntityDto Player { get; set; } = null!;
+    [Key(1)] public PlayerEntityDto Player { get; set; } = null! ;
 }
 ```
 
@@ -589,7 +923,7 @@ public void HandleLeaveZone(ClientConnection conn, LeaveZone msg)
     BroadcastToZone(player. ZoneId, new PlayerLeftZone
     {
         PlayerId = player.PersistentId,
-        Reason = PlayerLeftReason.Logout
+        Reason = PlayerLeftReason. Logout
     });
 
     SavePlayerState(player);
@@ -739,7 +1073,7 @@ var portalTransfer = new ZoneTransferRequest
 {
     TargetZoneId = 2001,
     TransferType = TransferType.Portal,
-    TargetPosition = new Position(50.0f, 50.0f, 0f, 2001)
+    TargetPosition = new Position(50. 0f, 50.0f, 0f, 2001)
 };
 
 // Hearthstone
@@ -753,8 +1087,8 @@ var hearthstone = new ZoneTransferRequest
 // Dungeon betreten
 var dungeon = new ZoneTransferRequest
 {
-    TargetZoneId = 5001, // Dungeon-ID
-    TransferType = TransferType. DungeonEntrance
+    TargetZoneId = 5001,
+    TransferType = TransferType.DungeonEntrance
 };
 ```
 
@@ -885,16 +1219,15 @@ ZoneLoadedAck (119)
 
 ### Beschreibung
 
-Benachrichtigung dass der Spieler eine neue Zone zum ersten Mal betreten hat. Kann XP-Bonus und Achievement auslösen.
+Benachrichtigung dass der Spieler eine neue Zone zum ersten Mal betreten hat. Enthält die vollständigen Zone-Daten als `ZoneDto` zum Cachen.
 
 ### Payload
 
-| Feld     | Typ         | Beschreibung                 | Pflicht |
-| -------- | ----------- | ---------------------------- | ------- |
-| Type     | MessageType | `MessageType.ZoneDiscovered` | Ja      |
-| ZoneId   | ushort      | Entdeckte Zone-ID            | Ja      |
-| ZoneName | string      | Zone-Name für UI             | Ja      |
-| XpBonus  | int         | XP-Belohnung (0 wenn keine)  | Ja      |
+| Feld    | Typ         | Beschreibung                 | Pflicht |
+| ------- | ----------- | ---------------------------- | ------- |
+| Type    | MessageType | `MessageType.ZoneDiscovered` | Ja      |
+| Zone    | ZoneDto     | Vollständige Zone-Daten      | Ja      |
+| XpBonus | int         | XP-Belohnung (0 wenn keine)  | Ja      |
 
 ### Code-Beispiel
 
@@ -904,9 +1237,8 @@ Benachrichtigung dass der Spieler eine neue Zone zum ersten Mal betreten hat. Ka
 public class ZoneDiscovered : IServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneDiscovered;
-    [Key(1)] public ushort ZoneId { get; set; }
-    [Key(2)] public string ZoneName { get; set; } = "";
-    [Key(3)] public int XpBonus { get; set; }
+    [Key(1)] public ZoneDto Zone { get; set; } = null!;
+    [Key(2)] public int XpBonus { get; set; }
 }
 ```
 
@@ -915,19 +1247,35 @@ public class ZoneDiscovered : IServerMessage
 ```csharp
 var discovered = new ZoneDiscovered
 {
-    ZoneId = 1005,
-    ZoneName = "Darkwood Forest",
+    Zone = ZoneDto. FromZone(zone),
     XpBonus = 150
 };
 ```
 
 ### Client-Verhalten
 
--   "Zone Discovered" UI-Element anzeigen
--   Zone-Name prominent darstellen
--   XP-Gewinn animieren (falls > 0)
--   Sound-Effekt abspielen
--   Zone in Weltkarte als "entdeckt" markieren
+```csharp
+public void OnZoneDiscovered(ZoneDiscovered msg)
+{
+    // 1. ZoneDto cachen
+    _zoneCache. CacheZone(msg.Zone);
+
+    // 2. UI anzeigen
+    _uiManager.ShowZoneDiscovered(msg.Zone. Name);
+
+    // 3. XP-Gewinn animieren (falls > 0)
+    if (msg.XpBonus > 0)
+    {
+        _uiManager.ShowXpGain(msg.XpBonus);
+    }
+
+    // 4. Sound-Effekt
+    _audioManager.PlaySound("zone_discovered");
+
+    // 5. Weltkarte aktualisieren
+    _worldMap. MarkAsDiscovered(msg.Zone. ZoneId);
+}
+```
 
 ### Verwandte Messages
 
@@ -962,7 +1310,7 @@ Client fordert Liste aller Zonen an (für Weltkarte, Fast-Travel UI).
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneListRequest)]
-public class ZoneListRequest : IClientMessage
+public class ZoneListRequest :  IClientMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneListRequest;
     [Key(1)] public bool IncludeUndiscovered { get; set; }
@@ -996,34 +1344,14 @@ var allZones = new ZoneListRequest
 
 ### Beschreibung
 
-Liste aller (entdeckten) Zonen für Weltkarte und Fast-Travel.
+Liste aller (entdeckten) Zonen für Weltkarte und Fast-Travel. Enthält `ZoneListItemDto` mit statischen und spieler-spezifischen Daten.
 
 ### Payload
 
-| Feld  | Typ                 | Beschreibung                   | Pflicht |
-| ----- | ------------------- | ------------------------------ | ------- |
-| Type  | MessageType         | `MessageType.ZoneListResponse` | Ja      |
-| Zones | List\<ZoneInfoDto\> | Zone-Informationen             | Ja      |
-
-### ZoneInfoDto
-
-```csharp
-[MessagePackObject]
-public class ZoneInfoDto
-{
-    [Key(0)] public ushort ZoneId { get; set; }
-    [Key(1)] public string Name { get; set; } = "";
-    [Key(2)] public ZoneType ZoneType { get; set; }
-    [Key(3)] public int RecommendedMinLevel { get; set; }
-    [Key(4)] public int RecommendedMaxLevel { get; set; }
-    [Key(5)] public bool IsDiscovered { get; set; }
-    [Key(6)] public bool HasFlightPath { get; set; }
-    [Key(7)] public Position? FlightPathPosition { get; set; }
-    [Key(8)] public bool IsPvPZone { get; set; }
-    [Key(9)] public bool IsContested { get; set; }
-    [Key(10)] public Faction?  ControllingFaction { get; set; }
-}
-```
+| Feld  | Typ                     | Beschreibung                   | Pflicht |
+| ----- | ----------------------- | ------------------------------ | ------- |
+| Type  | MessageType             | `MessageType.ZoneListResponse` | Ja      |
+| Zones | List\<ZoneListItemDto\> | Zone-Informationen             | Ja      |
 
 ### Code-Beispiel
 
@@ -1033,7 +1361,42 @@ public class ZoneInfoDto
 public class ZoneListResponse : IServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneListResponse;
-    [Key(1)] public List<ZoneInfoDto> Zones { get; set; } = new();
+    [Key(1)] public List<ZoneListItemDto> Zones { get; set; } = new();
+}
+```
+
+### Server-Logik
+
+```csharp
+public ZoneListResponse HandleZoneListRequest(PlayerEntity player, ZoneListRequest request)
+{
+    var zones = _zoneManager.GetAllZones();
+
+    if (! request.IncludeUndiscovered)
+    {
+        zones = zones.Where(z => player. DiscoveredZones.Contains(z. Id));
+    }
+
+    return new ZoneListResponse
+    {
+        Zones = zones.Select(z => ZoneListItemDto.Create(z, player)).ToList()
+    };
+}
+```
+
+### Client-Logik
+
+```csharp
+public void OnZoneListResponse(ZoneListResponse response)
+{
+    foreach (var item in response.Zones)
+    {
+        // ZoneDtos cachen
+        _zoneCache.CacheZone(item.Zone);
+
+        // Weltkarte aktualisieren
+        _worldMap.UpdateZone(item);
+    }
 }
 ```
 
@@ -1042,31 +1405,41 @@ public class ZoneListResponse : IServerMessage
 ```csharp
 var response = new ZoneListResponse
 {
-    Zones = new List<ZoneInfoDto>
+    Zones = new List<ZoneListItemDto>
     {
-        new ZoneInfoDto
+        new ZoneListItemDto
         {
-            ZoneId = 1001,
-            Name = "Elwynn Forest",
-            ZoneType = ZoneType.Outdoor,
-            RecommendedMinLevel = 1,
-            RecommendedMaxLevel = 10,
+            Zone = new ZoneDto
+            {
+                ZoneId = 1001,
+                Name = "Elwynn Forest",
+                Type = ZoneType.Outdoor,
+                RecommendedMinLevel = 1,
+                RecommendedMaxLevel = 10,
+                IsPvPEnabled = false
+            },
             IsDiscovered = true,
             HasFlightPath = true,
             FlightPathPosition = new Position(100f, 200f, 0f, 1001),
-            IsPvPZone = false
+            CompletedQuestCount = 12,
+            TotalQuestCount = 15
         },
-        new ZoneInfoDto
+        new ZoneListItemDto
         {
-            ZoneId = 1005,
-            Name = "Darkwood Forest",
-            ZoneType = ZoneType.Outdoor,
-            RecommendedMinLevel = 15,
-            RecommendedMaxLevel = 25,
-            IsDiscovered = false, // Noch nicht entdeckt
-            HasFlightPath = true,
-            IsPvPZone = true,
-            IsContested = true
+            Zone = new ZoneDto
+            {
+                ZoneId = 1005,
+                Name = "Darkwood Forest",
+                Type = ZoneType.Outdoor,
+                RecommendedMinLevel = 15,
+                RecommendedMaxLevel = 25,
+                IsPvPEnabled = true,
+                IsContested = true
+            },
+            IsDiscovered = false,
+            HasFlightPath = false,
+            CompletedQuestCount = 0,
+            TotalQuestCount = 20
         }
     }
 };
@@ -1118,10 +1491,9 @@ var request = new GetZoneRequest
 
 ### Server-Antwort
 
-Server antwortet mit `ZoneState` (102) - es gibt keine separate `GetZoneResponse` mehr.
+Server antwortet mit `ZoneState` (102):
 
 ```csharp
-// Server-Handler
 public void HandleGetZoneRequest(ClientConnection conn, GetZoneRequest request)
 {
     var player = GetPlayer(conn);
@@ -1129,27 +1501,16 @@ public void HandleGetZoneRequest(ClientConnection conn, GetZoneRequest request)
 
     if (zone == null)
     {
-        // Error-Handling
         SendError(conn, "ZONE_NOT_FOUND");
         return;
     }
 
-    // ZoneState direkt senden
-    var zoneState = new ZoneState
-    {
-        ZoneId = zone.Id,
-        ZoneName = zone.Name,
-        ZoneType = zone.Type,
-        Weather = zone.CurrentWeather,
-        TimeOfDay = zone.TimeOfDay,
-        StateType = ZoneStateType.Initial,
-        MyPlayer = PlayerEntityDto.FromEntity(player),
-        Entities = zone.GetVisibleEntities(player).Select(e => e.ToDto()).ToList(),
-        HasMoreEntities = false,
-        TotalEntityCount = zone.EntityCount
-    };
-
+    // ZoneState mit ZoneDto (falls erster Besuch) senden
+    var zoneState = CreateZoneState(player, zone, ZoneStateType.Initial);
     Send(conn, zoneState);
+
+    // Warte auf ZoneLoadedAck
+    player.WaitingForZoneAckSince = DateTime. UtcNow;
 }
 ```
 
@@ -1211,21 +1572,56 @@ public async Task LoadZoneAsync(ZoneState zoneState)
 {
     var stopwatch = Stopwatch.StartNew();
 
-    // 1. Assets laden (Texturen, Models, etc.)
-    await _assetLoader.LoadZoneAssetsAsync(zoneState. ZoneId);
+    // 1. ZoneDto cachen (falls vorhanden)
+    if (zoneState.ZoneInfo != null)
+    {
+        _zoneCache.CacheZone(zoneState.ZoneInfo);
+    }
 
-    // 2. ZoneState anwenden (Entities spawnen)
-    _zoneManager.ApplyZoneState(zoneState);
+    // 2. Zone-Infos aus Cache holen
+    var zoneInfo = _zoneCache.GetZone(zoneState.ZoneId);
+    if (zoneInfo == null)
+    {
+        _log.Error("ZoneDto not found for zone {ZoneId}!", zoneState.ZoneId);
+        RequestDisconnect("Missing zone data");
+        return;
+    }
 
-    // 3. Gebufferte Messages abarbeiten
+    // 3. Assets laden (Texturen, Models, etc.)
+    await _assetLoader.LoadZoneAssetsAsync(zoneInfo);
+
+    // 4. Audio starten
+    _audioManager.PlayMusic(zoneInfo.MusicId);
+    _audioManager.PlayAmbience(zoneInfo.AmbienceId);
+
+    // 5. Minimap initialisieren
+    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+
+    // 6. Dynamischen State anwenden
+    _weatherSystem.SetWeather(zoneState.CurrentWeather);
+    _timeSystem.SetTime(zoneState.TimeOfDay);
+
+    // 7. MyPlayer spawnen (falls vorhanden)
+    if (zoneState.MyPlayer != null)
+    {
+        _playerController.InitializeFromDto(zoneState.MyPlayer);
+    }
+
+    // 8. Entities spawnen
+    foreach (var entityDto in zoneState.Entities)
+    {
+        _entityManager.SpawnFromDto(entityDto);
+    }
+
+    // 9. Gebufferte Messages abarbeiten
     _messageBuffer.ProcessAll();
 
     stopwatch.Stop();
 
-    // 4. Server informieren - JETZT bereit für Updates!
+    // 10. Server informieren - JETZT bereit für Updates!
     _networkClient.Send(new ZoneLoadedAck
     {
-        ZoneId = zoneState.ZoneId,
+        ZoneId = zoneState. ZoneId,
         LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
     });
 }
@@ -1241,7 +1637,7 @@ public void HandleZoneLoadedAck(ClientConnection conn, ZoneLoadedAck ack)
     // Validierung
     if (player. CurrentZoneId != ack.ZoneId)
     {
-        _log. Warn("ZoneLoadedAck for wrong zone:  expected {Expected}, got {Got}",
+        _log. Warn("ZoneLoadedAck for wrong zone: expected {Expected}, got {Got}",
             player.CurrentZoneId, ack.ZoneId);
         return;
     }
@@ -1272,9 +1668,9 @@ Server wartet maximal 30 Sekunden auf `ZoneLoadedAck`:
 // Im Server-Tick
 public void CheckZoneLoadTimeouts()
 {
-    var now = DateTime. UtcNow;
+    var now = DateTime.UtcNow;
 
-    foreach (var player in _players.Where(p => ! p.IsZoneReady))
+    foreach (var player in _players. Where(p => ! p.IsZoneReady))
     {
         if (player.WaitingForZoneAckSince?. AddSeconds(30) < now)
         {
@@ -1309,13 +1705,13 @@ Enthält weitere Entities wenn eine Zone mehr als 100 Entities hat. Folgt auf `Z
 
 ### Payload
 
-| Feld        | Typ                | Beschreibung                 | Pflicht |
-| ----------- | ------------------ | ---------------------------- | ------- |
-| Type        | MessageType        | `MessageType.EntityBatch`    | Ja      |
-| ZoneId      | ushort             | Zone-ID zur Validierung      | Ja      |
-| BatchIndex  | int                | Batch-Nummer (1, 2, 3, .. .) | Ja      |
-| Entities    | List\<IEntityDto\> | Weitere Entities (max 100)   | Ja      |
-| IsLastBatch | bool               | Ist dies der letzte Batch?   | Ja      |
+| Feld        | Typ                | Beschreibung                | Pflicht |
+| ----------- | ------------------ | --------------------------- | ------- |
+| Type        | MessageType        | `MessageType.EntityBatch`   | Ja      |
+| ZoneId      | ushort             | Zone-ID zur Validierung     | Ja      |
+| BatchIndex  | int                | Batch-Nummer (1, 2, 3, ...) | Ja      |
+| Entities    | List\<IEntityDto\> | Weitere Entities (max 100)  | Ja      |
+| IsLastBatch | bool               | Ist dies der letzte Batch?  | Ja      |
 
 ### Code-Beispiel
 
@@ -1338,7 +1734,8 @@ public class EntityBatch : IServerMessage
 Zone mit 250 Entities:
 
 1. ZoneState (102)
-   ├── MyPlayer:  PlayerEntityDto
+   ├── ZoneInfo:  ZoneDto (bei erstem Besuch)
+   ├── MyPlayer: PlayerEntityDto
    ├── Entities: [Entity 0-99]     (100 Entities)
    ├── HasMoreEntities: true
    └── TotalEntityCount: 250
@@ -1368,15 +1765,25 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
     var firstChunk = allEntities.Take(CHUNK_SIZE).Select(e => e.ToDto()).ToList();
     var remainingEntities = allEntities.Skip(CHUNK_SIZE).ToList();
 
+    // Prüfen ob erster Besuch
+    bool firstVisit = ! player. VisitedZones.Contains(zone.Id);
+    if (firstVisit)
+    {
+        player.VisitedZones.Add(zone.Id);
+    }
+
     // 1. ZoneState mit erstem Chunk
     var zoneState = new ZoneState
     {
+        Timestamp = DateTimeOffset.UtcNow. ToUnixTimeMilliseconds(),
         ZoneId = zone.Id,
-        ZoneName = zone.Name,
+        ZoneInfo = firstVisit ? ZoneDto.FromZone(zone) : null,
+        CurrentWeather = zone.CurrentWeather,
+        TimeOfDay = zone.TimeOfDay,
         StateType = ZoneStateType.Initial,
         MyPlayer = PlayerEntityDto.FromEntity(player),
         Entities = firstChunk,
-        HasMoreEntities = remainingEntities.Any(),
+        HasMoreEntities = remainingEntities. Any(),
         TotalEntityCount = allEntities.Count
     };
     Send(conn, zoneState);
@@ -1397,6 +1804,9 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
         };
         Send(conn, entityBatch);
     }
+
+    // Warte auf ZoneLoadedAck
+    player.WaitingForZoneAckSince = DateTime. UtcNow;
 }
 ```
 
@@ -1406,16 +1816,18 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
 private int _expectedBatches;
 private int _receivedBatches;
 private List<IEntityDto> _pendingEntities = new();
+private ZoneState?  _pendingZoneState;
 
 public void OnZoneState(ZoneState state)
 {
-    // Initiale Entities speichern
+    _pendingZoneState = state;
+    _pendingEntities.Clear();
     _pendingEntities.AddRange(state.Entities);
 
     if (! state.HasMoreEntities)
     {
         // Keine weiteren Batches, direkt laden
-        ApplyEntitiesAndStartLoading();
+        _ = ProcessZoneLoadAsync();
     }
     else
     {
@@ -1428,27 +1840,77 @@ public void OnZoneState(ZoneState state)
 public void OnEntityBatch(EntityBatch batch)
 {
     // Validierung
-    if (batch.ZoneId != _currentZoneId)
+    if (_pendingZoneState == null || batch.ZoneId != _pendingZoneState.ZoneId)
     {
-        _log.Warn("EntityBatch for wrong zone");
+        _log.Warn("EntityBatch for wrong zone or no pending ZoneState");
         return;
     }
 
     // Entities hinzufügen
-    _pendingEntities.AddRange(batch. Entities);
+    _pendingEntities.AddRange(batch.Entities);
     _receivedBatches++;
 
     if (batch.IsLastBatch)
     {
-        ApplyEntitiesAndStartLoading();
+        _ = ProcessZoneLoadAsync();
     }
 }
 
-private void ApplyEntitiesAndStartLoading()
+private async Task ProcessZoneLoadAsync()
 {
-    _zoneManager.SpawnEntities(_pendingEntities);
+    if (_pendingZoneState == null) return;
+
+    var stopwatch = Stopwatch.StartNew();
+
+    // 1. ZoneDto cachen
+    if (_pendingZoneState.ZoneInfo != null)
+    {
+        _zoneCache.CacheZone(_pendingZoneState.ZoneInfo);
+    }
+
+    // 2. Zone-Infos holen
+    var zoneInfo = _zoneCache.GetZone(_pendingZoneState.ZoneId);
+    if (zoneInfo == null)
+    {
+        _log.Error("ZoneDto not found!");
+        return;
+    }
+
+    // 3. Assets laden
+    await _assetLoader.LoadZoneAssetsAsync(zoneInfo);
+
+    // 4. Audio/Visuals
+    _audioManager.PlayMusic(zoneInfo.MusicId);
+    _weatherSystem.SetWeather(_pendingZoneState.CurrentWeather);
+    _timeSystem.SetTime(_pendingZoneState.TimeOfDay);
+
+    // 5. MyPlayer spawnen
+    if (_pendingZoneState.MyPlayer != null)
+    {
+        _playerController.InitializeFromDto(_pendingZoneState.MyPlayer);
+    }
+
+    // 6. ALLE Entities spawnen (inkl. Batches)
+    foreach (var entityDto in _pendingEntities)
+    {
+        _entityManager.SpawnFromDto(entityDto);
+    }
+
+    // 7. Buffer abarbeiten
+    _messageBuffer. ProcessAll();
+
+    stopwatch.Stop();
+
+    // 8. Cleanup
+    _pendingZoneState = null;
     _pendingEntities.Clear();
-    StartAssetLoading();
+
+    // 9. Server informieren
+    _networkClient.Send(new ZoneLoadedAck
+    {
+        ZoneId = zoneInfo.ZoneId,
+        LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
+    });
 }
 ```
 
@@ -1648,7 +2110,7 @@ public enum ZoneStateType : byte
     FullSync = 4
 }
 
-// Mmo. Shared/Zone/Enums/ZoneType.cs
+// Mmo.Shared/Zone/Enums/ZoneType.cs
 public enum ZoneType : byte
 {
     Outdoor = 1,
@@ -1661,7 +2123,7 @@ public enum ZoneType : byte
     GhostZone = 8
 }
 
-// Mmo.Shared/Zone/Enums/WeatherType.cs
+// Mmo. Shared/Zone/Enums/WeatherType.cs
 public enum WeatherType : byte
 {
     Clear = 1,
@@ -1674,6 +2136,86 @@ public enum WeatherType : byte
     Storm = 8,
     Sandstorm = 9
 }
+
+// Mmo. Shared/Zone/Enums/Faction.cs
+public enum Faction :  byte
+{
+    Neutral = 0,
+    Alliance = 1,
+    Horde = 2
+}
+```
+
+## Neue DTOs
+
+Die folgenden DTOs müssen erstellt werden:
+
+```csharp
+// Mmo.Shared/Zone/Dtos/ZoneDto.cs
+[MessagePackObject]
+public class ZoneDto
+{
+    [Key(0)] public ushort ZoneId { get; set; }
+    [Key(1)] public string Name { get; set; } = "";
+    [Key(2)] public ZoneType Type { get; set; }
+    [Key(3)] public int RecommendedMinLevel { get; set; }
+    [Key(4)] public int RecommendedMaxLevel { get; set; }
+    [Key(5)] public bool IsPvPEnabled { get; set; }
+    [Key(6)] public bool IsContested { get; set; }
+    [Key(7)] public Faction?  ControllingFaction { get; set; }
+    [Key(8)] public bool IsSanctuary { get; set; }
+    [Key(9)] public Position DefaultSpawnPoint { get; set; }
+    [Key(10)] public Position? GraveyardPosition { get; set; }
+    [Key(11)] public string MusicId { get; set; } = "";
+    [Key(12)] public string AmbienceId { get; set; } = "";
+    [Key(13)] public float MinX { get; set; }
+    [Key(14)] public float MaxX { get; set; }
+    [Key(15)] public float MinY { get; set; }
+    [Key(16)] public float MaxY { get; set; }
+}
+
+// Mmo.Shared/Zone/Dtos/ZoneListItemDto.cs
+[MessagePackObject]
+public class ZoneListItemDto
+{
+    [Key(0)] public ZoneDto Zone { get; set; } = null!;
+    [Key(1)] public bool IsDiscovered { get; set; }
+    [Key(2)] public bool HasFlightPath { get; set; }
+    [Key(3)] public Position? FlightPathPosition { get; set; }
+    [Key(4)] public int CompletedQuestCount { get; set; }
+    [Key(5)] public int TotalQuestCount { get; set; }
+}
+```
+
+## Datei-Struktur
+
+```
+Mmo.Shared/
+├── Zone/
+│   ├── Enums/
+│   │   ├── LeaveReason.cs
+│   │   ├── PlayerLeftReason.cs
+│   │   ├── TransferType.cs
+│   │   ├── ZoneStateType.cs
+│   │   ├── ZoneType.cs
+│   │   ├── WeatherType.cs
+│   │   └── Faction.cs
+│   ├── Dtos/
+│   │   ├── ZoneDto.cs
+│   │   └── ZoneListItemDto.cs
+│   └── Messages/
+│       ├── LeaveZone.cs
+│       ├── ZoneState.cs
+│       ├── PlayerJoinedZone.cs
+│       ├── PlayerLeftZone.cs
+│       ├── ZoneTransferRequest.cs
+│       ├── ZoneTransferResponse.cs
+│       ├── ZoneDiscovered.cs
+│       ├── ZoneListRequest.cs
+│       ├── ZoneListResponse.cs
+│       ├── GetZoneRequest.cs
+│       ├── ZoneLoadedAck.cs
+│       └── EntityBatch.cs
 ```
 
 ---
@@ -1681,4 +2223,4 @@ public enum WeatherType : byte
 **Letzte Aktualisierung:** 2025-12-27  
 **Version:** 2.0.0
 
-[← Zurück zur Übersicht](README)
+[← Zurück zur Übersicht](README.md)
