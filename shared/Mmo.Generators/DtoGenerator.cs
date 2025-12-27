@@ -186,7 +186,7 @@ namespace Mmo.Generators
             sb.AppendLine($"        /// Creates a {dtoName} from a {typeSymbol.Name}.");
             sb.AppendLine($"        /// </summary>");
             sb.AppendLine(
-                $"        public static {dtoName} From{typeSymbol.Name}({typeSymbol.ToDisplayString()} source)");
+                $"        public static {dtoName} FromEntity({typeSymbol.ToDisplayString()} source)");
             sb.AppendLine("        {");
             sb.AppendLine($"            return new {dtoName}");
             sb.AppendLine("            {");
@@ -234,7 +234,7 @@ namespace Mmo.Generators
             // Ersetze System.  mit global::System.  um Namespace-Konflikte zu vermeiden
             if (typeName.StartsWith("System."))
             {
-                return "global: :" + typeName;
+                return "global::" + typeName;
             }
 
             // Für nullable System-Typen
@@ -244,7 +244,7 @@ namespace Mmo.Generators
             {
                 var innerType = namedType.TypeArguments[0];
                 var innerTypeName = GetFullTypeName(innerType);
-                return innerTypeName + "? ";
+                return innerTypeName + "?";
             }
 
             return typeName;
