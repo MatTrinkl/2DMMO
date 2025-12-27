@@ -12,26 +12,30 @@
 ## 📋 Inhaltsverzeichnis
 
 -   [Zone Loading Flow (Übersicht)](#-zone-loading-flow-übersicht)
--   [JoinZone (100)](#joinzone-100)
--   [LeaveZone (101)](#leavezone-101)
--   [ZoneState (102)](#zonestate-102)
--   [PlayerJoinedZone (103)](#playerjoinedzone-103)
--   [PlayerLeftZone (104)](#playerleftzone-104)
--   [ZoneTransferRequest (105)](#zonetransferrequest-105)
--   [ZoneTransferResponse (106)](#zonetransferresponse-106)
--   [ZoneLoadingProgress (107)](#zoneloadingprogress-107)
--   [ZoneDiscovered (108)](#zonediscovered-108)
--   [ZoneListRequest (109)](#zonelistrequest-109)
--   [ZoneListResponse (110)](#zonelistresponse-110)
--   [ShardTransfer (111)](#shardtransfer-111)
--   [ShardListRequest (112)](#shardlistrequest-112)
--   [ShardListResponse (113)](#shardlistresponse-113)
--   [SubZoneEnter (114)](#subzoneenter-114)
--   [SubZoneLeave (115)](#subzoneleave-115)
--   [ZonePhaseChange (116)](#zonephasechange-116)
--   [GetZoneRequest (117)](#getzonerequest-117)
--   [GetZoneResponse (118)](#getzoneresponse-118)
--   [ZoneLoadedAck (119)](#zoneloadedack-119)
+-   [Aktive Messages](#aktive-messages)
+    -   [LeaveZone (101)](#leavezone-101)
+    -   [ZoneState (102)](#zonestate-102)
+    -   [PlayerJoinedZone (103)](#playerjoinedzone-103)
+    -   [PlayerLeftZone (104)](#playerleftzone-104)
+    -   [ZoneTransferRequest (105)](#zonetransferrequest-105)
+    -   [ZoneTransferResponse (106)](#zonetransferresponse-106)
+    -   [ZoneDiscovered (108)](#zonediscovered-108)
+    -   [ZoneListRequest (109)](#zonelistrequest-109)
+    -   [ZoneListResponse (110)](#zonelistresponse-110)
+    -   [GetZoneRequest (117)](#getzonerequest-117)
+    -   [ZoneLoadedAck (119)](#zoneloadedack-119)
+    -   [EntityBatch (120)](#entitybatch-120)
+-   [Phase 2 Messages](#phase-2-messages)
+    -   [ShardTransfer (111)](#shardtransfer-111)
+    -   [ShardListRequest (112)](#shardlistrequest-112)
+    -   [ShardListResponse (113)](#shardlistresponse-113)
+    -   [SubZoneEnter (114)](#subzoneenter-114)
+    -   [SubZoneLeave (115)](#subzoneleave-115)
+    -   [ZonePhaseChange (116)](#zonephasechange-116)
+-   [Obsolete Messages](#obsolete-messages)
+    -   [JoinZone (100)](#joinzone-100-obsolet)
+    -   [ZoneLoadingProgress (107)](#zoneloadingprogress-107-obsolet)
+    -   [GetZoneResponse (118)](#getzoneresponse-118-obsolet)
 
 ---
 
@@ -39,23 +43,28 @@
 
 Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message enthält alle Daten die der Client zum Spawnen braucht.
 
-### Vereinfachter Flow
+### Haupt-Flow: Login → Zone
 
 ```
 Client                         Server
   │                              │
   │  CharacterSelectResponse     │
-  │  (SpawnZoneId: 1001)         │
+  │  (SpawnZoneId:  1001)         │
   │◄─────────────────────────────│
   │                              │
   │  GetZoneRequest (117)        │
-  │  "Gib mir Zone 1001"         │
+  │  ZoneId:  1001                │
   │─────────────────────────────►│
   │                              │
   │  ZoneState (102)             │  ← ALLES in einer Message!
   │  ├── Zone-Metadaten          │
-  │  ├── MyPlayer: PlayerEntityDto │
-  │  └── Entities: List<IEntityDto>│
+  │  ├── StateType:  Initial      │
+  │  ├── MyPlayer: PlayerEntityDto│
+  │  └── Entities:  List<IEntityDto>│
+  │◄─────────────────────────────│
+  │                              │
+  │  [Optional bei >100 Entities]│
+  │  EntityBatch (120)           │
   │◄─────────────────────────────│
   │                              │
   │  [Client buffert + lädt Assets]
@@ -68,199 +77,74 @@ Client                         Server
   │◄─────────────────────────────│
 ```
 
+### Zone Transfer Flow: Portal/Teleport
+
+```
+Client                         Server
+  │                              │
+  │  ZoneTransferRequest (105)   │
+  │  TargetZoneId: 2001          │
+  │  TransferType: Portal        │
+  │─────────────────────────────►│
+  │                              │
+  │  ZoneTransferResponse (106)  │
+  │  Success: true               │
+  │◄─────────────────────────────│
+  │                              │
+  │  [PlayerLeftZone broadcast]  │
+  │                              │
+  │  ZoneState (102)             │
+  │  ├── StateType: Transfer     │
+  │  ├── MyPlayer: PlayerEntityDto│
+  │  └── Entities: [...]         │
+  │◄─────────────────────────────│
+  │                              │
+  │  [Client lädt Assets]        │
+  │                              │
+  │  ZoneLoadedAck (119)         │
+  │─────────────────────────────►│
+```
+
+### Logout Flow
+
+```
+Client                         Server
+  │                              │
+  │  LeaveZone (101)             │
+  │  Reason: Logout              │
+  │─────────────────────────────►│
+  │                              │
+  │  [Server speichert State]    │
+  │  [PlayerLeftZone broadcast]  │
+  │                              │
+  │  [Connection close]          │
+```
+
 ### Message-Übersicht
 
-| Message | ID | Richtung | Status |
-|---------|-----|----------|--------|
-| `GetZoneRequest` | 117 | Client → Server | ✅ Aktiv |
-| `ZoneState` | 102 | Server → Client | ✅ Erweitert (MyPlayer + Entities) |
-| `ZoneLoadedAck` | 119 | Client → Server | ✅ **NEU** |
-| `GetZoneResponse` | 118 | Server → Client | ❌ **OBSOLET** (in ZoneState integriert) |
-| `JoinZone` | 100 | Server → Client | ❌ **OBSOLET** (in ZoneState integriert) |
+| Message                | ID  | Richtung           | Zweck                        |
+| ---------------------- | --- | ------------------ | ---------------------------- |
+| `GetZoneRequest`       | 117 | Client → Server    | Zone-Daten anfordern         |
+| `ZoneState`            | 102 | Server → Client    | Zone + MyPlayer + Entities   |
+| `EntityBatch`          | 120 | Server → Client    | Weitere Entities (Chunking)  |
+| `ZoneLoadedAck`        | 119 | Client → Server    | Client bestätigt Ready       |
+| `ZoneTransferRequest`  | 105 | Client → Server    | Zone wechseln wollen         |
+| `ZoneTransferResponse` | 106 | Server → Client    | Transfer bestätigen/ablehnen |
+| `LeaveZone`            | 101 | Client → Server    | Logout/Disconnect            |
+| `PlayerJoinedZone`     | 103 | Server → Broadcast | Neuer Spieler                |
+| `PlayerLeftZone`       | 104 | Server → Broadcast | Spieler verlässt             |
 
-### Vorteile des neuen Flows
+### Obsolete Messages
 
-- **4 Messages statt 6+** - Einfacherer Flow
-- **Atomarer State-Snapshot** - Keine Race Conditions
-- **Client-Kontrolle** - ZoneLoadedAck bestätigt Bereitschaft
-- **Server wartet** - Keine Updates während Client lädt
+| Message               | ID  | Ersetzt durch         |
+| --------------------- | --- | --------------------- |
+| `JoinZone`            | 100 | `ZoneState. MyPlayer` |
+| `ZoneLoadingProgress` | 107 | Client lädt lokal     |
+| `GetZoneResponse`     | 118 | `ZoneState` direkt    |
 
 ---
 
-## JoinZone (100)
-
-> ⚠️ **OBSOLET** - Diese Message wurde in `ZoneState` (102) integriert.
-> `MyPlayer` in `ZoneState` ersetzt die Funktionalität von `JoinZone`.
-> Siehe [Zone Loading Flow](#-zone-loading-flow-übersicht) für den neuen Prozess.
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-Server informiert Client dass Character in eine Zone gespawnt wird. Enthält Zone-ID, Spawn-Position und initiale Informationen.
-
-**Flow:** Nach `CharacterSelectResponse` sendet Client zuerst `GetZoneRequest` (117) um Zone-Metadaten zu laden und Assets vorzubereiten. Wenn bereit, sendet Server dann `JoinZone` mit vollständigem PlayerEntity.
-
-### Im Scope ✅
-
--   Zone-ID und Name
--   Spawn-Position (X, Y, Z)
--   Zone-Type (Outdoor, Dungeon, City, etc.)
--   **Vollständiges PlayerEntity mit allen gameplay-relevanten Daten**
--   **Equipment-Snapshot für korrektes Character-Rendering**
--   **Aktive Buffs/Debuffs für UI-Anzeige**
--   **Cooldowns für Ability-Verfügbarkeit**
-
-### Nicht im Scope ❌
-
--   Vollständiger ZoneState mit anderen Spielern → verwende `ZoneState` (102)
--   Entity-Liste → Server sendet separate `EntitySpawn` Messages (1400)
--   **Vollständiges Inventory** → verwende `InventorySync` (1100)
--   **Quest-Log** → verwende `QuestSync` (1000)
--   **Skill-Tree Details** → verwende `SkillSync` (800)
-
-### Payload
-
-| Feld       | Typ             | Beschreibung                             | Pflicht |
-| ---------- | --------------- | ---------------------------------------- | ------- |
-| ZoneId     | ushort          | Eindeutige Zone-ID                       | Ja      |
-| ZoneName   | string          | Name der Zone                            | Ja      |
-| ZoneType   | string          | "outdoor", "dungeon", "city", "instance" | Ja      |
-| PlayerData | PlayerEntityDto | Kompletter Character-State               | Ja      |
-
-**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für vollständige Referenz):
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| RuntimeId | EntityIdentity | Runtime Entity-ID |
-| PersistentId | Guid | Persistente Character-ID |
-| Position | Position | Spawn-Position (X, Y, Z) |
-| DisplayName | string | Character-Name |
-| Level | int | Character-Level |
-| CurrentHealth | int | Aktuelle HP |
-| MaxHealth | int | Maximale HP |
-| CurrentResource | int | Aktuelles Mana/Energy/Rage |
-| MaxResource | int | Maximales Mana/Energy/Rage |
-| CombatResourceType | CombatResourceType | Typ der Ressource |
-| Race | Race | Rasse |
-| Class | CharacterClass | Klasse |
-| Gender | Gender | Geschlecht |
-| State | CharacterState | Alive/Dead/Ghost |
-| IsPvpFlagged | bool | PvP-Flag aktiv? |
-| IsInCombat | bool | Im Kampf? |
-| MovementFlags | MovementFlags | Walking/Running Animation |
-| ... | ... | (weitere Properties siehe DTO_ARCHITECTURE.md) |
-
-> **⚠️ ServerOnly Properties (NICHT im DTO enthalten):**
->
-> -   `Experience` - Cheating-Prevention
-> -   `Gold` - Sicherheitskritisch
-> -   `AccountId` - Privacy
-> -   `AttackPower`, `Armor` - Server-interne Berechnungen
-
-### Erwartete Response
-
--   Client sendet `PositionUpdate` (200) um Spawn zu bestätigen
--   Danach: Client empfängt `ZoneState` (102) mit anderen Entities
-
-### Verwandte Messages
-
-| Message              | ID   | Beziehung                                         |
-| -------------------- | ---- | ------------------------------------------------- |
-| `ZoneState`          | 102  | Enthält kompletten Zone-State                     |
-| `LeaveZone`          | 101  | Verlassen der Zone                                |
-| `CharacterSelect`    | 9    | Auslöser für JoinZone                             |
-| `GetZoneRequest`     | 117  | Wird vor JoinZone gesendet (Zone-Metadaten laden) |
-| `EntitySpawn`        | 1400 | Andere Spieler/NPCs in Zone                       |
-| `InventorySync`      | 1100 | Vollständiges Inventory (separat)                 |
-| `QuestSync`          | 1000 | Quest-Log (separat)                               |
-| `SkillSync`          | 800  | Skill-Tree (separat)                              |
-| `FriendListResponse` | 2105 | Freundesliste (separat)                           |
-
-### Flow-Diagramm
-
-```
-Client                    Zone Server
-  │                          │
-  │  CharacterSelect (9)     │
-  │─────────────────────────►│
-  │                          │  Load Character
-  │                          │  Find Spawn Point
-  │                          │
-  │  CharacterSelectResponse │
-  │  (SpawnZoneId: 1001)     │
-  │◄─────────────────────────│
-  │                          │
-  │  GetZoneRequest (117)    │
-  │  (ZoneId: 1001)          │
-  │─────────────────────────►│
-  │                          │
-  │  GetZoneResponse (118)   │
-  │  with ZoneState          │
-  │◄─────────────────────────│
-  │                          │
-  │  Load Zone Assets        │
-  │  (Textures, Models...)   │
-  │                          │
-  │  Assets Loaded,          │
-  │  Ready to Spawn          │
-  │                          │
-  │  JoinZone (100)          │
-  │◄─────────────────────────│
-  │                          │
-  │  PositionUpdate (200)    │
-  │─────────────────────────►│
-  │                          │
-  │  EntitySpawn (1400) x N  │
-  │◄─────────────────────────│
-```
-
-### Beispiel Payload
-
-```csharp
-var joinZone = new JoinZone
-{
-    Type = MessageType.JoinZone,
-    ZoneId = 1001,
-    ZoneName = "Elwynn Forest",
-    ZoneType = "outdoor",
-    PlayerData = new PlayerEntityDto
-    {
-        RuntimeId = new EntityIdentity(1, 1001, 50001, 0, 1),
-        PersistentId = characterGuid,
-        Position = new Position(100.5f, 250.0f, 10.0f, 1001),
-        DisplayName = "Alice",
-        Level = 10,
-        CurrentHealth = 850,
-        MaxHealth = 1000,
-        CurrentResource = 200,
-        MaxResource = 300,
-        CombatResourceType = CombatResourceType.Mana,
-        Race = Race.Human,
-        Class = CharacterClass.Mage,
-        Gender = Gender.Female
-        // Experience, Gold, AccountId sind NICHT enthalten (ServerOnly)
-    }
-};
-```
-
-### Notizen
-
--   Loading-Screen im Client während Zone-Load
--   Client lädt Zone-Assets basierend auf ZoneId (nach `GetZoneRequest`)
--   Nach JoinZone: Server sendet andere Spieler als `EntitySpawn` (1400)
--   Spawn-Position ist entweder: Last-Position, Hearthstone, oder Zone-Default
--   **Empfohlener Flow:** `CharacterSelectResponse` → `GetZoneRequest` → Asset Loading → `JoinZone`
--   **PlayerEntityDto enthält alle Daten für sofortiges Gameplay** - Client muss keine weiteren Requests für Basis-Daten senden
--   **Nicht enthalten in PlayerEntityDto** (separate Messages):
-    -   Vollständiges Inventory → `InventorySync` (1100)
-    -   Quest-Log → `QuestSync` (1000)
-    -   Skill-Tree → `SkillSync` (800)
-    -   Freundesliste → `FriendListResponse` (2105)
--   **Geschätzte Message-Größe**: ~1-2 KB (akzeptabel für seltene Zone-Joins)
--   Bei Reconnect: Cooldowns werden korrekt wiederhergestellt
+# Aktive Messages
 
 ---
 
@@ -273,163 +157,174 @@ var joinZone = new JoinZone
 
 ### Beschreibung
 
-Client informiert Server dass Spieler die Zone verlassen will (Portal, Hearthstone, etc.). Server speichert State und transferiert zu neuer Zone.
+Client informiert Server dass Spieler die Zone verlassen will. Wird NUR für Logout, Disconnect oder Tod verwendet.
+
+> **Hinweis:** Für Zone-Wechsel (Portal, Teleport, Hearthstone) verwende `ZoneTransferRequest` (105)!
 
 ### Im Scope ✅
 
--   Freiwilliges Zone-Verlassen
--   State-Speicherung
--   Cleanup von Zone-Resources
+-   Logout
+-   Client-Disconnect
+-   Tod (Wechsel in Geist-Modus)
 
 ### Nicht im Scope ❌
 
--   Zone-Transfer → wird durch `ZoneTransferRequest` (105) gehandhabt
--   Logout → verwende `LogoutRequest` (3)
+-   Zone-Transfer → verwende `ZoneTransferRequest` (105)
+-   Hearthstone → verwende `ZoneTransferRequest` (105) mit `TransferType: Hearthstone`
 
-### Request Payload
+### Payload
 
-| Feld         | Typ    | Beschreibung                               | Pflicht |
-| ------------ | ------ | ------------------------------------------ | ------- |
-| Reason       | string | "logout", "portal", "hearthstone", "death" | Ja      |
-| TargetZoneId | ushort | Ziel-Zone (falls bekannt)                  | Nein    |
+| Feld   | Typ         | Beschreibung              | Pflicht |
+| ------ | ----------- | ------------------------- | ------- |
+| Type   | MessageType | `MessageType.LeaveZone`   | Ja      |
+| Reason | LeaveReason | Logout, Disconnect, Death | Ja      |
 
-### Erwartete Response
-
--   **Bei Zone-Transfer:** Server sendet `ZoneState` (102) für die neue Zone
--   **Bei Logout:** Connection wird geschlossen
-
-### Flow bei Zone-Transfer
-
-```
-Client                         Server
-  │                              │
-  │  LeaveZone (101)             │
-  │  Reason:  "portal"            │
-  │  TargetZoneId:  2001          │
-  │─────────────────────────────►│
-  │                              │
-  │  [Server: PlayerLeftZone     │
-  │   broadcast an alte Zone]    │
-  │                              │
-  │  ZoneState (102)             │  ← Neue Zone!
-  │  ZoneId:  2001                │
-  │  StateType: Transfer         │
-  │  MyPlayer: PlayerEntityDto   │
-  │◄─────────────────────────────│
-  │                              │
-  │  [Client lädt Assets]        │
-  │                              │
-  │  ZoneLoadedAck (119)         │
-  │─────────────────────────────►│
-  │                              │
-  │  [Server startet Updates]    │
+```csharp
+public enum LeaveReason :  byte
+{
+    Logout = 1,      // Normaler Logout
+    Disconnect = 2,  // Verbindungsabbruch
+    Death = 3        // Spieler gestorben → Geist-Modus
+}
 ```
 
-### Verwandte Messages
+### Code-Beispiel
 
-| Message               | ID  | Beziehung                                    |
-| --------------------- | --- | -------------------------------------------- |
-| `ZoneState`           | 102 | Neue Zone betreten (mit StateType: Transfer) |
-| `ZoneLoadedAck`       | 119 | Client bestätigt Zone-Load                   |
-| `PlayerLeftZone`      | 104 | Broadcast an andere Spieler in alter Zone    |
-| `ZoneTransferRequest` | 105 | Expliziter Zone-Transfer                     |
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.LeaveZone)]
+public class LeaveZone : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.LeaveZone;
+    [Key(1)] public LeaveReason Reason { get; set; }
+}
+```
+
+### Server-Verhalten
+
+| Reason       | Server-Aktion                                                     |
+| ------------ | ----------------------------------------------------------------- |
+| `Logout`     | State speichern → PlayerLeftZone broadcast → Connection close     |
+| `Disconnect` | State speichern → PlayerLeftZone broadcast → 30s Reconnect-Window |
+| `Death`      | PlayerLeftZone broadcast → Spieler in Geist-Zone spawnen          |
 
 ### Beispiel Payload
 
 ```csharp
 var leaveZone = new LeaveZone
 {
-    Type = MessageType.LeaveZone,
-    Reason = "portal",
-    TargetZoneId = 2001
+    Reason = LeaveReason. Logout
 };
 ```
 
-### Notizen
+### Verwandte Messages
 
--   Server broadcastet `PlayerLeftZone` (104) an alle Spieler in der alten Zone
--   Character wird aus alter Zone-Entity-Liste entfernt
--   Position wird in DB gespeichert
--   Bei Zone-Transfer: `ZoneState` (102) mit `StateType = Transfer` wird gesendet
+| Message               | ID  | Beziehung                           |
+| --------------------- | --- | ----------------------------------- |
+| `PlayerLeftZone`      | 104 | Broadcast an andere Spieler         |
+| `ZoneTransferRequest` | 105 | Für Zone-Wechsel (nicht LeaveZone!) |
+| `LogoutRequest`       | 3   | Alternative für Logout              |
 
 ---
 
 ## ZoneState (102)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Selten (Initial Load, Zone Transfer, Periodic Sync)  
+**Frequenz:** Selten (Initial Load, Zone Transfer, Periodic Sync, Reconnect)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
 Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Loading** und enthält:
-- Zone-Metadaten (Name, Typ, Wetter, etc.)
-- **MyPlayer**: Dein Character als PlayerEntityDto
-- **Entities**: Alle anderen Entities in der Zone
+
+-   Zone-Metadaten (Name, Typ, Wetter, etc.)
+-   **MyPlayer**: Dein Character als PlayerEntityDto
+-   **Entities**: Alle anderen Entities in der Zone (als DTOs)
 
 ### StateType Enum
 
-| Wert | Beschreibung |
-|------|--------------|
-| `Initial` (1) | Erster Login, Character spawnt zum ersten Mal |
-| `Transfer` (2) | Zone-Wechsel durch Portal/Teleport |
-| `FullSync` (3) | Periodischer Full-Sync (alle 60s) |
-| `Reconnect` (4) | Nach Verbindungsabbruch |
+| Wert            | Beschreibung                                   | MyPlayer     |
+| --------------- | ---------------------------------------------- | ------------ |
+| `Initial` (1)   | Erster Login, Character spawnt zum ersten Mal  | ✅ Enthalten |
+| `Transfer` (2)  | Zone-Wechsel durch Portal/Teleport/Hearthstone | ✅ Enthalten |
+| `Reconnect` (3) | Nach Verbindungsabbruch                        | ✅ Enthalten |
+| `FullSync` (4)  | Periodischer Full-Sync (alle 60s)              | ❌ null      |
 
 ### Payload
 
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Type | MessageType | `MessageType.ZoneState` | Ja |
-| Timestamp | long | Server-Timestamp | Ja |
-| ZoneId | ushort | Zone-ID | Ja |
-| ZoneName | string | Name der Zone | Ja |
-| ZoneType | string | "outdoor", "dungeon", "city", "instance" | Ja |
-| Weather | string | "sunny", "rain", "snow", "fog" | Ja |
-| TimeOfDay | float | 0.0-24.0 (Stunden) | Ja |
-| StateType | ZoneStateType | Initial, Transfer, FullSync, Reconnect | Ja |
-| MyPlayer | PlayerEntityDto? | Dein Character (null bei FullSync) | Bei Initial/Transfer |
-| Entities | List\<IEntityDto\> | Alle Entities (max 100 pro Message) | Ja |
-| HasMoreEntities | bool | Gibt es weitere Entity-Batches? | Ja |
-| TotalEntityCount | int | Gesamtzahl Entities in Zone | Ja |
+| Feld             | Typ                | Beschreibung                            | Pflicht     |
+| ---------------- | ------------------ | --------------------------------------- | ----------- |
+| Type             | MessageType        | `MessageType.ZoneState`                 | Ja          |
+| Timestamp        | long               | Server-Timestamp (Unix ms)              | Ja          |
+| ZoneId           | ushort             | Zone-ID                                 | Ja          |
+| ZoneName         | string             | Name der Zone                           | Ja          |
+| ZoneType         | ZoneType           | Outdoor, Dungeon, City, Instance, Arena | Ja          |
+| Weather          | WeatherType        | Sunny, Rain, Snow, Fog, Storm           | Ja          |
+| TimeOfDay        | float              | 0.0-24.0 (Stunden)                      | Ja          |
+| StateType        | ZoneStateType      | Initial, Transfer, Reconnect, FullSync  | Ja          |
+| MyPlayer         | PlayerEntityDto?   | Dein Character (null bei FullSync)      | Conditional |
+| Entities         | List\<IEntityDto\> | Alle Entities (max 100 pro Message)     | Ja          |
+| HasMoreEntities  | bool               | Gibt es weitere Entity-Batches?         | Ja          |
+| TotalEntityCount | int                | Gesamtzahl Entities in Zone             | Ja          |
 
 ### Code-Beispiel
 
 ```csharp
 [MessagePackObject]
+[NetworkMessage(MessageType.ZoneState)]
 public class ZoneState : ITimestampedServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneState;
     [Key(1)] public long Timestamp { get; set; }
-    
+
     // Zone-Metadaten
     [Key(2)] public ushort ZoneId { get; set; }
-    [Key(3)] public string ZoneName { get; set; }
-    [Key(4)] public string ZoneType { get; set; }
-    [Key(5)] public string Weather { get; set; }
+    [Key(3)] public string ZoneName { get; set; } = "";
+    [Key(4)] public ZoneType ZoneType { get; set; }
+    [Key(5)] public WeatherType Weather { get; set; }
     [Key(6)] public float TimeOfDay { get; set; }
-    
+
     // State-Type
     [Key(7)] public ZoneStateType StateType { get; set; }
-    
+
     // Dein Character (null bei FullSync)
     [Key(8)] public PlayerEntityDto? MyPlayer { get; set; }
-    
+
     // Entities (max ~100 pro Message)
     [Key(9)] public List<IEntityDto> Entities { get; set; } = new();
-    
+
     // Chunking
     [Key(10)] public bool HasMoreEntities { get; set; }
     [Key(11)] public int TotalEntityCount { get; set; }
 }
 
-public enum ZoneStateType : byte
+public enum ZoneStateType :  byte
 {
     Initial = 1,
     Transfer = 2,
-    FullSync = 3,
-    Reconnect = 4
+    Reconnect = 3,
+    FullSync = 4
+}
+
+public enum ZoneType : byte
+{
+    Outdoor = 1,
+    Dungeon = 2,
+    City = 3,
+    Instance = 4,
+    Arena = 5,
+    Battleground = 6
+}
+
+public enum WeatherType : byte
+{
+    Sunny = 1,
+    Cloudy = 2,
+    Rain = 3,
+    Snow = 4,
+    Fog = 5,
+    Storm = 6
 }
 ```
 
@@ -441,13 +336,12 @@ var zoneState = new ZoneState
     Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
     ZoneId = 1001,
     ZoneName = "Elwynn Forest",
-    ZoneType = "outdoor",
-    Weather = "sunny",
-    TimeOfDay = 14.5f,
+    ZoneType = ZoneType.Outdoor,
+    Weather = WeatherType. Sunny,
+    TimeOfDay = 14.5f, // 14:30
     StateType = ZoneStateType.Initial,
     MyPlayer = PlayerEntityDto.FromEntity(playerEntity),
-    Entities = zone.GetAllEntities()
-        .Where(e => e.PersistentId != playerEntity.PersistentId)
+    Entities = zone.GetVisibleEntities(playerEntity)
         .Select(e => e.ToDto())
         .Take(100)
         .ToList(),
@@ -463,28 +357,36 @@ Bei Zonen mit mehr als 100 Entities wird Chunking verwendet:
 ```
 ZoneState (102)       → MyPlayer + erste 100 Entities + HasMoreEntities=true
 EntityBatch (120)     → nächste 100 Entities
-EntityBatch (120)     → letzte 50 Entities + IsLast=true
+EntityBatch (120)     → letzte 50 Entities + IsLastBatch=true
 ZoneLoadedAck (119)   → Client ready
 ```
 
-### Verwandte Messages
-
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `GetZoneRequest` | 117 | Request der ZoneState auslöst |
-| `ZoneLoadedAck` | 119 | Client-Bestätigung nach ZoneState |
-| `EntityBatch` | 120 | Weitere Entities bei Chunking |
-| `EntitySpawn` | 1400 | Einzelne Entity spawnt später |
-| `EntityDespawn` | 1402 | Entity verlässt Zone |
-
 ### Use-Cases
 
-| Use-Case | StateType | MyPlayer | Entities |
-|----------|-----------|----------|----------|
-| Login | Initial | ✅ Dein Character | ✅ Alle |
-| Portal/Teleport | Transfer | ✅ Dein Character | ✅ Alle in neuer Zone |
-| Reconnect | Reconnect | ✅ Restored Character | ✅ Alle |
-| Periodic Sync | FullSync | ❌ null | ✅ Alle (Sync-Check) |
+| Use-Case        | StateType | MyPlayer        | Entities               |
+| --------------- | --------- | --------------- | ---------------------- |
+| Login           | Initial   | ✅ Vollständig  | ✅ Alle sichtbaren     |
+| Portal/Teleport | Transfer  | ✅ Aktualisiert | ✅ Alle in neuer Zone  |
+| Hearthstone     | Transfer  | ✅ Aktualisiert | ✅ Alle in Heimat-Zone |
+| Reconnect       | Reconnect | ✅ Restored     | ✅ Alle sichtbaren     |
+| Periodic Sync   | FullSync  | ❌ null         | ✅ Alle (Validation)   |
+
+### Verwandte Messages
+
+| Message          | ID   | Beziehung                               |
+| ---------------- | ---- | --------------------------------------- |
+| `GetZoneRequest` | 117  | Request der ZoneState auslöst           |
+| `ZoneLoadedAck`  | 119  | Client-Bestätigung nach ZoneState       |
+| `EntityBatch`    | 120  | Weitere Entities bei Chunking           |
+| `EntitySpawn`    | 1400 | Einzelne Entity spawnt später (Runtime) |
+| `EntityDespawn`  | 1402 | Entity verlässt Zone (Runtime)          |
+
+### Notizen
+
+-   **Message-Größe**: ~2-10 KB (abhängig von Entity-Anzahl)
+-   **Chunking-Threshold**: 100 Entities pro Message
+-   **MyPlayer enthält KEINE ServerOnly Properties** (Experience, Gold, AccountId)
+-   Bei `FullSync`: Client vergleicht mit lokalem State für Desync-Detection
 
 ---
 
@@ -497,73 +399,51 @@ ZoneLoadedAck (119)   → Client ready
 
 ### Beschreibung
 
-Broadcast an alle Spieler in Zone wenn ein neuer Spieler spawnt. Ermöglicht Clients den neuen Spieler anzuzeigen.
-
-### Im Scope ✅
-
--   Neuer Spieler-Informationen
--   Spawn-Position
--   Basic-Stats (Level, Klasse, etc.)
-
-### Nicht im Scope ❌
-
--   Vollständige Character-Stats → verwende `InspectRequest` (3300)
--   Equipment-Details → verwende `InspectEquipment` (3302)
+Broadcast an alle Spieler in der Zone wenn ein neuer Spieler spawnt. Der neue Spieler selbst erhält `ZoneState` (102), nicht diese Message.
 
 ### Payload
 
-| Feld       | Typ             | Beschreibung                    | Pflicht |
-| ---------- | --------------- | ------------------------------- | ------- |
-| PlayerData | PlayerEntityDto | Komplette Spieler-Informationen | Ja      |
+| Feld   | Typ             | Beschreibung                      | Pflicht |
+| ------ | --------------- | --------------------------------- | ------- |
+| Type   | MessageType     | `MessageType.PlayerJoinedZone`    | Ja      |
+| Player | PlayerEntityDto | Komplette sichtbare Spieler-Daten | Ja      |
 
-**PlayerEntityDto** (siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für vollständige Referenz):
+### Code-Beispiel
 
-Das DTO enthält alle sichtbaren Informationen über den neuen Spieler:
-
--   Runtime- und Persistent-IDs
--   Position und Movement
--   Display-Name, Level, Race, Class
--   Health/Resource Status
--   Combat-State
--   **NICHT** enthalten: Experience, Gold, AccountId (ServerOnly)
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType. PlayerJoinedZone)]
+public class PlayerJoinedZone : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.PlayerJoinedZone;
+    [Key(1)] public PlayerEntityDto Player { get; set; } = null!;
+}
+```
 
 ### Beispiel Payload
 
 ```csharp
 var playerJoined = new PlayerJoinedZone
 {
-    Type = MessageType.PlayerJoinedZone,
-    PlayerData = new PlayerEntityDto
-    {
-        RuntimeId = new EntityIdentity(1, 1001, 50002, 0, 1),
-        PersistentId = characterGuid,
-        CharacterId = characterGuid,
-        DisplayName = "Gimli",
-        Level = 12,
-        Race = Race.Dwarf,
-        Class = CharacterClass.Warrior,
-        Position = new Position(98.5f, 255.0f, 10.2f, 1001),
-        CurrentHealth = 800,
-        MaxHealth = 1200,
-        CurrentResource = 100,
-        MaxResource = 100,
-        CombatResourceType = CombatResourceType.Rage
-    }
+    Player = PlayerEntityDto.FromEntity(newPlayer)
 };
+
+// Broadcast an alle AUSSER dem neuen Spieler
+zone.BroadcastExcept(playerJoined, newPlayer. ConnectionId);
 ```
 
 ### Verwandte Messages
 
-| Message          | ID   | Beziehung                       |
-| ---------------- | ---- | ------------------------------- |
-| `JoinZone`       | 100  | Auslöser für diesen Broadcast   |
-| `PlayerLeftZone` | 104  | Gegenstück beim Verlassen       |
-| `EntitySpawn`    | 1400 | Generische Entity-Spawn Message |
+| Message          | ID   | Beziehung                          |
+| ---------------- | ---- | ---------------------------------- |
+| `ZoneState`      | 102  | Was der neue Spieler selbst erhält |
+| `PlayerLeftZone` | 104  | Gegenstück beim Verlassen          |
+| `EntitySpawn`    | 1400 | Generische Entity-Spawn Message    |
 
 ### Notizen
 
--   Wird NUR an bereits anwesende Spieler gebroadcastet
--   Der joinierende Spieler selbst empfängt `JoinZone` (100)
+-   Wird **NUR** an bereits anwesende Spieler gesendet
+-   Der joinierende Spieler erhält `ZoneState` (102) mit allen Entities
 -   Client fügt Spieler zur lokalen Entity-Liste hinzu
 
 ---
@@ -577,36 +457,59 @@ var playerJoined = new PlayerJoinedZone
 
 ### Beschreibung
 
-Broadcast an alle Spieler wenn ein Spieler die Zone verlässt. Client entfernt den Spieler aus der Entity-Liste.
-
-### Im Scope ✅
-
--   Entity-ID des verlassenden Spielers
--   Grund (optional)
-
-### Nicht im Scope ❌
-
--   Ziel-Zone (Privacy)
+Broadcast an alle Spieler wenn ein Spieler die Zone verlässt (Logout, Transfer, Disconnect, Tod).
 
 ### Payload
 
-| Feld     | Typ    | Beschreibung                                | Pflicht |
-| -------- | ------ | ------------------------------------------- | ------- |
-| PlayerId | Guid   | Persistent Player-ID                        | Ja      |
-| Reason   | string | "logout", "transfer", "disconnect", "death" | Ja      |
+| Feld     | Typ              | Beschreibung                        | Pflicht |
+| -------- | ---------------- | ----------------------------------- | ------- |
+| Type     | MessageType      | `MessageType.PlayerLeftZone`        | Ja      |
+| PlayerId | Guid             | PersistentId des Spielers           | Ja      |
+| Reason   | PlayerLeftReason | Logout, Transfer, Disconnect, Death | Ja      |
 
-**Hinweis:** PlayerId entspricht `PlayerEntityDto.PersistentId` für konsistente ID-Referenzierung.
+```csharp
+public enum PlayerLeftReason : byte
+{
+    Logout = 1,
+    Transfer = 2,
+    Disconnect = 3,
+    Death = 4
+}
+```
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.PlayerLeftZone)]
+public class PlayerLeftZone : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.PlayerLeftZone;
+    [Key(1)] public Guid PlayerId { get; set; }
+    [Key(2)] public PlayerLeftReason Reason { get; set; }
+}
+```
 
 ### Beispiel Payload
 
 ```csharp
 var playerLeft = new PlayerLeftZone
 {
-    Type = MessageType.PlayerLeftZone,
-    PlayerId = playerGuid, // Persistent ID
-    Reason = "transfer"
+    PlayerId = player.PersistentId,
+    Reason = PlayerLeftReason.Transfer
 };
+
+zone. Broadcast(playerLeft);
 ```
+
+### Client-Verhalten
+
+| Reason       | Client-Aktion                                       |
+| ------------ | --------------------------------------------------- |
+| `Logout`     | Entity sofort entfernen                             |
+| `Transfer`   | Entity sofort entfernen                             |
+| `Disconnect` | Entity als "Geist" markieren (30s Reconnect-Window) |
+| `Death`      | Todes-Animation abspielen, dann entfernen           |
 
 ### Verwandte Messages
 
@@ -616,157 +519,174 @@ var playerLeft = new PlayerLeftZone
 | `PlayerJoinedZone` | 103  | Gegenstück beim Betreten                    |
 | `EntityDespawn`    | 1402 | Generische Entity-Despawn Message           |
 
-### Notizen
-
--   Client entfernt Spieler-Entity aus Render-Liste
--   Bei "disconnect": Spieler bleibt 30s "geistern" (Reconnect Window)
-
 ---
 
 ## ZoneTransferRequest (105)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
+**Frequenz:** Mittel  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-Expliziter Request um zu anderer Zone zu wechseln (Portal, Teleport, Dungeon-Eingang).
+Client möchte zu einer anderen Zone wechseln. Wird für alle Arten von Zone-Wechseln verwendet:
 
-### Im Scope ✅
+-   Portal benutzen
+-   Teleport-Spell
+-   Hearthstone
+-   Dungeon-Eingang
+-   Flugmeister-Route beenden
 
--   Ziel-Zone-ID
--   Transfer-Typ (Portal, Teleport, etc.)
--   Position in Ziel-Zone (falls bekannt)
+> **Hinweis:** Für Logout verwende `LeaveZone` (101), nicht `ZoneTransferRequest`!
 
-### Nicht im Scope ❌
+### Payload
 
--   Forced Transfer (Server-initiiert) → Server sendet direkt `JoinZone` (100)
-
-### Request Payload
-
-| Feld         | Typ    | Beschreibung                             | Pflicht |
-| ------------ | ------ | ---------------------------------------- | ------- |
-| TargetZoneId | int    | Ziel-Zone-ID                             | Ja      |
-| TransferType | string | "portal", "teleport", "dungeon_entrance" | Ja      |
-| TargetX      | float  | Ziel-X (falls bekannt)                   | Nein    |
-| TargetY      | float  | Ziel-Y (falls bekannt)                   | Nein    |
-
-### Erwartete Response
-
--   **Bei Erfolg:** `ZoneTransferResponse` (106) → dann `JoinZone` (100)
--   **Bei Fehler:** `ZoneTransferResponse` (106) mit ErrorCode
-
-### Verwandte Messages
-
-| Message                | ID  | Beziehung                        |
-| ---------------------- | --- | -------------------------------- |
-| `ZoneTransferResponse` | 106 | Response zu diesem Request       |
-| `JoinZone`             | 100 | Nach erfolgreichem Transfer      |
-| `ZoneLoadingProgress`  | 107 | Loading-Updates während Transfer |
-
-### Beispiel Payload
+| Feld           | Typ          | Beschreibung                      | Pflicht |
+| -------------- | ------------ | --------------------------------- | ------- |
+| Type           | MessageType  | `MessageType.ZoneTransferRequest` | Ja      |
+| TargetZoneId   | ushort       | Ziel-Zone-ID                      | Ja      |
+| TransferType   | TransferType | Art des Transfers                 | Ja      |
+| TargetPosition | Position?    | Ziel-Position (falls bekannt)     | Nein    |
 
 ```csharp
-var transferRequest = new ZoneTransferRequest
+public enum TransferType : byte
 {
-    Type = MessageType.ZoneTransferRequest,
+    Portal = 1,
+    Teleport = 2,
+    Hearthstone = 3,
+    DungeonEntrance = 4,
+    FlightPath = 5,
+    SpellTeleport = 6,
+    AdminTeleport = 7
+}
+```
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ZoneTransferRequest)]
+public class ZoneTransferRequest : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneTransferRequest;
+    [Key(1)] public ushort TargetZoneId { get; set; }
+    [Key(2)] public TransferType TransferType { get; set; }
+    [Key(3)] public Position? TargetPosition { get; set; }
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Portal benutzen
+var portalTransfer = new ZoneTransferRequest
+{
     TargetZoneId = 2001,
-    TransferType = "dungeon_entrance",
-    TargetX = 50.0f,
-    TargetY = 50.0f
+    TransferType = TransferType.Portal,
+    TargetPosition = new Position(50.0f, 50.0f, 0f, 2001)
+};
+
+// Hearthstone
+var hearthstone = new ZoneTransferRequest
+{
+    TargetZoneId = player.HearthstoneZoneId,
+    TransferType = TransferType.Hearthstone,
+    TargetPosition = player.HearthstonePosition
 };
 ```
 
-### Error Codes
+### Server-Validierung
 
-| Code             | Bedeutung                       | Aktion            |
-| ---------------- | ------------------------------- | ----------------- |
-| `ZONE_NOT_FOUND` | Ziel-Zone existiert nicht       | Fehler anzeigen   |
-| `ZONE_LOCKED`    | Zone ist gesperrt (Maintenance) | Warten            |
-| `LEVEL_TOO_LOW`  | Character-Level zu niedrig      | Level erhöhen     |
-| `QUEST_REQUIRED` | Quest erforderlich              | Quest abschließen |
-| `IN_COMBAT`      | Im Kampf                        | Kampf beenden     |
+| Check                  | Error Code        | Beschreibung              |
+| ---------------------- | ----------------- | ------------------------- |
+| Zone existiert         | `ZONE_NOT_FOUND`  | Ziel-Zone-ID ungültig     |
+| Zone nicht gesperrt    | `ZONE_LOCKED`     | Maintenance               |
+| Level-Requirement      | `LEVEL_TOO_LOW`   | Min-Level nicht erreicht  |
+| Quest-Requirement      | `QUEST_REQUIRED`  | Quest nicht abgeschlossen |
+| Nicht im Combat        | `IN_COMBAT`       | Combat muss beendet sein  |
+| Cooldown (Hearthstone) | `COOLDOWN_ACTIVE` | Hearthstone auf Cooldown  |
 
-### Notizen
+### Verwandte Messages
 
--   Server validiert Transfer-Berechtigung (Level, Quests, etc.)
--   Loading-Screen während Transfer
+| Message                | ID  | Beziehung                  |
+| ---------------------- | --- | -------------------------- |
+| `ZoneTransferResponse` | 106 | Antwort auf diesen Request |
+| `ZoneState`            | 102 | Folgt bei Erfolg           |
+| `PlayerLeftZone`       | 104 | Broadcast an alte Zone     |
 
 ---
 
 ## ZoneTransferResponse (106)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
+**Frequenz:** Mittel  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-Bestätigung oder Ablehnung eines Zone-Transfer-Requests.
-
-### Response Payload
-
-| Feld              | Typ    | Beschreibung            | Pflicht    |
-| ----------------- | ------ | ----------------------- | ---------- |
-| Success           | bool   | Transfer erlaubt?       | Ja         |
-| ErrorCode         | string | Fehlercode falls Failed | Nein       |
-| ErrorMessage      | string | Fehlermeldung           | Nein       |
-| EstimatedLoadTime | int    | Sekunden (ca.)          | Bei Erfolg |
-
-### Beispiel Payload
-
-```csharp
-var transferResponse = new ZoneTransferResponse
-{
-    Type = MessageType.ZoneTransferResponse,
-    Success = true,
-    EstimatedLoadTime = 3
-};
-```
-
-### Notizen
-
--   Bei Success: Client zeigt Loading-Screen
--   Während Load: Server sendet `ZoneLoadingProgress` (107)
-
----
-
-## ZoneLoadingProgress (107)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig (während Loading)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-Progress-Updates während Zone-Loading (Asset-Loading, State-Sync, etc.).
+Antwort auf `ZoneTransferRequest`. Bei Erfolg folgt danach `ZoneState` (102) für die neue Zone.
 
 ### Payload
 
-| Feld     | Typ    | Beschreibung                                  | Pflicht |
-| -------- | ------ | --------------------------------------------- | ------- |
-| Progress | float  | 0.0 - 1.0 (0% - 100%)                         | Ja      |
-| Status   | string | "loading_assets", "syncing_state", "spawning" | Ja      |
+| Feld         | Typ         | Beschreibung                       | Pflicht |
+| ------------ | ----------- | ---------------------------------- | ------- |
+| Type         | MessageType | `MessageType.ZoneTransferResponse` | Ja      |
+| Success      | bool        | Transfer erlaubt?                  | Ja      |
+| ErrorCode    | string?     | Fehlercode bei Failure             | Nein    |
+| ErrorMessage | string?     | Benutzerfreundliche Fehlermeldung  | Nein    |
 
-### Beispiel Payload
+### Code-Beispiel
 
 ```csharp
-var loadingProgress = new ZoneLoadingProgress
+[MessagePackObject]
+[NetworkMessage(MessageType. ZoneTransferResponse)]
+public class ZoneTransferResponse : IServerMessage
 {
-    Type = MessageType.ZoneLoadingProgress,
-    Progress = 0.65f,
-    Status = "syncing_state"
+    [Key(0)] public MessageType Type => MessageType.ZoneTransferResponse;
+    [Key(1)] public bool Success { get; set; }
+    [Key(2)] public string? ErrorCode { get; set; }
+    [Key(3)] public string? ErrorMessage { get; set; }
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Erfolg
+var success = new ZoneTransferResponse
+{
+    Success = true
+};
+
+// Fehler
+var error = new ZoneTransferResponse
+{
+    Success = false,
+    ErrorCode = "LEVEL_TOO_LOW",
+    ErrorMessage = "Du musst mindestens Level 20 sein um diese Zone zu betreten."
 };
 ```
 
-### Notizen
+### Flow bei Erfolg
 
--   Client zeigt Progress-Bar im Loading-Screen
--   Bei Progress=1.0: Kurz danach folgt `JoinZone` (100)
+```
+ZoneTransferRequest → ZoneTransferResponse (Success) → ZoneState → ZoneLoadedAck
+```
+
+### Error Codes
+
+| Code              | Beschreibung                         |
+| ----------------- | ------------------------------------ |
+| `ZONE_NOT_FOUND`  | Ziel-Zone existiert nicht            |
+| `ZONE_LOCKED`     | Zone ist für Wartung gesperrt        |
+| `LEVEL_TOO_LOW`   | Level-Requirement nicht erfüllt      |
+| `QUEST_REQUIRED`  | Quest muss erst abgeschlossen werden |
+| `IN_COMBAT`       | Nicht möglich während Combat         |
+| `COOLDOWN_ACTIVE` | Hearthstone/Teleport auf Cooldown    |
+| `INSTANCE_FULL`   | Instanz hat maximale Spielerzahl     |
+| `NOT_IN_PARTY`    | Gruppen-Instanz erfordert Gruppe     |
 
 ---
 
@@ -779,22 +699,36 @@ var loadingProgress = new ZoneLoadingProgress
 
 ### Beschreibung
 
-Benachrichtigung dass Spieler eine neue Zone entdeckt hat (Achievement, XP-Bonus).
+Benachrichtigung dass der Spieler eine neue Zone zum ersten Mal betreten hat. Kann XP-Bonus und Achievement auslösen.
 
 ### Payload
 
-| Feld     | Typ    | Beschreibung                | Pflicht |
-| -------- | ------ | --------------------------- | ------- |
-| ZoneId   | int    | Entdeckte Zone-ID           | Ja      |
-| ZoneName | string | Zone-Name                   | Ja      |
-| XpBonus  | int    | XP-Belohnung für Entdeckung | Ja      |
+| Feld     | Typ         | Beschreibung                 | Pflicht |
+| -------- | ----------- | ---------------------------- | ------- |
+| Type     | MessageType | `MessageType.ZoneDiscovered` | Ja      |
+| ZoneId   | ushort      | Entdeckte Zone-ID            | Ja      |
+| ZoneName | string      | Zone-Name für UI             | Ja      |
+| XpBonus  | int         | XP-Belohnung (0 wenn keine)  | Ja      |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType. ZoneDiscovered)]
+public class ZoneDiscovered : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneDiscovered;
+    [Key(1)] public ushort ZoneId { get; set; }
+    [Key(2)] public string ZoneName { get; set; } = "";
+    [Key(3)] public int XpBonus { get; set; }
+}
+```
 
 ### Beispiel Payload
 
 ```csharp
-var zoneDiscovered = new ZoneDiscovered
+var discovered = new ZoneDiscovered
 {
-    Type = MessageType.ZoneDiscovered,
     ZoneId = 1005,
     ZoneName = "Darkwood Forest",
     XpBonus = 150
@@ -803,15 +737,10 @@ var zoneDiscovered = new ZoneDiscovered
 
 ### Verwandte Messages
 
-| Message               | ID   | Beziehung                          |
-| --------------------- | ---- | ---------------------------------- |
-| `AchievementUnlocked` | 1900 | Kann gleichzeitig ausgelöst werden |
-| `XpGain`              | 601  | XP-Bonus für Entdeckung            |
-
-### Notizen
-
--   Wird beim ersten Betreten einer Zone ausgelöst
--   Client zeigt Discovery-UI
+| Message               | ID   | Beziehung              |
+| --------------------- | ---- | ---------------------- |
+| `AchievementUnlocked` | 1900 | "Explorer" Achievement |
+| `XpGain`              | 601  | XP-Bonus Anzeige       |
 
 ---
 
@@ -824,15 +753,26 @@ var zoneDiscovered = new ZoneDiscovered
 
 ### Beschreibung
 
-Fordert Liste aller bekannten/entdeckten Zonen an.
+Client fordert Liste aller Zonen an (für Weltkarte, Fast-Travel UI).
 
-### Request Payload
+### Payload
 
-Keine zusätzlichen Felder
+| Feld                | Typ         | Beschreibung                  | Pflicht |
+| ------------------- | ----------- | ----------------------------- | ------- |
+| Type                | MessageType | `MessageType.ZoneListRequest` | Ja      |
+| IncludeUndiscovered | bool        | Auch nicht-entdeckte Zonen?   | Ja      |
 
-### Erwartete Response
+### Code-Beispiel
 
--   **Immer:** `ZoneListResponse` (110)
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ZoneListRequest)]
+public class ZoneListRequest : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneListRequest;
+    [Key(1)] public bool IncludeUndiscovered { get; set; }
+}
+```
 
 ---
 
@@ -840,165 +780,46 @@ Keine zusätzlichen Felder
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-Liste aller vom Character entdeckten Zonen.
-
-### Response Payload
-
-| Feld  | Typ            | Beschreibung    | Pflicht |
-| ----- | -------------- | --------------- | ------- |
-| Zones | List<ZoneInfo> | Entdeckte Zonen | Ja      |
-
-**ZoneInfo**:
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| ZoneId | int | Zone-ID |
-| Name | string | Zone-Name |
-| Level | int | Empfohlenes Level |
-| Discovered | bool | Bereits entdeckt? |
-
-### Notizen
-
--   Für Map-UI und Fast-Travel Funktionen
-
----
-
-## ShardTransfer (111)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
 
-**Phase 2 Feature** - Transfer zu anderem Shard (Zone-Instance) für Load-Balancing.
-
-### Notizen
-
--   Im Prototyp: Nicht implementiert (Single-Shard)
--   Phase 2: Multi-Shard Support für Skalierung
-
----
-
-## ShardListRequest (112)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-**Phase 2 Feature** - Liste aller Shards für aktuelle Zone.
-
-### Notizen
-
--   Im Prototyp: Nicht implementiert
-
----
-
-## ShardListResponse (113)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-**Phase 2 Feature** - Antwort mit Shard-Informationen.
-
-### Notizen
-
--   Im Prototyp: Nicht implementiert
-
----
-
-## SubZoneEnter (114)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-**Phase 2 Feature** - Spieler betritt eine Sub-Zone (Bereich innerhalb einer Zone, z.B. "Goldshire" in "Elwynn Forest").
+Liste aller (entdeckten) Zonen für Weltkarte und Fast-Travel.
 
 ### Payload
 
-| Feld        | Typ    | Beschreibung      | Pflicht |
-| ----------- | ------ | ----------------- | ------- |
-| SubZoneId   | int    | Sub-Zone-ID       | Ja      |
-| SubZoneName | string | Name der Sub-Zone | Ja      |
-
-### Notizen
-
--   UI-Update: Zeige Sub-Zone-Name im HUD
-
----
-
-## SubZoneLeave (115)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-**Phase 2 Feature** - Spieler verlässt Sub-Zone.
-
-### Payload
-
-| Feld      | Typ | Beschreibung           | Pflicht |
-| --------- | --- | ---------------------- | ------- |
-| SubZoneId | int | Verlassene Sub-Zone-ID | Ja      |
-
----
-
-## ZonePhaseChange (116)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-**Phase 2 Feature** - Zone ändert Phase (Quest-Fortschritt, Story-Events). Spieler sehen unterschiedliche Versionen der gleichen Zone.
-
-### Payload
-
-| Feld      | Typ    | Beschreibung  | Pflicht |
-| --------- | ------ | ------------- | ------- |
-| ZoneId    | int    | Zone-ID       | Ja      |
-| PhaseId   | int    | Neue Phase-ID | Ja      |
-| PhaseName | string | Phase-Name    | Ja      |
-
-### Beispiel
+| Feld  | Typ                 | Beschreibung                   | Pflicht |
+| ----- | ------------------- | ------------------------------ | ------- |
+| Type  | MessageType         | `MessageType.ZoneListResponse` | Ja      |
+| Zones | List\<ZoneInfoDto\> | Zone-Informationen             | Ja      |
 
 ```csharp
-// Nach Quest "Defeat the Dragon"
-var phaseChange = new ZonePhaseChange
+[MessagePackObject]
+public class ZoneInfoDto
 {
-    Type = MessageType.ZonePhaseChange,
-    ZoneId = 1001,
-    PhaseId = 2,
-    PhaseName = "Post-Dragon Victory"
-};
+    [Key(0)] public ushort ZoneId { get; set; }
+    [Key(1)] public string Name { get; set; } = "";
+    [Key(2)] public ZoneType ZoneType { get; set; }
+    [Key(3)] public int RecommendedLevel { get; set; }
+    [Key(4)] public int MaxLevel { get; set; }
+    [Key(5)] public bool IsDiscovered { get; set; }
+    [Key(6)] public bool HasFlightPath { get; set; }
+    [Key(7)] public Position? FlightPathPosition { get; set; }
+}
 ```
 
-### Notizen
+### Code-Beispiel
 
--   Server transferiert Spieler zu anderer Phase
--   Kann andere Spieler, NPCs, und Objekte zeigen
--   Wird durch Quest-Fortschritt ausgelöst
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ZoneListResponse)]
+public class ZoneListResponse : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneListResponse;
+    [Key(1)] public List<ZoneInfoDto> Zones { get; set; } = new();
+}
+```
 
 ---
 
@@ -1011,211 +832,49 @@ var phaseChange = new ZonePhaseChange
 
 ### Beschreibung
 
-Client fordert Zone-Metadaten an bevor er in die Zone spawnt. Dies ermöglicht dem Client, Zone-Assets (Textures, Models, etc.) vorzuladen während der Server den Spawn vorbereitet.
+Client fordert Zone-Daten an. Wird nach `CharacterSelectResponse` gesendet um die Spawn-Zone zu laden.
 
-### Im Scope ✅
+> **Hinweis:** Server antwortet direkt mit `ZoneState` (102), nicht mit einer separaten Response-Message.
 
--   Zone-Metadaten abrufen (Name, Type, Weather)
--   Asset-Loading vorbereiten
--   Zone-Info cachen
+### Payload
 
-### Nicht im Scope ❌
+| Feld   | Typ         | Beschreibung                    | Pflicht |
+| ------ | ----------- | ------------------------------- | ------- |
+| Type   | MessageType | `MessageType.GetZoneRequest`    | Ja      |
+| ZoneId | ushort      | Zone-ID die geladen werden soll | Ja      |
 
--   Spawn-Position → kommt in `JoinZone` (100)
--   PlayerEntity-Daten → kommt in `JoinZone` (100)
--   Andere Spieler/NPCs → kommt in `ZoneState` (102) und `EntitySpawn` (1400)
+### Code-Beispiel
 
-### Request Payload
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.GetZoneRequest)]
+public class GetZoneRequest : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.GetZoneRequest;
+    [Key(1)] public ushort ZoneId { get; set; }
+}
+```
 
-| Feld   | Typ | Beschreibung               | Pflicht |
-| ------ | --- | -------------------------- | ------- |
-| ZoneId | int | Zone-ID die angefragt wird | Ja      |
+### Beispiel Payload
 
-### Erwartete Response
+```csharp
+var request = new GetZoneRequest
+{
+    ZoneId = 1001
+};
+```
 
--   **Immer:** `GetZoneResponse` (118) mit `ZoneState` (102)
+### Server-Antwort
+
+Server antwortet mit `ZoneState` (102) - es gibt keine separate `GetZoneResponse` mehr.
 
 ### Verwandte Messages
 
 | Message                   | ID  | Beziehung                |
 | ------------------------- | --- | ------------------------ |
-| `GetZoneResponse`         | 118 | Response mit ZoneState   |
-| `CharacterSelectResponse` | 21  | Liefert SpawnZoneId      |
-| `ZoneState`               | 102 | Enthält Zone-Daten       |
-| `JoinZone`                | 100 | Folgt nach Asset-Loading |
-
-### Flow-Diagramm
-
-```
-Client                    Gateway                   Zone Server
-  │                          │                          │
-  │  CharacterSelectResponse │                          │
-  │  (SpawnZoneId: 1001)     │                          │
-  │◄─────────────────────────│                          │
-  │                          │                          │
-  │  GetZoneRequest (117)    │                          │
-  │  ZoneId: 1001            │                          │
-  │─────────────────────────►│                          │
-  │                          │                          │
-  │                          │  Forward Request         │
-  │                          │─────────────────────────►│
-  │                          │                          │
-  │                          │                          │  Load Zone Data
-  │                          │                          │
-  │                          │  ZoneState (102)         │
-  │                          │◄─────────────────────────│
-  │                          │                          │
-  │  GetZoneResponse (118)   │                          │
-  │  with ZoneState          │                          │
-  │◄─────────────────────────│                          │
-  │                          │                          │
-  │  Load Zone Assets        │                          │
-  │  (Textures, Models...)   │                          │
-  │                          │                          │
-  │  Assets loaded           │                          │
-  │  Ready for Spawn         │                          │
-  │                          │                          │
-  │                          │  Player Ready Signal     │
-  │                          │─────────────────────────►│
-  │                          │                          │
-  │                          │  JoinZone (100)          │
-  │                          │◄─────────────────────────│
-  │  JoinZone (100)          │                          │
-  │◄─────────────────────────│                          │
-```
-
-### Beispiel Payload
-
-```csharp
-var getZoneRequest = new GetZoneRequest
-{
-    Type = MessageType.GetZoneRequest,
-    ZoneId = 1001
-};
-```
-
-### Error Codes
-
-| Code             | Bedeutung                   | Aktion                                |
-| ---------------- | --------------------------- | ------------------------------------- |
-| `ZONE_NOT_FOUND` | Zone-ID existiert nicht     | Client-Fehler, sollte nicht passieren |
-| `ZONE_LOCKED`    | Zone gesperrt (Maintenance) | Wartungsmeldung anzeigen              |
-| `ACCESS_DENIED`  | Keine Berechtigung für Zone | Level/Quest-Anforderung anzeigen      |
-
-### Notizen
-
--   Wird nach `CharacterSelectResponse` gesendet
--   Client erhält ZoneState mit allen statischen Zone-Infos
--   Client lädt Assets während Server Spawn vorbereitet
--   Reduziert wahrgenommene Loading-Time durch paralleles Laden
--   Zone-Daten können client-seitig gecached werden
-
----
-
-## GetZoneResponse (118)
-
-> ⚠️ **OBSOLET** - Diese Message wurde in `ZoneState` (102) integriert.
-> Siehe [Zone Loading Flow](#-zone-loading-flow-übersicht) für den neuen Prozess.
-
----
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-
-Response auf `GetZoneRequest` (117). Enthält als Payload eine `ZoneState` (102) Message mit allen Zone-Metadaten.
-
-**Hinweis:** Diese Message ist ein Wrapper um `ZoneState` (102) im Request-Response Pattern. Der eigentliche Payload ist identisch mit `ZoneState`.
-
-### Im Scope ✅
-
--   Success/Error Status
--   ZoneState bei Erfolg
--   Error-Informationen bei Fehler
-
-### Nicht im Scope ❌
-
--   Player-spezifische Daten → kommt in `JoinZone` (100)
-
-### Response Payload
-
-| Feld         | Typ       | Beschreibung                   | Pflicht    |
-| ------------ | --------- | ------------------------------ | ---------- |
-| Success      | bool      | Request erfolgreich?           | Ja         |
-| ErrorCode    | string    | Fehlercode falls Success=false | Nein       |
-| ErrorMessage | string    | Fehlermeldung                  | Nein       |
-| ZoneState    | ZoneState | Zone-Daten (siehe Message 102) | Bei Erfolg |
-
-**ZoneState** (siehe [ZoneState (102)](#zonestate-102) für vollständige Spezifikation):
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| ZoneId | int | Zone-ID |
-| ZoneName | string | Name der Zone |
-| ZoneType | string | "outdoor", "dungeon", "city", "instance" |
-| ServerTime | long | Server Unix Timestamp |
-| Weather | string | "sunny", "rain", "snow", "fog" |
-| TimeOfDay | float | 0.0-24.0 (Stunden) |
-| Players | List<PlayerEntity> | **Leer** bei GetZoneResponse |
-| NPCs | List<NpcEntity> | **Leer** bei GetZoneResponse |
-
-**Wichtig:** Bei `GetZoneResponse` sind die `Players` und `NPCs` Listen **leer**, da der Spieler noch nicht in der Zone gespawnt ist. Diese Daten kommen später via separater `EntitySpawn` Messages.
-
-### Verwandte Messages
-
-| Message          | ID  | Beziehung                  |
-| ---------------- | --- | -------------------------- |
-| `GetZoneRequest` | 117 | Request zu dieser Response |
-| `ZoneState`      | 102 | Payload dieser Response    |
-| `JoinZone`       | 100 | Folgt nach dieser Response |
-
-### Beispiel Payload
-
-```csharp
-// Erfolg
-var successResponse = new GetZoneResponse
-{
-    Type = MessageType.GetZoneResponse,
-    Success = true,
-    ZoneState = new ZoneState
-    {
-        ZoneId = 1001,
-        ZoneName = "Elwynn Forest",
-        ZoneType = "outdoor",
-        ServerTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-        Weather = "sunny",
-        TimeOfDay = 14.5f, // 14:30
-        Players = new List<PlayerEntity>(), // Leer!
-        NPCs = new List<NpcEntity>()        // Leer!
-    }
-};
-
-// Fehler
-var errorResponse = new GetZoneResponse
-{
-    Type = MessageType.GetZoneResponse,
-    Success = false,
-    ErrorCode = "ZONE_LOCKED",
-    ErrorMessage = "Zone ist wegen Wartungsarbeiten gesperrt"
-};
-```
-
-### Error Codes
-
-| Code             | Bedeutung                   |
-| ---------------- | --------------------------- |
-| `ZONE_NOT_FOUND` | Zone-ID existiert nicht     |
-| `ZONE_LOCKED`    | Zone gesperrt (Maintenance) |
-| `ACCESS_DENIED`  | Keine Berechtigung für Zone |
-
-### Notizen
-
--   Wrapper um `ZoneState` (102) für Request-Response Pattern
--   Players und NPCs Listen sind immer leer
--   Client sollte Zone-Daten cachen (basierend auf ZoneId + Version)
--   Nach Erhalt: Client lädt Assets, dann bereit für `JoinZone` (100)
+| `CharacterSelectResponse` | 21  | Enthält SpawnZoneId      |
+| `ZoneState`               | 102 | Direkte Antwort          |
+| `ZoneLoadedAck`           | 119 | Client bestätigt Loading |
 
 ---
 
@@ -1228,24 +887,24 @@ var errorResponse = new GetZoneResponse
 
 ### Beschreibung
 
-Client bestätigt dass Zone-Assets geladen und ZoneState verarbeitet wurde. Server startet erst nach diesem Ack die hochfrequenten Updates (PositionBroadcast, etc.).
+Client bestätigt dass Zone-Assets geladen und `ZoneState` verarbeitet wurde. Server startet erst nach diesem Ack die hochfrequenten Updates.
 
 ### Warum diese Message?
 
-| Ohne ZoneLoadedAck | Mit ZoneLoadedAck |
-|--------------------|-------------------|
+| Ohne ZoneLoadedAck                             | Mit ZoneLoadedAck        |
+| ---------------------------------------------- | ------------------------ |
 | Server sendet 25Hz Updates während Client lädt | Server wartet auf Client |
-| Bandbreite verschwendet | Bandbreite optimal |
-| Client-Buffer wächst | Kein unnötiger Buffer |
-| Server weiß nicht ob Client ready | Klarer Handshake |
+| Bandbreite verschwendet                        | Bandbreite optimal       |
+| Client-Buffer wächst                           | Kein unnötiger Buffer    |
+| Server weiß nicht ob Client ready              | Klarer Handshake         |
 
 ### Payload
 
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Type | MessageType | `MessageType.ZoneLoadedAck` | Ja |
-| ZoneId | ushort | Zone-ID zur Validierung | Ja |
-| LoadTimeMs | int | Wie lange hat Loading gedauert? (Metrics) | Nein |
+| Feld       | Typ         | Beschreibung                  | Pflicht |
+| ---------- | ----------- | ----------------------------- | ------- |
+| Type       | MessageType | `MessageType.ZoneLoadedAck`   | Ja      |
+| ZoneId     | ushort      | Zone-ID zur Validierung       | Ja      |
+| LoadTimeMs | int?        | Loading-Dauer in ms (Metrics) | Nein    |
 
 ### Code-Beispiel
 
@@ -1260,47 +919,26 @@ public class ZoneLoadedAck : IClientMessage
 }
 ```
 
-### Server-Logik
-
-```csharp
-public void HandleZoneLoadedAck(ClientConnection conn, ZoneLoadedAck ack)
-{
-    var player = GetPlayer(conn);
-    
-    if (player.CurrentZoneId != ack.ZoneId)
-    {
-        _log.Warn("ZoneLoadedAck for wrong zone");
-        return;
-    }
-    
-    player.IsZoneReady = true;
-    
-    // Jetzt hochfrequente Updates senden
-    _log.Info("Player {Name} ready in zone {ZoneId}, load time: {Ms}ms",
-        player.Name, ack.ZoneId, ack.LoadTimeMs);
-}
-```
-
 ### Client-Logik
 
 ```csharp
 public async Task LoadZoneAsync(ZoneState zoneState)
 {
     var stopwatch = Stopwatch.StartNew();
-    
-    // Assets laden
-    await LoadZoneAssets(zoneState.ZoneId);
-    
-    // ZoneState anwenden
-    ApplyZoneState(zoneState);
-    
-    // Message-Buffer abarbeiten
-    ProcessMessageBuffer();
-    
+
+    // 1. Assets laden
+    await _assetLoader.LoadZoneAssetsAsync(zoneState. ZoneId);
+
+    // 2. ZoneState anwenden
+    _zoneManager.ApplyZoneState(zoneState);
+
+    // 3. Gebufferte Messages abarbeiten
+    _messageBuffer.ProcessAll();
+
     stopwatch.Stop();
-    
-    // Server informieren
-    SendMessage(new ZoneLoadedAck
+
+    // 4. Server informieren
+    _networkClient.Send(new ZoneLoadedAck
     {
         ZoneId = zoneState.ZoneId,
         LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
@@ -1308,22 +946,253 @@ public async Task LoadZoneAsync(ZoneState zoneState)
 }
 ```
 
-### Timeout-Handling
-
-Server wartet maximal 30 Sekunden auf ZoneLoadedAck:
+### Server-Logik
 
 ```csharp
-// Server-Side
-if (player.WaitingForZoneAckSince?.AddSeconds(30) < DateTime.UtcNow)
+public void HandleZoneLoadedAck(ClientConnection conn, ZoneLoadedAck ack)
 {
-    // Timeout - Client reagiert nicht
+    var player = _playerManager.GetPlayer(conn);
+
+    if (player. CurrentZoneId != ack.ZoneId)
+    {
+        _log. Warn("ZoneLoadedAck for wrong zone:  expected {Expected}, got {Got}",
+            player.CurrentZoneId, ack.ZoneId);
+        return;
+    }
+
+    player.IsZoneReady = true;
+
+    _log.Info("Player {Name} ready in zone {ZoneId} (load time: {Ms}ms)",
+        player.DisplayName, ack.ZoneId, ack.LoadTimeMs);
+}
+```
+
+### Timeout-Handling
+
+Server wartet maximal 30 Sekunden auf `ZoneLoadedAck`:
+
+```csharp
+if (player.WaitingForZoneAckSince?. AddSeconds(30) < DateTime.UtcNow)
+{
+    _log. Warn("Player {Name} loading timeout", player.DisplayName);
     DisconnectPlayer(player, DisconnectReason.LoadingTimeout);
 }
 ```
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-26  
-**Version**: 1.1.0
+## EntityBatch (120)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten (nur bei großen Zonen)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Enthält weitere Entities wenn eine Zone mehr als 100 Entities hat. Folgt auf `ZoneState` (102) wenn `HasMoreEntities = true`.
+
+### Payload
+
+| Feld        | Typ                | Beschreibung                | Pflicht |
+| ----------- | ------------------ | --------------------------- | ------- |
+| Type        | MessageType        | `MessageType.EntityBatch`   | Ja      |
+| ZoneId      | ushort             | Zone-ID zur Validierung     | Ja      |
+| BatchIndex  | int                | Batch-Nummer (1, 2, 3, ...) | Ja      |
+| Entities    | List\<IEntityDto\> | Weitere Entities (max 100)  | Ja      |
+| IsLastBatch | bool               | Ist dies der letzte Batch?  | Ja      |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.EntityBatch)]
+public class EntityBatch : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.EntityBatch;
+    [Key(1)] public ushort ZoneId { get; set; }
+    [Key(2)] public int BatchIndex { get; set; }
+    [Key(3)] public List<IEntityDto> Entities { get; set; } = new();
+    [Key(4)] public bool IsLastBatch { get; set; }
+}
+```
+
+### Chunking-Flow
+
+```
+Zone mit 250 Entities:
+
+ZoneState (102)
+├── MyPlayer:  PlayerEntityDto
+├── Entities: [0-99]        (100 Entities)
+├── HasMoreEntities: true
+└── TotalEntityCount: 250
+
+EntityBatch (120)
+├── BatchIndex: 1
+├── Entities: [100-199]     (100 Entities)
+└── IsLastBatch: false
+
+EntityBatch (120)
+├── BatchIndex: 2
+├── Entities: [200-249]     (50 Entities)
+└── IsLastBatch: true
+
+ZoneLoadedAck (119)         (Client ist ready)
+```
+
+### Client-Handling
+
+```csharp
+private int _expectedBatches;
+private int _receivedBatches;
+
+public void OnZoneState(ZoneState state)
+{
+    _zoneManager.ApplyInitialState(state);
+
+    if (! state.HasMoreEntities)
+    {
+        // Keine weiteren Batches, direkt laden
+        StartAssetLoading();
+    }
+    else
+    {
+        _expectedBatches = (state.TotalEntityCount - 100) / 100 + 1;
+        _receivedBatches = 0;
+    }
+}
+
+public void OnEntityBatch(EntityBatch batch)
+{
+    _zoneManager.AddEntities(batch.Entities);
+    _receivedBatches++;
+
+    if (batch.IsLastBatch)
+    {
+        StartAssetLoading();
+    }
+}
+```
+
+---
+
+# Phase 2 Messages
+
+Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
+
+---
+
+## ShardTransfer (111)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Transfer zu anderem Shard (Zone-Instance) für Load-Balancing.
+
+---
+
+## ShardListRequest (112)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Liste aller Shards für aktuelle Zone anfragen.
+
+---
+
+## ShardListResponse (113)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Antwort mit Shard-Informationen.
+
+---
+
+## SubZoneEnter (114)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Spieler betritt Sub-Zone (z.B. "Goldshire" in "Elwynn Forest").
+
+---
+
+## SubZoneLeave (115)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Spieler verlässt Sub-Zone.
+
+---
+
+## ZonePhaseChange (116)
+
+**Status:** 🔮 Phase 2  
+**Beschreibung:** Zone ändert Phase basierend auf Quest-Fortschritt.
+
+---
+
+# Obsolete Messages
+
+Die folgenden Messages wurden durch den neuen Zone Loading Flow ersetzt.
+
+---
+
+## JoinZone (100) [OBSOLET]
+
+> ⚠️ **OBSOLET** - Ersetzt durch `ZoneState. MyPlayer`
+>
+> Die Funktionalität wurde in `ZoneState` (102) integriert. Das Feld `MyPlayer` enthält jetzt alle Daten die früher in `JoinZone` gesendet wurden.
+
+**MessageType ID:** 100 - Kann für zukünftige Zwecke wiederverwendet werden.
+
+---
+
+## ZoneLoadingProgress (107) [OBSOLET]
+
+> ⚠️ **OBSOLET** - Nicht mehr benötigt
+>
+> Der Client lädt Zone-Assets lokal und sendet `ZoneLoadedAck` (119) wenn fertig. Server muss keinen Loading-Progress mehr senden.
+
+**MessageType ID:** 107 - Kann für zukünftige Zwecke wiederverwendet werden.
+
+---
+
+## GetZoneResponse (118) [OBSOLET]
+
+> ⚠️ **OBSOLET** - Ersetzt durch direkte `ZoneState` Antwort
+>
+> Server antwortet auf `GetZoneRequest` (117) direkt mit `ZoneState` (102). Ein separater Response-Wrapper ist nicht mehr nötig.
+
+**MessageType ID:** 118 - Kann für zukünftige Zwecke wiederverwendet werden.
+
+---
+
+## MessageType Enum Updates
+
+Die folgenden Änderungen müssen im `MessageType` Enum vorgenommen werden:
+
+```csharp
+// ZONE EVENTS (0100-0199)
+// JoinZone = 100,           // OBSOLET - entfernen oder als Reserved markieren
+LeaveZone = 101,
+ZoneState = 102,
+PlayerJoinedZone = 103,
+PlayerLeftZone = 104,
+ZoneTransferRequest = 105,
+ZoneTransferResponse = 106,
+// ZoneLoadingProgress = 107, // OBSOLET - entfernen oder als Reserved markieren
+ZoneDiscovered = 108,
+ZoneListRequest = 109,
+ZoneListResponse = 110,
+ShardTransfer = 111,          // Phase 2
+ShardListRequest = 112,       // Phase 2
+ShardListResponse = 113,      // Phase 2
+SubZoneEnter = 114,           // Phase 2
+SubZoneLeave = 115,           // Phase 2
+ZonePhaseChange = 116,        // Phase 2
+GetZoneRequest = 117,         // NEU (fehlt im Enum!)
+// GetZoneResponse = 118,     // OBSOLET - entfernen oder als Reserved markieren
+ZoneLoadedAck = 119,          // NEU (fehlt im Enum!)
+EntityBatch = 120,            // NEU (fehlt im Enum!)
+```
+
+---
+
+**Letzte Aktualisierung:** 2025-12-27  
+**Version:** 2.0.0
 
 [← Zurück zur Übersicht](README.md)
