@@ -233,20 +233,48 @@ Client informiert Server dass Spieler die Zone verlassen will (Portal, Hearthsto
 | Feld         | Typ    | Beschreibung                               | Pflicht |
 | ------------ | ------ | ------------------------------------------ | ------- |
 | Reason       | string | "logout", "portal", "hearthstone", "death" | Ja      |
-| TargetZoneId | int    | Ziel-Zone (falls bekannt)                  | Nein    |
+| TargetZoneId | ushort | Ziel-Zone (falls bekannt)                  | Nein    |
 
 ### Erwartete Response
 
--   Server bestätigt mit neuem `JoinZone` (100) falls TargetZoneId gesetzt
--   Sonst: Connection wird geschlossen (bei logout)
+-   **Bei Zone-Transfer:** Server sendet `ZoneState` (102) für die neue Zone
+-   **Bei Logout:** Connection wird geschlossen
+
+### Flow bei Zone-Transfer
+
+```
+Client                         Server
+  │                              │
+  │  LeaveZone (101)             │
+  │  Reason:  "portal"            │
+  │  TargetZoneId:  2001          │
+  │─────────────────────────────►│
+  │                              │
+  │  [Server: PlayerLeftZone     │
+  │   broadcast an alte Zone]    │
+  │                              │
+  │  ZoneState (102)             │  ← Neue Zone!
+  │  ZoneId:  2001                │
+  │  StateType: Transfer         │
+  │  MyPlayer: PlayerEntityDto   │
+  │◄─────────────────────────────│
+  │                              │
+  │  [Client lädt Assets]        │
+  │                              │
+  │  ZoneLoadedAck (119)         │
+  │─────────────────────────────►│
+  │                              │
+  │  [Server startet Updates]    │
+```
 
 ### Verwandte Messages
 
-| Message               | ID  | Beziehung                   |
-| --------------------- | --- | --------------------------- |
-| `JoinZone`            | 100 | Zone betreten               |
-| `PlayerLeftZone`      | 104 | Broadcast an andere Spieler |
-| `ZoneTransferRequest` | 105 | Expliziter Zone-Transfer    |
+| Message               | ID  | Beziehung                                    |
+| --------------------- | --- | -------------------------------------------- |
+| `ZoneState`           | 102 | Neue Zone betreten (mit StateType: Transfer) |
+| `ZoneLoadedAck`       | 119 | Client bestätigt Zone-Load                   |
+| `PlayerLeftZone`      | 104 | Broadcast an andere Spieler in alter Zone    |
+| `ZoneTransferRequest` | 105 | Expliziter Zone-Transfer                     |
 
 ### Beispiel Payload
 
@@ -255,15 +283,16 @@ var leaveZone = new LeaveZone
 {
     Type = MessageType.LeaveZone,
     Reason = "portal",
-    TargetZoneId = 1002
+    TargetZoneId = 2001
 };
 ```
 
 ### Notizen
 
--   Server broadcastet `PlayerLeftZone` (104) an alle Spieler in Zone
--   Character wird aus Zone-Entity-Liste entfernt
+-   Server broadcastet `PlayerLeftZone` (104) an alle Spieler in der alten Zone
+-   Character wird aus alter Zone-Entity-Liste entfernt
 -   Position wird in DB gespeichert
+-   Bei Zone-Transfer: `ZoneState` (102) mit `StateType = Transfer` wird gesendet
 
 ---
 

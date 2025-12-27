@@ -11,28 +11,13 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneState)]
-public class ZoneState : ITimestampedMessage
+public class ZoneState : IServerMessage, ITimestampedMessage
 {
     /// <summary>
-    ///     The constructor used by <see cref="MessagePackSerializer" />.
+    ///     The Message Type of this Message.
     /// </summary>
-    [SerializationConstructor]
-    public ZoneState()
-    {
-    }
-
-    /// <summary>
-    ///     Creates a new Zone State Message.
-    /// </summary>
-    /// <param name="timestamp">The timestamp of the message.</param>
-    /// <param name="zoneId">The ID of the zone. (Later we need to see how shards work with that).</param>
-    /// <param name="entities">All Entities in this Zone.</param>
-    public ZoneState(long timestamp, ushort zoneId, List<IEntity> entities)
-    {
-        Timestamp = timestamp;
-        ZoneId = zoneId;
-        Entities = entities;
-    }
+    [Key(0)]
+    public MessageType Type => MessageType.ZoneState;
 
     /// <summary>
     ///     ID of the zone. WIP!
@@ -46,11 +31,6 @@ public class ZoneState : ITimestampedMessage
     [Key(3)]
     public List<IEntity> Entities { get; set; } = new();
 
-    /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneState;
 
     /// <summary>
     ///     The timestamp of the message.
