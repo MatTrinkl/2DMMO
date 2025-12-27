@@ -246,6 +246,57 @@ Console.WriteLine($"Health: {playerData.CurrentHealth}/{playerData.MaxHealth}");
 
 ---
 
+## 🔄 Zone Loading Integration
+
+Das DTO-System ist eng mit dem Zone-Loading-Flow integriert:
+
+### ZoneState enthält DTOs
+
+```csharp
+public class ZoneState
+{
+    // Dein Character als DTO (nicht Entity!)
+    public PlayerEntityDto? MyPlayer { get; set; }
+    
+    // Alle anderen als DTOs (Union-Type)
+    public List<IEntityDto> Entities { get; set; }
+}
+```
+
+### Warum MyPlayer als DTO?
+
+| Ohne DTO | Mit DTO |
+|----------|---------|
+| `PlayerEntity` mit allen Server-Daten | `PlayerEntityDto` gefiltert |
+| Experience, Gold werden gesendet ❌ | ServerOnly Properties geschützt ✅ |
+| Sicherheitsrisiko | Sicher |
+
+### Flow mit DTOs
+
+```
+Server                              Client
+  │                                   │
+  │  PlayerEntity (Server-State)      │
+  │  ├── Experience = 45000           │
+  │  ├── Gold = 1250                  │
+  │  └── AccountId = xxx              │
+  │           │                       │
+  │           ▼ ToDto()               │
+  │  PlayerEntityDto                  │
+  │  ├── Level, Health, etc.          │
+  │  └── KEINE sensiblen Daten        │
+  │           │                       │
+  │           ▼ ZoneState             │
+  │  ZoneState                        │
+  │  └── MyPlayer = dto               │
+  │──────────────────────────────────►│
+  │                                   │
+  │                                   │  PlayerEntityDto
+  │                                   │  (Nur Client-Daten)
+```
+
+---
+
 ## 🔗 Verschachtelte DTOs für ZoneState
 
 ### IEntityDto Union-Interface
