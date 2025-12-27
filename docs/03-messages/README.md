@@ -222,6 +222,29 @@ Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
 
 ---
 
+## 🔄 Zone Loading Flow
+
+Der Zone-Loading-Prozess wurde vereinfacht:
+
+| Schritt | Message | Beschreibung |
+|---------|---------|--------------|
+| 1 | `CharacterSelectResponse` | Server teilt SpawnZoneId mit |
+| 2 | `GetZoneRequest` (117) | Client fragt Zone an |
+| 3 | `ZoneState` (102) | Server sendet ALLES (Zone + MyPlayer + Entities) |
+| 4 | `ZoneLoadedAck` (119) | Client bestätigt Bereitschaft |
+| 5 | Updates starten | PositionBroadcast, EntityUpdates, etc. |
+
+Siehe [01-zone.md](01-zone.md) für Details.
+
+### Obsolete Messages
+
+| Message | ID | Ersetzt durch |
+|---------|-----|---------------|
+| `GetZoneResponse` | 118 | `ZoneState` (102) |
+| `JoinZone` | 100 | `ZoneState.MyPlayer` |
+
+---
+
 ## 🔍 Schnellsuche
 
 ### Nach Funktion
