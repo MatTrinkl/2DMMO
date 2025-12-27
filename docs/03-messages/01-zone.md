@@ -51,8 +51,9 @@ Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message ent
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  ZoneDto (statisch, cachebar)                                   │
-│  ├── ZoneId, Name, Type                                         │
-│  ├── RecommendedLevel, IsPvP, Faction                          │
+│  ├── ZoneId, Name                                               │
+│  ├── Flags (ZoneFlags - PvP, Restrictions, etc.)               │
+│  ├── RecommendedLevel, ControllingFaction                      │
 │  ├── SpawnPoints, Graveyard                                     │
 │  └── Music, Ambience, Bounds                                    │
 └─────────────────────────────────────────────────────────────────┘
@@ -64,8 +65,8 @@ Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message ent
 │  ├── ZoneInfo:  ZoneDto?  (nur bei erstem Besuch)                │
 │  ├── CurrentWeather, TimeOfDay (dynamisch)                      │
 │  ├── StateType (Initial/Transfer/Reconnect/FullSync)           │
-│  ├── MyPlayer: PlayerEntityDto                                  │
-│  └── Entities: List<IEntityDto>                                 │
+│  ├── MyPlayer:  PlayerEntityDto                                  │
+│  └── Entities:  List<IEntityDto>                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -126,7 +127,7 @@ Client                         Server
   │◄─────────────────────────────│
   │                              │
   │  ZoneState (102)             │
-  │  ├── ZoneInfo: null          │  ← KEIN ZoneDto (bereits gecached)
+  │  ├── ZoneInfo:  null          │  ← KEIN ZoneDto (bereits gecached)
   │  ├── CurrentWeather, TimeOfDay│
   │  ├── StateType: Transfer     │
   │  ├── MyPlayer:  PlayerEntityDto│
@@ -225,48 +226,62 @@ Client                         Server
 
 **Zweck:** Statische Zone-Metadaten die sich selten ändern und client-seitig gecached werden können.
 
+> **Hinweis:** Verwendet das existierende `ZoneFlags` Enum für Zone-Eigenschaften.
+
 ### Felder
 
-| Feld                | Typ       | Beschreibung                              | Pflicht |
-| ------------------- | --------- | ----------------------------------------- | ------- |
-| ZoneId              | ushort    | Eindeutige Zone-ID                        | Ja      |
-| Name                | string    | Anzeigename der Zone                      | Ja      |
-| Type                | ZoneType  | Outdoor, Dungeon, City, etc.              | Ja      |
-| RecommendedMinLevel | int       | Empfohlenes Mindest-Level                 | Ja      |
-| RecommendedMaxLevel | int       | Empfohlenes Höchst-Level                  | Ja      |
-| IsPvPEnabled        | bool      | PvP in dieser Zone erlaubt?               | Ja      |
-| IsContested         | bool      | Umkämpftes Gebiet?                        | Ja      |
-| ControllingFaction  | Faction?  | Kontrollierende Fraktion (null = neutral) | Nein    |
-| IsSanctuary         | bool      | Sicherer Bereich (kein PvP, kein Combat)? | Ja      |
-| DefaultSpawnPoint   | Position  | Standard-Spawn-Position                   | Ja      |
-| GraveyardPosition   | Position? | Friedhof für Wiederbelebung               | Nein    |
-| MusicId             | string    | Musik-Asset-ID für Audio-System           | Ja      |
-| AmbienceId          | string    | Ambiente-Sound-Asset-ID                   | Ja      |
-| MinX                | float     | Westliche Grenze (für Minimap)            | Ja      |
-| MaxX                | float     | Östliche Grenze                           | Ja      |
-| MinY                | float     | Südliche Grenze                           | Ja      |
-| MaxY                | float     | Nördliche Grenze                          | Ja      |
+| Feld                | Typ        | Beschreibung                                 | Pflicht |
+| ------------------- | ---------- | -------------------------------------------- | ------- |
+| ZoneId              | ushort     | Eindeutige Zone-ID                           | Ja      |
+| Name                | string     | Anzeigename der Zone                         | Ja      |
+| Flags               | ZoneFlags  | Zone-Eigenschaften (PvP, Restrictions, etc.) | Ja      |
+| RecommendedMinLevel | int        | Empfohlenes Mindest-Level                    | Ja      |
+| RecommendedMaxLevel | int        | Empfohlenes Höchst-Level                     | Ja      |
+| ControllingFaction  | Faction?   | Kontrollierende Fraktion (null = neutral)    | Nein    |
+| DefaultSpawnPoint   | Position   | Standard-Spawn-Position für neue Spieler     | Ja      |
+| GraveyardPosition   | Position?  | Friedhof-Position für Wiederbelebung         | Nein    |
+| MusicId             | string     | Musik-Asset-ID                               | Ja      |
+| AmbienceId          | string     | Ambiente-Sound-Asset-ID                      | Ja      |
+| Bounds              | ZoneBounds | Zone-Grenzen (für Minimap)                   | Ja      |
 
-### Enums
+### Existierendes ZoneFlags Enum
+
+Das `ZoneFlags` Enum existiert bereits und ersetzt einen separaten `ZoneType`:
 
 ```csharp
-public enum ZoneType :  byte
+// Mmo.Shared/Zones/Enums/ZoneFlags.cs (bereits vorhanden)
+[Flags]
+public enum ZoneFlags :  ushort
 {
-    Outdoor = 1,        // Offene Welt
-    Dungeon = 2,        // Instanzierter Dungeon
-    City = 3,           // Stadt/Hub
-    Instance = 4,       // Generische Instanz
-    Arena = 5,          // PvP Arena
-    Battleground = 6,   // Großes PvP Schlachtfeld
-    Sanctuary = 7,      // Sicherer Bereich
-    GhostZone = 8       // Geister-Welt nach Tod
-}
+    None = 0,
 
-public enum Faction : byte
-{
-    Neutral = 0,
-    Alliance = 1,
-    Horde = 2
+    // PvP
+    PvpEnabled = 1 << 0,
+    AutoFlagPvp = 1 << 1,
+
+    // Restrictions
+    NoMounting = 1 << 2,
+    NoFlying = 1 << 3,
+    NoCombat = 1 << 4,
+    NoSpellCast = 1 << 5,
+    NoSummon = 1 << 6,
+
+    // Special
+    IsCapital = 1 << 7,
+    IsInstance = 1 << 8,
+    IsRaid = 1 << 9,
+    IsBattleground = 1 << 10,
+    IsArena = 1 << 11,
+
+    // Environment
+    IsIndoor = 1 << 12,
+    IsUnderwater = 1 << 13,
+
+    // Rest
+    HasRestXp = 1 << 14,
+
+    // NEU: Für Ghost-Zone nach Tod
+    IsGhostZone = 1 << 15
 }
 ```
 
@@ -278,42 +293,43 @@ public class ZoneDto
 {
     [Key(0)] public ushort ZoneId { get; set; }
     [Key(1)] public string Name { get; set; } = "";
-    [Key(2)] public ZoneType Type { get; set; }
+    [Key(2)] public ZoneFlags Flags { get; set; }
     [Key(3)] public int RecommendedMinLevel { get; set; }
     [Key(4)] public int RecommendedMaxLevel { get; set; }
-    [Key(5)] public bool IsPvPEnabled { get; set; }
-    [Key(6)] public bool IsContested { get; set; }
-    [Key(7)] public Faction? ControllingFaction { get; set; }
-    [Key(8)] public bool IsSanctuary { get; set; }
-    [Key(9)] public Position DefaultSpawnPoint { get; set; }
-    [Key(10)] public Position? GraveyardPosition { get; set; }
-    [Key(11)] public string MusicId { get; set; } = "";
-    [Key(12)] public string AmbienceId { get; set; } = "";
-    [Key(13)] public float MinX { get; set; }
-    [Key(14)] public float MaxX { get; set; }
-    [Key(15)] public float MinY { get; set; }
-    [Key(16)] public float MaxY { get; set; }
+    [Key(5)] public Faction?  ControllingFaction { get; set; }
+    [Key(6)] public Position DefaultSpawnPoint { get; set; }
+    [Key(7)] public Position? GraveyardPosition { get; set; }
+    [Key(8)] public string MusicId { get; set; } = "";
+    [Key(9)] public string AmbienceId { get; set; } = "";
+    [Key(10)] public ZoneBounds Bounds { get; set; }
 
+    /// <summary>
+    /// Erstellt ein ZoneDto aus einer Zone.
+    /// </summary>
     public static ZoneDto FromZone(Zone zone) => new()
     {
         ZoneId = zone.Id,
         Name = zone.Name,
-        Type = zone.Type,
-        RecommendedMinLevel = zone.MinLevel,
-        RecommendedMaxLevel = zone.MaxLevel,
-        IsPvPEnabled = zone.IsPvP,
-        IsContested = zone.IsContested,
+        Flags = zone.Flags,
+        RecommendedMinLevel = zone.RecommendedMinLevel,
+        RecommendedMaxLevel = zone.RecommendedMaxLevel,
         ControllingFaction = zone.ControllingFaction,
-        IsSanctuary = zone.IsSanctuary,
-        DefaultSpawnPoint = zone.DefaultSpawn,
-        GraveyardPosition = zone.Graveyard,
-        MusicId = zone. MusicId,
+        DefaultSpawnPoint = zone.DefaultSpawnPoint,
+        GraveyardPosition = zone.GraveyardPosition,
+        MusicId = zone.MusicId,
         AmbienceId = zone.AmbienceId,
-        MinX = zone. Bounds.MinX,
-        MaxX = zone.Bounds.MaxX,
-        MinY = zone.Bounds.MinY,
-        MaxY = zone.Bounds.MaxY
+        Bounds = zone. Bounds
     };
+
+    // Convenience Properties (nicht serialisiert)
+    [IgnoreMember] public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
+    [IgnoreMember] public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
+    [IgnoreMember] public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
+    [IgnoreMember] public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
+    [IgnoreMember] public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
+    [IgnoreMember] public bool IsIndoor => Flags.HasFlag(ZoneFlags.IsIndoor);
+    [IgnoreMember] public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
+    [IgnoreMember] public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
 }
 ```
 
@@ -350,14 +366,19 @@ public void OnZoneState(ZoneState state)
     var zoneInfo = _zoneCache.GetZone(state.ZoneId);
     if (zoneInfo == null)
     {
-        _log.Error("ZoneDto not found and not provided!");
+        _log.Error("ZoneDto not found for zone {ZoneId}!", state.ZoneId);
+        RequestDisconnect("Missing zone data");
         return;
     }
 
-    // Zone initialisieren
+    // Statische Zone-Daten anwenden
     _audioManager.PlayMusic(zoneInfo.MusicId);
     _audioManager.PlayAmbience(zoneInfo. AmbienceId);
-    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+    _minimapManager.SetBounds(zoneInfo.Bounds);
+    _pvpManager.SetPvPState(zoneInfo.IsPvPEnabled);
+
+    // Mount-Button basierend auf Flags
+    _uiManager.SetMountButtonEnabled(zoneInfo.AllowsMounting);
 
     // Dynamischen State anwenden
     _weatherSystem.SetWeather(state.CurrentWeather);
@@ -371,7 +392,7 @@ public void OnZoneState(ZoneState state)
 | ------------------ | --------------------------------------------- |
 | `ZoneState`        | `ZoneInfo:  ZoneDto?` - nur bei erstem Besuch |
 | `ZoneListResponse` | `List<ZoneListItemDto>` enthält `ZoneDto`     |
-| `ZoneDiscovered`   | `Zone: ZoneDto` - neue Zone entdeckt          |
+| `ZoneDiscovered`   | `Zone:  ZoneDto` - neue Zone entdeckt         |
 
 ---
 
@@ -464,7 +485,7 @@ Client informiert Server über beabsichtigtes Verlassen. Wird **NUR** für Clien
 ### Enums
 
 ```csharp
-public enum LeaveReason : byte
+public enum LeaveReason :  byte
 {
     Logout = 1,           // Logout-Button → zurück zum Login
     ExitGame = 2,         // Spiel komplett beenden
@@ -639,13 +660,13 @@ public ZoneState CreateZoneState(PlayerEntity player, Zone zone, ZoneStateType s
         TimeOfDay = zone.TimeOfDay,
         StateType = stateType,
         MyPlayer = stateType != ZoneStateType. FullSync
-            ? PlayerEntityDto.FromEntity(player)
+            ? PlayerEntityDto.FromPlayerEntity(player)
             : null,
         Entities = zone.GetVisibleEntities(player)
             .Select(e => e.ToDto())
             .Take(100)
             .ToList(),
-        HasMoreEntities = zone. GetVisibleEntityCount(player) > 100,
+        HasMoreEntities = zone.GetVisibleEntityCount(player) > 100,
         TotalEntityCount = zone.GetVisibleEntityCount(player)
     };
 }
@@ -673,12 +694,12 @@ public void OnZoneState(ZoneState state)
 
     // 3. Statische Zone-Daten anwenden
     _audioManager.PlayMusic(zoneInfo.MusicId);
-    _audioManager.PlayAmbience(zoneInfo. AmbienceId);
-    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+    _audioManager.PlayAmbience(zoneInfo.AmbienceId);
+    _minimapManager.SetBounds(zoneInfo.Bounds);
     _pvpManager.SetPvPState(zoneInfo.IsPvPEnabled);
 
     // 4. Dynamischen State anwenden
-    _weatherSystem.SetWeather(state. CurrentWeather);
+    _weatherSystem.SetWeather(state.CurrentWeather);
     _timeSystem.SetTime(state.TimeOfDay);
 
     // 5. MyPlayer spawnen (falls vorhanden)
@@ -690,7 +711,7 @@ public void OnZoneState(ZoneState state)
     // 6. Entities spawnen
     foreach (var entityDto in state.Entities)
     {
-        _entityManager.SpawnFromDto(entityDto);
+        _entityManager. SpawnFromDto(entityDto);
     }
 
     // 7. Auf weitere Batches warten oder Loading starten
@@ -713,10 +734,9 @@ var firstVisit = new ZoneState
     {
         ZoneId = 1001,
         Name = "Elwynn Forest",
-        Type = ZoneType. Outdoor,
+        Flags = ZoneFlags.HasRestXp,
         RecommendedMinLevel = 1,
         RecommendedMaxLevel = 10,
-        IsPvPEnabled = false,
         MusicId = "music_elwynn",
         AmbienceId = "ambience_forest"
     },
@@ -833,7 +853,7 @@ Broadcast an alle Spieler in der Zone wenn ein neuer Spieler spawnt. Der neue Sp
 public class PlayerJoinedZone :  IServerMessage
 {
     [Key(0)] public MessageType Type => MessageType.PlayerJoinedZone;
-    [Key(1)] public PlayerEntityDto Player { get; set; } = null! ;
+    [Key(1)] public PlayerEntityDto Player { get; set; } = null!;
 }
 ```
 
@@ -842,7 +862,7 @@ public class PlayerJoinedZone :  IServerMessage
 ```csharp
 var playerJoined = new PlayerJoinedZone
 {
-    Player = PlayerEntityDto.FromEntity(newPlayer)
+    Player = PlayerEntityDto.FromPlayerEntity(newPlayer)
 };
 
 // Broadcast an alle AUSSER dem neuen Spieler
@@ -923,7 +943,7 @@ public void HandleLeaveZone(ClientConnection conn, LeaveZone msg)
     BroadcastToZone(player. ZoneId, new PlayerLeftZone
     {
         PlayerId = player.PersistentId,
-        Reason = PlayerLeftReason. Logout
+        Reason = PlayerLeftReason.Logout
     });
 
     SavePlayerState(player);
@@ -1073,7 +1093,7 @@ var portalTransfer = new ZoneTransferRequest
 {
     TargetZoneId = 2001,
     TransferType = TransferType.Portal,
-    TargetPosition = new Position(50. 0f, 50.0f, 0f, 2001)
+    TargetPosition = new Position(50.0f, 50.0f, 0f, 2001)
 };
 
 // Hearthstone
@@ -1258,7 +1278,7 @@ var discovered = new ZoneDiscovered
 public void OnZoneDiscovered(ZoneDiscovered msg)
 {
     // 1. ZoneDto cachen
-    _zoneCache. CacheZone(msg.Zone);
+    _zoneCache.CacheZone(msg.Zone);
 
     // 2. UI anzeigen
     _uiManager.ShowZoneDiscovered(msg.Zone. Name);
@@ -1273,7 +1293,7 @@ public void OnZoneDiscovered(ZoneDiscovered msg)
     _audioManager.PlaySound("zone_discovered");
 
     // 5. Weltkarte aktualisieren
-    _worldMap. MarkAsDiscovered(msg.Zone. ZoneId);
+    _worldMap. MarkAsDiscovered(msg.Zone.ZoneId);
 }
 ```
 
@@ -1310,7 +1330,7 @@ Client fordert Liste aller Zonen an (für Weltkarte, Fast-Travel UI).
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneListRequest)]
-public class ZoneListRequest :  IClientMessage
+public class ZoneListRequest : IClientMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneListRequest;
     [Key(1)] public bool IncludeUndiscovered { get; set; }
@@ -1374,7 +1394,7 @@ public ZoneListResponse HandleZoneListRequest(PlayerEntity player, ZoneListReque
 
     if (! request.IncludeUndiscovered)
     {
-        zones = zones.Where(z => player. DiscoveredZones.Contains(z. Id));
+        zones = zones.Where(z => player. DiscoveredZones.Contains(z.Id));
     }
 
     return new ZoneListResponse
@@ -1392,7 +1412,7 @@ public void OnZoneListResponse(ZoneListResponse response)
     foreach (var item in response.Zones)
     {
         // ZoneDtos cachen
-        _zoneCache.CacheZone(item.Zone);
+        _zoneCache.CacheZone(item. Zone);
 
         // Weltkarte aktualisieren
         _worldMap.UpdateZone(item);
@@ -1413,10 +1433,9 @@ var response = new ZoneListResponse
             {
                 ZoneId = 1001,
                 Name = "Elwynn Forest",
-                Type = ZoneType.Outdoor,
+                Flags = ZoneFlags.HasRestXp,
                 RecommendedMinLevel = 1,
-                RecommendedMaxLevel = 10,
-                IsPvPEnabled = false
+                RecommendedMaxLevel = 10
             },
             IsDiscovered = true,
             HasFlightPath = true,
@@ -1430,11 +1449,9 @@ var response = new ZoneListResponse
             {
                 ZoneId = 1005,
                 Name = "Darkwood Forest",
-                Type = ZoneType.Outdoor,
+                Flags = ZoneFlags.PvpEnabled,
                 RecommendedMinLevel = 15,
-                RecommendedMaxLevel = 25,
-                IsPvPEnabled = true,
-                IsContested = true
+                RecommendedMaxLevel = 25
             },
             IsDiscovered = false,
             HasFlightPath = false,
@@ -1554,16 +1571,16 @@ Client bestätigt dass Zone-Assets geladen und `ZoneState` verarbeitet wurde. Se
 
 ### Code-Beispiel
 
-```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneLoadedAck)]
 public class ZoneLoadedAck : IClientMessage
 {
-    [Key(0)] public MessageType Type => MessageType.ZoneLoadedAck;
-    [Key(1)] public ushort ZoneId { get; set; }
-    [Key(2)] public int? LoadTimeMs { get; set; }
+[Key(0)] public MessageType Type => MessageType. ZoneLoadedAck;
+[Key(1)] public ushort ZoneId { get; set; }
+[Key(2)] public int? LoadTimeMs { get; set; }
 }
-```
+
+````
 
 ### Client-Logik
 
@@ -1595,7 +1612,7 @@ public async Task LoadZoneAsync(ZoneState zoneState)
     _audioManager.PlayAmbience(zoneInfo.AmbienceId);
 
     // 5. Minimap initialisieren
-    _minimapManager.SetBounds(zoneInfo.MinX, zoneInfo.MaxX, zoneInfo.MinY, zoneInfo.MaxY);
+    _minimapManager.SetBounds(zoneInfo. Bounds);
 
     // 6. Dynamischen State anwenden
     _weatherSystem.SetWeather(zoneState.CurrentWeather);
@@ -1625,7 +1642,7 @@ public async Task LoadZoneAsync(ZoneState zoneState)
         LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
     });
 }
-```
+````
 
 ### Server-Logik
 
@@ -1635,9 +1652,9 @@ public void HandleZoneLoadedAck(ClientConnection conn, ZoneLoadedAck ack)
     var player = GetPlayer(conn);
 
     // Validierung
-    if (player. CurrentZoneId != ack.ZoneId)
+    if (player.CurrentZoneId != ack.ZoneId)
     {
-        _log. Warn("ZoneLoadedAck for wrong zone: expected {Expected}, got {Got}",
+        _log. Warn("ZoneLoadedAck for wrong zone:  expected {Expected}, got {Got}",
             player.CurrentZoneId, ack.ZoneId);
         return;
     }
@@ -1670,7 +1687,7 @@ public void CheckZoneLoadTimeouts()
 {
     var now = DateTime.UtcNow;
 
-    foreach (var player in _players. Where(p => ! p.IsZoneReady))
+    foreach (var player in _players.Where(p => ! p.IsZoneReady))
     {
         if (player.WaitingForZoneAckSince?. AddSeconds(30) < now)
         {
@@ -1746,7 +1763,7 @@ Zone mit 250 Entities:
    └── IsLastBatch: false
 
 3. EntityBatch (120)
-   ├── BatchIndex: 2
+   ├── BatchIndex:  2
    ├── Entities: [Entity 200-249]  (50 Entities)
    └── IsLastBatch: true
 
@@ -1781,16 +1798,16 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
         CurrentWeather = zone.CurrentWeather,
         TimeOfDay = zone.TimeOfDay,
         StateType = ZoneStateType.Initial,
-        MyPlayer = PlayerEntityDto.FromEntity(player),
+        MyPlayer = PlayerEntityDto.FromPlayerEntity(player),
         Entities = firstChunk,
-        HasMoreEntities = remainingEntities. Any(),
+        HasMoreEntities = remainingEntities.Any(),
         TotalEntityCount = allEntities.Count
     };
     Send(conn, zoneState);
 
     // 2. Weitere Batches
     int batchIndex = 1;
-    while (remainingEntities. Any())
+    while (remainingEntities.Any())
     {
         var batch = remainingEntities.Take(CHUNK_SIZE).ToList();
         remainingEntities = remainingEntities.Skip(CHUNK_SIZE).ToList();
@@ -1842,7 +1859,7 @@ public void OnEntityBatch(EntityBatch batch)
     // Validierung
     if (_pendingZoneState == null || batch.ZoneId != _pendingZoneState.ZoneId)
     {
-        _log.Warn("EntityBatch for wrong zone or no pending ZoneState");
+        _log. Warn("EntityBatch for wrong zone or no pending ZoneState");
         return;
     }
 
@@ -1902,13 +1919,14 @@ private async Task ProcessZoneLoadAsync()
     stopwatch.Stop();
 
     // 8. Cleanup
+    var zoneId = _pendingZoneState. ZoneId;
     _pendingZoneState = null;
     _pendingEntities.Clear();
 
     // 9. Server informieren
     _networkClient.Send(new ZoneLoadedAck
     {
-        ZoneId = zoneInfo.ZoneId,
+        ZoneId = zoneId,
         LoadTimeMs = (int)stopwatch.ElapsedMilliseconds
     });
 }
@@ -2068,7 +2086,7 @@ EntityBatch = 120,              // NEU - muss hinzugefügt werden!
 Die folgenden Enums müssen erstellt werden:
 
 ```csharp
-// Mmo. Shared/Zone/Enums/LeaveReason.cs
+// Mmo. Shared/Zones/Enums/LeaveReason.cs
 public enum LeaveReason :  byte
 {
     Logout = 1,
@@ -2076,7 +2094,7 @@ public enum LeaveReason :  byte
     CharacterSwitch = 3
 }
 
-// Mmo. Shared/Zone/Enums/PlayerLeftReason.cs
+// Mmo. Shared/Zones/Enums/PlayerLeftReason.cs
 public enum PlayerLeftReason : byte
 {
     Logout = 1,
@@ -2087,7 +2105,7 @@ public enum PlayerLeftReason : byte
     Banned = 6
 }
 
-// Mmo.Shared/Zone/Enums/TransferType.cs
+// Mmo. Shared/Zones/Enums/TransferType.cs
 public enum TransferType : byte
 {
     Portal = 1,
@@ -2101,7 +2119,7 @@ public enum TransferType : byte
     GraveyardTeleport = 9
 }
 
-// Mmo. Shared/Zone/Enums/ZoneStateType.cs
+// Mmo. Shared/Zones/Enums/ZoneStateType.cs
 public enum ZoneStateType : byte
 {
     Initial = 1,
@@ -2110,20 +2128,7 @@ public enum ZoneStateType : byte
     FullSync = 4
 }
 
-// Mmo.Shared/Zone/Enums/ZoneType.cs
-public enum ZoneType : byte
-{
-    Outdoor = 1,
-    Dungeon = 2,
-    City = 3,
-    Instance = 4,
-    Arena = 5,
-    Battleground = 6,
-    Sanctuary = 7,
-    GhostZone = 8
-}
-
-// Mmo. Shared/Zone/Enums/WeatherType.cs
+// Mmo. Shared/Zones/Enums/WeatherType.cs
 public enum WeatherType : byte
 {
     Clear = 1,
@@ -2137,7 +2142,7 @@ public enum WeatherType : byte
     Sandstorm = 9
 }
 
-// Mmo. Shared/Zone/Enums/Faction.cs
+// Mmo.Shared/Zones/Enums/Faction.cs
 public enum Faction :  byte
 {
     Neutral = 0,
@@ -2146,44 +2151,130 @@ public enum Faction :  byte
 }
 ```
 
-## Neue DTOs
+## ZoneFlags Erweiterung
 
-Die folgenden DTOs müssen erstellt werden:
+Das existierende `ZoneFlags` Enum sollte um `IsGhostZone` erweitert werden:
 
 ```csharp
-// Mmo.Shared/Zone/Dtos/ZoneDto.cs
-[MessagePackObject]
-public class ZoneDto
+// Mmo.Shared/Zones/Enums/ZoneFlags.cs (bereits vorhanden - erweitern)
+[Flags]
+public enum ZoneFlags : ushort
 {
-    [Key(0)] public ushort ZoneId { get; set; }
-    [Key(1)] public string Name { get; set; } = "";
-    [Key(2)] public ZoneType Type { get; set; }
-    [Key(3)] public int RecommendedMinLevel { get; set; }
-    [Key(4)] public int RecommendedMaxLevel { get; set; }
-    [Key(5)] public bool IsPvPEnabled { get; set; }
-    [Key(6)] public bool IsContested { get; set; }
-    [Key(7)] public Faction?  ControllingFaction { get; set; }
-    [Key(8)] public bool IsSanctuary { get; set; }
-    [Key(9)] public Position DefaultSpawnPoint { get; set; }
-    [Key(10)] public Position? GraveyardPosition { get; set; }
-    [Key(11)] public string MusicId { get; set; } = "";
-    [Key(12)] public string AmbienceId { get; set; } = "";
-    [Key(13)] public float MinX { get; set; }
-    [Key(14)] public float MaxX { get; set; }
-    [Key(15)] public float MinY { get; set; }
-    [Key(16)] public float MaxY { get; set; }
-}
+    // ... existierende Flags ...
 
-// Mmo.Shared/Zone/Dtos/ZoneListItemDto.cs
-[MessagePackObject]
-public class ZoneListItemDto
+    /// <summary>
+    ///     This is a ghost/spirit world zone (after death).
+    /// </summary>
+    IsGhostZone = 1 << 15
+}
+```
+
+## Zone Class (aktualisiert)
+
+Die Zone wurde von `struct` zu `class` geändert:
+
+```csharp
+// Mmo.Shared/Zones/Zone.cs
+using Mmo.Shared. Zones.Enums;
+
+namespace Mmo.Shared. Zones;
+
+/// <summary>
+/// Repräsentiert eine Spiel-Zone mit allen zugehörigen Daten.
+/// </summary>
+public class Zone
 {
-    [Key(0)] public ZoneDto Zone { get; set; } = null!;
-    [Key(1)] public bool IsDiscovered { get; set; }
-    [Key(2)] public bool HasFlightPath { get; set; }
-    [Key(3)] public Position? FlightPathPosition { get; set; }
-    [Key(4)] public int CompletedQuestCount { get; set; }
-    [Key(5)] public int TotalQuestCount { get; set; }
+    private readonly HashSet<Guid> _entityIds = new();
+
+    public Zone(ushort zoneId, string name, ZoneBounds bounds)
+    {
+        Id = zoneId;
+        Name = name;
+        Bounds = bounds;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // IDENTIFIKATION
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Eindeutige Zone-ID. </summary>
+    public ushort Id { get; }
+
+    /// <summary>Anzeigename der Zone.</summary>
+    public string Name { get; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ZONE-EIGENSCHAFTEN (für ZoneDto)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Zone-Flags (PvP, Restrictions, etc.).</summary>
+    public ZoneFlags Flags { get; set; } = ZoneFlags.None;
+
+    /// <summary>Empfohlenes Mindest-Level.</summary>
+    public int RecommendedMinLevel { get; set; } = 1;
+
+    /// <summary>Empfohlenes Höchst-Level.</summary>
+    public int RecommendedMaxLevel { get; set; } = 60;
+
+    /// <summary>Kontrollierende Fraktion (null = neutral).</summary>
+    public Faction? ControllingFaction { get; set; }
+
+    /// <summary>Zone-Grenzen für Minimap und Collision.</summary>
+    public ZoneBounds Bounds { get; }
+
+    /// <summary>Standard-Spawn-Position für neue Spieler.</summary>
+    public Position DefaultSpawnPoint { get; set; }
+
+    /// <summary>Friedhof-Position für Wiederbelebung.</summary>
+    public Position?  GraveyardPosition { get; set; }
+
+    /// <summary>Musik-Asset-ID. </summary>
+    public string MusicId { get; set; } = "";
+
+    /// <summary>Ambiente-Sound-Asset-ID.</summary>
+    public string AmbienceId { get; set; } = "";
+
+    // ═══════════════════════════════════════════════════════════════
+    // DYNAMISCHER STATE (NICHT im ZoneDto)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Aktuelles Wetter in der Zone.</summary>
+    public WeatherType CurrentWeather { get; set; } = WeatherType.Clear;
+
+    /// <summary>Aktuelle Tageszeit (0.0 - 24.0).</summary>
+    public float TimeOfDay { get; set; } = 12.0f;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ENTITY-MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Anzahl Entities in der Zone.</summary>
+    public int EntityCount => _entityIds.Count;
+
+    /// <summary>Alle Entity-IDs in der Zone.</summary>
+    public IEnumerable<Guid> GetEntityIds() => _entityIds;
+
+    /// <summary>Prüft ob eine Entity in der Zone ist.</summary>
+    public bool HasEntity(Guid persistentId) => _entityIds.Contains(persistentId);
+
+    /// <summary>Fügt eine Entity zur Zone hinzu. </summary>
+    public void AddEntity(Guid persistentId) => _entityIds.Add(persistentId);
+
+    /// <summary>Entfernt eine Entity aus der Zone.</summary>
+    public bool RemoveEntity(Guid persistentId) => _entityIds.Remove(persistentId);
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONVENIENCE PROPERTIES
+    // ═══════════════════════════════════════════════════════════════
+
+    public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
+    public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
+    public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
+    public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
+    public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
+    public bool IsIndoor => Flags.HasFlag(ZoneFlags. IsIndoor);
+    public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
+    public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
 }
 ```
 
@@ -2191,31 +2282,46 @@ public class ZoneListItemDto
 
 ```
 Mmo.Shared/
-├── Zone/
+├── Zones/
+│   ├── Zone.cs                         ← Haupt-Klasse (jetzt Class, nicht Struct)
 │   ├── Enums/
-│   │   ├── LeaveReason.cs
-│   │   ├── PlayerLeftReason.cs
-│   │   ├── TransferType.cs
-│   │   ├── ZoneStateType.cs
-│   │   ├── ZoneType.cs
-│   │   ├── WeatherType.cs
-│   │   └── Faction.cs
+│   │   ├── ZoneFlags.cs                ← Bereits vorhanden (erweitern)
+│   │   ├── LeaveReason.cs              ← NEU
+│   │   ├── PlayerLeftReason.cs         ← NEU
+│   │   ├── TransferType.cs             ← NEU
+│   │   ├── ZoneStateType.cs            ← NEU
+│   │   ├── WeatherType.cs              ← NEU
+│   │   └── Faction.cs                  ← NEU
 │   ├── Dtos/
-│   │   ├── ZoneDto.cs
-│   │   └── ZoneListItemDto.cs
+│   │   ├── ZoneDto.cs                  ← NEU
+│   │   └── ZoneListItemDto.cs          ← NEU
+│   ├── Structs/
+│   │   └── ZoneBounds.cs               ← Bereits vorhanden
 │   └── Messages/
-│       ├── LeaveZone.cs
-│       ├── ZoneState.cs
+│       ├── LeaveZone.cs                ← Aktualisieren
+│       ├── ZoneState.cs                ← Aktualisieren
 │       ├── PlayerJoinedZone.cs
-│       ├── PlayerLeftZone.cs
-│       ├── ZoneTransferRequest.cs
+│       ├── PlayerLeftZone.cs           ← Aktualisieren
+│       ├── ZoneTransferRequest.cs      ← Aktualisieren
 │       ├── ZoneTransferResponse.cs
-│       ├── ZoneDiscovered.cs
+│       ├── ZoneDiscovered.cs           ← Aktualisieren
 │       ├── ZoneListRequest.cs
-│       ├── ZoneListResponse.cs
-│       ├── GetZoneRequest.cs
-│       ├── ZoneLoadedAck.cs
-│       └── EntityBatch.cs
+│       ├── ZoneListResponse.cs         ← Aktualisieren
+│       ├── GetZoneRequest.cs           ← NEU
+│       ├── ZoneLoadedAck.cs            ← NEU
+│       └── EntityBatch.cs              ← NEU
+│
+├── Generators/
+│   └── Attributes/
+│       ├── GenerateDtoAttribute.cs
+│       ├── DtoImplementsAttribute.cs
+│       ├── ServerOnlyAttribute.cs
+│       ├── DtoIgnoreAttribute.cs
+│       └── DtoPropertyAttribute.cs
+│
+└── Messaging/
+    └── Enums/
+        └── MessageType.cs              ← Aktualisieren (117, 119, 120 hinzufügen)
 ```
 
 ---
