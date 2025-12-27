@@ -1,6 +1,7 @@
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Shared.Tests.Zones;
@@ -28,7 +29,7 @@ public class ZoneTests : IDisposable
 
         Assert.Equal(42, zone.Id);
         Assert.Equal("TestZone", zone.Name);
-        Assert.Equal(bounds, zone.Bounds);
+        Assert.Equal(bounds, zone.Boarder);
         Assert.Empty(zone.GetEntityIds());
     }
 

@@ -4,7 +4,7 @@ using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Entities.Services;
 

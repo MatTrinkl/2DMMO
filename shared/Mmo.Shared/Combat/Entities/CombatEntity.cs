@@ -1,4 +1,3 @@
-using MessagePack;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Combat.Enums;
@@ -14,43 +13,28 @@ namespace Mmo.Shared.Combat.Entities;
 ///     Abstract base class for all entities that can fight.
 ///     Implements the shared combat logic.
 /// </summary>
-[MessagePackObject]
-public abstract class CombatEntity : ICombatEntity
+public abstract class CombatEntity(Guid persistentId, Position position, ushort prefabId) : ICombatEntity
 {
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTORS
     // ═══════════════════════════════════════════════════════════════
 
-    [SerializationConstructor]
-    protected CombatEntity()
-    {
-        Position = null!;
-    }
-
-    protected CombatEntity(Guid persistentId, Position position, ushort prefabId)
-    {
-        PersistentId = persistentId;
-        Position = position;
-        PrefabId = prefabId;
-        RuntimeId = new EntityIdentity(1, 0, 0, 0, prefabId);
-    }
 
     /// <summary>
     ///     Prefab type identifier - Public setter required for MessagePack deserialization.
     ///     Should be immutable after creation in production code.
     /// </summary>
-    [Key(3)]
-    public ushort PrefabId { get; set; }
+    public ushort PrefabId { get; set; } = prefabId;
 
-    [Key(17)] public float BaseMovementSpeed { get; set; } = 5.0f;
+    public float BaseMovementSpeed { get; set; } = 5.0f;
 
     // ═══════════════════════════════════════════════════════════════
     // COMPUTED PROPERTIES
     // ═══════════════════════════════════════════════════════════════
 
-    [IgnoreMember] public float HealthPercent => MaxHealth > 0 ? (float)CurrentHealth / MaxHealth : 0f;
+    public float HealthPercent => MaxHealth > 0 ? (float)CurrentHealth / MaxHealth : 0f;
 
-    [IgnoreMember] public float ResourcePercent => MaxResource > 0 ? (float)CurrentResource / MaxResource : 0f;
+    public float ResourcePercent => MaxResource > 0 ? (float)CurrentResource / MaxResource : 0f;
     // ═══════════════════════════════════════════════════════════════
     // IEntity Implementation
     // ═══════════════════════════════════════════════════════════════
@@ -59,67 +43,48 @@ public abstract class CombatEntity : ICombatEntity
     ///     Runtime identity - Public setter required for MessagePack deserialization.
     ///     Should only be modified via SetEntityId() or ChangeZone() in production code.
     /// </summary>
-    [Key(0)]
-    public EntityIdentity RuntimeId { get; set; }
+    public EntityIdentity RuntimeId { get; set; } = new(1, 0, 0, 0, prefabId);
 
     /// <summary>
     ///     Persistent GUID - Public setter required for MessagePack deserialization.
     ///     Should be immutable after creation in production code.
     /// </summary>
-    [Key(1)]
-    public Guid PersistentId { get; set; }
+    public Guid PersistentId { get; set; } = persistentId;
 
-    [Key(2)] public Position Position { get; set; }
-
-    [IgnoreMember] public abstract EntityType Type { get; }
-
-    [IgnoreMember] public virtual bool IsTrulyPersistent => true;
+    public Position Position { get; set; } = position;
+    public abstract EntityType Type { get; }
+    public virtual bool IsTrulyPersistent => true;
 
     // ═══════════════════════════════════════════════════════════════
     // ICombatEntity - Identity
     // ═══════════════════════════════════════════════════════════════
-
-    [Key(4)] public string DisplayName { get; set; } = "";
-
-    [Key(5)] public int Level { get; set; } = 1;
+    public string DisplayName { get; set; } = "";
+    public int Level { get; set; } = 1;
 
     // ═══════════════════════════════════════════════════════════════
     // ICombatEntity - Health & Resource
     // ═══════════════════════════════════════════════════════════════
-
-    [Key(6)] public int CurrentHealth { get; set; } = 100;
-
-    [Key(7)] public int MaxHealth { get; set; } = 100;
-
-    [Key(8)] public int CurrentResource { get; set; } = 100;
-
-    [Key(9)] public int MaxResource { get; set; } = 100;
-
-    [Key(10)] public virtual CombatResourceType CombatResourceType { get; set; } = CombatResourceType.None;
+    public int CurrentHealth { get; set; } = 100;
+    public int MaxHealth { get; set; } = 100;
+    public int CurrentResource { get; set; } = 100;
+    public int MaxResource { get; set; } = 100;
+    public virtual CombatResourceType CombatResourceType { get; set; } = CombatResourceType.None;
 
     // ═══════════════════════════════════════════════════════════════
     // ICombatEntity - State
     // ═══════════════════════════════════════════════════════════════
-
-    [Key(11)] public bool IsInCombat { get; set; }
-
-    [Key(12)] public Guid? TargetEntityId { get; set; }
-
-    [Key(13)] public Faction Faction { get; set; } = Faction.Neutral;
-
-    [IgnoreMember] public virtual bool IsDead => CurrentHealth <= 0;
-
-    [IgnoreMember] public virtual bool IsAttackable => !IsDead;
+    public bool IsInCombat { get; set; }
+    public Guid? TargetEntityId { get; set; }
+    public Faction Faction { get; set; } = Faction.Neutral;
+    public virtual bool IsDead => CurrentHealth <= 0;
+    public virtual bool IsAttackable => !IsDead;
 
     // ═══════════════════════════════════════════════════════════════
     // ICombatEntity - Stats
     // ═══════════════════════════════════════════════════════════════
-
-    [Key(14)] public int AttackPower { get; set; } = 10;
-
-    [Key(15)] public int Armor { get; set; } = 0;
-
-    [Key(16)] public float MovementSpeed { get; set; } = 5.0f;
+    public int AttackPower { get; set; } = 10;
+    public int Armor { get; set; } = 0;
+    public float MovementSpeed { get; set; } = 5.0f;
 
     // ═══════════════════════════════════════════════════════════════
     // IEntity METHODS

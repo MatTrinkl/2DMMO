@@ -1,4 +1,4 @@
-namespace Mmo.Shared.System.Enums;
+namespace Mmo.Shared.Core.Enums;
 
 /// <summary>
 ///     Represents the type of server announcement.

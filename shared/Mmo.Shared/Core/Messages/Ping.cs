@@ -3,7 +3,7 @@ using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 
-namespace Mmo.Shared.System.Messages;
+namespace Mmo.Shared.Core.Messages;
 
 [MessagePackObject]
 [NetworkMessage(MessageType.Ping)]

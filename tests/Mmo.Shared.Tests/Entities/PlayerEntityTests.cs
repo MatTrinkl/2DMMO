@@ -131,16 +131,6 @@ public class PlayerEntityTests
     }
 
     [Fact]
-    public void DefaultConstructor_CreatesEmptyPlayer()
-    {
-        // This constructor is used by MessagePack deserialization
-        var player = new PlayerEntity();
-
-        Assert.NotNull(player);
-        Assert.Equal(string.Empty, player.DisplayName);
-    }
-
-    [Fact]
     public void Type_AlwaysReturnsPlayer()
     {
         var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(0, 0));

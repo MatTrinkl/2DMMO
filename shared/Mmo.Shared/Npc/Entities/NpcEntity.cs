@@ -15,7 +15,6 @@ namespace Mmo.Shared.Npc.Entities;
 /// <summary>
 ///     NPC/Monster Entity.
 /// </summary>
-[MessagePackObject]
 public class NpcEntity : CombatEntity, INpcEntity
 {
     private readonly Dictionary<Guid, int> _threatTable = new();
@@ -24,11 +23,6 @@ public class NpcEntity : CombatEntity, INpcEntity
     // CONSTRUCTORS
     // ═══════════════════════════════════════════════════════════════
 
-    [SerializationConstructor]
-    public NpcEntity()
-    {
-        SpawnPosition = null!;
-    }
 
     public NpcEntity(
         int npcTemplateId,

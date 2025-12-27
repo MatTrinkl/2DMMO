@@ -5,7 +5,7 @@ using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones.Services;
 
@@ -28,8 +28,8 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
         // Using available data from Zone struct
         // TODO: Add RecommendedLevel, IsPvP, IsInstance to Zone configuration
         return new ZoneInfo(
-            zone.Value.Id,
-            zone.Value.Name,
+            zone.Id,
+            zone.Name,
             1, // Default value, should come from config
             false, // Default value, should come from config
             false // Default value, should come from config
@@ -114,6 +114,6 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
         if (zone == null)
             return [];
 
-        return zone.Value.GetEntityIds();
+        return zone.GetEntityIds();
     }
 }

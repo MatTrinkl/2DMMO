@@ -35,6 +35,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\server\Mmo.Server\Mmo.Server.csproj"/>
     <ProjectReference Include="..\..\shared\Mmo.Shared\Mmo.Shared.csproj"/>
+    <ProjectReference Include="..\..\shared\Mmo.Generators\Mmo.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"/>
   </ItemGroup>
 
 </Project>

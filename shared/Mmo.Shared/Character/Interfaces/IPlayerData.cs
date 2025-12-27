@@ -5,7 +5,7 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Movement.Enums;
 
-namespace Mmo.Shared.Entities.Interfaces;
+namespace Mmo.Shared.Character.Interfaces;
 
 /// <summary>
 ///     Interface for synchronized player data between PlayerEntity and PlayerEntityDto.

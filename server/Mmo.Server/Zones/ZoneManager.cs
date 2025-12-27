@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Mmo.Server.PlayerService;
 using Mmo.Shared.Core;
 using Mmo.Shared.Entities.Interfaces;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones;
 
@@ -61,7 +61,7 @@ public class ZoneManager(ushort defaultZoneId)
         if (zone == null) return [];
 
         // Zone only has IDs, entities come from IdRegistry
-        return zone.Value.GetEntityIds()
+        return zone.GetEntityIds()
             .Select(id => IdRegistry.Instance.TryGetEntity(id, out IEntity? e) ? e : null)
             .Where(e => e != null)!;
     }
@@ -87,7 +87,7 @@ public class ZoneManager(ushort defaultZoneId)
         Zone? zone = GetZone(zoneId);
         if (zone == null) return [];
 
-        return zone.Value.GetEntityIds()
+        return zone.GetEntityIds()
             .Select(id =>
             {
                 if (IdRegistry.Instance.TryGetConnectionByEntity(id, out Guid connId) &&

@@ -2,9 +2,9 @@ using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Movement;
-using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Tests.GameServer;
 

@@ -8,8 +8,6 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Serialization;
 using Mmo.Shared.Movement;
-using Mmo.Shared.Zones.Messages.Server_Brodcast;
-using Mmo.Shared.Zones.Messages.Server_Client;
 
 namespace Mmo.Server.Tests.Networking;
 
@@ -56,21 +54,6 @@ public class MessageSerializerTests
         Assert.Null(deserialized.ErrorMessage);
     }
 
-    [Fact]
-    public void Serialize_Deserialize_PlayerJoined_RoundTrip()
-    {
-        var original = new PlayerJoinedZone
-            (new PlayerEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f)));
-
-
-        byte[] bytes = MessageSerializer.Serialize(original);
-        var deserialized = (PlayerJoinedZone)MessageSerializer.Deserialize(bytes);
-
-        Assert.Equal(original.Player.RuntimeId, deserialized.Player.RuntimeId);
-        Assert.Equal(original.Player.DisplayName, deserialized.Player.DisplayName);
-        Assert.Equal(original.Player.Position.X, deserialized.Player.Position.X);
-        Assert.Equal(original.Player.Position.Y, deserialized.Player.Position.Y);
-    }
 
     [Fact]
     public void Deserialize_ByType_ReturnsCorrectMessageType()
@@ -115,27 +98,7 @@ public class MessageSerializerTests
         Assert.Equal(original.Timestamp, deserialized.Timestamp);
     }
 
-    [Fact]
-    public void Serialize_Deserialize_WorldState_RoundTrip()
-    {
-        ushort zoneId = 0;
-        var original = new ZoneState(12345, zoneId,
-        [
-            new PlayerEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(0, 0)),
-            new PlayerEntity(Guid.Empty, Guid.NewGuid(), "Player2", new Position(0, 0))
-        ]);
-
-        byte[] bytes = MessageSerializer.Serialize(original);
-
-        var deserialized = (ZoneState)MessageSerializer.Deserialize(bytes);
-
-        Assert.Equal(original.Timestamp, deserialized.Timestamp);
-        Assert.Equal(2, deserialized.Entities.Count);
-        Assert.Equal("Player1",
-            ((PlayerEntity)deserialized.Entities[0]).DisplayName);
-        Assert.Equal("Player2",
-            ((PlayerEntity)deserialized.Entities[1]).DisplayName);
-    }
+    //Todo: ZoneStateTests
 
     [Fact]
     public void Serialize_Deserialize_ChatMessage_RoundTrip()

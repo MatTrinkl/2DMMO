@@ -6,6 +6,7 @@ using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
+using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
@@ -102,7 +103,7 @@ public class EntityServiceTests : IDisposable
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.True(zone.Value.HasEntity(playerId));
+        Assert.True(zone.HasEntity(playerId));
     }
 
     [Fact]
@@ -121,7 +122,7 @@ public class EntityServiceTests : IDisposable
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.False(zone.Value.HasEntity(playerId));
+        Assert.False(zone.HasEntity(playerId));
     }
 
     [Fact]

@@ -1,10 +1,11 @@
+using System.Reflection;
 using FluentAssertions;
+using MessagePack;
 using Mmo.Shared.Character.Entities;
-using Mmo.Shared.Character.Entities.Dtos;
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Combat.Enums;
+using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Tests.Sync;
 
@@ -17,7 +18,7 @@ public class EntityDtoSyncTests
     public void PlayerEntityDto_Implements_IPlayerData()
     {
         // Arrange & Act
-        var isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntityDto));
+        bool isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntityDto));
 
         // Assert
         isAssignable.Should().BeTrue("PlayerEntityDto should implement IPlayerData");
@@ -27,7 +28,7 @@ public class EntityDtoSyncTests
     public void PlayerEntity_Implements_IPlayerData()
     {
         // Arrange & Act
-        var isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntity));
+        bool isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntity));
 
         // Assert
         isAssignable.Should().BeTrue("PlayerEntity should implement IPlayerData");
@@ -107,11 +108,11 @@ public class EntityDtoSyncTests
     public void ServerOnly_Properties_Not_In_Dto()
     {
         // Arrange
-        var dtoType = typeof(PlayerEntityDto);
+        Type dtoType = typeof(PlayerEntityDto);
 
         // Act
-        var experienceProperty = dtoType.GetProperty("Experience");
-        var goldProperty = dtoType.GetProperty("Gold");
+        PropertyInfo? experienceProperty = dtoType.GetProperty("Experience");
+        PropertyInfo? goldProperty = dtoType.GetProperty("Gold");
 
         // Assert
         experienceProperty.Should().BeNull("Experience is a server-only property and should not exist in DTO");
@@ -122,11 +123,11 @@ public class EntityDtoSyncTests
     public void ServerOnly_Properties_Exist_In_Entity()
     {
         // Arrange
-        var entityType = typeof(PlayerEntity);
+        Type entityType = typeof(PlayerEntity);
 
         // Act
-        var experienceProperty = entityType.GetProperty("Experience");
-        var goldProperty = entityType.GetProperty("Gold");
+        PropertyInfo? experienceProperty = entityType.GetProperty("Experience");
+        PropertyInfo? goldProperty = entityType.GetProperty("Gold");
 
         // Assert
         experienceProperty.Should().NotBeNull("Experience should exist in PlayerEntity");
@@ -137,13 +138,14 @@ public class EntityDtoSyncTests
     public void ServerOnly_Attributes_Applied_Correctly()
     {
         // Arrange
-        var entityType = typeof(PlayerEntity);
-        var experienceProperty = entityType.GetProperty("Experience");
-        var goldProperty = entityType.GetProperty("Gold");
+        Type entityType = typeof(PlayerEntity);
+        PropertyInfo? experienceProperty = entityType.GetProperty("Experience");
+        PropertyInfo? goldProperty = entityType.GetProperty("Gold");
 
         // Act
-        var experienceHasServerOnly = experienceProperty?.GetCustomAttributes(typeof(Generators.ServerOnlyAttribute), false).Any() ?? false;
-        var goldHasServerOnly = goldProperty?.GetCustomAttributes(typeof(Generators.ServerOnlyAttribute), false).Any() ?? false;
+        bool experienceHasServerOnly =
+            experienceProperty?.GetCustomAttributes(typeof(ServerOnlyAttribute), false).Any() ?? false;
+        bool goldHasServerOnly = goldProperty?.GetCustomAttributes(typeof(ServerOnlyAttribute), false).Any() ?? false;
 
         // Assert
         experienceHasServerOnly.Should().BeTrue("Experience should have [ServerOnly] attribute");
@@ -190,8 +192,8 @@ public class EntityDtoSyncTests
         var dto = PlayerEntityDto.FromEntity(entity);
 
         // Act
-        var serialized = MessagePack.MessagePackSerializer.Serialize(dto);
-        var deserialized = MessagePack.MessagePackSerializer.Deserialize<PlayerEntityDto>(serialized);
+        byte[] serialized = MessagePackSerializer.Serialize(dto);
+        var deserialized = MessagePackSerializer.Deserialize<PlayerEntityDto>(serialized);
 
         // Assert
         deserialized.Should().NotBeNull();

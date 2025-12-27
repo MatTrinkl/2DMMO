@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.Connections;
 using Mmo.Server.Core;
+using Mmo.Server.Player;
 using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Shared.Account.Enums;

@@ -1,3 +1,4 @@
+using MessagePack;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Zones.Configurations;
 
@@ -10,27 +11,28 @@ namespace Mmo.Shared.Zones.Structs;
 /// <param name="MinY">The bottom side of the Y-Axis.</param>
 /// <param name="MaxX">The right side of the X-Axis.</param>
 /// <param name="MaxY">The top side of the Y-Axis.</param>
+[MessagePackObject]
 public readonly record struct ZoneBounds(float MinX, float MinY, float MaxX, float MaxY)
 {
     /// <summary>
     ///     The right side of the X-Axis.
     /// </summary>
-    public readonly float MaxX = MaxX;
+    [Key(0)] public readonly float MaxX = MaxX;
 
     /// <summary>
     ///     The top side of the Y-Axis.
     /// </summary>
-    public readonly float MaxY = MaxY;
+    [Key(1)] public readonly float MaxY = MaxY;
 
     /// <summary>
     ///     The left side of the X-Axis.
     /// </summary>
-    public readonly float MinX = MinX;
+    [Key(2)] public readonly float MinX = MinX;
 
     /// <summary>
     ///     The bottom side of the Y-Axis.
     /// </summary>
-    public readonly float MinY = MinY;
+    [Key(3)] public readonly float MinY = MinY;
 
     public static ZoneBounds FromConfig(ZoneBoundsConfig config) =>
         new(config.MinX, config.MinY, config.MaxX, config.MaxY);
