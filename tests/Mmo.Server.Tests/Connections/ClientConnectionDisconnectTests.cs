@@ -1,6 +1,8 @@
 ﻿using Mmo.Server.Connections;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Connections;
 

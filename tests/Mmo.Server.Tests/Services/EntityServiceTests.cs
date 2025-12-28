@@ -2,11 +2,14 @@ using Mmo.Server.Entities;
 using Mmo.Server.Entities.Services;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Configurations;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
 using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -22,7 +25,7 @@ public class EntityServiceTests : IDisposable
         _zoneManager = new ZoneManager(0);
 
         // Register default zone
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        var defaultZone = TestHelpers.CreateTestZone(0, "default");
         _zoneManager.RegisterZone(defaultZone);
     }
 
@@ -32,7 +35,7 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_ValidZone_SucceedsAndAssignsLocalId()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         SpawnResult result = service.SpawnEntity(player, 0);
 
@@ -49,7 +52,7 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_InvalidZone_ReturnsFailure()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         SpawnResult result = service.SpawnEntity(player, 999);
 
@@ -61,9 +64,9 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_MultipleEntities_AssignsSequentialIds()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
-        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         SpawnResult result1 = service.SpawnEntity(player1, 0);
         SpawnResult result2 = service.SpawnEntity(player2, 0);
@@ -82,12 +85,12 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
 
         Assert.True(IdRegistry.Instance.HasEntity(playerId));
-        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out IEntity? retrieved));
+        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out BaseEntity? retrieved));
         Assert.Equal(player, retrieved);
     }
 
@@ -96,13 +99,13 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.True(zone.HasEntity(playerId));
+        Assert.True(zone.Value.HasEntity(playerId));
     }
 
     [Fact]
@@ -110,7 +113,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
 
@@ -121,7 +124,7 @@ public class EntityServiceTests : IDisposable
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.False(zone.HasEntity(playerId));
+        Assert.False(zone.Value.HasEntity(playerId));
     }
 
     [Fact]
@@ -138,14 +141,14 @@ public class EntityServiceTests : IDisposable
     public void DespawnEntity_ReleasesLocalId()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player1, 0); // Gets ID 0
         service.SpawnEntity(player2, 0); // Gets ID 1
         service.DespawnEntity(player1.PersistentId); // Releases ID 0
 
-        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         SpawnResult result = service.SpawnEntity(player3, 0); // Should reuse ID 0
 
         Assert.NotNull(result.LocalId);
@@ -156,8 +159,8 @@ public class EntityServiceTests : IDisposable
     public void GetEntitiesInZone_ReturnsAllEntities()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player1, 0);
         service.SpawnEntity(player2, 0);
@@ -174,7 +177,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
 
@@ -200,11 +203,11 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         // Spawn entities at different positions
-        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         var player2 =
-            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
+            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105), EntityIdentity.Unassigned(PrefabIds.PlayerDefault)); // ~7 units away
         var player3 =
-            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
+            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault)); // ~141 units away
 
         service.SpawnEntity(player1, 0);
         service.SpawnEntity(player2, 0);
@@ -235,9 +238,9 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
-        var other1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200));
-        var other2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other2", new Position(300, 300));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var other1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var other2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other2", new Position(300, 300), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
         service.SpawnEntity(other1, 0);
@@ -267,7 +270,7 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         var playerId = Guid.NewGuid();
-        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         service.SpawnEntity(player, 0);
 

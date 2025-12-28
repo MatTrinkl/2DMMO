@@ -186,6 +186,19 @@ public class DtoGenerator : IIncrementalGenerator
         var interfaces = new List<string>();
         if (generateDtoAttr.ImplementSourceInterface) interfaces.Add(interfaceSymbol.ToDisplayString());
 
+        // Add union interface if this DTO is a union member
+        if (unionMemberInfo != null && unionMemberInfo.RootInterfaceSymbol != null)
+        {
+            var unionAttr = GetGenerateDtoUnionAttribute(unionMemberInfo.RootInterfaceSymbol);
+            if (unionAttr != null)
+            {
+                string unionName = unionAttr.UnionName ?? $"{GetBaseName(unionMemberInfo.RootInterfaceSymbol)}DtoUnion";
+                string unionNamespace = unionAttr.Namespace ?? $"{unionMemberInfo.RootInterfaceSymbol.ContainingNamespace.ToDisplayString()}.Dtos";
+                string unionFullName = $"{unionNamespace}.{unionName}";
+                if (!interfaces.Contains(unionFullName)) interfaces.Add(unionFullName);
+            }
+        }
+
         List<INamedTypeSymbol> dtoImplementsAttrs = GetDtoImplementsAttributes(interfaceSymbol);
         foreach (INamedTypeSymbol? iface in dtoImplementsAttrs)
         {
@@ -266,8 +279,11 @@ public class DtoGenerator : IIncrementalGenerator
             string? defaultValue = GetDefaultValue(prop.Symbol.Type);
             string defaultAssignment = defaultValue != null ? $" = {defaultValue};" : "";
 
+            // Use 'set' if interface requires it, otherwise use 'init' for immutability
+            string accessor = prop.RequiresSetAccessor ? "set" : "init";
+
             sb.AppendLine($"        [Key({keyIndex})]");
-            sb.AppendLine($"        public {propType} {propName} {{ get; init; }}{defaultAssignment}");
+            sb.AppendLine($"        public {propType} {propName} {{ get; {accessor}; }}{defaultAssignment}");
             sb.AppendLine();
         }
 
@@ -754,11 +770,17 @@ public class DtoGenerator : IIncrementalGenerator
 
                 int finalKey = explicitKey >= 0 ? explicitKey : autoKeyIndex++;
 
+                // Check if property has a true 'set' accessor (not init)
+                // Both 'init' and 'set' have SetMethod != null
+                // But 'init' has SetMethod.IsInitOnly == true
+                bool requiresSet = propertySymbol.SetMethod != null && !propertySymbol.SetMethod.IsInitOnly;
+
                 properties.Add(new PropertyData
                 {
                     Symbol = propertySymbol,
                     CustomName = customName,
-                    ExplicitKey = finalKey
+                    ExplicitKey = finalKey,
+                    RequiresSetAccessor = requiresSet
                 });
             }
         }
@@ -1081,7 +1103,8 @@ public class DtoGenerator : IIncrementalGenerator
             SourceInterface = typeSymbol.ToDisplayString(),
             DtoFullName = dtoFullName,
             RootInterface = unionType.ToDisplayString(),
-            InterfaceDepth = depth
+            InterfaceDepth = depth,
+            RootInterfaceSymbol = unionType
         };
     }
 
@@ -1210,6 +1233,7 @@ public class DtoGenerator : IIncrementalGenerator
         public string DtoFullName { get; set; } = "";
         public string RootInterface { get; set; } = "";
         public int InterfaceDepth { get; set; }
+        public INamedTypeSymbol? RootInterfaceSymbol { get; set; }
     }
 
     private sealed class PropertyData
@@ -1217,5 +1241,6 @@ public class DtoGenerator : IIncrementalGenerator
         public IPropertySymbol Symbol { get; set; } = null!;
         public string? CustomName { get; set; }
         public int ExplicitKey { get; set; } = -1;
+        public bool RequiresSetAccessor { get; set; } = false;
     }
 }

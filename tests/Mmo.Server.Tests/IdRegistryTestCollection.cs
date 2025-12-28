@@ -1,4 +1,6 @@
 using Mmo.Shared.Core;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests;
 
