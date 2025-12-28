@@ -16,6 +16,8 @@ using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Helpers;
 

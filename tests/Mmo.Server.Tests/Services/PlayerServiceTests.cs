@@ -8,6 +8,8 @@ using Mmo.Shared.Character.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Services;
 

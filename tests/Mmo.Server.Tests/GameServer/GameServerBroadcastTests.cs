@@ -4,6 +4,8 @@ using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Core;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;
 

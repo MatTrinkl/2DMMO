@@ -8,6 +8,8 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Serialization;
 using Mmo.Shared.Movement;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Networking;
 
@@ -81,7 +83,7 @@ public class MessageSerializerTests
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var original = new PositionUpdate(timestamp,
-            new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f)),
+            new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f), EntityIdentity.Unassigned(PrefabIds.PlayerDefault)),
             new Position(123.456f, 789.012f));
 
         byte[] bytes = MessageSerializer.Serialize(original);

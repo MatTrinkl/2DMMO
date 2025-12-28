@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Mmo.Server.Zones.Configurations;
 using Mmo.Server.Zones.Serialization;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Zones;
 
