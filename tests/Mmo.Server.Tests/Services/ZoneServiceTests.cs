@@ -1,6 +1,7 @@
 using Mmo.Server.Entities;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Configurations;
 using Mmo.Server.Zones.Records;
 using Mmo.Server.Zones.Services;
 using Mmo.Shared.Core;
@@ -28,8 +29,8 @@ public class ZoneServiceTests : IDisposable
         _zoneService = new ZoneService(_zoneManager, _broadcastService, _log);
 
         // Register test zones
-        var zone0 = new Zone(0, "Starter Zone", new ZoneBounds(0, 0, 1000, 1000));
-        var zone1 = new Zone(1, "Forest Zone", new ZoneBounds(0, 0, 2000, 2000));
+        var zone0 = TestHelpers.CreateTestZone(0, "Starter Zone");
+        var zone1 = TestHelpers.CreateTestZone(1, "Forest Zone");
         _zoneManager.RegisterZone(zone0);
         _zoneManager.RegisterZone(zone1);
     }

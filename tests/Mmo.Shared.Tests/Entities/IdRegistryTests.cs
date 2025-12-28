@@ -350,7 +350,7 @@ public class IdRegistryTests : IDisposable
         public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(_testPrefabId);
         public bool IsTrulyPersistent => false;
 
-        public Guid PersistentId { get; } = Guid.NewGuid();
+        public Guid PersistentId { get; init; } = Guid.NewGuid();
         public EntityType Type => EntityType.Player;
         public Position Position { get; set; } = new(0, 0);
 

@@ -92,7 +92,7 @@ public class MessageSerializerTests
 
         Debug.Assert(original.EntityOldPosition != null);
         Debug.Assert(deserialized.EntityOldPosition != null);
-        Assert.Equal(original.EntityOldPosition.RuntimeId, deserialized.EntityOldPosition.RuntimeId);
+        Assert.Equal(((BaseEntity)original.EntityOldPosition).RuntimeId, ((BaseEntity)deserialized.EntityOldPosition).RuntimeId);
         Assert.Equal(original.EntityOldPosition.Position.X, deserialized.EntityOldPosition.Position.X);
         Debug.Assert(original.NewPosition != null);
         Debug.Assert(deserialized.NewPosition != null);

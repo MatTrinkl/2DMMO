@@ -2,6 +2,7 @@ using Mmo.Server.Entities;
 using Mmo.Server.Entities.Services;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Configurations;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
@@ -24,7 +25,7 @@ public class EntityServiceTests : IDisposable
         _zoneManager = new ZoneManager(0);
 
         // Register default zone
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        var defaultZone = TestHelpers.CreateTestZone(0, "default");
         _zoneManager.RegisterZone(defaultZone);
     }
 
@@ -89,7 +90,7 @@ public class EntityServiceTests : IDisposable
         service.SpawnEntity(player, 0);
 
         Assert.True(IdRegistry.Instance.HasEntity(playerId));
-        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out IEntity? retrieved));
+        Assert.True(IdRegistry.Instance.TryGetEntity(playerId, out BaseEntity? retrieved));
         Assert.Equal(player, retrieved);
     }
 
@@ -104,7 +105,7 @@ public class EntityServiceTests : IDisposable
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.True(zone.HasEntity(playerId));
+        Assert.True(zone.Value.HasEntity(playerId));
     }
 
     [Fact]
@@ -123,7 +124,7 @@ public class EntityServiceTests : IDisposable
 
         Zone? zone = _zoneManager.GetZone(0);
         Assert.NotNull(zone);
-        Assert.False(zone.HasEntity(playerId));
+        Assert.False(zone.Value.HasEntity(playerId));
     }
 
     [Fact]
