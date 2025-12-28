@@ -1,5 +1,4 @@
 using MessagePack;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages.Client_Server;

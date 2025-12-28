@@ -2,20 +2,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Connections;
 using Mmo.Server.Connections.MessageHandler;
+using Mmo.Server.Entities;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
+using Mmo.Server.Player;
 using Mmo.Server.Player.Interfaces;
-using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Authentification.Interfaces;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Helpers;
@@ -133,7 +132,7 @@ public static class TestHelpers
         float x = 100,
         float y = 100)
     {
-        var entity = new PlayerEntity(
+        var entity = new CharacterEntity(
             persistentId ?? Guid.NewGuid(),
             Guid.NewGuid(),
             name,

@@ -1,12 +1,11 @@
+using Mmo.Server.Entities;
 using Mmo.Server.Entities.Services;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Records;
-using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
@@ -33,7 +32,7 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_ValidZone_SucceedsAndAssignsLocalId()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         SpawnResult result = service.SpawnEntity(player, 0);
 
@@ -50,7 +49,7 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_InvalidZone_ReturnsFailure()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         SpawnResult result = service.SpawnEntity(player, 999);
 
@@ -62,9 +61,9 @@ public class EntityServiceTests : IDisposable
     public void SpawnEntity_MultipleEntities_AssignsSequentialIds()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
-        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
 
         SpawnResult result1 = service.SpawnEntity(player1, 0);
         SpawnResult result2 = service.SpawnEntity(player2, 0);
@@ -83,7 +82,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         service.SpawnEntity(player, 0);
 
@@ -97,7 +96,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         service.SpawnEntity(player, 0);
 
@@ -111,7 +110,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         service.SpawnEntity(player, 0);
 
@@ -139,14 +138,14 @@ public class EntityServiceTests : IDisposable
     public void DespawnEntity_ReleasesLocalId()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
 
         service.SpawnEntity(player1, 0); // Gets ID 0
         service.SpawnEntity(player2, 0); // Gets ID 1
         service.DespawnEntity(player1.PersistentId); // Releases ID 0
 
-        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(300, 300));
         SpawnResult result = service.SpawnEntity(player3, 0); // Should reuse ID 0
 
         Assert.NotNull(result.LocalId);
@@ -157,8 +156,8 @@ public class EntityServiceTests : IDisposable
     public void GetEntitiesInZone_ReturnsAllEntities()
     {
         var service = new EntityService(_zoneManager, _log);
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
 
         service.SpawnEntity(player1, 0);
         service.SpawnEntity(player2, 0);
@@ -175,7 +174,7 @@ public class EntityServiceTests : IDisposable
     {
         var service = new EntityService(_zoneManager, _log);
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "TestPlayer", new Position(100, 100));
 
         service.SpawnEntity(player, 0);
 
@@ -201,11 +200,11 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         // Spawn entities at different positions
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
         var player2 =
-            new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
+            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(105, 105)); // ~7 units away
         var player3 =
-            new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
+            new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(200, 200)); // ~141 units away
 
         service.SpawnEntity(player1, 0);
         service.SpawnEntity(player2, 0);
@@ -236,9 +235,9 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
-        var other1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200));
-        var other2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Other2", new Position(300, 300));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+        var other1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other1", new Position(200, 200));
+        var other2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Other2", new Position(300, 300));
 
         service.SpawnEntity(player, 0);
         service.SpawnEntity(other1, 0);
@@ -268,7 +267,7 @@ public class EntityServiceTests : IDisposable
         var service = new EntityService(_zoneManager, _log);
 
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
 
         service.SpawnEntity(player, 0);
 

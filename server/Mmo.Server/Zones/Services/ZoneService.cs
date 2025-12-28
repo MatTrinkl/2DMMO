@@ -1,11 +1,10 @@
+using Mmo.Server.Entities;
 using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Entities.Interfaces;
-using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones.Services;
 
@@ -28,8 +27,8 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
         // Using available data from Zone struct
         // TODO: Add RecommendedLevel, IsPvP, IsInstance to Zone configuration
         return new ZoneInfo(
-            zone.Id,
-            zone.Name,
+            zone.Value.ZoneId,
+            zone.Value.ZoneName,
             1, // Default value, should come from config
             false, // Default value, should come from config
             false // Default value, should come from config
@@ -58,7 +57,7 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
             };
 
         // 2. Get player entity
-        if (!IdRegistry.Instance.TryGetEntity(playerId, out IEntity? entity))
+        if (!IdRegistry.Instance.TryGetEntity(playerId, out BaseEntity? entity))
             return new ZoneTransferResult
             {
                 Success = false,
@@ -114,6 +113,6 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
         if (zone == null)
             return [];
 
-        return zone.GetEntityIds();
+        return zone.Value.GetEntityIds();
     }
 }

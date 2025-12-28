@@ -6,7 +6,7 @@ using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Messages.Enums;
 using Mmo.Server.Network;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages.Client_Server;

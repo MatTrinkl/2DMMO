@@ -2,7 +2,7 @@ using Mmo.Server.Connections;
 using Mmo.Server.Core;
 using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;

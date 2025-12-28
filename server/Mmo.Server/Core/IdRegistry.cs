@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities.Interfaces;
+using Mmo.Server.Core;
+using Mmo.Server.Entities;
 
 namespace Mmo.Shared.Core;
 
@@ -19,14 +19,14 @@ public sealed class IdRegistry : IIdRegistry
     private readonly ConcurrentDictionary<Guid, Guid> _connectionToEntity = new();
 
     /// <summary>
-    ///     GlobalKey → IEntity lookup (for runtime lookups).
+    ///     GlobalKey → BaseEntity lookup (for runtime lookups).
     /// </summary>
-    private readonly ConcurrentDictionary<long, IEntity> _entitiesByGlobalKey = new();
+    private readonly ConcurrentDictionary<long, BaseEntity> _entitiesByGlobalKey = new();
 
     /// <summary>
-    ///     PersistentId → IEntity lookup.
+    ///     PersistentId → BaseEntity lookup.
     /// </summary>
-    private readonly ConcurrentDictionary<Guid, IEntity> _entitiesByPersistentId = new();
+    private readonly ConcurrentDictionary<Guid, BaseEntity> _entitiesByPersistentId = new();
 
     /// <summary>
     ///     PersistentId → ConnectionId mapping.
@@ -96,15 +96,24 @@ public sealed class IdRegistry : IIdRegistry
     }
 
     /// <inheritdoc />
-    public bool TryGetEntity(Guid persistentId, [NotNullWhen(true)] out IEntity? entity) =>
+    public bool TryGetEntity(Guid persistentId, [NotNullWhen(true)] out BaseEntity? entity) =>
         _entitiesByPersistentId.TryGetValue(persistentId, out entity);
 
     /// <inheritdoc />
-    public bool TryGetEntity(long globalKey, [NotNullWhen(true)] out IEntity? entity) =>
+    public List<BaseEntity> GetEntities(IEnumerable<Guid> persistentIds)
+    {
+        List<BaseEntity> entities = [];
+        foreach (Guid id in persistentIds) entities.AddRange(_entitiesByPersistentId[id]);
+
+        return entities;
+    }
+
+    /// <inheritdoc />
+    public bool TryGetEntity(long globalKey, [NotNullWhen(true)] out BaseEntity? entity) =>
         _entitiesByGlobalKey.TryGetValue(globalKey, out entity);
 
     /// <inheritdoc />
-    public bool TryGetEntityByConnection(Guid connectionId, [NotNullWhen(true)] out IEntity? entity)
+    public bool TryGetEntityByConnection(Guid connectionId, [NotNullWhen(true)] out BaseEntity? entity)
     {
         entity = null;
         if (!_connectionToEntity.TryGetValue(connectionId, out Guid persistentId))
@@ -123,7 +132,7 @@ public sealed class IdRegistry : IIdRegistry
     ///     This is intentional to support scenarios like reconnecting players
     ///     or zone transfers where the entity might already be registered.
     /// </remarks>
-    public void RegisterEntity(IEntity entity)
+    public void RegisterEntity(BaseEntity entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -136,7 +145,7 @@ public sealed class IdRegistry : IIdRegistry
     /// <inheritdoc />
     public void UnregisterEntity(Guid persistentId)
     {
-        if (_entitiesByPersistentId.TryRemove(persistentId, out IEntity? entity))
+        if (_entitiesByPersistentId.TryRemove(persistentId, out BaseEntity? entity))
             // Also remove from GlobalKey lookup if it was assigned
             if (entity.RuntimeId.IsAssigned)
                 _entitiesByGlobalKey.TryRemove(entity.RuntimeId.GlobalKey, out _);
@@ -166,7 +175,7 @@ public sealed class IdRegistry : IIdRegistry
     /// </summary>
     /// <param name="entity">The entity that changed zones.</param>
     /// <param name="oldGlobalKey">The previous GlobalKey of the entity.</param>
-    public void UpdateEntityGlobalKey(IEntity entity, long oldGlobalKey)
+    public void UpdateEntityGlobalKey(BaseEntity entity, long oldGlobalKey)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -195,7 +204,7 @@ public sealed class IdRegistry : IIdRegistry
     ///     Gets all registered entities.
     /// </summary>
     /// <returns>An enumerable of all entities.</returns>
-    public IEnumerable<IEntity> GetAllEntities() => _entitiesByPersistentId.Values;
+    public IEnumerable<BaseEntity> GetAllEntities() => _entitiesByPersistentId.Values;
 
     /// <summary>
     ///     Clears all registrations. Useful for testing.

@@ -1,4 +1,3 @@
-using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
@@ -349,9 +348,9 @@ public class IdRegistryTests : IDisposable
         private const ushort _testPrefabId = 1;
 
         public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(_testPrefabId);
+        public bool IsTrulyPersistent => false;
 
         public Guid PersistentId { get; } = Guid.NewGuid();
-        public bool IsTrulyPersistent => false;
         public EntityType Type => EntityType.Player;
         public Position Position { get; set; } = new(0, 0);
 

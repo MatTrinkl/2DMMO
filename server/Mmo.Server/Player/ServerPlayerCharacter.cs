@@ -1,17 +1,17 @@
 using Mmo.Server.Connections;
+using Mmo.Server.Entities;
 using Mmo.Shared.Account.Enums;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Groups.Enums;
 
-namespace Mmo.Server.PlayerService;
+namespace Mmo.Server.Player;
 
 /// <summary>
 ///     Server-side wrapper for PlayerEntity with connection info.
 /// </summary>
-public class ServerPlayerCharacter(PlayerEntity entity, ClientConnection connection)
+public class ServerPlayerCharacter(CharacterEntity entity, ClientConnection connection)
 {
     /// <summary>Rate-Limiting Tracker..</summary>
     private readonly Dictionary<string, List<DateTime>> _rateLimits = new();
@@ -19,7 +19,7 @@ public class ServerPlayerCharacter(PlayerEntity entity, ClientConnection connect
     /// <summary>
     ///     The shared PlayerEntity (position, stats, etc.).
     /// </summary>
-    public PlayerEntity Entity { get; } = entity;
+    public CharacterEntity Entity { get; } = entity;
 
     /// <summary>
     ///     The ClientConnection ID for this player.

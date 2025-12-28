@@ -7,13 +7,17 @@ using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Structs;
 
-namespace Mmo.Shared.Combat.Entities;
+namespace Mmo.Server.Entities;
 
 /// <summary>
 ///     Abstract base class for all entities that can fight.
 ///     Implements the shared combat logic.
 /// </summary>
-public abstract class CombatEntity(Guid persistentId, Position position, ushort prefabId) : ICombatEntity
+public abstract class CombatEntity(
+    Guid persistentId,
+    Position position,
+    ushort prefabId,
+    EntityIdentity runtimeId) : BaseEntity(runtimeId, persistentId, position), ICombatEntity
 {
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTORS
@@ -42,41 +46,12 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
     /// <summary>
     ///     Runtime identity - Public setter required for MessagePack deserialization.
     ///     Should only be modified via SetEntityId() or ChangeZone() in production code.
+    ///     Todo: get from registry by default.
     /// </summary>
-    public EntityIdentity RuntimeId { get; set; } = new(1, 0, 0, 0, prefabId);
+    public new EntityIdentity RuntimeId { get; private set; } = new(1, 0, 0, 0, prefabId);
 
-    /// <summary>
-    ///     Persistent GUID - Public setter required for MessagePack deserialization.
-    ///     Should be immutable after creation in production code.
-    /// </summary>
-    public Guid PersistentId { get; set; } = persistentId;
-
-    public Position Position { get; set; } = position;
-    public abstract EntityType Type { get; }
-    public virtual bool IsTrulyPersistent => true;
-
-    // ═══════════════════════════════════════════════════════════════
-    // ICombatEntity - Identity
-    // ═══════════════════════════════════════════════════════════════
-    public string DisplayName { get; set; } = "";
-    public int Level { get; set; } = 1;
-
-    // ═══════════════════════════════════════════════════════════════
-    // ICombatEntity - Health & Resource
-    // ═══════════════════════════════════════════════════════════════
-    public int CurrentHealth { get; set; } = 100;
-    public int MaxHealth { get; set; } = 100;
-    public int CurrentResource { get; set; } = 100;
-    public int MaxResource { get; set; } = 100;
-    public virtual CombatResourceType CombatResourceType { get; set; } = CombatResourceType.None;
-
-    // ═══════════════════════════════════════════════════════════════
-    // ICombatEntity - State
-    // ═══════════════════════════════════════════════════════════════
-    public bool IsInCombat { get; set; }
-    public Guid? TargetEntityId { get; set; }
-    public Faction Faction { get; set; } = Faction.Neutral;
-    public virtual bool IsDead => CurrentHealth <= 0;
+    public override bool IsTrulyPersistent => true;
+    protected virtual bool IsDead => CurrentHealth <= 0;
     public virtual bool IsAttackable => !IsDead;
 
     // ═══════════════════════════════════════════════════════════════
@@ -84,13 +59,44 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
     // ═══════════════════════════════════════════════════════════════
     public int AttackPower { get; set; } = 10;
     public int Armor { get; set; } = 0;
+
+    /// <summary>
+    ///     Persistent GUID - Public setter required for MessagePack deserialization.
+    ///     Should be immutable after creation in production code.
+    /// </summary>
+    public new Guid PersistentId { get; init; } = persistentId;
+
+    public new Position Position { get; set; } = position;
+    public abstract override EntityType Type { get; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICombatEntity - Identity
+    // ═══════════════════════════════════════════════════════════════
+    public string DisplayName { get; init; } = "";
+    public int Level { get; set; } = 1;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICombatEntity - Health & Resource
+    // ═══════════════════════════════════════════════════════════════
+    public int CurrentHealth { get; set; } = 100;
+    public int MaxHealth { get; init; } = 100;
+    public int CurrentResource { get; set; } = 100;
+    public int MaxResource { get; init; } = 100;
+    public virtual CombatResourceType CombatResourceType { get; init; } = CombatResourceType.None;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICombatEntity - State
+    // ═══════════════════════════════════════════════════════════════
+    public bool IsInCombat { get; set; }
+    public Guid? TargetEntityId { get; set; }
+    public Faction Faction { get; init; } = Faction.Neutral;
     public float MovementSpeed { get; set; } = 5.0f;
 
     // ═══════════════════════════════════════════════════════════════
     // IEntity METHODS
     // ═══════════════════════════════════════════════════════════════
 
-    public void SetEntityId(ushort localId, ushort zoneId)
+    public override void SetEntityId(ushort localId, ushort zoneId)
     {
         RuntimeId = new EntityIdentity(
             RuntimeId.ServerId,
@@ -102,7 +108,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
     }
 
 
-    public virtual void ChangeZone(ushort newZoneId)
+    public override void ChangeZone(ushort newZoneId)
     {
         RuntimeId = new EntityIdentity(
             RuntimeId.ServerId,
@@ -117,7 +123,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
     // ICombatEntity METHODS - Gemeinsame Implementierung!
     // ═══════════════════════════════════════════════════════════════
 
-    public virtual bool IsHostileTo(ICombatEntity other)
+    protected virtual bool IsHostileTo(ICombatEntity other)
     {
         if (other.Faction == Faction.Monster && this is ICharacterEntity)
             return true;
@@ -184,7 +190,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
         );
     }
 
-    public virtual HealResult ReceiveHeal(int amount, ICombatEntity? source)
+    internal HealResult ReceiveHeal(int amount, ICombatEntity? source)
     {
         if (IsDead)
             return new HealResult(
@@ -207,7 +213,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
         );
     }
 
-    public virtual void Die(ICombatEntity? killer)
+    internal virtual void Die(ICombatEntity? killer)
     {
         CurrentHealth = 0;
         IsInCombat = false;
@@ -215,7 +221,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
         OnDeath(killer);
     }
 
-    public virtual void EnterCombat(ICombatEntity? enemy)
+    internal virtual void EnterCombat(ICombatEntity? enemy)
     {
         if (!IsInCombat)
         {
@@ -224,7 +230,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
         }
     }
 
-    public virtual void LeaveCombat()
+    public void LeaveCombat()
     {
         if (IsInCombat)
         {
@@ -237,7 +243,7 @@ public abstract class CombatEntity(Guid persistentId, Position position, ushort 
     // PROTECTED HELPERS (for subclasses to override)
     // ═══════════════════════════════════════════════════════════════
 
-    protected virtual int CalculateArmorMitigation(int rawDamage)
+    protected int CalculateArmorMitigation(int rawDamage)
     {
         // Simple formula:  Damage * (1 - Armor / (Armor + 100 * Level))
         float mitigation = (float)Armor / (Armor + 100 * Math.Max(1, Level));

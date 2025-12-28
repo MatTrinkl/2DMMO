@@ -18,7 +18,6 @@ using Mmo.Server.Zones.Services;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Server.Core;
 

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using MessagePack;
-using Mmo.Shared.Character.Entities;
+using Mmo.Server.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
@@ -81,7 +81,7 @@ public class MessageSerializerTests
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var original = new PositionUpdate(timestamp,
-            new PlayerEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f)),
+            new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f)),
             new Position(123.456f, 789.012f));
 
         byte[] bytes = MessageSerializer.Serialize(original);

@@ -1,9 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using MessagePack;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Generators;
 
@@ -18,7 +16,7 @@ public class EntityDtoSyncTests
     public void PlayerEntityDto_Implements_IPlayerData()
     {
         // Arrange & Act
-        bool isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntityDto));
+        bool isAssignable = typeof(ICharacterData).IsAssignableFrom(typeof(PlayerEntityDto));
 
         // Assert
         isAssignable.Should().BeTrue("PlayerEntityDto should implement IPlayerData");
@@ -28,7 +26,7 @@ public class EntityDtoSyncTests
     public void PlayerEntity_Implements_IPlayerData()
     {
         // Arrange & Act
-        bool isAssignable = typeof(IPlayerData).IsAssignableFrom(typeof(PlayerEntity));
+        bool isAssignable = typeof(ICharacterData).IsAssignableFrom(typeof(PlayerEntity));
 
         // Assert
         isAssignable.Should().BeTrue("PlayerEntity should implement IPlayerData");

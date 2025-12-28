@@ -1,4 +1,4 @@
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Shared.Connection.Enums;
 
 namespace Mmo.Server.Connections.Records;

@@ -1,16 +1,17 @@
 using MessagePack;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
-using Mmo.Shared.Combat.Entities;
 using Mmo.Shared.Combat.Enums;
+using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Creatures.Enums;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Npc.Enums;
 using Mmo.Shared.Npc.Interfaces;
 
-namespace Mmo.Shared.Npc.Entities;
+namespace Mmo.Server.Entities;
 
 /// <summary>
 ///     NPC/Monster Entity.
@@ -29,8 +30,8 @@ public class NpcEntity : CombatEntity, INpcEntity
         int spawnId,
         string displayName,
         Position spawnPosition,
-        ushort prefabId)
-        : base(Guid.NewGuid(), spawnPosition, prefabId)
+        ushort prefabId, EntityIdentity runtimeId)
+        : base(IdRegistry.Instance.GeneratePersistentId(), spawnPosition, prefabId, runtimeId)
     {
         NpcTemplateId = npcTemplateId;
         SpawnId = spawnId;
@@ -84,34 +85,9 @@ public class NpcEntity : CombatEntity, INpcEntity
 
     [Key(45)] public TrainerType? TrainerType { get; set; }
 
-    // ═══════════════════════════════════════════════════════════════
-    // IEntity Overrides
-    // ═══════════════════════════════════════════════════════════════
-
-    [IgnoreMember] public override EntityType Type => EntityType.Npc;
-
     [IgnoreMember] public override bool IsTrulyPersistent => false; // NPCs werden nicht in DB gespeichert
 
-    // ═══════════════════════════════════════════════════════════════
-    // INpcEntity - Identity
-    // ═══════════════════════════════════════════════════════════════
-
-    [Key(18)] public int NpcTemplateId { get; }
-
     [Key(19)] public int SpawnId { get; }
-
-    [Key(20)] public CombatRank CombatRank { get; set; } = CombatRank.Normal;
-
-    [Key(21)] public NpcFunction Function { get; set; } = NpcFunction.Hostile;
-
-    // CreatureType bleibt (Humanoid, Beast, Undead, etc.)
-    [Key(22)] public CreatureType CreatureType { get; set; } = CreatureType.Humanoid;
-
-    // ═══════════════════════════════════════════════════════════════
-    // INpcEntity - AI
-    // ═══════════════════════════════════════════════════════════════
-
-    [Key(22)] public NpcAiState AiState { get; set; } = NpcAiState.Idle;
 
     [Key(23)] public float AggroRadius { get; set; } = 10f;
 
@@ -147,6 +123,31 @@ public class NpcEntity : CombatEntity, INpcEntity
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // IEntity Overrides
+    // ═══════════════════════════════════════════════════════════════
+
+    [IgnoreMember] public override EntityType Type => EntityType.Npc;
+
+    // ═══════════════════════════════════════════════════════════════
+    // INpcEntity - Identity
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(18)] public int NpcTemplateId { get; init; }
+
+    [Key(20)] public CombatRank CombatRank { get; init; } = CombatRank.Normal;
+
+    [Key(21)] public NpcFunction Function { get; init; } = NpcFunction.Hostile;
+
+    // CreatureType bleibt (Humanoid, Beast, Undead, etc.)
+    [Key(22)] public CreatureType CreatureType { get; init; } = CreatureType.Humanoid;
+
+    // ═══════════════════════════════════════════════════════════════
+    // INpcEntity - AI
+    // ═══════════════════════════════════════════════════════════════
+
+    [Key(22)] public NpcAiState AiState { get; set; } = NpcAiState.Idle;
+
     public void AddThreat(Guid entityId, int amount)
     {
         if (!_threatTable.TryAdd(entityId, amount))
@@ -159,7 +160,7 @@ public class NpcEntity : CombatEntity, INpcEntity
     // OVERRIDES
     // ═══════════════════════════════════════════════════════════════
 
-    public override bool IsHostileTo(ICombatEntity other)
+    protected override bool IsHostileTo(ICombatEntity other)
     {
         // Monster sind immer feindlich zu Spielern
         if (Faction == Faction.Monster && other is ICharacterEntity)

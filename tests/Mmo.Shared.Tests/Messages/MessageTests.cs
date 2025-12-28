@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Constants;

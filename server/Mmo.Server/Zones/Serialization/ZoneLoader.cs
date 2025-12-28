@@ -1,8 +1,7 @@
 using System.Text.Json;
-using Mmo.Shared.Zones.Configurations;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Server.Zones.Configurations;
 
-namespace Mmo.Shared.Zones.Serialization;
+namespace Mmo.Server.Zones.Serialization;
 
 /// <summary>
 ///     Loads Zones from JSON Config.
@@ -20,13 +19,13 @@ public static class ZoneLoader
     };
 
     /// <summary>
-    ///     Load a <see cref="ZoneConfig" /> from a JSON file.
+    ///     Load a <see cref="configPath" /> from a JSON file.
     /// </summary>
     /// <param name="configPath">Path to the JSON File.</param>
     /// <returns>Returns the loaded Configuration.</returns>
-    /// <exception cref="FileNotFoundException">Thrown when the path leads to a file that does not exist.</exception>
-    /// <exception cref="ArgumentException">Thrown when the path doesn't end with .json.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the file isn't a <see cref="ZoneConfig" />.</exception>
+    /// <exception cref="ArgumentException">Thrown when the path leads to a file that does not exist.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the path doesn't end with .json.</exception>
+    /// <exception cref="ZoneConfig">Thrown when the file isn't a <see cref="ZoneConfig" />.</exception>
     public static ZoneConfig LoadZoneConfig(string configPath)
     {
         if (!File.Exists(configPath))
@@ -64,8 +63,7 @@ public static class ZoneLoader
     /// <returns>The zone from the config.</returns>
     public static Zone CreateZoneFromConfig(ZoneConfig config)
     {
-        var bounds = ZoneBounds.FromConfig(config.Bounds);
-        var newZone = new Zone(config.ZoneId, config.InternalName, bounds);
+        var newZone = new Zone(config, ZoneContext.CreateFromConfig(config));
         return newZone;
     }
 }

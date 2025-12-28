@@ -5,7 +5,7 @@ namespace Mmo.Shared.Zones.Configurations;
 /// <summary>
 ///     TODO:will be used in issue #123
 /// </summary>
-public class SpawnPointConfig
+public record SpawnPointConfig
 {
     public float X { get; init; }
     public float Y { get; init; }

@@ -1,31 +1,30 @@
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
-using Mmo.Shared.Combat.Entities;
 using Mmo.Shared.Combat.Enums;
 using Mmo.Shared.Combat.Records;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Generators;
 using Mmo.Shared.Movement.Enums;
 using Mmo.Shared.Prefab;
 
-namespace Mmo.Shared.Character.Entities;
+namespace Mmo.Server.Entities;
 
 /// <summary>
 ///     Represents a player character entity in the game world.
 /// </summary>
-[GenerateDto]
-[DtoImplements(typeof(IPlayerData))]
-public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
+public class CharacterEntity : CombatEntity, ICharacterEntity
 {
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTORS
     // ═══════════════════════════════════════════════════════════════
 
 
-    public PlayerEntity(Guid characterId, Guid accountId, string displayName, Position position)
-        : base(characterId, position, PrefabIds.PlayerDefault)
+    public CharacterEntity(Guid characterId, Guid accountId, string displayName, Position position,
+        EntityIdentity runtimeId)
+        : base(characterId, position, PrefabIds.PlayerDefault, runtimeId)
     {
         CharacterId = characterId;
         AccountId = accountId;
@@ -35,6 +34,42 @@ public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
     public float LevelProgress => ExperienceToNextLevel > 0
         ? (float)Experience / ExperienceToNextLevel
         : 0f;
+
+    protected override bool IsDead => State == CharacterState.Dead || CurrentHealth <= 0;
+
+    public override bool IsAttackable => !IsDead && State != CharacterState.Ghost;
+
+    public Guid AccountId { get; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Progression
+    // ═══════════════════════════════════════════════════════════════
+
+    [ServerOnly] public long Experience { get; set; }
+
+    public long ExperienceToNextLevel => CalculateXpForLevel(Level + 1);
+
+    public int HonorPoints { get; init; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Currency
+    // ═══════════════════════════════════════════════════════════════
+
+    [ServerOnly] public long Gold { get; set; } = 0;
+
+    public DateTime? PvpFlagExpires { get; set; }
+
+    public int PvpKills { get; set; }
+
+    public int PvpDeaths { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ICharacterEntity - Locations
+    // ═══════════════════════════════════════════════════════════════
+
+    public BindLocation? HearthstoneLocation { get; set; }
+
+    public Position? LastSafePosition { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
     // IEntity Overrides
@@ -46,47 +81,31 @@ public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
     // ICombatEntity Overrides
     // ═══════════════════════════════════════════════════════════════
 
-    public override CombatResourceType CombatResourceType { get; set; } = CombatResourceType.Mana;
-
-    public override bool IsDead => State == CharacterState.Dead || CurrentHealth <= 0;
-
-    public override bool IsAttackable => !IsDead && State != CharacterState.Ghost;
+    public override CombatResourceType CombatResourceType { get; init; } = CombatResourceType.Mana;
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - Identity
     // ═══════════════════════════════════════════════════════════════
 
-    public Guid CharacterId { get; }
-
-    public Guid AccountId { get; }
+    public Guid CharacterId { get; init; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - Character Info
     // ═══════════════════════════════════════════════════════════════
 
-    public Race Race { get; set; } = Race.Human;
+    public Race Race { get; init; } = Race.Human;
 
-    public CharacterClass Class { get; set; } = CharacterClass.Warrior;
+    public CharacterClass Class { get; init; } = CharacterClass.Warrior;
 
-    public Gender Gender { get; set; } = Gender.Male;
+    public Gender Gender { get; init; } = Gender.Male;
 
-    public string? Title { get; set; }
-
-    // ═══════════════════════════════════════════════════════════════
-    // ICharacterEntity - Progression
-    // ═══════════════════════════════════════════════════════════════
-
-    [ServerOnly] public long Experience { get; set; }
-
-    public long ExperienceToNextLevel => CalculateXpForLevel(Level + 1);
+    public string? Title { get; init; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - PvP
     // ═══════════════════════════════════════════════════════════════
 
     public bool IsPvpFlagged { get; set; }
-
-    public int HonorPoints { get; set; }
 
     // ═══════════════════════════════════════════════════════════════
     // ICharacterEntity - State
@@ -97,16 +116,10 @@ public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
     public MovementFlags MovementFlags { get; set; } = MovementFlags.None;
 
     // ═══════════════════════════════════════════════════════════════
-    // ICharacterEntity - Currency
-    // ═══════════════════════════════════════════════════════════════
-
-    [ServerOnly] public long Gold { get; set; } = 0;
-
-    // ═══════════════════════════════════════════════════════════════
     // OVERRIDES
     // ═══════════════════════════════════════════════════════════════
 
-    public override bool IsHostileTo(ICombatEntity other)
+    protected override bool IsHostileTo(ICombatEntity other)
     {
         // Basis-Check
         if (base.IsHostileTo(other))
@@ -137,32 +150,12 @@ public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
         Experience += amount;
 
         if (Experience >= ExperienceToNextLevel)
-        {
-            LevelUp();
+            //LevelUp();
             return true;
-        }
 
         return false;
     }
 
-    public void LevelUp()
-    {
-        Experience -= ExperienceToNextLevel;
-        Level++;
-
-        // Stats erhöhen
-        int healthGain = 10 + Level * 2;
-        int resourceGain = 5 + Level;
-
-        MaxHealth += healthGain;
-        MaxResource += resourceGain;
-
-        // Full heal on level up
-        CurrentHealth = MaxHealth;
-        CurrentResource = MaxResource;
-
-        AttackPower += 2;
-    }
 
     public void Respawn(Position position)
     {
@@ -173,20 +166,6 @@ public class PlayerEntity : CombatEntity, ICharacterEntity, IPlayerData
         IsInCombat = false;
         TargetEntityId = null;
     }
-
-    public DateTime? PvpFlagExpires { get; set; }
-
-    public int PvpKills { get; set; }
-
-    public int PvpDeaths { get; set; }
-
-    // ═══════════════════════════════════════════════════════════════
-    // ICharacterEntity - Locations
-    // ═══════════════════════════════════════════════════════════════
-
-    public BindLocation? HearthstoneLocation { get; set; }
-
-    public Position? LastSafePosition { get; set; }
 
     protected override void OnDeath(ICombatEntity? killer) => State = CharacterState.Dead;
 

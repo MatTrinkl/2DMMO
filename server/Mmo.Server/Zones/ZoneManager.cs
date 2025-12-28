@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Entities;
+using Mmo.Server.Player;
 using Mmo.Shared.Core;
 using Mmo.Shared.Entities.Interfaces;
-using Mmo.Shared.Zones;
 
 namespace Mmo.Server.Zones;
 
@@ -42,7 +42,7 @@ public class ZoneManager(ushort defaultZoneId)
     public bool ZoneExists(ushort zoneId)
         => _zones.ContainsKey(zoneId);
 
-    public bool RegisterZone(Zone zone) => _zones.TryAdd(zone.Id, zone);
+    public bool RegisterZone(Zone zone) => _zones.TryAdd(zone.ZoneId, zone);
 
     // ═══════════════════════════════════════════════════════════════
     // ENTITY METHODS - Delegiert an IdRegistry + Zone
@@ -51,18 +51,18 @@ public class ZoneManager(ushort defaultZoneId)
     public IEntity? GetEntity(Guid persistentId)
     {
         // Lookup via IdRegistry - NO own list!
-        IdRegistry.Instance.TryGetEntity(persistentId, out IEntity? entity);
+        IdRegistry.Instance.TryGetEntity(persistentId, out BaseEntity? entity);
         return entity;
     }
 
-    public IEnumerable<IEntity> GetEntitiesInZone(ushort zoneId)
+    public IEnumerable<BaseEntity> GetEntitiesInZone(ushort zoneId)
     {
         Zone? zone = GetZone(zoneId);
         if (zone == null) return [];
 
         // Zone only has IDs, entities come from IdRegistry
-        return zone.GetEntityIds()
-            .Select(id => IdRegistry.Instance.TryGetEntity(id, out IEntity? e) ? e : null)
+        return zone.Value.GetEntityIds()
+            .Select(id => IdRegistry.Instance.TryGetEntity(id, out BaseEntity? e) ? e : null)
             .Where(e => e != null)!;
     }
 
@@ -87,7 +87,7 @@ public class ZoneManager(ushort defaultZoneId)
         Zone? zone = GetZone(zoneId);
         if (zone == null) return [];
 
-        return zone.GetEntityIds()
+        return zone.Value.GetEntityIds()
             .Select(id =>
             {
                 if (IdRegistry.Instance.TryGetConnectionByEntity(id, out Guid connId) &&

@@ -1,5 +1,3 @@
-using Mmo.Shared.Core;
-
 namespace Mmo.Shared.Tests;
 
 /// <summary>

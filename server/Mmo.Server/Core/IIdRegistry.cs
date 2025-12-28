@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using Mmo.Shared.Entities.Interfaces;
+using Mmo.Server.Entities;
 
-namespace Mmo.Shared.Core.Interfaces;
+namespace Mmo.Server.Core;
 
 /// <summary>
 ///     Interface for the central ID registry.
@@ -40,7 +40,7 @@ public interface IIdRegistry
     /// <param name="persistentId">The PersistentId to search for.</param>
     /// <param name="entity">The found entity, or null.</param>
     /// <returns>True if the entity was found.</returns>
-    bool TryGetEntity(Guid persistentId, [NotNullWhen(true)] out IEntity? entity);
+    bool TryGetEntity(Guid persistentId, [NotNullWhen(true)] out BaseEntity? entity);
 
     /// <summary>
     ///     Looks up an entity by its GlobalKey (runtime ID).
@@ -48,7 +48,14 @@ public interface IIdRegistry
     /// <param name="globalKey">The GlobalKey to search for.</param>
     /// <param name="entity">The found entity, or null.</param>
     /// <returns>True if the entity was found.</returns>
-    bool TryGetEntity(long globalKey, [NotNullWhen(true)] out IEntity? entity);
+    bool TryGetEntity(long globalKey, [NotNullWhen(true)] out BaseEntity? entity);
+
+    /// <summary>
+    ///     Get all Entities by a list of Ids.
+    /// </summary>
+    /// <param name="persistentIds">List of ids.</param>
+    /// <returns>All found entities.</returns>
+    List<BaseEntity> GetEntities(IEnumerable<Guid> persistentIds);
 
     /// <summary>
     ///     Looks up an entity by connection ID.
@@ -56,7 +63,7 @@ public interface IIdRegistry
     /// <param name="connectionId">The connection ID.</param>
     /// <param name="entity">The found entity, or null.</param>
     /// <returns>True if the entity was found.</returns>
-    bool TryGetEntityByConnection(Guid connectionId, [NotNullWhen(true)] out IEntity? entity);
+    bool TryGetEntityByConnection(Guid connectionId, [NotNullWhen(true)] out BaseEntity? entity);
 
     /// <summary>
     ///     Looks up a connection ID by entity PersistentId.
@@ -70,7 +77,7 @@ public interface IIdRegistry
     ///     Registers an entity in the registry.
     /// </summary>
     /// <param name="entity">The entity to register.</param>
-    void RegisterEntity(IEntity entity);
+    void RegisterEntity(BaseEntity entity);
 
     /// <summary>
     ///     Unregisters an entity from the registry.

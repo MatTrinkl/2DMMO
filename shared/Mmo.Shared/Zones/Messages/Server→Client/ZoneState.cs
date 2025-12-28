@@ -2,7 +2,8 @@ using MessagePack;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Zones.Enums;
+using Mmo.Shared.Zones.Interfaces;
+using EntityDtoUnion = Mmo.Shared.Entities.Dtos.EntityDtoUnion;
 
 namespace Mmo.Shared.Zones.Messages.Server_Client;
 
@@ -14,16 +15,17 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneState)]
 public class ZoneState : IServerMessage, ITimestampedMessage
 {
+    [Key(2)] public required ZoneConfigDto ZoneConfig { get; init; }
+
+    [Key(3)] public required ZoneContextDto ZoneContext { get; init; }
+
+    [Key(4)] public required List<EntityDtoUnion> Entities { get; init; }
+
     /// <summary>
     ///     ID of the zone.
     /// </summary>
-    [Key(2)]
-    public ushort ZoneId { get; set; }
-
-    [Key(3)] public string ZoneName { get; set; } = "";
-    [Key(4)] public ZoneFlags ZoneFlags { get; set; }
-    [Key(5)] public WeatherType WeatherType { get; set; }
-    [Key(6)] public float TimeOfDay { get; set; }
+    [IgnoreMember]
+    public ushort ZoneId => ZoneConfig.ZoneId;
 
     /// <summary>
     ///     The Message Type of this Message.

@@ -1,11 +1,10 @@
 using Mmo.Server.Connections;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Entities;
+using Mmo.Server.Player;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Zones;
@@ -39,7 +38,7 @@ public class ZoneManagerTests : IDisposable
 
     private ServerPlayerCharacter CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
     {
-        var entity = new PlayerEntity(
+        var entity = new CharacterEntity(
             persistentId ?? IdRegistry.Instance.GeneratePersistentId(),
             Guid.NewGuid(),
             "TestPlayer",

@@ -3,7 +3,7 @@ namespace Mmo.Shared.Generators;
 /// <summary>
 ///     Marks a class or a struct for automatic DTO Generation.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
 public class GenerateDtoAttribute : Attribute
 {
     /// <summary>
@@ -29,4 +29,10 @@ public class GenerateDtoAttribute : Attribute
     ///     Default: "Dto"
     /// </summary>
     public string DtoSuffix { get; set; } = "Dto";
+
+    /// <summary>
+    ///     When true and applied to an interface, the generated DTO will implement the source interface.
+    ///     Default: true for interfaces
+    /// </summary>
+    public bool ImplementSourceInterface { get; set; } = true;
 }

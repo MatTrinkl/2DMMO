@@ -1,5 +1,4 @@
 using MessagePack;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Prefab;

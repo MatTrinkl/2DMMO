@@ -5,7 +5,7 @@ namespace Mmo.Shared.Zones.Configurations;
 /// <summary>
 ///     NPC-Spawn Definition.
 /// </summary>
-public class NpcSpawnConfig
+public record NpcSpawnConfig
 {
     public int SpawnId { get; set; }
     public int NpcTemplateId { get; set; }
