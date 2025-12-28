@@ -1,7 +1,7 @@
 # 🔄 DTO Architecture
 
-**Version:** 2.0.0  
-**Letzte Aktualisierung:** 2025-12-27  
+**Version:** 3.0.0  
+**Letzte Aktualisierung:** 2025-12-28  
 **Teil von:** [Message Documentation](README.md) | [Architektur](../02-architecture/README.md)
 
 ---
@@ -36,13 +36,13 @@ Entity (Server)  →  DTO (Network)  →  Client
 ### Von Entity zu Client
 
 ```
-1. PlayerEntity (Server)
+1. CharacterEntity (Server) implements ICharacterEntity
    ├─ Experience:  1000 [ServerOnly]
    ├─ Gold: 500 [ServerOnly]
    ├─ Position: (10, 20)
    └─ DisplayName: "Alice"
 
-2. PlayerEntityDto. FromPlayerEntity(entity)
+2. entity.ToDto()  // Extension Method
    ├─ Position: (10, 20) ✅
    └─ DisplayName: "Alice" ✅
 
@@ -53,7 +53,7 @@ Entity (Server)  →  DTO (Network)  →  Client
    Client ← Server
 
 5. MessagePack Deserialization
-   PlayerEntityDto (Client)
+   CharacterEntityDto (Client)
    ├─ Position: (10, 20)
    └─ DisplayName:  "Alice"
 ```
@@ -64,13 +64,13 @@ Entity (Server)  →  DTO (Network)  →  Client
 
 ### `[GenerateDto]` Attribute
 
-Markiert eine Entity-Klasse für die automatische DTO-Generierung durch den Source Generator.
+Markiert ein **Interface** für die automatische DTO-Generierung durch den Source Generator.
 
 ```csharp
-[GenerateDto]
-public class PlayerEntity :  CombatEntity
+[GenerateDto(DtoName = "CharacterEntityDto")]
+public interface ICharacterEntity : ICombatEntity
 {
-    // DTO wird automatisch generiert:  PlayerEntityDto
+    // DTO wird automatisch generiert:  CharacterEntityDto
 }
 ```
 
@@ -78,26 +78,26 @@ public class PlayerEntity :  CombatEntity
 
 | Property            | Typ     | Default | Beschreibung                                    |
 | ------------------- | ------- | ------- | ----------------------------------------------- |
-| `InheritInterfaces` | bool    | false   | Übernimmt alle Interfaces der Source-Class      |
-| `DtoName`           | string? | null    | Custom Name (Default: "{ClassName}Dto")         |
+| `InheritInterfaces` | bool    | false   | Übernimmt alle Interfaces des Source-Interface  |
+| `DtoName`           | string? | null    | Custom Name (Default: "{InterfaceName}Dto")     |
 | `DtoNamespace`      | string? | null    | Custom Namespace (Default: gleicher wie Source) |
 | `DtoSuffix`         | string  | "Dto"   | Suffix für generierten Namen                    |
 
 **Beispiele:**
 
 ```csharp
-// Standard:  Generiert PlayerEntityDto
-[GenerateDto]
-public class PlayerEntity { }
+// Standard:  Generiert CharacterEntityDto
+[GenerateDto(DtoName = "CharacterEntityDto")]
+public interface ICharacterEntity { }
 
 // Mit Interface-Vererbung
 [GenerateDto(InheritInterfaces = true)]
-public class PlayerEntity : IPlayerData { }
-// Generiert:  PlayerEntityDto :  IPlayerData
+public interface ICharacterEntity : IPlayerData { }
+// Generiert:  CharacterEntityDto :  IPlayerData
 
 // Custom Name
 [GenerateDto(DtoName = "PlayerSnapshot")]
-public class PlayerEntity { }
+public interface IPlayerEntity { }
 // Generiert: PlayerSnapshot
 ```
 
@@ -106,29 +106,97 @@ public class PlayerEntity { }
 Explizite Angabe welche Interfaces das generierte DTO implementieren soll.
 
 ```csharp
-[GenerateDto]
+[GenerateDto(DtoName = "CharacterEntityDto")]
 [DtoImplements(typeof(IPlayerData))]
 [DtoImplements(typeof(IPositionable))]
-public class PlayerEntity : IPlayerData, IPositionable, IServerInternals
+public interface ICharacterEntity : IPlayerData, IPositionable, IServerInternals
 {
-    // Generiert: PlayerEntityDto :  IPlayerData, IPositionable
+    // Generiert: CharacterEntityDto :  IPlayerData, IPositionable
     // IServerInternals wird NICHT übernommen
 }
 ```
+
+### `[GenerateDtoUnion]` Attribute
+
+**Neu in V3:** Markiert ein Interface als Wurzel einer Union-Hierarchie für polymorphe Serialisierung.
+
+```csharp
+[GenerateDto(DtoName = "EntityDto")]
+[GenerateDtoUnion(UnionName = "EntityDtoUnion", Namespace = "Mmo.Shared.Entities.Dtos")]
+public interface IEntity
+{
+    Guid PersistentId { get; init; }
+    Position Position { get; set; }
+}
+```
+
+**Properties:**
+
+| Property    | Typ     | Default                     | Beschreibung                            |
+| ----------- | ------- | --------------------------- | --------------------------------------- |
+| `UnionName` | string? | "{InterfaceName}DtoUnion"   | Name des Union-Interfaces               |
+| `Namespace` | string? | "{SourceNamespace}.Dtos"    | Namespace für Union                     |
+
+### `[DtoUnionMember]` Attribute
+
+**Neu in V3:** Markiert ein Interface als Member einer Union.
+
+```csharp
+[GenerateDto(DtoName = "CharacterEntityDto")]
+[DtoUnionMember(0, typeof(IEntity))]
+public interface ICharacterEntity : ICombatEntity
+{
+    Guid CharacterId { get; init; }
+}
+
+[GenerateDto(DtoName = "NpcEntityDto")]
+[DtoUnionMember(1, typeof(IEntity))]
+public interface INpcEntity : ICombatEntity
+{
+    int NpcTemplateId { get; init; }
+}
+```
+
+**Generiert:**
+
+```csharp
+// EntityDtoUnion.g.cs
+[Union(0, typeof(CharacterEntityDto))]
+[Union(1, typeof(NpcEntityDto))]
+public interface EntityDtoUnion { }
+
+// CharacterEntityDto implementiert: ICharacterEntity, EntityDtoUnion
+// NpcEntityDto implementiert: INpcEntity, EntityDtoUnion
+```
+
+**Parameter:**
+
+- `index` (int): Union-Index für MessagePack
+- `rootType` (Type): Das Root-Interface (mit `[GenerateDtoUnion]`)
 
 ### `[ServerOnly]` Attribute
 
 Markiert Properties die **NICHT** an Clients übertragen werden sollen.
 
+> **Hinweis:** Wird auf der konkreten Entity-Klasse verwendet, nicht auf dem Interface.
+
 ```csharp
-[ServerOnly]
-public long Experience { get; set; }
+// Concrete Entity Class
+public class CharacterEntity : BaseEntity, ICharacterEntity
+{
+    // Interface Property - wird im DTO generiert
+    public string DisplayName { get; set; } = "";
+    
+    // ServerOnly - wird NICHT im DTO generiert
+    [ServerOnly]
+    public long Experience { get; set; }
 
-[ServerOnly]
-public long Gold { get; set; }
+    [ServerOnly]
+    public long Gold { get; set; }
 
-[ServerOnly]
-public Guid AccountId { get; set; }
+    [ServerOnly]
+    public Guid AccountId { get; set; }
+}
 ```
 
 **Wichtig:** ServerOnly Properties werden beim DTO-Mapping übersprungen.
@@ -150,10 +218,38 @@ public HashSet<Guid> InternalCache { get; set; }
 Optionale Konfiguration für einzelne Properties im generierten DTO.
 
 ```csharp
-[DtoProperty(Name = "PlayerName", Key = 5)]
-public string DisplayName { get; set; }
-// Generiert: [Key(5)] public string PlayerName { get; set; }
+public interface ICharacterEntity
+{
+    [DtoProperty(Name = "PlayerName", Key = 5)]
+    string DisplayName { get; init; }
+    // Generiert: [Key(5)] public string PlayerName { get; init; }
+}
 ```
+
+### Set vs Init Accessor Logic
+
+**Wichtig in V3:** Der Generator respektiert die Accessor-Typen des Interfaces!
+
+```csharp
+public interface IEntity
+{
+    Guid PersistentId { get; init; }  // DTO: { get; init; }
+    Position Position { get; set; }    // DTO: { get; set; }
+    EntityType Type { get; }           // DTO: { get; init; }
+}
+```
+
+**Regel:**
+
+- Interface hat `{ get; set; }` → DTO bekommt `{ get; set; }` (mutable)
+- Interface hat `{ get; init; }` → DTO bekommt `{ get; init; }` (init-only)
+- Interface hat nur `{ get; }` → DTO bekommt `{ get; init; }` (readonly after construction)
+
+**Warum wichtig?**
+
+- Erfüllt Interface-Contract
+- Ermöglicht Mutability wo nötig (z.B. Position-Updates)
+- Verhindert Compilation Errors: `'CharacterEntityDto' does not implement interface member 'IEntity.Position.set'`
 
 ---
 
@@ -229,50 +325,94 @@ Generierte DTOs erscheinen unter:
 
 ```csharp
 // <auto-generated/>
-// This file was generated by Mmo.Generators.DtoGenerator
+// Generated by Mmo.Generators.DtoGenerator
+// Source: Mmo.Shared.Character.Interfaces.ICharacterEntity
 
 #nullable enable
 
 using MessagePack;
 using System;
-using Mmo.Shared. Entities;
+using Mmo.Shared.Character.Interfaces;
+using Mmo.Shared.Entities.Dtos;
 
-namespace Mmo. Shared.Entities;
+namespace Mmo.Shared.Character.Interfaces;
 
 /// <summary>
-/// Auto-generated DTO for <see cref="PlayerEntity"/>.
+/// Auto-generated DTO for <see cref="ICharacterEntity"/>.
 /// </summary>
 [MessagePackObject]
-public sealed class PlayerEntityDto :  IPlayerData
+public sealed class CharacterEntityDto : ICharacterEntity, EntityDtoUnion
 {
-    [Key(0)] public Guid PersistentId { get; set; }
-    [Key(1)] public string DisplayName { get; set; }
-    [Key(2)] public int Level { get; set; }
-    [Key(3)] public Position Position { get; set; }
+    [SerializationConstructor]
+    public CharacterEntityDto() { }
+
+    public CharacterEntityDto(ICharacterEntity source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        PersistentId = source.PersistentId;
+        DisplayName = source.DisplayName;
+        Level = source.Level;
+        Position = source.Position;
+    }
+
+    [Key(0)] public Guid PersistentId { get; init; }
+    [Key(1)] public string DisplayName { get; init; }
+    [Key(2)] public int Level { get; init; }
+    [Key(3)] public Position Position { get; set; }  // 'set' weil Interface 'set' hat
     // Experience, Gold, AccountId sind NICHT enthalten (ServerOnly)
+}
+
+/// <summary>
+/// Extension methods for CharacterEntityDto.
+/// </summary>
+public static class CharacterEntityDtoExtensions
+{
+    /// <summary>
+    /// Converts an ICharacterEntity to CharacterEntityDto.
+    /// </summary>
+    public static CharacterEntityDto ToDto(this ICharacterEntity source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return new CharacterEntityDto(source);
+    }
 
     /// <summary>
-    /// Creates a PlayerEntityDto from a PlayerEntity.
+    /// Converts a list of ICharacterEntity to List&lt;CharacterEntityDto&gt;.
     /// </summary>
-    public static PlayerEntityDto FromPlayerEntity(PlayerEntity source)
+    public static List<CharacterEntityDto> ToDtoList(this IEnumerable<ICharacterEntity> source)
     {
-        return new PlayerEntityDto
+        ArgumentNullException.ThrowIfNull(source);
+        return source.Select(x => x.ToDto()).ToList();
+    }
+}
+
+/// <summary>
+/// Extension methods for EntityDtoUnion.
+/// </summary>
+public static class EntityDtoUnionExtensions
+{
+    /// <summary>
+    /// Converts an IEntity to EntityDtoUnion (polymorphic).
+    /// </summary>
+    public static EntityDtoUnion ToUnionDto(this IEntity source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        
+        return source switch
         {
-            PersistentId = source. PersistentId,
-            DisplayName = source.DisplayName,
-            Level = source.Level,
-            Position = source.Position,
+            ICharacterEntity x => x.ToDto(),
+            INpcEntity x => x.ToDto(),
+            _ => throw new ArgumentException($"Unknown IEntity type: {source.GetType().Name}")
         };
     }
 
     /// <summary>
-    /// Applies this DTO's values to an existing PlayerEntity.
+    /// Converts a list of IEntity to List&lt;EntityDtoUnion&gt;.
     /// </summary>
-    public void ApplyTo(PlayerEntity target)
+    public static List<EntityDtoUnion> ToUnionDtoList(this IEnumerable<IEntity> source)
     {
-        target. DisplayName = this.DisplayName;
-        target. Level = this.Level;
-        target.Position = this.Position;
+        ArgumentNullException.ThrowIfNull(source);
+        return source.Select(x => x.ToUnionDto()).ToList();
     }
 }
 ```
@@ -284,18 +424,20 @@ Wenn der Generator funktioniert, können manuell erstellte DTOs **gelöscht** we
 ```
 VORHER (manuell):
 Mmo.Shared/
-├── Entities/
-│   ├── PlayerEntity.cs
+├── Character/
+│   ├── Interfaces/
+│   │   └── ICharacterEntity.cs
 │   └── Dtos/
-│       └── PlayerEntityDto.cs    ← LÖSCHEN!
+│       └── CharacterEntityDto.cs    ← LÖSCHEN!
 
 NACHHER (generiert):
 Mmo.Shared/
-├── Entities/
-│   └── PlayerEntity.cs           ← [GenerateDto]
+├── Character/
+│   └── Interfaces/
+│       └── ICharacterEntity.cs      ← [GenerateDto]
 │
 └── obj/generated/
-    └── PlayerEntityDto.g.cs      ← AUTO-GENERIERT
+    └── CharacterEntityDto.g.cs      ← AUTO-GENERIERT
 ```
 
 ---
@@ -381,27 +523,33 @@ public class ZoneDto
     [Key(9)] public string AmbienceId { get; set; } = "";
     [Key(10)] public ZoneBounds Bounds { get; set; }
 
-    public static ZoneDto FromZone(Zone zone) => new()
-    {
-        ZoneId = zone.Id,
-        Name = zone.Name,
-        Flags = zone. Flags,
-        RecommendedMinLevel = zone.RecommendedMinLevel,
-        RecommendedMaxLevel = zone. RecommendedMaxLevel,
-        ControllingFaction = zone.ControllingFaction,
-        DefaultSpawnPoint = zone. DefaultSpawnPoint,
-        GraveyardPosition = zone.GraveyardPosition,
-        MusicId = zone.MusicId,
-        AmbienceId = zone.AmbienceId,
-        Bounds = zone.Bounds
-    };
-
     // Convenience Properties (nicht serialisiert)
     [IgnoreMember] public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
     [IgnoreMember] public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
     [IgnoreMember] public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
     [IgnoreMember] public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
     [IgnoreMember] public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
+}
+
+/// <summary>
+/// Extension methods for Zone to DTO conversion.
+/// </summary>
+public static class ZoneDtoExtensions
+{
+    public static ZoneDto ToDto(this Zone zone) => new()
+    {
+        ZoneId = zone.Id,
+        Name = zone.Name,
+        Flags = zone.Flags,
+        RecommendedMinLevel = zone.RecommendedMinLevel,
+        RecommendedMaxLevel = zone.RecommendedMaxLevel,
+        ControllingFaction = zone.ControllingFaction,
+        DefaultSpawnPoint = zone.DefaultSpawnPoint,
+        GraveyardPosition = zone.GraveyardPosition,
+        MusicId = zone.MusicId,
+        AmbienceId = zone.AmbienceId,
+        Bounds = zone.Bounds
+    };
 }
 ```
 
@@ -475,25 +623,25 @@ Server                              Client
   │  ├── CurrentWeather               │
   │  └── TimeOfDay                    │
   │           │                       │
-  │           ▼ ZoneDto. FromZone()    │
+  │           ▼ zone.ToDto()          │
   │  ZoneDto (nur bei erstem Besuch)  │
   │  ├── Name, Flags, Bounds          │
   │  └── KEINE EntityIds              │
   │           │                       │
-  │  PlayerEntity (Server-State)      │
+  │  CharacterEntity (Server-State)   │
   │  ├── Experience = 45000           │
   │  ├── Gold = 1250                  │
   │  └── AccountId = xxx              │
   │           │                       │
-  │           ▼ FromPlayerEntity()    │
-  │  PlayerEntityDto                  │
+  │           ▼ character.ToDto()     │
+  │  CharacterEntityDto               │
   │  ├── Level, Health, etc.          │
   │  └── KEINE sensiblen Daten        │
   │           │                       │
   │           ▼ ZoneState             │
   │  ZoneState                        │
-  │  ├── ZoneInfo = ZoneDto?           │
-  │  └── MyPlayer = PlayerEntityDto   │
+  │  ├── ZoneInfo = ZoneDto?          │
+  │  └── MyPlayer = CharacterEntityDto│
   │──────────────────────────────────►│
   │                                   │
   │                                   │  Client cached ZoneDto
@@ -508,13 +656,23 @@ Das 2DMMO verwendet drei separate Klassen pro Entity-Typ:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  DOMAIN ENTITIES - KEINE Serialisierungs-Attribute              │
+│  INTERFACES - Contracts für DTOs                                │
 │                                                                  │
-│  PlayerEntity. cs                                                │
-│  ├── Properties (public get/set)                                │
+│  ICharacterEntity.cs                                             │
+│  ├── Properties (get; set; oder get; init;)                     │
+│  ├── [GenerateDto] für Generator                                │
+│  ├── [DtoUnionMember] für Polymorphismus                        │
+│  └── Definiert Netzwerk-Contract                                │
+└─────────────────────────────────────────────────────────────────┘
+           │                              
+           ▼                              
+┌─────────────────────────────────────────────────────────────────┐
+│  DOMAIN ENTITIES - Implementieren Interfaces                    │
+│                                                                  │
+│  CharacterEntity.cs                                              │
+│  ├── implements ICharacterEntity                                │
 │  ├── Business-Logik (LevelUp, TakeDamage, etc.)                │
-│  ├── [GenerateDto] für Generator                               │
-│  ├── [ServerOnly] für geschützte Properties                    │
+│  ├── [ServerOnly] für geschützte Properties                     │
 │  └── Validierung                                                │
 └─────────────────────────────────────────────────────────────────┘
            │                              │
@@ -523,11 +681,11 @@ Das 2DMMO verwendet drei separate Klassen pro Entity-Typ:
 │  DTOs (Network)      │    │  DB Entities (Persistence)          │
 │  [MessagePackObject] │    │  [Table], [Column] (EF Core)        │
 │                      │    │                                     │
-│  PlayerEntityDto     │    │  CharacterDbEntity                  │
+│  CharacterEntityDto  │    │  CharacterDbEntity                  │
 │  ├── [Key(0-n)]      │    │  ├── [Key] Id                       │
 │  ├── Nur Client-     │    │  ├── [Column] Level                 │
 │  │   relevante Daten │    │  ├── [Column] Experience            │
-│  └── FromEntity()    │    │  └── ToEntity() / FromEntity()     │
+│  └── .ToDto()        │    │  └── ToEntity() / FromEntity()      │
 └─────────────────────┘    └─────────────────────────────────────┘
            │                              │
            ▼                              ▼
@@ -535,24 +693,41 @@ Das 2DMMO verwendet drei separate Klassen pro Entity-Typ:
    (MessagePack)                  (SQL Server/PostgreSQL)
 ```
 
-| Schicht         | Klasse              | Attribute                         | Zweck                        |
-| --------------- | ------------------- | --------------------------------- | ---------------------------- |
-| **Domain**      | `PlayerEntity`      | `[GenerateDto]`, `[ServerOnly]`   | Business-Logik, Server-State |
-| **Network**     | `PlayerEntityDto`   | `[MessagePackObject]`, `[Key(n)]` | Client-Synchronisation       |
-| **Persistence** | `CharacterDbEntity` | `[Table]`, `[Column]`             | Datenbank (EF Core)          |
+| Schicht         | Klasse              | Attribute                                 | Zweck                        |
+| --------------- | ------------------- | ----------------------------------------- | ---------------------------- |
+| **Interface**   | `ICharacterEntity`  | `[GenerateDto]`, `[DtoUnionMember]`       | DTO Contract                 |
+| **Domain**      | `CharacterEntity`   | `[ServerOnly]` für einzelne Properties    | Business-Logik, Server-State |
+| **Network**     | `CharacterEntityDto`| `[MessagePackObject]`, `[Key(n)]`         | Client-Synchronisation       |
+| **Persistence** | `CharacterDbEntity` | `[Table]`, `[Column]`                     | Datenbank (EF Core)          |
 
 ---
 
 ## 💻 Code-Beispiele
 
-### Domain Entity (mit Generator-Attributen)
+### Domain Entity mit Interface (V3 Pattern)
 
 ```csharp
-namespace Mmo.Shared. Entities;
+namespace Mmo.Shared.Character.Interfaces;
 
-[GenerateDto(InheritInterfaces = true)]
-public class PlayerEntity : CombatEntity, IPlayerData
+// Interface definiert den DTO Contract
+[GenerateDto(DtoName = "CharacterEntityDto")]
+[DtoUnionMember(0, typeof(IEntity))]
+public interface ICharacterEntity : ICombatEntity
 {
+    Guid CharacterId { get; init; }
+    string DisplayName { get; init; }
+    int Level { get; init; }
+    Position Position { get; set; }  // Mutable für Client-Updates
+    Race Race { get; init; }
+    CharacterClass Class { get; init; }
+    int CurrentHealth { get; set; }
+    int MaxHealth { get; init; }
+}
+
+// Concrete Entity implementiert Interface
+public class CharacterEntity : CombatEntity, ICharacterEntity
+{
+    // Interface Properties
     public Guid CharacterId { get; set; }
     public string DisplayName { get; set; } = "";
     public int Level { get; set; }
@@ -562,6 +737,7 @@ public class PlayerEntity : CombatEntity, IPlayerData
     public int CurrentHealth { get; set; }
     public int MaxHealth { get; set; }
 
+    // Server-Only Properties (nicht im Interface)
     [ServerOnly]
     public Guid AccountId { get; set; }
 
@@ -598,11 +774,11 @@ public class PlayerEntity : CombatEntity, IPlayerData
 }
 ```
 
-### Server-Side: Entity → DTO
+### Server-Side: Entity → DTO (mit Extension Methods)
 
 ```csharp
 // Entity auf dem Server
-var player = new PlayerEntity
+var character = new CharacterEntity
 {
     CharacterId = Guid.NewGuid(),
     DisplayName = "Alice",
@@ -612,8 +788,8 @@ var player = new PlayerEntity
     AccountId = accountId // ServerOnly
 };
 
-// DTO für Client erstellen (generierte Methode)
-var dto = PlayerEntityDto.FromPlayerEntity(player);
+// DTO für Client erstellen (Extension Method)
+var dto = character.ToDto();
 
 // In Message verwenden
 var zoneState = new ZoneState
@@ -628,6 +804,24 @@ byte[] bytes = MessageSerializer.Serialize(zoneState);
 await client.SendAsync(bytes);
 ```
 
+### Polymorphe Entity-Listen (mit ToUnionDtoList)
+
+```csharp
+// Server hat gemischte Entity-Liste
+List<IEntity> entities = zone.GetEntities();
+// entities enthält: CharacterEntity, NpcEntity, ObjectEntity, etc.
+
+// Konvertiert zu polymorphem DTO-Union
+List<EntityDtoUnion> entityDtos = entities.ToUnionDtoList();
+
+var zoneState = new ZoneState
+{
+    ZoneId = 1001,
+    Entities = entityDtos,  // Polymorphe Liste
+    // ...
+};
+```
+
 ### Client-Side: DTO empfangen
 
 ```csharp
@@ -635,7 +829,7 @@ await client.SendAsync(bytes);
 var zoneState = MessageSerializer.Deserialize<ZoneState>(bytes);
 
 // DTO ist type-safe
-PlayerEntityDto myPlayer = zoneState.MyPlayer;
+CharacterEntityDto? myPlayer = zoneState.MyPlayer as CharacterEntityDto;
 
 // Client hat KEINEN Zugriff auf:
 // - myPlayer.Experience (existiert nicht)
@@ -688,19 +882,18 @@ CREATE INDEX IX_Characters_Level ON Characters(Level);
 
 ## 📚 Verfügbare DTOs
 
-| DTO               | Source         | Generiert  | Verwendet in                                |
-| ----------------- | -------------- | ---------- | ------------------------------------------- |
-| `PlayerEntityDto` | `PlayerEntity` | ✅ Ja      | ZoneState, PlayerJoinedZone                 |
-| `ZoneDto`         | `Zone`         | ❌ Manuell | ZoneState, ZoneDiscovered, ZoneListResponse |
-| `ZoneListItemDto` | -              | ❌ Manuell | ZoneListResponse                            |
-| `NpcEntityDto`    | `NpcEntity`    | 🟡 Geplant | ZoneState, EntitySpawn                      |
-| `IEntityDto`      | Interface      | 🟡 Geplant | ZoneState (polymorphe Liste)                |
+| DTO                   | Source               | Generiert  | Verwendet in                                |
+| --------------------- | -------------------- | ---------- | ------------------------------------------- |
+| `CharacterEntityDto`  | `ICharacterEntity`   | ✅ Ja (V3) | ZoneState, PlayerJoinedZone                 |
+| `NpcEntityDto`        | `INpcEntity`         | ✅ Ja (V3) | ZoneState, EntitySpawn                      |
+| `EntityDtoUnion`      | `IEntity` (Union)    | ✅ Ja (V3) | ZoneState (polymorphe Listen)               |
+| `ZoneDto`             | `Zone`               | ❌ Manuell | ZoneState, ZoneDiscovered, ZoneListResponse |
+| `ZoneListItemDto`     | -                    | ❌ Manuell | ZoneListResponse                            |
 
 **Legende:**
 
--   ✅ Implementiert
+-   ✅ Implementiert (V3: Interface-basiert mit Extension Methods)
 -   ❌ Manuell (nicht generiert)
--   🟡 Geplant
 
 ---
 
@@ -709,30 +902,56 @@ CREATE INDEX IX_Characters_Level ON Characters(Level);
 ### DO ✅
 
 ```csharp
-// Generator-Attribute verwenden
-[GenerateDto(InheritInterfaces = true)]
-public class PlayerEntity : IPlayerData { }
+// Interfaces mit [GenerateDto]
+[GenerateDto(DtoName = "CharacterEntityDto")]
+[DtoUnionMember(0, typeof(IEntity))]
+public interface ICharacterEntity : ICombatEntity { }
 
-// ServerOnly für sensible Daten
+// Concrete Entity implementiert Interface
+public class CharacterEntity : BaseEntity, ICharacterEntity { }
+
+// ServerOnly auf Concrete Entity (nicht im Interface)
 [ServerOnly]
 public long Gold { get; set; }
 
-// Generierte Methode verwenden
-var dto = PlayerEntityDto.FromPlayerEntity(entity);
+// Extension Methods verwenden (V3)
+var dto = character.ToDto();
+var dtoList = characters.ToDtoList();
+var unionDtos = entities.ToUnionDtoList();
+
+// Polymorphe Listen mit Union
+List<EntityDtoUnion> entities = serverEntities.ToUnionDtoList();
 
 // Structs direkt mit MessagePackObject
 [MessagePackObject]
 public readonly struct Position { }
+
+// Set/Init Accessors im Interface richtig definieren
+public interface IEntity
+{
+    Guid Id { get; init; }      // Immutable
+    Position Position { get; set; }  // Mutable
+}
 ```
 
 ### DON'T ❌
 
 ```csharp
+// Keine Klassen für DTO-Generation (V2-Pattern)
+[GenerateDto]
+public class Entity { }  // ❌ Use interface instead
+
 // Entity direkt serialisieren
 byte[] bytes = MessagePackSerializer.Serialize(entity); // ❌
 
+// Keine manuellen Static Methods mehr (V2-Pattern)
+var dto = PlayerEntityDto.FromPlayerEntity(entity); // ❌ Use .ToDto()
+
+// Kein ApplyTo() mehr (V3 entfernt)
+dto.ApplyTo(entity); // ❌ DTOs sind one-way Server→Client
+
 // Properties manuell kopieren
-var dto = new PlayerEntityDto
+var dto = new CharacterEntityDto
 {
     DisplayName = entity.DisplayName,
     // ... vergisst leicht Properties
@@ -740,6 +959,10 @@ var dto = new PlayerEntityDto
 
 // ServerOnly Daten im DTO setzen
 dto.Experience = entity.Experience; // ❌ Compile Error (Property existiert nicht)
+
+// Falsche Union-Hierarchie
+[DtoUnionMember(0, typeof(IWrongRoot))]  // ❌ Root muss [GenerateDtoUnion] haben
+public interface IEntity { }
 ```
 
 ---
@@ -752,6 +975,6 @@ dto.Experience = entity.Experience; // ❌ Compile Error (Property existiert nic
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-27  
-**Version:** 2.0.0  
+**Letzte Aktualisierung:** 2025-12-28  
+**Version:** 3.0.0  
 **Maintainer:** 2DMMO Team

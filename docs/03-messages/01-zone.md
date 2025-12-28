@@ -66,7 +66,7 @@ Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message ent
 │  ├── CurrentWeather, TimeOfDay (dynamisch)                      │
 │  ├── StateType (Initial/Transfer/Reconnect/FullSync)           │
 │  ├── MyPlayer:  PlayerEntityDto                                  │
-│  └── Entities:  List<IEntityDto>                                 │
+│  └── Entities:  List<EntityDtoUnion>                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -95,7 +95,7 @@ Client                         Server
   │  ├── CurrentWeather, TimeOfDay│
   │  ├── StateType:  Initial      │
   │  ├── MyPlayer: PlayerEntityDto│
-  │  └── Entities:  List<IEntityDto>│
+  │  └── Entities: List<EntityDtoUnion>│
   │◄─────────────────────────────│
   │                              │
   │  [Optional bei >100 Entities]│
@@ -303,10 +303,26 @@ public class ZoneDto
     [Key(9)] public string AmbienceId { get; set; } = "";
     [Key(10)] public ZoneBounds Bounds { get; set; }
 
+    // Convenience Properties (nicht serialisiert)
+    [IgnoreMember] public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
+    [IgnoreMember] public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
+    [IgnoreMember] public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
+    [IgnoreMember] public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
+    [IgnoreMember] public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
+    [IgnoreMember] public bool IsIndoor => Flags.HasFlag(ZoneFlags.IsIndoor);
+    [IgnoreMember] public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
+    [IgnoreMember] public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
+}
+
+/// <summary>
+/// Extension methods for Zone to DTO conversion.
+/// </summary>
+public static class ZoneDtoExtensions
+{
     /// <summary>
-    /// Erstellt ein ZoneDto aus einer Zone.
+    /// Converts a Zone to ZoneDto.
     /// </summary>
-    public static ZoneDto FromZone(Zone zone) => new()
+    public static ZoneDto ToDto(this Zone zone) => new()
     {
         ZoneId = zone.Id,
         Name = zone.Name,
@@ -318,18 +334,8 @@ public class ZoneDto
         GraveyardPosition = zone.GraveyardPosition,
         MusicId = zone.MusicId,
         AmbienceId = zone.AmbienceId,
-        Bounds = zone. Bounds
+        Bounds = zone.Bounds
     };
-
-    // Convenience Properties (nicht serialisiert)
-    [IgnoreMember] public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
-    [IgnoreMember] public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
-    [IgnoreMember] public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
-    [IgnoreMember] public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
-    [IgnoreMember] public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
-    [IgnoreMember] public bool IsIndoor => Flags.HasFlag(ZoneFlags.IsIndoor);
-    [IgnoreMember] public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
-    [IgnoreMember] public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
 }
 ```
 
@@ -426,7 +432,7 @@ public class ZoneListItemDto
 
     public static ZoneListItemDto Create(Zone zone, PlayerEntity player) => new()
     {
-        Zone = ZoneDto.FromZone(zone),
+        Zone = zone.ToDto(),
         IsDiscovered = player. DiscoveredZones.Contains(zone. Id),
         HasFlightPath = player.UnlockedFlightPaths.Contains(zone.Id),
         FlightPathPosition = zone.FlightPathPosition,
@@ -577,7 +583,7 @@ Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Load
 | TimeOfDay        | float              | 0. 0-24.0 (Stunden)                     | Ja          |
 | StateType        | ZoneStateType      | Initial, Transfer, Reconnect, FullSync  | Ja          |
 | MyPlayer         | PlayerEntityDto?   | Dein Character (null bei FullSync)      | Conditional |
-| Entities         | List\<IEntityDto\> | Alle Entities (max 100 pro Message)     | Ja          |
+| Entities         | List\<EntityDtoUnion\> | Alle Entities (max 100 pro Message)     | Ja          |
 | HasMoreEntities  | bool               | Gibt es weitere Entity-Batches?         | Ja          |
 | TotalEntityCount | int                | Gesamtzahl Entities in Zone             | Ja          |
 
@@ -631,7 +637,7 @@ public class ZoneState : ITimestampedServerMessage
     [Key(7)] public PlayerEntityDto? MyPlayer { get; set; }
 
     // Entities
-    [Key(8)] public List<IEntityDto> Entities { get; set; } = new();
+    [Key(8)] public List<EntityDtoUnion> Entities { get; set; } = new();
     [Key(9)] public bool HasMoreEntities { get; set; }
     [Key(10)] public int TotalEntityCount { get; set; }
 }
@@ -655,15 +661,15 @@ public ZoneState CreateZoneState(PlayerEntity player, Zone zone, ZoneStateType s
     {
         Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         ZoneId = zone.Id,
-        ZoneInfo = firstVisit ? ZoneDto.FromZone(zone) : null,
+        ZoneInfo = firstVisit ? zone.ToDto() : null,
         CurrentWeather = zone.CurrentWeather,
         TimeOfDay = zone.TimeOfDay,
         StateType = stateType,
         MyPlayer = stateType != ZoneStateType. FullSync
-            ? PlayerEntityDto.FromPlayerEntity(player)
+            ? player.ToDto()
             : null,
         Entities = zone.GetVisibleEntities(player)
-            .Select(e => e.ToDto())
+            .ToUnionDtoList()
             .Take(100)
             .ToList(),
         HasMoreEntities = zone.GetVisibleEntityCount(player) > 100,
@@ -862,7 +868,7 @@ public class PlayerJoinedZone :  IServerMessage
 ```csharp
 var playerJoined = new PlayerJoinedZone
 {
-    Player = PlayerEntityDto.FromPlayerEntity(newPlayer)
+    Player = newPlayer.ToDto()
 };
 
 // Broadcast an alle AUSSER dem neuen Spieler
@@ -1267,7 +1273,7 @@ public class ZoneDiscovered : IServerMessage
 ```csharp
 var discovered = new ZoneDiscovered
 {
-    Zone = ZoneDto. FromZone(zone),
+    Zone = zone.ToDto(),
     XpBonus = 150
 };
 ```
@@ -1727,7 +1733,7 @@ Enthält weitere Entities wenn eine Zone mehr als 100 Entities hat. Folgt auf `Z
 | Type        | MessageType        | `MessageType.EntityBatch`   | Ja      |
 | ZoneId      | ushort             | Zone-ID zur Validierung     | Ja      |
 | BatchIndex  | int                | Batch-Nummer (1, 2, 3, ...) | Ja      |
-| Entities    | List\<IEntityDto\> | Weitere Entities (max 100)  | Ja      |
+| Entities    | List\<EntityDtoUnion\> | Weitere Entities (max 100)  | Ja      |
 | IsLastBatch | bool               | Ist dies der letzte Batch?  | Ja      |
 
 ### Code-Beispiel
@@ -1740,7 +1746,7 @@ public class EntityBatch : IServerMessage
     [Key(0)] public MessageType Type => MessageType.EntityBatch;
     [Key(1)] public ushort ZoneId { get; set; }
     [Key(2)] public int BatchIndex { get; set; }
-    [Key(3)] public List<IEntityDto> Entities { get; set; } = new();
+    [Key(3)] public List<EntityDtoUnion> Entities { get; set; } = new();
     [Key(4)] public bool IsLastBatch { get; set; }
 }
 ```
@@ -1779,7 +1785,7 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
     const int CHUNK_SIZE = 100;
 
     var allEntities = zone.GetVisibleEntities(player).ToList();
-    var firstChunk = allEntities.Take(CHUNK_SIZE).Select(e => e.ToDto()).ToList();
+    var firstChunk = allEntities.Take(CHUNK_SIZE).ToUnionDtoList();
     var remainingEntities = allEntities.Skip(CHUNK_SIZE).ToList();
 
     // Prüfen ob erster Besuch
@@ -1794,11 +1800,11 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
     {
         Timestamp = DateTimeOffset.UtcNow. ToUnixTimeMilliseconds(),
         ZoneId = zone.Id,
-        ZoneInfo = firstVisit ? ZoneDto.FromZone(zone) : null,
+        ZoneInfo = firstVisit ? zone.ToDto() : null,
         CurrentWeather = zone.CurrentWeather,
         TimeOfDay = zone.TimeOfDay,
         StateType = ZoneStateType.Initial,
-        MyPlayer = PlayerEntityDto.FromPlayerEntity(player),
+        MyPlayer = player.ToDto(),
         Entities = firstChunk,
         HasMoreEntities = remainingEntities.Any(),
         TotalEntityCount = allEntities.Count
@@ -1816,7 +1822,7 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
         {
             ZoneId = zone.Id,
             BatchIndex = batchIndex++,
-            Entities = batch. Select(e => e.ToDto()).ToList(),
+            Entities = batch.ToUnionDtoList(),
             IsLastBatch = ! remainingEntities.Any()
         };
         Send(conn, entityBatch);
@@ -1832,7 +1838,7 @@ public void SendZoneStateWithChunking(ClientConnection conn, PlayerEntity player
 ```csharp
 private int _expectedBatches;
 private int _receivedBatches;
-private List<IEntityDto> _pendingEntities = new();
+private List<EntityDtoUnion> _pendingEntities = new();
 private ZoneState?  _pendingZoneState;
 
 public void OnZoneState(ZoneState state)
@@ -2326,7 +2332,7 @@ Mmo.Shared/
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-27  
+**Letzte Aktualisierung:** 2025-12-28  
 **Version:** 2.0.0
 
 [← Zurück zur Übersicht](README.md)
