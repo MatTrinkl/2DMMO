@@ -18,10 +18,11 @@
 -   [Aktive Messages](#aktive-messages)
     -   [LeaveZone (101)](#leavezone-101)
     -   [ZoneState (102)](#zonestate-102)
-    -   [PlayerJoinedZone (103)](#playerjoinedzone-103)
-    -   [PlayerLeftZone (104)](#playerleftzone-104)
-    -   [ZoneTransferRequest (105)](#zonetransferrequest-105)
-    -   [ZoneTransferResponse (106)](#zonetransferresponse-106)
+    -   [ZoneDelta (103)](#zonedelta-103)
+    -   [PlayerJoinedZone (104)](#playerjoinedzone-104)
+    -   [PlayerLeftZone (105)](#playerleftzone-105)
+    -   [ZoneTransferRequest (106)](#zonetransferrequest-106)
+    -   [ZoneTransferResponse (107)](#zonetransferresponse-107)
     -   [ZoneDiscovered (108)](#zonediscovered-108)
     -   [ZoneListRequest (109)](#zonelistrequest-109)
     -   [ZoneListResponse (110)](#zonelistresponse-110)
@@ -196,17 +197,18 @@ Client                         Server
 
 ### Message-Übersicht
 
-| Message                | ID  | Richtung           | Zweck                        |
-| ---------------------- | --- | ------------------ | ---------------------------- |
-| `GetZoneRequest`       | 117 | Client → Server    | Zone-Daten anfordern         |
-| `ZoneState`            | 102 | Server → Client    | Zone + MyPlayer + Entities   |
-| `EntityBatch`          | 120 | Server → Client    | Weitere Entities (Chunking)  |
-| `ZoneLoadedAck`        | 119 | Client → Server    | Client bestätigt Ready       |
-| `ZoneTransferRequest`  | 105 | Client → Server    | Zone wechseln wollen         |
-| `ZoneTransferResponse` | 106 | Server → Client    | Transfer bestätigen/ablehnen |
-| `LeaveZone`            | 101 | Client → Server    | Logout/Exit/CharacterSwitch  |
-| `PlayerJoinedZone`     | 103 | Server → Broadcast | Neuer Spieler in Zone        |
-| `PlayerLeftZone`       | 104 | Server → Broadcast | Spieler verlässt Zone        |
+| Message                | ID  | Richtung           | Zweck                             |
+| ---------------------- | --- | ------------------ | --------------------------------- |
+| `GetZoneRequest`       | 117 | Client → Server    | Zone-Daten anfordern              |
+| `ZoneState`            | 102 | Server → Client    | Zone + MyPlayer + Entities        |
+| `ZoneDelta`            | 103 | Server → Client    | Delta-Updates (jeden Tick)        |
+| `EntityBatch`          | 120 | Server → Client    | Weitere Entities (Chunking)       |
+| `ZoneLoadedAck`        | 119 | Client → Server    | Client bestätigt Ready            |
+| `ZoneTransferRequest`  | 106 | Client → Server    | Zone wechseln wollen              |
+| `ZoneTransferResponse` | 107 | Server → Client    | Transfer bestätigen/ablehnen      |
+| `LeaveZone`            | 101 | Client → Server    | Logout/Exit/CharacterSwitch       |
+| `PlayerJoinedZone`     | 104 | Server → Broadcast | Neuer Spieler in Zone             |
+| `PlayerLeftZone`       | 105 | Server → Broadcast | Spieler verlässt Zone             |
 
 ### Obsolete Messages
 
@@ -560,7 +562,11 @@ Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Load
 -   **ZoneInfo**: Statische Zone-Daten als `ZoneDto` (nur bei erstem Besuch, sonst `null`)
 -   **Dynamischer State**: Wetter, Tageszeit
 -   **MyPlayer**: Dein Character als `PlayerEntityDto`
--   **Entities**: Alle anderen Entities in der Zone als DTOs
+-   **Entities**: Alle anderen Entities **in sichtbaren Chunks** als DTOs
+
+> **Phase 2 Update - Chunk-Based Filtering:**  
+> Ab Phase 2 werden nur Entities in **sichtbaren Chunks** (3x3 Grid um Spieler) gesendet.  
+> Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details.
 
 ### StateType Enum
 
@@ -833,7 +839,383 @@ ZoneLoadedAck (119)         (Client ist ready)
 
 ---
 
-## PlayerJoinedZone (103)
+## ZoneDelta (103)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** ⚡⚡ Extrem häufig (Jeden Tick = 40ms, gebatched)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+**Phase 2 - Chunk-Based Delta Sync System**
+
+Hochfrequente Delta-Updates für Entity-Änderungen. Ersetzt einzelne Entity-Messages (`EntityMove`, `EntityUpdate`, etc.) durch ein **gebatchtes** Update-System.
+
+> **Wichtig:**  
+> Nur Änderungen in **sichtbaren Chunks** (3x3 Grid um Spieler) werden gesendet.  
+> Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details zum Chunk-System.
+
+### Im Scope ✅
+
+- **Batched Entity Updates**: Alle Änderungen in einem Message
+- **Chunk-Filtered**: Nur sichtbare Chunks (3x3 = 9 Chunks)
+- **Delta-Only**: Nur geänderte Properties
+- **High-Frequency**: Jeden Tick (40ms) bei Änderungen
+- **Bandwidth-Optimiert**: 96%+ Reduktion vs. Full Sync
+
+### Nicht im Scope ❌
+
+- Sofort-Events → verwende `EntityAnimation`, `EntityAggro`, `EntityEmote` (nicht gebatched!)
+- Zone-Loading → verwende `ZoneState` (102)
+- Request/Response → verwende `EntityInteract`, `EntityTarget` (dediziert)
+
+### Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Type | MessageType | `MessageType.ZoneDelta` | Ja |
+| Timestamp | long | Server-Timestamp (Unix ms) | Ja |
+| ZoneId | ushort | Zone-ID | Ja |
+| SpawnedEntities | List<EntityDtoUnion>? | Neue Entities in sichtbaren Chunks | Nein |
+| DespawnedEntityIds | List<Guid>? | Entfernte Entities (IDs) | Nein |
+| PositionUpdates | List<EntityPositionDelta>? | Position-Änderungen | Nein |
+| StateUpdates | List<EntityStateDelta>? | HP, State-Änderungen | Nein |
+| ContextDelta | ZoneContextDelta? | Wetter, Zeit-Änderungen | Nein |
+
+### Sub-DTOs
+
+#### EntityPositionDelta
+
+```csharp
+[MessagePackObject]
+public class EntityPositionDelta
+{
+    [Key(0)] public Guid EntityId { get; set; }
+    [Key(1)] public float X { get; set; }
+    [Key(2)] public float Y { get; set; }
+    [Key(3)] public float VelocityX { get; set; }
+    [Key(4)] public float VelocityY { get; set; }
+    [Key(5)] public float? Rotation { get; set; }  // Optional
+}
+```
+
+#### EntityStateDelta
+
+```csharp
+[MessagePackObject]
+public class EntityStateDelta
+{
+    [Key(0)] public Guid EntityId { get; set; }
+    [Key(1)] public int? CurrentHP { get; set; }      // Nur wenn geändert
+    [Key(2)] public int? MaxHP { get; set; }          // Nur wenn geändert
+    [Key(3)] public byte? State { get; set; }         // EntityState (Idle, Combat, etc.)
+    [Key(4)] public uint? ModelId { get; set; }       // Polymorph, etc.
+    [Key(5)] public int? Level { get; set; }          // Level-up
+}
+```
+
+#### ZoneContextDelta
+
+```csharp
+[MessagePackObject]
+public class ZoneContextDelta
+{
+    [Key(0)] public WeatherType? CurrentWeather { get; set; }  // Nur wenn geändert
+    [Key(1)] public float? TimeOfDay { get; set; }             // Nur wenn geändert
+}
+```
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ZoneDelta)]
+public class ZoneDelta : ITimestampedServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ZoneDelta;
+    [Key(1)] public long Timestamp { get; set; }
+    [Key(2)] public ushort ZoneId { get; set; }
+    
+    // Delta-Arrays (null wenn keine Änderungen)
+    [Key(3)] public List<EntityDtoUnion>? SpawnedEntities { get; set; }
+    [Key(4)] public List<Guid>? DespawnedEntityIds { get; set; }
+    [Key(5)] public List<EntityPositionDelta>? PositionUpdates { get; set; }
+    [Key(6)] public List<EntityStateDelta>? StateUpdates { get; set; }
+    [Key(7)] public ZoneContextDelta? ContextDelta { get; set; }
+}
+```
+
+### Server-Logik (Chunk-Based)
+
+```csharp
+public ZoneDelta BuildDeltaForClient(Guid clientId, long currentTick)
+{
+    var player = _playerService.GetPlayer(clientId);
+    var visibleChunks = _clientViewService.GetClientVisibleChunks(clientId);
+    
+    var delta = new ZoneDelta
+    {
+        Timestamp = currentTick,
+        ZoneId = player.CurrentZoneId
+    };
+    
+    // Sammle Änderungen aus allen sichtbaren Chunks
+    foreach (var chunk in visibleChunks)
+    {
+        var dirtyEntities = _chunkDirtyTracker.GetDirtyEntitiesInChunk(chunk);
+        
+        foreach (var entityId in dirtyEntities)
+        {
+            var entity = _entityManager.GetEntity(entityId);
+            
+            if (entity.IsNewlySpawned)
+            {
+                delta.SpawnedEntities ??= new List<EntityDtoUnion>();
+                delta.SpawnedEntities.Add(entity.ToDto());
+            }
+            else if (entity.PositionChanged)
+            {
+                delta.PositionUpdates ??= new List<EntityPositionDelta>();
+                delta.PositionUpdates.Add(new EntityPositionDelta
+                {
+                    EntityId = entity.PersistentId,
+                    X = entity.Position.X,
+                    Y = entity.Position.Y,
+                    VelocityX = entity.Velocity.X,
+                    VelocityY = entity.Velocity.Y,
+                    Rotation = entity.Rotation
+                });
+            }
+            
+            if (entity.StateChanged)
+            {
+                delta.StateUpdates ??= new List<EntityStateDelta>();
+                delta.StateUpdates.Add(new EntityStateDelta
+                {
+                    EntityId = entity.PersistentId,
+                    CurrentHP = entity.HPChanged ? entity.CurrentHP : null,
+                    MaxHP = entity.MaxHPChanged ? entity.MaxHP : null,
+                    State = entity.StateChanged ? (byte)entity.State : null,
+                    ModelId = entity.ModelChanged ? entity.ModelId : null
+                });
+            }
+        }
+    }
+    
+    // Zone-Context Änderungen (nicht chunk-spezifisch)
+    if (_zoneManager.WeatherChanged || _zoneManager.TimeChanged)
+    {
+        delta.ContextDelta = new ZoneContextDelta
+        {
+            CurrentWeather = _zoneManager.WeatherChanged ? _zoneManager.CurrentWeather : null,
+            TimeOfDay = _zoneManager.TimeChanged ? _zoneManager.TimeOfDay : null
+        };
+    }
+    
+    return delta;
+}
+```
+
+### Client-Logik
+
+```csharp
+public void OnZoneDelta(ZoneDelta delta)
+{
+    // 1. Spawned Entities
+    if (delta.SpawnedEntities != null)
+    {
+        foreach (var entityDto in delta.SpawnedEntities)
+        {
+            _entityManager.SpawnFromDto(entityDto);
+        }
+    }
+    
+    // 2. Despawned Entities
+    if (delta.DespawnedEntityIds != null)
+    {
+        foreach (var entityId in delta.DespawnedEntityIds)
+        {
+            _entityManager.Despawn(entityId);
+        }
+    }
+    
+    // 3. Position Updates
+    if (delta.PositionUpdates != null)
+    {
+        foreach (var update in delta.PositionUpdates)
+        {
+            var entity = _entityManager.GetEntity(update.EntityId);
+            if (entity != null)
+            {
+                entity.UpdatePosition(
+                    update.X, update.Y,
+                    update.VelocityX, update.VelocityY,
+                    update.Rotation
+                );
+            }
+        }
+    }
+    
+    // 4. State Updates
+    if (delta.StateUpdates != null)
+    {
+        foreach (var update in delta.StateUpdates)
+        {
+            var entity = _entityManager.GetEntity(update.EntityId);
+            if (entity != null)
+            {
+                if (update.CurrentHP.HasValue)
+                    entity.CurrentHP = update.CurrentHP.Value;
+                if (update.MaxHP.HasValue)
+                    entity.MaxHP = update.MaxHP.Value;
+                if (update.State.HasValue)
+                    entity.SetState((EntityState)update.State.Value);
+                if (update.ModelId.HasValue)
+                    entity.SetModel(update.ModelId.Value);
+                if (update.Level.HasValue)
+                    entity.Level = update.Level.Value;
+            }
+        }
+    }
+    
+    // 5. Zone Context
+    if (delta.ContextDelta != null)
+    {
+        if (delta.ContextDelta.CurrentWeather.HasValue)
+            _weatherSystem.SetWeather(delta.ContextDelta.CurrentWeather.Value);
+        if (delta.ContextDelta.TimeOfDay.HasValue)
+            _timeSystem.SetTime(delta.ContextDelta.TimeOfDay.Value);
+    }
+}
+```
+
+### Beispiel Payload
+
+```csharp
+// Typisches Delta (3 bewegende Entities, 1 HP-Update)
+var delta = new ZoneDelta
+{
+    Timestamp = 1234567890123,
+    ZoneId = 1001,
+    PositionUpdates = new List<EntityPositionDelta>
+    {
+        new() { EntityId = entity1Id, X = 100.5f, Y = 200.3f, VelocityX = 5.0f, VelocityY = 0f },
+        new() { EntityId = entity2Id, X = 150.2f, Y = 180.1f, VelocityX = 0f, VelocityY = -3.0f },
+        new() { EntityId = entity3Id, X = 120.0f, Y = 210.0f, VelocityX = 2.5f, VelocityY = 2.5f }
+    },
+    StateUpdates = new List<EntityStateDelta>
+    {
+        new() { EntityId = entity4Id, CurrentHP = 450, MaxHP = 600 }
+    }
+};
+
+// Spawn + Despawn Delta
+var spawnDespawnDelta = new ZoneDelta
+{
+    Timestamp = 1234567890456,
+    ZoneId = 1001,
+    SpawnedEntities = new List<EntityDtoUnion>
+    {
+        new PlayerEntityDto { ... },  // Neuer Spieler in Sichtweite
+        new NpcEntityDto { ... }       // NPC spawned
+    },
+    DespawnedEntityIds = new List<Guid>
+    {
+        oldEntity1Id,
+        oldEntity2Id
+    }
+};
+
+// Wetter-Änderung
+var weatherDelta = new ZoneDelta
+{
+    Timestamp = 1234567890789,
+    ZoneId = 1001,
+    ContextDelta = new ZoneContextDelta
+    {
+        CurrentWeather = WeatherType.Rain,
+        TimeOfDay = 18.5f
+    }
+};
+```
+
+### Sync-Strategie Tabelle
+
+| Sync Type | Interval | Scope | Zweck |
+|-----------|----------|-------|-------|
+| **ZoneDelta** | Jeden Tick (40ms) | **Nur sichtbare Chunks pro Client** | Hochfrequente Änderungen |
+| **ZoneState** | Alle 25 Ticks (1s) | **Nur sichtbare Chunks pro Client** | Periodischer Full-Sync (Desync-Prevention) |
+| **ZoneState** | Bei Zone-Join | **Nur sichtbare Chunks** | Initiales Loading |
+
+### Bandbreiten-Optimierung
+
+```
+ALTE STRATEGIE (Einzelne EntityMove Messages):
+  - Pro bewegte Entity: ~60 bytes Overhead (Message-Header, etc.)
+  - 10 bewegte Entities: 10 * 60 = 600 bytes Overhead
+  - Payload: 10 * 40 = 400 bytes
+  - Total: 1000 bytes
+
+NEUE STRATEGIE (ZoneDelta Batching):
+  - Ein Message-Header: ~20 bytes
+  - 10 PositionDeltas: 10 * 40 = 400 bytes
+  - Total: 420 bytes
+  
+REDUKTION: 58% weniger Overhead!
+```
+
+### Ersetzt folgende Messages
+
+| Old Message | ID | Grund |
+|-------------|-----|-------|
+| `EntityMove` | 1402 | → `ZoneDelta.PositionUpdates` (Batching!) |
+| `EntityUpdate` | 1403 | → `ZoneDelta.StateUpdates` (Batching!) |
+| `EntityStateChange` | 1405 | → `ZoneDelta.StateUpdates` (Batching!) |
+
+> ⚠️ Diese Messages sind in Phase 2 **DEPRECATED**.  
+> Siehe [Entity Messages](14-entity.md) für Details.
+
+### Verbleibende Event-Based Messages
+
+Diese Messages bleiben **NICHT** gebatched:
+
+| Message | ID | Grund |
+|---------|-----|-------|
+| `EntityAnimation` | 1404 | Combat-kritisch, braucht instant Feedback |
+| `EntityAggro` | 1421 | Combat-kritisch |
+| `EntityEmote` | 1430 | Social Feature, erwartete ~0 Latency |
+| `EntityInteract` | 1410 | Request/Response-Pattern |
+| `EntityTarget` | 1420 | Request/Response-Pattern |
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `ZoneState` | 102 | Periodischer Full-Sync (alle 1s) |
+| `EntityAnimation` | 1404 | Nicht gebatched, sofort |
+| `EntityAggro` | 1421 | Nicht gebatched, sofort |
+| `EntityEmote` | 1430 | Nicht gebatched, sofort |
+
+### Notizen
+
+- **Message-Größe**: ~50-500 bytes (abhängig von Änderungen)
+- **Frequency**: Jeden Tick (40ms) wenn Änderungen vorhanden
+- **Chunk-Filtered**: Nur sichtbare 9 Chunks (3x3 Grid)
+- **Batching**: Alle Änderungen in einer Message
+- **Delta-Only**: Nur geänderte Properties (null-Felder bei StateUpdates)
+- **Bandbreiten-Reduktion**: 96%+ vs. Full Broadcast
+- **Skalierung**: Konstante Bandbreite unabhängig von Zone-Größe
+
+### Verwandte Dokumentation
+
+- [Chunk-Based Sync System](../../02-architecture/CHUNK_BASED_SYNC.md) - Vollständige Dokumentation
+- [Game Loop - Output Phase](../../02-architecture/GAME_LOOP.md) - Delta-Building Logik
+- [Entity Messages](14-entity.md) - Deprecated Messages
+
+---
+
+## PlayerJoinedZone (104)
 
 **Richtung:** 📡 Broadcast (Server → All Clients in Zone)  
 **Frequenz:** Häufig  
@@ -892,7 +1274,7 @@ zone.BroadcastExcept(playerJoined, newPlayer. ConnectionId);
 
 ---
 
-## PlayerLeftZone (104)
+## PlayerLeftZone (105)
 
 **Richtung:** 📡 Broadcast (Server → All Clients in Zone)  
 **Frequenz:** Häufig  
@@ -1032,7 +1414,7 @@ var death = new PlayerLeftZone
 
 ---
 
-## ZoneTransferRequest (105)
+## ZoneTransferRequest (106)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Mittel  
@@ -1142,7 +1524,7 @@ var dungeon = new ZoneTransferRequest
 
 ---
 
-## ZoneTransferResponse (106)
+## ZoneTransferResponse (107)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Mittel  

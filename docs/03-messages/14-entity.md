@@ -287,6 +287,11 @@ var deathDespawn = new EntityDespawn
 
 ## EntityMove (1402)
 
+> ⚠️ **DEPRECATED in Phase 2**
+> 
+> This message is replaced by `ZoneDelta.PositionUpdates` for better batching performance.
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
+
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** ⚡⚡ Extrem häufig (20-50 Updates/Sekunde)  
 **Authentifizierung:** 🔒 Ja  
@@ -368,6 +373,11 @@ var entityMove = new EntityMove
 ---
 
 ## EntityUpdate (1403)
+
+> ⚠️ **DEPRECATED in Phase 2**
+> 
+> This message is replaced by `ZoneDelta.StateUpdates` for better batching performance.
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig (nur bei Changes)  
@@ -518,6 +528,11 @@ var death = new EntityAnimation
 
 ## EntityStateChange (1405)
 
+> ⚠️ **DEPRECATED in Phase 2**
+> 
+> This message is replaced by `ZoneDelta.StateUpdates` for better batching performance.
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
+
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
@@ -562,6 +577,46 @@ var stateChange = new EntityStateChange
 
 -   **Animations**: State-Change trigger Animations
 -   **Behavior**: Client ändert Rendering (z.B. Red-Tint für Combat)
+
+---
+
+## 🎯 Phase 2: Non-Batched Event Messages
+
+Die folgenden Entity-Messages bleiben **AKTIV** und werden **NICHT** durch `ZoneDelta` ersetzt:
+
+### ✅ Noch aktive Messages (Immediate Event-Based)
+
+| Message | ID | Grund |
+|---------|-----|-------|
+| **EntityAnimation** | 1404 | Combat-kritisch, braucht instant Feedback (~0 Latency) |
+| **EntityAggro** | 1421 | Combat-kritisch, Threat-Management |
+| **EntityEmote** | 1430 | Social Feature, erwartete ~0 Latency |
+| **EntityInteract** | 1410 | Request/Response-Pattern |
+| **EntityTarget** | 1420 | Request/Response-Pattern |
+
+### Warum nicht gebatched?
+
+**Sofortige Reaktion erforderlich:**
+- **EntityAnimation**: Angriffs-Animations müssen instant sichtbar sein für Combat-Feedback
+- **EntityAggro**: Spieler muss sofort sehen wenn Monster auf ihn zuläuft
+- **EntityEmote**: Social-Interaktion erwartet ~0 Latency (Wave, Dance, etc.)
+
+**Request/Response-Pattern:**
+- **EntityInteract**: Client → Server Request, braucht direkte Response
+- **EntityTarget**: Client → Server Request, braucht direkte Response
+
+**Performance:**
+Diese Messages sind **selten genug** dass Batching keinen Vorteil bringt:
+- EntityAnimation: ~1-5/Sekunde pro Entity
+- EntityAggro: ~0.1/Sekunde pro Entity
+- EntityEmote: ~0.01/Sekunde pro Entity
+
+**Batching würde schaden:**
+- Künstliche Latenz durch warten auf nächsten Tick
+- Schlechteres Spielgefühl bei Combat und Social-Features
+- Komplexere Logik ohne Bandbreiten-Gewinn
+
+Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details zum Delta-System.
 
 ---
 

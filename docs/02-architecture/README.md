@@ -22,15 +22,16 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 | 4 | [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) | Message Handling, Business Logic, Async Operations |
 | 5 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
 | 6 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 7 | [Login-to-Play Flow](LOGIN_TO_PLAY_FLOW.md) | **NEU** - Kompletter Message Flow von Login bis Ready-to-Play |
-| 8 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| 9 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 10 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 11 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
-| 12 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
-| 13 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 14 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
-| 15 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
+| 7 | [Chunk-Based Sync](CHUNK_BASED_SYNC.md) | **Phase 2** - AOI Delta Sync, Chunk Grid, Bandwidth Optimization |
+| 8 | [Login-to-Play Flow](LOGIN_TO_PLAY_FLOW.md) | Kompletter Message Flow von Login bis Ready-to-Play |
+| 9 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
+| 10 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
+| 11 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
+| 12 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
+| 13 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
+| 14 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
+| 15 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
+| 16 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
 
 ---
 

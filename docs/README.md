@@ -28,6 +28,7 @@ Diese Dokumentation ist modular aufgebaut und in thematische Bereiche unterteilt
 | [Message-Spezifikation](02-architecture/MESSAGES.md) | Message Types, DTOs, Serialization |
 | [Game Loop Design](02-architecture/GAME_LOOP.md) | Server Game Loop, Tick Timing |
 | [Client-Server Sync](02-architecture/CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
+| [Chunk-Based Sync](02-architecture/CHUNK_BASED_SYNC.md) | **Phase 2** - AOI Delta Sync, Chunk Grid, Bandwidth Optimization |
 | [ID-System](02-architecture/ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
 | [Zone-Daten-Architektur](02-architecture/ZONE_DATA_ARCHITECTURE.md) | ZoneBounds, CollisionData, Datenstrukturen |
 | [Redis-Strategie](02-architecture/REDIS.md) | Key Schema, Caching, Pub/Sub |
