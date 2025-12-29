@@ -1,3 +1,5 @@
+using Mmo.Shared.Zones.Structs;
+
 namespace Mmo.Shared.Zones.Records;
 
 /// <summary>
@@ -9,4 +11,5 @@ namespace Mmo.Shared.Zones.Records;
 /// <param name="MaxY">The top side of the Y-Axis.</param>
 public record ZoneBoundsConfig(float MinX, float MinY, float MaxX, float MaxY)
 {
+    public ZoneBounds FromConfig() => new(MinX, MinY, MaxX, MaxY);
 }

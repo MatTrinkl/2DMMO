@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
+using Mmo.Shared.Zones.Messages.Server_Broadcast;
 using Mmo.Shared.Zones.Messages.Server_Brodcast;
 
 namespace Mmo.Integration.Tests;
@@ -61,11 +62,11 @@ public class MultiClientTests : IAsyncLifetime
         await Task.Delay(1000);
 
         // Assert
-        List<PlayerJoinedZone> playerJoinedMessages = client1.GetMessages<PlayerJoinedZone>();
+        List<CharacterJoinedZone> playerJoinedMessages = client1.GetMessages<CharacterJoinedZone>();
         playerJoinedMessages.Should().NotBeEmpty("first client should receive PlayerJoined event");
 
         // The joined player should be client2
-        PlayerJoinedZone? joinedEvent = playerJoinedMessages.FirstOrDefault();
+        CharacterJoinedZone? joinedEvent = playerJoinedMessages.FirstOrDefault();
         //if (joinedEvent != null) joinedEvent.Player.Should().NotBeNull("joined event should contain player data");TODO:Undo comment after fixing playerJOinZone
 
         // Cleanup
@@ -90,7 +91,7 @@ public class MultiClientTests : IAsyncLifetime
         await Task.Delay(1000);
 
         // Assert
-        List<PlayerLeftZone> playerLeftMessages = client1.GetMessages<PlayerLeftZone>();
+        List<CharacterLeftZone> playerLeftMessages = client1.GetMessages<CharacterLeftZone>();
         playerLeftMessages.Should().NotBeEmpty("first client should receive PlayerLeft event");
 
         // Cleanup
@@ -142,7 +143,7 @@ public class MultiClientTests : IAsyncLifetime
         await Task.Delay(1000);
 
 
-        List<PlayerJoinedZone> joinedMessages = client1.GetMessages<PlayerJoinedZone>();
+        List<CharacterJoinedZone> joinedMessages = client1.GetMessages<CharacterJoinedZone>();
         joinedMessages.Should().NotBeEmpty("client1 should see client2 joining");
 
         // Cleanup

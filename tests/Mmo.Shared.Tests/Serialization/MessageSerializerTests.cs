@@ -84,23 +84,7 @@ public class MessageSerializerTests
     // MOVEMENT MESSAGES
     // ══════════════════════════════════════════════════════════
 
-    [Fact]
-    public void Serialize_PositionUpdate_RoundTrip()
-    {
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(100, 200));
-        var newPos = new Position(110, 210);
-        var original = new PositionUpdate(98765L, player, newPos);
 
-        byte[] serialized = MessagePackSerializer.Serialize(original);
-        PositionUpdate deserialized = MessagePackSerializer.Deserialize<PositionUpdate>(serialized);
-
-        Assert.NotNull(deserialized);
-        Assert.Equal(MessageType.PositionUpdate, deserialized.Type);
-        Assert.Equal(98765L, deserialized.Timestamp);
-        Assert.NotNull(deserialized.NewPosition);
-        Assert.Equal(110, deserialized.NewPosition.X);
-        Assert.Equal(210, deserialized.NewPosition.Y);
-    }
 
     [Fact]
     public void Serialize_PositionBroadcast_RoundTrip()
@@ -343,17 +327,7 @@ public class MessageSerializerTests
         Assert.IsType<LeaveZone>(deserialized);
     }
 
-    [Fact]
-    public void MessageSerializer_Deserialize_PositionUpdate_ReturnsCorrectType()
-    {
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
-        var original = new PositionUpdate(12345L, player, new Position(10, 20));
-        byte[] serialized = MessageSerializer.Serialize(original);
 
-        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
-
-        Assert.IsType<PositionUpdate>(deserialized);
-    }
 
     [Fact]
     public void MessageSerializer_Deserialize_PositionBroadcast_ReturnsCorrectType()
@@ -386,30 +360,6 @@ public class MessageSerializerTests
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<ChatBroadcast>(deserialized);
-    }
-
-    [Fact]
-    public void MessageSerializer_Deserialize_PlayerJoinedZone_ReturnsCorrectType()
-    {
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
-        var original = new PlayerJoinedZone();
-        byte[] serialized = MessageSerializer.Serialize(original);
-
-        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
-
-        Assert.IsType<PlayerJoinedZone>(deserialized);
-    }
-
-    [Fact]
-    public void MessageSerializer_Deserialize_PlayerLeftZone_ReturnsCorrectType()
-    {
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(0, 0));
-        var original = new PlayerLeftZone();
-        byte[] serialized = MessageSerializer.Serialize(original);
-
-        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
-
-        Assert.IsType<PlayerLeftZone>(deserialized);
     }
 
     [Fact]

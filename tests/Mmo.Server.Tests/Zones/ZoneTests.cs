@@ -1,7 +1,12 @@
+using Mmo.Server.Entities;
+using Mmo.Server.Zones;
+using Mmo.Server.Zones.Configurations;
+using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Zones.Structs;
 
-namespace Mmo.Shared.Tests.Zones;
+namespace Mmo.Server.Tests.Zones;
 
 [Collection("IdRegistry")]
 public class ZoneTests : IDisposable
@@ -22,19 +27,21 @@ public class ZoneTests : IDisposable
     public void Constructor_SetsAllProperties()
     {
         var bounds = new ZoneBounds(10, 20, 100, 200);
-        var zone = new Zone(42, "TestZone", bounds);
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
 
-        Assert.Equal(42, zone.Id);
-        Assert.Equal("TestZone", zone.Name);
-        Assert.Equal(bounds, zone.Boarder);
+        Assert.Equal(42, zone.ZoneId);
+        Assert.Equal("TestZone", zone.ZoneName);
+        Assert.Equal(bounds, zone.Config.Bounds.FromConfig());
         Assert.Empty(zone.GetEntityIds());
     }
 
     [Fact]
     public void AddEntity_AddsEntityIdToZone()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50),EntityIdentity.Unassigned(0));
 
         zone.AddEntity(player.PersistentId);
 
@@ -45,10 +52,11 @@ public class ZoneTests : IDisposable
     [Fact]
     public void AddEntity_MultipleEntities_AddsAllIds()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20));
-        var player3 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10),EntityIdentity.Unassigned(0));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20),EntityIdentity.Unassigned(0));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30),EntityIdentity.Unassigned(0));
 
         zone.AddEntity(player1.PersistentId);
         zone.AddEntity(player2.PersistentId);
@@ -63,7 +71,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void AddEntity_SameEntityTwice_DoesNotDuplicate()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var playerId = Guid.NewGuid();
 
         zone.AddEntity(playerId);
@@ -75,7 +84,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void AddEntity_EmptyGuid_CanBeAdded()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
 
         // Guid.Empty is a valid Guid, not null
         zone.AddEntity(Guid.Empty);
@@ -86,7 +96,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void RemoveEntity_RemovesFromZone()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var playerId = Guid.NewGuid();
         zone.AddEntity(playerId);
 
@@ -99,7 +110,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void RemoveEntity_NonExistent_DoesNotThrow()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
 
         // Should not throw
         zone.RemoveEntity(Guid.NewGuid());
@@ -110,7 +122,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void RemoveEntity_ThenAddNewEntity_UpdatesCount()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var player1Id = Guid.NewGuid();
         var player2Id = Guid.NewGuid();
         var player3Id = Guid.NewGuid();
@@ -134,7 +147,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void HasEntity_WithEntityId_ReturnsTrue()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var playerId = Guid.NewGuid();
         zone.AddEntity(playerId);
 
@@ -144,7 +158,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void HasEntity_AfterRemoval_ReturnsFalse()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var playerId = Guid.NewGuid();
         zone.AddEntity(playerId);
         zone.RemoveEntity(playerId);
@@ -155,7 +170,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void HasEntity_NotInZone_ReturnsFalse()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var playerId = Guid.NewGuid();
 
         Assert.False(zone.HasEntity(playerId));
@@ -164,7 +180,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void GetEntityIds_ReturnsAllIds()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
         var id1 = Guid.NewGuid();
         var id2 = Guid.NewGuid();
         var id3 = Guid.NewGuid();
@@ -184,7 +201,8 @@ public class ZoneTests : IDisposable
     [Fact]
     public void GetEntityIds_EmptyZone_ReturnsEmpty()
     {
-        var zone = new Zone(1, "main", new ZoneBounds(0, 0, 100, 100));
+        var zoneConfig =  new ZoneConfig();
+        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
 
         var ids = zone.GetEntityIds().ToList();
 

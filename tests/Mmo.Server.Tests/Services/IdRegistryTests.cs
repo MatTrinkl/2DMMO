@@ -1,3 +1,5 @@
+using Mmo.Server.Entities;
+using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
@@ -109,7 +111,7 @@ public class IdRegistryTests : IDisposable
 
         IdRegistry.Instance.RegisterEntity(entity);
 
-        bool found = IdRegistry.Instance.TryGetEntity(entity.PersistentId, out IEntity? retrieved);
+        bool found = IdRegistry.Instance.TryGetEntity(entity.PersistentId, out BaseEntity? retrieved);
 
         Assert.True(found);
         Assert.Same(entity, retrieved);
@@ -124,7 +126,7 @@ public class IdRegistryTests : IDisposable
 
         IdRegistry.Instance.RegisterEntity(entity);
 
-        bool found = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out IEntity? retrieved);
+        bool found = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out BaseEntity? retrieved);
 
         Assert.True(found);
         Assert.Same(entity, retrieved);
@@ -168,7 +170,7 @@ public class IdRegistryTests : IDisposable
         IdRegistry.Instance.RegisterEntity(entity);
         IdRegistry.Instance.RegisterConnection(connectionId, entity.PersistentId);
 
-        bool foundEntity = IdRegistry.Instance.TryGetEntityByConnection(connectionId, out IEntity? retrieved);
+        bool foundEntity = IdRegistry.Instance.TryGetEntityByConnection(connectionId, out BaseEntity? retrieved);
         bool foundConnection =
             IdRegistry.Instance.TryGetConnectionByEntity(entity.PersistentId, out Guid retrievedConnId);
 
@@ -226,7 +228,7 @@ public class IdRegistryTests : IDisposable
         IdRegistry.Instance.UpdateEntityGlobalKey(entity, oldGlobalKey);
 
         bool foundOld = IdRegistry.Instance.TryGetEntity(oldGlobalKey, out _);
-        bool foundNew = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out IEntity? retrieved);
+        bool foundNew = IdRegistry.Instance.TryGetEntity(entity.RuntimeId.GlobalKey, out BaseEntity? retrieved);
 
         Assert.False(foundOld);
         Assert.True(foundNew);
@@ -331,12 +333,12 @@ public class IdRegistryTests : IDisposable
         Assert.Equal(0, IdRegistry.Instance.GetNextLocalId(1));
     }
 
-    private static TestEntity CreateTestEntity() => new();
+    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0),Guid.Empty,new Position(0,0));
 
     /// <summary>
     ///     Simple test entity implementation.
     /// </summary>
-    private class TestEntity : IEntity
+    private class TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position) : BaseEntity(runtimeId, persistentId, position),IEntity
     {
         /// <summary>Test server ID.</summary>
         private const byte _testServerId = 1;
@@ -348,16 +350,16 @@ public class IdRegistryTests : IDisposable
         private const ushort _testPrefabId = 1;
 
         public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(_testPrefabId);
-        public bool IsTrulyPersistent => false;
+        public override bool IsTrulyPersistent => false;
 
         public Guid PersistentId { get; init; } = Guid.NewGuid();
-        public EntityType Type => EntityType.Player;
+        public override EntityType Type => EntityType.Player;
         public Position Position { get; set; } = new(0, 0);
 
-        public void SetEntityId(ushort localId, ushort zoneId) =>
+        public override void SetEntityId(ushort localId, ushort zoneId) =>
             RuntimeId = new EntityIdentity(_testServerId, zoneId, _testShardId, localId, _testPrefabId);
 
-        public void ChangeZone(ushort newZoneId)
+        public override void ChangeZone(ushort newZoneId)
         {
         }
     }

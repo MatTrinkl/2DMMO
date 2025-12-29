@@ -34,4 +34,8 @@
                       ReferenceOutputAssembly="false"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Sync\" />
+  </ItemGroup>
+
 </Project>

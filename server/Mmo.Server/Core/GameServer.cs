@@ -18,6 +18,7 @@ using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
+using Mmo.Shared.Zones.Messages.Server_Broadcast;
 using Mmo.Shared.Zones.Messages.Server_Brodcast;
 
 namespace Mmo.Server.Core;
@@ -677,7 +678,7 @@ public class GameServer : IDisposable
                 player.Name, player.RuntimeId.ZoneId, reason ?? "Unknown");
 
             // Broadcast to zone: Player has left
-            var leftMessage = new PlayerLeftZone();
+            var leftMessage = new CharacterLeftZone();
             var outgoing = OutgoingMessage.BroadcastToZoneExcept(
                 leftMessage,
                 player.RuntimeId.ZoneId,
