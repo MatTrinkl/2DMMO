@@ -12,6 +12,7 @@ namespace Mmo.Shared.Generators;
 ///         <item>Generate backing fields and property wrappers for tracked properties</item>
 ///         <item>Generate extension methods for creating delta DTOs (e.g., ToPositionDelta())</item>
 ///         <item>Automatically set DirtyFlags when tracked properties change</item>
+///         <item>Transfer the ID property to generated delta DTOs (when IdPropertyName is specified)</item>
 ///     </list>
 ///     </para>
 ///     
@@ -23,9 +24,11 @@ namespace Mmo.Shared.Generators;
 /// </remarks>
 /// <example>
 /// <code>
-/// [GenerateDirtyTracking]
+/// [GenerateDirtyTracking(IdPropertyName = "PersistentId")]
 /// public partial class PlayerEntity
 /// {
+///     public Guid PersistentId { get; set; }
+///     
 ///     [TrackedProperty(DirtyFlags.Position)]
 ///     public float X { get; set; }
 ///     
@@ -40,4 +43,19 @@ namespace Mmo.Shared.Generators;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
 public class GenerateDirtyTrackingAttribute : Attribute
 {
+    /// <summary>
+    ///     Gets or sets the name of the property that serves as the entity identifier.
+    ///     This ID will be automatically included in generated delta DTOs with the [DeltaId] attribute.
+    /// </summary>
+    /// <remarks>
+    ///     When specified, the generator will:
+    ///     <list type="bullet">
+    ///         <item>Include this property in all generated delta DTOs</item>
+    ///         <item>Mark it with [DeltaId] attribute for automatic recognition</item>
+    ///         <item>Enable O(1) lookup capabilities in delta collections</item>
+    ///     </list>
+    ///     
+    ///     Examples: "PersistentId", "EntityId", "PlayerId", "QuestId"
+    /// </remarks>
+    public string? IdPropertyName { get; set; }
 }

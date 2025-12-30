@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Generators;
+using Mmo.Shared.Zones.Interfaces;
 
 namespace Mmo.Shared.Zones.Dtos;
 
@@ -27,6 +28,7 @@ namespace Mmo.Shared.Zones.Dtos;
 ///     - BuffDelta (active buffs/debuffs)
 ///     - QuestDelta (quest progress)
 ///     - AchievementDelta (achievement progress)
+///     - Implement IDeltaDto&lt;TId&gt; for O(1) lookup support
 ///     </para>
 /// </remarks>
 /// <example>
@@ -41,10 +43,17 @@ namespace Mmo.Shared.Zones.Dtos;
 ///     ModelId = null, // hasn't changed
 ///     Level = null // hasn't changed
 /// };
+/// 
+/// // O(1) lookup in collections
+/// var deltaDict = stateDeltas.ToDictionary(d => d.GetId());
+/// if (deltaDict.TryGetValue(entityId, out var delta))
+/// {
+///     // Apply delta
+/// }
 /// </code>
 /// </example>
 [MessagePackObject]
-public class EntityStateDelta
+public class EntityStateDelta : IDeltaDto<Guid>
 {
     /// <summary>
     ///     Gets or sets the unique identifier of the entity.
@@ -93,4 +102,10 @@ public class EntityStateDelta
     /// </summary>
     [Key(5)]
     public int? Level { get; set; }
+    
+    /// <summary>
+    ///     Gets the identifier value for O(1) lookup in collections.
+    /// </summary>
+    /// <returns>The entity identifier.</returns>
+    public Guid GetId() => EntityId;
 }

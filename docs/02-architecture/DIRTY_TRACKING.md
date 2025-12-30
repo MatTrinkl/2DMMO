@@ -79,9 +79,12 @@ Without dirty-tracking, the server must send full entity updates every tick (40m
 ### 1. Basic Entity with Dirty-Tracking
 
 ```csharp
-[GenerateDirtyTracking]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
 public partial class PlayerEntity
 {
+    // ID property - automatically transferred to Delta DTOs
+    public Guid PersistentId { get; set; }
+    
     [TrackedProperty(DirtyFlags.Position)]
     public float X { get; set; }
     
@@ -95,7 +98,6 @@ public partial class PlayerEntity
     public int MaxHP { get; set; }
     
     // Non-tracked properties work normally
-    public Guid PersistentId { get; set; }
     public string Name { get; set; }
 }
 ```
@@ -130,6 +132,24 @@ partial class PlayerEntity : IDirtyTrackable
     }
     
     // ... similar wrappers for Y, CurrentHP, MaxHP
+}
+
+// Auto-generated Delta DTO
+[MessagePackObject]
+public class PlayerPositionDelta : IDeltaDto<Guid>
+{
+    [Key(0)]
+    [DeltaId]  // Automatically transferred from IdPropertyName
+    public Guid PersistentId { get; set; }
+    
+    [Key(1)]
+    public float X { get; set; }
+    
+    [Key(2)]
+    public float Y { get; set; }
+    
+    // O(1) lookup helper
+    public Guid GetId() => PersistentId;
 }
 ```
 
@@ -212,10 +232,33 @@ if (entity.DirtyFlags.HasFlag(DirtyFlags.Health))
     entity.ClearDirtyFlags();
 }
 
-// Client-side: Apply delta
+// Client-side: Apply delta with O(1) lookup
+public void ApplyDeltas(List<EntityStateDelta> stateDeltas)
+{
+    // Convert to dictionary for O(1) lookup
+    var deltaDict = stateDeltas.ToDeltaDictionary<Guid, EntityStateDelta>();
+    
+    // Fast lookup for each entity
+    foreach (var entity in visibleEntities)
+    {
+        if (deltaDict.TryGetValue(entity.PersistentId, out var delta))
+        {
+            if (delta.CurrentHP.HasValue)
+                entity.CurrentHP = delta.CurrentHP.Value;
+            
+            if (delta.MaxHP.HasValue)
+                entity.MaxHP = delta.MaxHP.Value;
+            
+            if (delta.State.HasValue)
+                entity.State = (EntityState)delta.State.Value;
+        }
+    }
+}
+
+// Alternative: Single entity lookup
 public void ApplyDelta(EntityStateDelta delta)
 {
-    var entity = GetEntity(delta.EntityId);
+    var entity = GetEntity(delta.GetId());  // O(1) using GetId() helper
     
     if (delta.CurrentHP.HasValue)
         entity.CurrentHP = delta.CurrentHP.Value;
@@ -228,7 +271,58 @@ public void ApplyDelta(EntityStateDelta delta)
 }
 ```
 
-### 3. Custom DirtyFlags for Different Entity Types
+### 3. O(1) Lookup with IDeltaDto Interface
+
+All Delta DTOs implement `IDeltaDto<TId>` for efficient ID-based lookup:
+
+```csharp
+// Delta DTOs implement IDeltaDto<TId>
+public class EntityPositionDelta : IDeltaDto<Guid>
+{
+    [Key(0)]
+    [DeltaId]
+    public Guid EntityId { get; set; }
+    
+    // ... other properties
+    
+    // O(1) lookup helper
+    public Guid GetId() => EntityId;
+}
+
+// Server: Send list of deltas
+var positionDeltas = new List<EntityPositionDelta> { /* ... */ };
+SendToClients(new ZoneDelta { PositionUpdates = positionDeltas });
+
+// Client: Convert to dictionary for O(1) lookup
+var deltaDict = zoneDelta.PositionUpdates.ToDeltaDictionary<Guid, EntityPositionDelta>();
+
+// Fast lookup by entity ID
+if (deltaDict.TryGetValue(myEntityId, out var delta))
+{
+    // Apply delta - O(1) lookup
+    entity.X = delta.X;
+    entity.Y = delta.Y;
+}
+
+// Performance comparison:
+// - Linear search: O(n) - slow for large lists
+// - Dictionary lookup: O(1) - fast regardless of list size
+```
+
+**Extension Methods:**
+
+```csharp
+// Convert to dictionary for O(1) lookup
+var dict = deltas.ToDeltaDictionary<Guid, EntityPositionDelta>();
+
+// Or use TryGetDelta for single lookup (O(n))
+if (deltas.TryGetDelta(entityId, out var delta))
+{
+    // Process delta
+}
+```
+
+### 4. Custom DirtyFlags for Different Entity Types
 
 The system is extensible to other domains:
 

@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Generators;
+using Mmo.Shared.Zones.Interfaces;
 
 namespace Mmo.Shared.Zones.Dtos;
 
@@ -20,6 +21,7 @@ namespace Mmo.Shared.Zones.Dtos;
 ///     - Use nullable types for optional fields that may not change
 ///     - Include only the EntityId as non-nullable identifier
 ///     - Keep DTOs focused on a specific aspect (position, stats, equipment, etc.)
+///     - Implement IDeltaDto&lt;TId&gt; for O(1) lookup support
 ///     </para>
 /// </remarks>
 /// <example>
@@ -34,10 +36,17 @@ namespace Mmo.Shared.Zones.Dtos;
 ///     VelocityY = entity.VelocityY,
 ///     Rotation = entity.Rotation // nullable, only if changed
 /// };
+/// 
+/// // O(1) lookup in collections
+/// var deltaDict = deltas.ToDictionary(d => d.GetId());
+/// if (deltaDict.TryGetValue(entityId, out var found))
+/// {
+///     // Apply delta
+/// }
 /// </code>
 /// </example>
 [MessagePackObject]
-public class EntityPositionDelta
+public class EntityPositionDelta : IDeltaDto<Guid>
 {
     /// <summary>
     ///     Gets or sets the unique identifier of the entity.
@@ -76,4 +85,10 @@ public class EntityPositionDelta
     /// </summary>
     [Key(5)]
     public float? Rotation { get; set; }
+    
+    /// <summary>
+    ///     Gets the identifier value for O(1) lookup in collections.
+    /// </summary>
+    /// <returns>The entity identifier.</returns>
+    public Guid GetId() => EntityId;
 }
