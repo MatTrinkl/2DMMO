@@ -10,6 +10,8 @@ namespace Mmo.Shared.Character.Interfaces;
 /// </summary>
 [GenerateDto(InheritInterfaces = false, DtoName = "CharacterEntityDto")]
 [DtoUnionMember(0, typeof(IEntity))]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
+[DeltaDtoUnionMember(0, typeof(IEntity))]
 public interface ICharacterEntity : ICombatEntity
 {
     // Character Identity

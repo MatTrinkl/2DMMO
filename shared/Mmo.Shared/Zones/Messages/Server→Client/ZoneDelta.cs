@@ -69,9 +69,10 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     /// <summary>
     ///     Gets or sets the list of entity updates (nullable).
     ///     Null if no entity changes this tick.
-    ///     Auto-generated unified Delta DTO from ICombatEntity with all tracked properties as nullable.
+    ///     Auto-generated unified Delta DTOs from entity interfaces with all tracked properties as nullable.
     ///     Only changed properties have non-null values, minimizing bandwidth usage.
+    ///     Uses Union pattern to support different entity types (Characters, NPCs, etc.) in one list.
     /// </summary>
     [Key(5)]
-    public List<ICombatEntityDelta>? EntityUpdates { get; init; }
+    public List<EntityDeltaUnion>? EntityUpdates { get; init; }
 }
