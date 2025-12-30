@@ -11,6 +11,8 @@ namespace Mmo.Shared.Npc.Interfaces;
 /// </summary>
 [GenerateDto(InheritInterfaces = false, DtoName = "NpcEntityDto")]
 [DtoUnionMember(1, typeof(IEntity))]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
+[DeltaDtoUnionMember(1, typeof(IEntity))]
 public interface INpcEntity : ICombatEntity
 {
     // NPC Identity

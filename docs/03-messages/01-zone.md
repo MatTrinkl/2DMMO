@@ -855,6 +855,10 @@ Hochfrequente Delta-Updates für Entity-Änderungen. Ersetzt einzelne Entity-Mes
 > **Wichtig:**  
 > Nur Änderungen in **sichtbaren Chunks** (3x3 Grid um Spieler) werden gesendet.  
 > Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details zum Chunk-System.
+> 
+> **Dirty-Tracking System:**
+> ZoneDelta nutzt das automatische Dirty-Tracking System für optimale Bandbreitennutzung.  
+> Siehe [Dirty-Tracking Architecture](../../02-architecture/DIRTY_TRACKING.md) für vollständige Dokumentation.
 
 ### Im Scope ✅
 
@@ -1207,8 +1211,42 @@ Diese Messages bleiben **NICHT** gebatched:
 - **Bandbreiten-Reduktion**: 96%+ vs. Full Broadcast
 - **Skalierung**: Konstante Bandbreite unabhängig von Zone-Größe
 
+### Erweiterbarkeit
+
+Das Delta-System ist **generisch und erweiterbar**:
+
+1. **Neue Delta-Typen hinzufügen:**
+   - Erstelle neue Delta-DTO (z.B. `EntityEquipmentDelta`, `EntityBuffDelta`)
+   - Folge dem Nullable-Pattern (null = nicht geändert)
+   - Füge als nullable List zu `ZoneDelta` hinzu
+
+2. **Eigene DirtyFlags definieren:**
+   ```csharp
+   [Flags]
+   public enum CustomDirtyFlags : uint
+   {
+       Equipment = 1 << 10,
+       Buffs = 1 << 11,
+       // ... bis zu 32 Flags
+   }
+   ```
+
+3. **Beispiel - Equipment Delta:**
+   ```csharp
+   [MessagePackObject]
+   public class EntityEquipmentDelta
+   {
+       [Key(0)] public Guid EntityId { get; set; }
+       [Key(1)] public uint? Helmet { get; set; }  // null = nicht geändert
+       [Key(2)] public uint? Weapon { get; set; }
+   }
+   ```
+
+Siehe [Dirty-Tracking Architecture](../../02-architecture/DIRTY_TRACKING.md) für vollständige Dokumentation und Beispiele.
+
 ### Verwandte Dokumentation
 
+- [Dirty-Tracking System](../../02-architecture/DIRTY_TRACKING.md) - Automatisches Change-Tracking
 - [Chunk-Based Sync System](../../02-architecture/CHUNK_BASED_SYNC.md) - Vollständige Dokumentation
 - [Game Loop - Output Phase](../../02-architecture/GAME_LOOP.md) - Delta-Building Logik
 - [Entity Messages](14-entity.md) - Deprecated Messages
