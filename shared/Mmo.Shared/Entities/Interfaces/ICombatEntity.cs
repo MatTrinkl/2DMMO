@@ -15,34 +15,34 @@ public interface ICombatEntity : IEntity
     // Identity
     string DisplayName { get; init; }
     
-    [TrackedProperty(DirtyFlags.Level)]
+    [TrackedProperty(EntityDirtyFlags.Level)]
     int Level { get; set; }
 
     // Health & Resource
-    [TrackedProperty(DirtyFlags.Health)]
+    [TrackedProperty(EntityDirtyFlags.Health)]
     int CurrentHealth { get; set; }
     
-    [TrackedProperty(DirtyFlags.MaxHealth)]
+    [TrackedProperty(EntityDirtyFlags.MaxHealth)]
     int MaxHealth { get; init; }
     
-    [TrackedProperty(DirtyFlags.Resource)]
+    [TrackedProperty(EntityDirtyFlags.Resource)]
     int CurrentResource { get; set; }
     
-    [TrackedProperty(DirtyFlags.MaxResource)]
+    [TrackedProperty(EntityDirtyFlags.MaxResource)]
     int MaxResource { get; init; }
     
     CombatResourceType CombatResourceType { get; init; }
 
     // State
-    [TrackedProperty(DirtyFlags.State)]
+    [TrackedProperty(EntityDirtyFlags.State)]
     bool IsInCombat { get; set; }
     
-    [TrackedProperty(DirtyFlags.State)]
+    [TrackedProperty(EntityDirtyFlags.State)]
     Guid? TargetEntityId { get; set; }
     
     Faction Faction { get; init; }
 
     // Stats
-    [TrackedProperty(DirtyFlags.Velocity)]
+    [TrackedProperty(EntityDirtyFlags.Velocity)]
     float MovementSpeed { get; set; }
 }

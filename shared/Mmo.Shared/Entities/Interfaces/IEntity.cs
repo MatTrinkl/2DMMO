@@ -20,6 +20,6 @@ public interface IEntity
 
     EntityType Type { get; }
 
-    [TrackedProperty(DirtyFlags.Position)]
+    [TrackedProperty(EntityDirtyFlags.Position)]
     Position Position { get; set; }
 }

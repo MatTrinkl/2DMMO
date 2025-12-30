@@ -4,7 +4,7 @@ namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Marks a property for automatic dirty tracking.
-///     When the property is set, the specified DirtyFlags will be automatically set.
+///     When the property is set, the specified EntityDirtyFlags will be automatically set.
 /// </summary>
 /// <remarks>
 ///     This attribute works with the [GenerateDirtyTracking] attribute on the containing class.
@@ -15,10 +15,10 @@ namespace Mmo.Shared.Generators;
 /// [GenerateDirtyTracking]
 /// public partial class Player
 /// {
-///     [TrackedProperty(DirtyFlags.Position)]
+///     [TrackedProperty(EntityDirtyFlags.Position)]
 ///     public float X { get; set; }
 ///     
-///     [TrackedProperty(DirtyFlags.Health)]
+///     [TrackedProperty(EntityDirtyFlags.Health)]
 ///     public int CurrentHP { get; set; }
 /// }
 /// </code>
@@ -29,13 +29,13 @@ public class TrackedPropertyAttribute : Attribute
     /// <summary>
     ///     Gets the dirty flag that will be set when this property changes.
     /// </summary>
-    public DirtyFlags Flag { get; }
+    public EntityDirtyFlags Flag { get; }
     
     /// <summary>
     ///     Initializes a new instance of the <see cref="TrackedPropertyAttribute"/> class.
     /// </summary>
     /// <param name="flag">The flag to set when this property changes.</param>
-    public TrackedPropertyAttribute(DirtyFlags flag)
+    public TrackedPropertyAttribute(EntityDirtyFlags flag)
     {
         Flag = flag;
     }

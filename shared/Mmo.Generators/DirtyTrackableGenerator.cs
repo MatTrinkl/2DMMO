@@ -95,13 +95,13 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"partial class {typeSymbol.Name} : Mmo.Shared.Entities.Interfaces.IDirtyTrackable");
         sb.AppendLine("{");
-        sb.AppendLine("    private Mmo.Shared.Entities.Enums.DirtyFlags _dirtyFlags = Mmo.Shared.Entities.Enums.DirtyFlags.None;");
+        sb.AppendLine("    private Mmo.Shared.Entities.Enums.EntityDirtyFlags _dirtyFlags = Mmo.Shared.Entities.Enums.EntityDirtyFlags.None;");
         sb.AppendLine();
-        sb.AppendLine("    public Mmo.Shared.Entities.Enums.DirtyFlags DirtyFlags => _dirtyFlags;");
-        sb.AppendLine("    public bool IsDirty => _dirtyFlags != Mmo.Shared.Entities.Enums.DirtyFlags.None;");
+        sb.AppendLine("    public Mmo.Shared.Entities.Enums.EntityDirtyFlags DirtyFlags => _dirtyFlags;");
+        sb.AppendLine("    public bool IsDirty => _dirtyFlags != Mmo.Shared.Entities.Enums.EntityDirtyFlags.None;");
         sb.AppendLine();
-        sb.AppendLine("    public void ClearDirtyFlags() => _dirtyFlags = Mmo.Shared.Entities.Enums.DirtyFlags.None;");
-        sb.AppendLine("    public void MarkDirty(Mmo.Shared.Entities.Enums.DirtyFlags flags) => _dirtyFlags |= flags;");
+        sb.AppendLine("    public void ClearDirtyFlags() => _dirtyFlags = Mmo.Shared.Entities.Enums.EntityDirtyFlags.None;");
+        sb.AppendLine("    public void MarkDirty(Mmo.Shared.Entities.Enums.EntityDirtyFlags flags) => _dirtyFlags |= flags;");
         sb.AppendLine("}");
         
         return sb.ToString();
