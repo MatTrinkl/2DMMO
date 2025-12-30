@@ -50,14 +50,60 @@ Das Entity-System ist die Basis für alle Game-Objects:
 
 **Visibility-Range**: 50m Radius (configurable per Zone)
 
-**🔄 DTO-System:**  
-Entity Messages wie `EntitySpawn` (1400) und `EntityUpdate` (1404) werden in Phase 2 mit DTOs arbeiten:
+**🔄 DTO-System & Dirty-Tracking:**  
+Entity Messages verwenden in Phase 2 **automatisch generierte DTOs** und **Delta DTO Unions**:
 
--   `EntitySpawn` sollte `IEntityDto` verwenden (polymorphes Union-Interface)
--   `EntityUpdate` sollte Delta-DTOs verwenden (nur geänderte Properties)
--   Ermöglicht type-sichere Entity-Updates ohne sensible Server-Daten
+-   `EntitySpawn` verwendet `EntityDtoUnion` (polymorphes Interface für Characters, NPCs, etc.)
+-   `EntityUpdate` ist ersetzt durch **`ZoneDelta.EntityUpdates`** mit **Delta DTO Unions**
+-   Delta DTOs werden automatisch aus Interfaces generiert (z.B. `ICharacterEntityDelta`, `INpcEntityDelta`)
+-   **Factory Methods:** `entity.ToDeltaUnion()` erzeugt automatisch das passende Delta-DTO
+-   **O(1) Lookup:** Alle Delta-DTOs implementieren `IDeltaDto<TId>` für schnelle Dictionary-Lookups
+-   **97% Bandwidth-Reduzierung** durch Nullable-Pattern (nur geänderte Properties werden übertragen)
 
-Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details zu `IEntityDto`, `PlayerEntityDto` und `NpcEntityDto`.
+**Beispiel - Server erstellt Delta Updates:**
+```csharp
+// Characters und NPCs in einer Liste
+var entityUpdates = new List<EntityDeltaUnion>
+{
+    // Character mit Factory-Methode
+    character.ToDeltaUnion(),  // Nur geänderte Properties
+    
+    // NPC manuell
+    new INpcEntityDelta 
+    { 
+        PersistentId = npcId,
+        CurrentHealth = 120,  // Nur Health hat sich geändert
+        Position = null       // Position unverändert (wird nicht serialisiert)
+    }
+};
+
+var zoneDelta = new ZoneDelta { EntityUpdates = entityUpdates };
+```
+
+**Beispiel - Client wendet Delta Updates an:**
+```csharp
+// O(1) Lookup für schnelles Finden
+var deltaDict = zoneDelta.EntityUpdates.ToDictionary(d => d.GetId());
+
+if (deltaDict.TryGetValue(myCharacterId, out var delta))
+{
+    // Type-safe Pattern-Matching
+    switch (delta)
+    {
+        case ICharacterEntityDelta charDelta:
+            if (charDelta.CurrentHealth.HasValue)
+                myCharacter.CurrentHealth = charDelta.CurrentHealth.Value;
+            if (charDelta.Position.HasValue)
+                myCharacter.Position = charDelta.Position.Value;
+            break;
+        case INpcEntityDelta npcDelta:
+            // Handle NPC delta
+            break;
+    }
+}
+```
+
+Siehe [DIRTY_TRACKING.md](../../02-architecture/DIRTY_TRACKING.md) für Details zum Delta-DTO-System, Union-Pattern und automatischer Code-Generierung.
 
 ---
 
@@ -289,8 +335,9 @@ var deathDespawn = new EntityDespawn
 
 > ⚠️ **DEPRECATED in Phase 2**
 > 
-> This message is replaced by `ZoneDelta.PositionUpdates` for better batching performance.
-> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
+> This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
+> Position changes are now sent via `IEntityPositionDelta` or entity-specific Delta DTOs like `ICharacterEntityDelta`.
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) and [DIRTY_TRACKING.md](../../02-architecture/DIRTY_TRACKING.md) for details.
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** ⚡⚡ Extrem häufig (20-50 Updates/Sekunde)  
@@ -376,8 +423,10 @@ var entityMove = new EntityMove
 
 > ⚠️ **DEPRECATED in Phase 2**
 > 
-> This message is replaced by `ZoneDelta.StateUpdates` for better batching performance.
-> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
+> This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
+> State changes (HP, Level, Combat-State, etc.) are now sent via Delta DTOs like `ICharacterEntityDelta` or `INpcEntityDelta`.
+> All Delta DTOs use nullable pattern - only changed properties are transmitted, achieving 97% bandwidth reduction.
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) and [DIRTY_TRACKING.md](../../02-architecture/DIRTY_TRACKING.md) for details.
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig (nur bei Changes)  
@@ -530,8 +579,9 @@ var death = new EntityAnimation
 
 > ⚠️ **DEPRECATED in Phase 2**
 > 
-> This message is replaced by `ZoneDelta.StateUpdates` for better batching performance.
-> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) for details.
+> This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
+> State changes are now included in Delta DTOs (e.g., `IsInCombat`, `IsDead` properties in entity-specific Delta DTOs).
+> See [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) and [DIRTY_TRACKING.md](../../02-architecture/DIRTY_TRACKING.md) for details.
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig  
@@ -580,11 +630,153 @@ var stateChange = new EntityStateChange
 
 ---
 
-## 🎯 Phase 2: Non-Batched Event Messages
+## 🎯 Phase 2: Delta DTO Union System
 
-Die folgenden Entity-Messages bleiben **AKTIV** und werden **NICHT** durch `ZoneDelta` ersetzt:
+### ✅ Modernes Delta-Batching mit Unions (ZoneDelta.EntityUpdates)
+
+Phase 2 ersetzt einzelne Entity-Messages durch **ein einheitliches Delta-DTO-System mit MessagePack Unions**:
+
+**Alte Messages (DEPRECATED):**
+- ❌ `EntityMove` (1402) - Eretzt durch Delta-DTOs mit Position-Property
+- ❌ `EntityUpdate` (1403) - Ersetzt durch Delta-DTOs mit State/HP/Level Properties
+- ❌ `EntityStateChange` (1405) - Ersetzt durch Delta-DTOs mit State-Properties
+
+**Neues System:**
+✅ **`ZoneDelta.EntityUpdates: List<EntityDeltaUnion>?`** - Eine Liste für alle Entity-Typen
+
+**Was ist EntityDeltaUnion?**
+Ein MessagePack Union-Interface das polymorphe Serialisierung ermöglicht:
+
+```csharp
+// Automatisch generiert vom DeltaDtoUnionGenerator
+[Union(0, typeof(ICharacterEntityDelta))]
+[Union(1, typeof(INpcEntityDelta))]
+// ... weitere Entity-Typen können einfach hinzugefügt werden
+public interface EntityDeltaUnion { }
+```
+
+**Delta DTOs für verschiedene Entity-Typen:**
+```csharp
+// Character Delta (automatisch generiert)
+public class ICharacterEntityDelta : IDeltaDto<Guid>, EntityDeltaUnion
+{
+    [DeltaId] public Guid PersistentId { get; set; }
+    public Position? Position { get; set; }          // null = unverändert
+    public int? CurrentHealth { get; set; }          // null = unverändert
+    public int? Level { get; set; }                  // null = unverändert
+    public bool? IsInCombat { get; set; }            // null = unverändert
+    // ... weitere Properties aus ICharacterEntity-Hierarchie
+}
+
+// NPC Delta (automatisch generiert)
+public class INpcEntityDelta : IDeltaDto<Guid>, EntityDeltaUnion
+{
+    [DeltaId] public Guid PersistentId { get; set; }
+    public Position? Position { get; set; }
+    public int? CurrentHealth { get; set; }
+    // ... NPC-spezifische Properties
+}
+```
+
+**Vorteile:**
+- ✅ **Eine Liste für alle Entity-Typen** - Characters, NPCs, Chests, etc. in einer Sammlung
+- ✅ **97% Bandwidth-Reduzierung** - Nur geänderte Properties werden übertragen (Nullable-Pattern)
+- ✅ **Type-Safe** - MessagePack deserializiert automatisch zum korrekten konkreten Typ
+- ✅ **Erweiterbar** - Neue Entity-Typen erfordern keine Änderung an ZoneDelta
+- ✅ **O(1) Lookup** - Alle Delta-DTOs implementieren `IDeltaDto<TId>` für schnelle Dictionary-Lookups
+- ✅ **Factory Methods** - `entity.ToDeltaUnion()` generiert automatisch das passende Delta-DTO
+
+**Server-Seite - Delta-Erstellung:**
+```csharp
+// Mix von verschiedenen Entity-Typen in einer Liste
+var entityUpdates = new List<EntityDeltaUnion>
+{
+    // Character (nur geänderte Properties)
+    character.ToDeltaUnion(),  // Factory-Methode generiert ICharacterEntityDelta
+    
+    // NPC (manuell)
+    new INpcEntityDelta 
+    {
+        PersistentId = npcId,
+        CurrentHealth = 120,   // Nur Health hat sich geändert
+        Position = null,       // Unverändert - wird nicht serialisiert
+        Level = null           // Unverändert - wird nicht serialisiert
+    }
+};
+
+var zoneDelta = new ZoneDelta
+{
+    EntityUpdates = entityUpdates,  // Einzige Entity-Update-Liste
+    Timestamp = serverTick
+};
+```
+
+**Client-Seite - Delta-Anwendung:**
+```csharp
+if (zoneDelta.EntityUpdates == null) return;
+
+// O(1) Lookup mit Extension-Methode
+var deltaDict = zoneDelta.EntityUpdates.ToDictionary(d => d.GetId());
+
+// Schnelles Finden für eigene Entity
+if (deltaDict.TryGetValue(myCharacterId, out var delta))
+{
+    // Type-Safe Pattern-Matching
+    switch (delta)
+    {
+        case ICharacterEntityDelta charDelta:
+            // Nur geänderte Properties anwenden
+            if (charDelta.Position.HasValue)
+                myCharacter.Position = charDelta.Position.Value;
+            if (charDelta.CurrentHealth.HasValue)
+                myCharacter.CurrentHealth = charDelta.CurrentHealth.Value;
+            if (charDelta.IsInCombat.HasValue)
+                myCharacter.EnterCombat(charDelta.IsInCombat.Value);
+            break;
+            
+        case INpcEntityDelta npcDelta:
+            // NPC-spezifische Behandlung
+            if (npcDelta.CurrentHealth.HasValue)
+                UpdateNpcHealthBar(npcDelta.PersistentId, npcDelta.CurrentHealth.Value);
+            break;
+    }
+}
+
+// Alle Entities durchgehen
+foreach (var entityDelta in zoneDelta.EntityUpdates)
+{
+    ApplyDeltaToEntity(entityDelta);
+}
+```
+
+**Update-Frequency:**
+- **Tick-Rate**: 25 Hz (40ms) - siehe [GAME_LOOP.md](../../02-architecture/GAME_LOOP.md)
+- **Batching**: Alle Entity-Changes pro Tick in **einer** ZoneDelta-Message
+- **Bandwidth**: ~1.5 MB/s statt 50 MB/s (97% Reduktion)
+
+**Erweiterbarkeit - Neue Entity-Typen hinzufügen:**
+```csharp
+// 1. Interface erstellen und markieren
+[DeltaDtoUnionMember(2, typeof(IEntity))]  // Nächster Union-Index
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
+public interface IChestEntity : IEntity
+{
+    [TrackedProperty(DirtyFlags.State)]
+    bool IsOpen { get; set; }
+}
+
+// 2. Build - Generator erstellt automatisch:
+//    - IChestEntityDelta (mit EntityDeltaUnion-Interface)
+//    - Aktualisierte EntityDeltaUnion mit IChestEntityDelta
+//    - Factory-Methode ToDeltaUnion()
+
+// 3. Sofort verwendbar - keine Änderung an ZoneDelta nötig!
+var chestDelta = chest.ToDeltaUnion();
+```
 
 ### ✅ Noch aktive Messages (Immediate Event-Based)
+
+Die folgenden Entity-Messages bleiben **AKTIV** und werden **NICHT** durch `ZoneDelta` ersetzt:
 
 | Message | ID | Grund |
 |---------|-----|-------|
@@ -616,7 +808,7 @@ Diese Messages sind **selten genug** dass Batching keinen Vorteil bringt:
 - Schlechteres Spielgefühl bei Combat und Social-Features
 - Komplexere Logik ohne Bandbreiten-Gewinn
 
-Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details zum Delta-System.
+Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) und [DIRTY_TRACKING.md](../../02-architecture/DIRTY_TRACKING.md) für Details zum Delta-DTO-Union-System.
 
 ---
 
