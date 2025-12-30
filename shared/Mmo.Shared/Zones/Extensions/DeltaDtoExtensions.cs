@@ -28,8 +28,8 @@ public static class DeltaDtoExtensions
     /// </remarks>
     /// <example>
     /// <code>
-    /// // Receive delta list from server
-    /// List&lt;EntityPositionDelta&gt; positionDeltas = zoneDelta.PositionUpdates;
+    /// // Receive delta list from server (using generated Delta DTO)
+    /// List&lt;IEntityPositionDelta&gt; positionDeltas = zoneDelta.PositionUpdates;
     /// 
     /// // Convert to dictionary for O(1) lookup
     /// var deltaDict = positionDeltas.ToDeltaDictionary();

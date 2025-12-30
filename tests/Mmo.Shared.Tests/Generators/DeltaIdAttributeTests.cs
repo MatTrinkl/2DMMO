@@ -1,5 +1,4 @@
 using Mmo.Shared.Generators;
-using Mmo.Shared.Zones.Dtos;
 
 namespace Mmo.Shared.Tests.Generators;
 
@@ -11,22 +10,8 @@ public class DeltaIdAttributeTests
     [Fact]
     public void Attribute_CanBeAppliedToProperty()
     {
-        var type = typeof(EntityPositionDelta);
-        var property = type.GetProperty(nameof(EntityPositionDelta.EntityId));
-        
-        Assert.NotNull(property);
-        
-        var attribute = property!.GetCustomAttributes(typeof(DeltaIdAttribute), false)
-            .FirstOrDefault() as DeltaIdAttribute;
-        
-        Assert.NotNull(attribute);
-    }
-    
-    [Fact]
-    public void EntityStateDelta_HasDeltaIdAttribute()
-    {
-        var type = typeof(EntityStateDelta);
-        var property = type.GetProperty(nameof(EntityStateDelta.EntityId));
+        var type = typeof(TestDeltaWithCustomId);
+        var property = type.GetProperty(nameof(TestDeltaWithCustomId.PlayerId));
         
         Assert.NotNull(property);
         
@@ -70,7 +55,7 @@ public class DeltaIdAttributeTests
     [Fact]
     public void Attribute_OnlyOneIdPropertyPerClass()
     {
-        var type = typeof(EntityPositionDelta);
+        var type = typeof(TestDeltaWithCustomId);
         
         var idProperties = type.GetProperties()
             .Where(p => p.GetCustomAttributes(typeof(DeltaIdAttribute), false).Any())

@@ -3,7 +3,6 @@ using Mmo.Shared.Entities.Dtos;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Zones.Dtos;
 
 namespace Mmo.Shared.Zones.Messages.Server_Client;
 
@@ -20,16 +19,21 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 ///     
 ///     <para>
 ///     <strong>Extensibility:</strong>
-///     Additional delta types can be added by:
-///     1. Creating a new Delta DTO (following EntityPositionDelta/EntityStateDelta pattern)
-///     2. Adding a nullable List property here
-///     3. Populating it server-side based on DirtyFlags
+///     Delta DTOs are automatically generated from entities marked with [GenerateDirtyTracking].
+///     The generators create Delta DTOs grouped by DirtyFlags (Position, State, etc.).
 ///     </para>
 ///     
 ///     <para>
 ///     <strong>Null Fields:</strong>
 ///     All collection fields are nullable. Null = no changes of that type.
 ///     This minimizes message size when only specific aspects have changed.
+///     </para>
+///     
+///     <para>
+///     <strong>TODO:</strong>
+///     Delta DTO properties will be added here once IEntity is marked with [GenerateDirtyTracking]
+///     and the appropriate [TrackedProperty] attributes are applied. The generators will create
+///     Delta DTOs (e.g., IEntityPositionDelta.g.cs, IEntityStateDelta.g.cs) that will be used here.
 ///     </para>
 /// </remarks>
 [MessagePackObject]
@@ -68,30 +72,14 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     [Key(4)]
     public List<Guid>? DespawnedEntityIds { get; init; }
     
-    /// <summary>
-    ///     Gets or sets the list of position updates (nullable).
-    ///     Null if no position changes this tick.
-    /// </summary>
-    /// <remarks>
-    ///     Uses EntityPositionDelta for compact transmission of position data.
-    /// </remarks>
-    [Key(5)]
-    public List<EntityPositionDelta>? PositionUpdates { get; init; }
-    
-    /// <summary>
-    ///     Gets or sets the list of state/stat updates (nullable).
-    ///     Null if no state changes this tick.
-    /// </summary>
-    /// <remarks>
-    ///     Uses EntityStateDelta with nullable fields - only changed properties are set.
-    /// </remarks>
-    [Key(6)]
-    public List<EntityStateDelta>? StateUpdates { get; init; }
-    
-    /// <summary>
-    ///     Gets or sets the zone context delta (nullable).
-    ///     Null if no zone-wide changes (weather, time) this tick.
-    /// </summary>
-    [Key(7)]
-    public ZoneContextDelta? ContextDelta { get; init; }
+    // TODO: Add generated Delta DTO properties here once IEntity is marked with [GenerateDirtyTracking]
+    // Example (will be uncommented when generated DTOs are available):
+    // [Key(5)]
+    // public List<IEntityPositionDelta>? PositionUpdates { get; init; }
+    //
+    // [Key(6)]
+    // public List<IEntityStateDelta>? StateUpdates { get; init; }
+    //
+    // [Key(7)]
+    // public ZoneContextDelta? ContextDelta { get; init; }
 }
