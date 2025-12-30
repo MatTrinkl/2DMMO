@@ -135,13 +135,15 @@ partial class PlayerEntity : IDirtyTrackable
 
 ### 2. Creating Delta DTOs
 
-Delta DTOs follow the **Nullable Pattern**:
+Delta DTOs follow the **Nullable Pattern** and use the **`[DeltaId]` Attribute** to identify the ID field:
 
 ```csharp
 [MessagePackObject]
 public class EntityStateDelta
 {
-    [Key(0)] public Guid EntityId { get; set; }
+    [Key(0)]
+    [DeltaId]  // Marks this as the identifier field
+    public Guid EntityId { get; set; }
     
     // Nullable fields: null = unchanged, value = changed
     [Key(1)] public int? CurrentHP { get; set; }
@@ -149,6 +151,48 @@ public class EntityStateDelta
     [Key(3)] public byte? State { get; set; }
 }
 ```
+
+**The `[DeltaId]` Attribute:**
+
+The `DeltaIdAttribute` allows the system to recognize which property contains the entity identifier, regardless of its name. This is crucial for extensibility since different data structures use different ID field names:
+
+```csharp
+// Entity delta - uses EntityId
+[MessagePackObject]
+public class EntityPositionDelta
+{
+    [Key(0)]
+    [DeltaId]
+    public Guid EntityId { get; set; }
+    // ...
+}
+
+// Player-specific delta - uses PlayerId
+[MessagePackObject]
+public class PlayerInventoryDelta
+{
+    [Key(0)]
+    [DeltaId]
+    public Guid PlayerId { get; set; }
+    // ...
+}
+
+// Quest delta - uses QuestId (different type too!)
+[MessagePackObject]
+public class QuestProgressDelta
+{
+    [Key(0)]
+    [DeltaId]
+    public int QuestId { get; set; }
+    // ...
+}
+```
+
+This attribute enables:
+- **Automatic ID field detection** in code generators
+- **Flexible naming** (EntityId, PlayerId, QuestId, etc.)
+- **Different ID types** (Guid, int, long, etc.)
+- **Reflection-based helpers** to find the ID property dynamically
 
 **Usage:**
 
@@ -447,7 +491,10 @@ public partial class Inventory
 [MessagePackObject]
 public class InventoryDelta
 {
-    [Key(0)] public Guid PlayerId { get; set; }
+    [Key(0)]
+    [DeltaId]  // Marks PlayerId as the identifier
+    public Guid PlayerId { get; set; }
+    
     [Key(1)] public Item? Slot1 { get; set; }
     // ... only changed slots
     [Key(32)] public int? Gold { get; set; }
@@ -481,6 +528,51 @@ public partial class Guild
     [TrackedProperty(GuildDirtyFlags.Experience)]
     public long Experience { get; set; }
 }
+
+// Delta DTO for guild updates
+[MessagePackObject]
+public class GuildDelta
+{
+    [Key(0)]
+    [DeltaId]  // Marks GuildId as the identifier
+    public Guid GuildId { get; set; }
+    
+    [Key(1)] public string? Name { get; set; }
+    [Key(2)] public List<GuildMember>? Members { get; set; }
+    [Key(3)] public long? Experience { get; set; }
+}
+```
+
+### 3. Helper Method to Find ID Property
+
+The `[DeltaId]` attribute enables reflection-based helpers:
+
+```csharp
+public static class DeltaHelper
+{
+    /// <summary>
+    ///     Finds the ID property in a delta DTO using the [DeltaId] attribute.
+    /// </summary>
+    public static PropertyInfo? GetIdProperty(Type deltaType)
+    {
+        return deltaType.GetProperties()
+            .FirstOrDefault(p => p.GetCustomAttribute<DeltaIdAttribute>() != null);
+    }
+    
+    /// <summary>
+    ///     Gets the ID value from a delta DTO instance.
+    /// </summary>
+    public static object? GetIdValue(object deltaInstance)
+    {
+        var idProperty = GetIdProperty(deltaInstance.GetType());
+        return idProperty?.GetValue(deltaInstance);
+    }
+}
+
+// Usage:
+var delta = new PlayerInventoryDelta { PlayerId = playerId, ... };
+var id = DeltaHelper.GetIdValue(delta);  // Returns the PlayerId value
+```
 ```
 
 ## Performance Considerations

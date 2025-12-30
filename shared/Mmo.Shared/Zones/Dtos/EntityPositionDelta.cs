@@ -1,4 +1,5 @@
 using MessagePack;
+using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Zones.Dtos;
 
@@ -42,6 +43,7 @@ public class EntityPositionDelta
     ///     Gets or sets the unique identifier of the entity.
     /// </summary>
     [Key(0)]
+    [DeltaId]
     public Guid EntityId { get; set; }
     
     /// <summary>
