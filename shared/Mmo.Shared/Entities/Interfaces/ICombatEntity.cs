@@ -1,5 +1,6 @@
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Combat.Enums;
+using Mmo.Shared.DirtyTracking.Attributes;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Generators;
 
@@ -15,34 +16,34 @@ public interface ICombatEntity : IEntity
     // Identity
     string DisplayName { get; init; }
     
-    [TrackedProperty(EntityDirtyFlags.Level)]
+    [TrackDirty("Level")]
     int Level { get; set; }
 
     // Health & Resource
-    [TrackedProperty(EntityDirtyFlags.Health)]
+    [TrackDirty("Health")]
     int CurrentHealth { get; set; }
     
-    [TrackedProperty(EntityDirtyFlags.MaxHealth)]
+    [TrackDirty("MaxHealth")]
     int MaxHealth { get; init; }
     
-    [TrackedProperty(EntityDirtyFlags.Resource)]
+    [TrackDirty("Resource")]
     int CurrentResource { get; set; }
     
-    [TrackedProperty(EntityDirtyFlags.MaxResource)]
+    [TrackDirty("MaxResource")]
     int MaxResource { get; init; }
     
     CombatResourceType CombatResourceType { get; init; }
 
     // State
-    [TrackedProperty(EntityDirtyFlags.State)]
+    [TrackDirty("State")]
     bool IsInCombat { get; set; }
     
-    [TrackedProperty(EntityDirtyFlags.State)]
+    [TrackDirty("State")]
     Guid? TargetEntityId { get; set; }
     
     Faction Faction { get; init; }
 
     // Stats
-    [TrackedProperty(EntityDirtyFlags.Velocity)]
+    [TrackDirty("Velocity")]
     float MovementSpeed { get; set; }
 }

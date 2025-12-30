@@ -8,7 +8,7 @@ namespace Mmo.Generators;
 /// </summary>
 public static class GeneratorHelpers
 {
-    private const string TrackedPropertyAttributeFullName = "Mmo.Shared.Generators.TrackedPropertyAttribute";
+    private const string TrackDirtyAttributeFullName = "Mmo.Shared.DirtyTracking.Attributes.TrackDirtyAttribute";
     
     public static bool IsCandidateForGeneration(SyntaxNode node)
     {
@@ -77,13 +77,14 @@ public static class GeneratorHelpers
                 continue;
                 
             var attr = property.GetAttributes()
-                .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == TrackedPropertyAttributeFullName);
+                .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == TrackDirtyAttributeFullName);
                 
             if (attr == null || attr.ConstructorArguments.Length == 0)
                 continue;
                 
-            var flagValue = attr.ConstructorArguments[0];
-            string flagName = GetDirtyFlagGroupName(flagValue);
+            // TrackDirty uses string flag names
+            var flagNameArg = attr.ConstructorArguments[0];
+            string flagName = flagNameArg.Value?.ToString() ?? "Unknown";
             
             if (!groups.ContainsKey(flagName))
                 groups[flagName] = new List<TrackedPropertyInfo>();
@@ -92,7 +93,7 @@ public static class GeneratorHelpers
             {
                 Name = property.Name,
                 Type = property.Type.ToDisplayString(),
-                FlagValue = flagValue.Value?.ToString() ?? "0"
+                FlagValue = flagName
             });
         }
         

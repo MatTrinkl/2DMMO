@@ -1,6 +1,7 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.DirtyTracking.Attributes;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Generators;
 
@@ -20,6 +21,6 @@ public interface IEntity
 
     EntityType Type { get; }
 
-    [TrackedProperty(EntityDirtyFlags.Position)]
+    [TrackDirty("Position")]
     Position Position { get; set; }
 }

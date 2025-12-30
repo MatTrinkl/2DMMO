@@ -2,7 +2,7 @@ namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Marks a class or interface for automatic dirty tracking code generation.
-///     The generator will implement IDirtyTrackable and create property wrappers for [TrackedProperty] members.
+///     The generator will implement IDirtyTrackable and create property wrappers for [TrackDirty] members.
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -24,18 +24,18 @@ namespace Mmo.Shared.Generators;
 /// </remarks>
 /// <example>
 /// <code>
-/// [GenerateDirtyTracking(IdPropertyName = "PersistentId")]
+/// [GenerateDirtyTracking(IdPropertyName = "PersistentId", FlagsEnumType = "Mmo.Shared.Entities.Enums.EntityDirtyFlags")]
 /// public partial class PlayerEntity
 /// {
 ///     public Guid PersistentId { get; set; }
 ///     
-///     [TrackedProperty(DirtyFlags.Position)]
+///     [TrackDirty("Position")]
 ///     public float X { get; set; }
 ///     
-///     [TrackedProperty(DirtyFlags.Position)]
+///     [TrackDirty("Position")]
 ///     public float Y { get; set; }
 ///     
-///     [TrackedProperty(DirtyFlags.Health)]
+///     [TrackDirty("Health")]
 ///     public int CurrentHP { get; set; }
 /// }
 /// </code>
@@ -58,4 +58,25 @@ public class GenerateDirtyTrackingAttribute : Attribute
     ///     Examples: "PersistentId", "EntityId", "PlayerId", "QuestId"
     /// </remarks>
     public string? IdPropertyName { get; set; }
+    
+    /// <summary>
+    ///     Gets or sets the fully qualified name of the flags enum type to use for dirty tracking.
+    ///     If not specified, defaults to "Mmo.Shared.Entities.Enums.EntityDirtyFlags".
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///     This allows different domains to use their own flag enums:
+    ///     <list type="bullet">
+    ///         <item>Entity domain: "Mmo.Shared.Entities.Enums.EntityDirtyFlags"</item>
+    ///         <item>Zone domain: "Mmo.Shared.Zones.Enums.ZoneDirtyFlags"</item>
+    ///         <item>Inventory domain: "Mmo.Shared.Inventory.Enums.InventoryDirtyFlags"</item>
+    ///     </list>
+    ///     </para>
+    ///     
+    ///     The enum type must:
+    ///     - Be a [Flags] enum
+    ///     - Have a backing type of uint or ulong
+    ///     - Define at least a "None" value
+    /// </remarks>
+    public string? FlagsEnumType { get; set; }
 }
