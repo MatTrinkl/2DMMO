@@ -14,7 +14,7 @@
 - [JoinZone (100)](#joinzone-100)
 - [LeaveZone (101)](#leavezone-101)
 - [ZoneState (102)](#zonestate-102)
-- [PlayerJoinedZone (103)](#playerjoinedzone-103)
+- [ZoneDelta (103)](#zonedelta-103)
 - [PlayerLeftZone (104)](#playerleftzone-104)
 - [ZoneTransferRequest (105)](#zonetransferrequest-105)
 - [ZoneTransferResponse (106)](#zonetransferresponse-106)
@@ -385,66 +385,363 @@ var zoneState = new ZoneState
 
 ---
 
-## PlayerJoinedZone (103)
+## ZoneDelta (103)
 
 **Richtung:** 📡 Broadcast (Server → All Clients in Zone)  
-**Frequenz:** Häufig  
+**Frequenz:** Sehr häufig (25 Hz / jeder Tick)  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** Keine  
+**Status:** 🟢 Aktiv und Produktiv
 
 ### Beschreibung
-Broadcast an alle Spieler in Zone wenn ein neuer Spieler spawnt. Ermöglicht Clients den neuen Spieler anzuzeigen.
+**Inkrementelle Entity-Updates** für optimale Bandbreitennutzung. Sendet nur geänderte Properties (Dirty Tracking) statt vollständiger Entity-States. 
+
+Verwendet das **EntityDeltaUnion-System** mit automatisch generierten Delta-DTOs aus Interfaces.
+
+**Warum ZoneDelta?**
+- **Bandbreiten-Effizienz:** Nur Änderungen werden gesendet (nicht komplette Entities)
+- **Skalierbarkeit:** Ermöglicht viele Spieler in einer Zone
+- **O(1) Lookup:** Dictionary-basierter Zugriff auf Delta-DTOs nach Entity-ID
+- **Type-Safe:** Delta-DTOs sind typsicher und validiert
 
 ### Im Scope ✅
-- Neuer Spieler-Informationen
-- Spawn-Position
-- Basic-Stats (Level, Klasse, etc.)
+- Position-Updates (X, Y, Z, Rotation)
+- Stats-Updates (Health, Mana, etc.)
+- State-Updates (IsMoving, IsCasting, etc.)
+- Equipment-Changes
+- Buff/Debuff-Updates
+- Beliebige Entity-Properties die sich ändern
 
 ### Nicht im Scope ❌
-- Vollständige Character-Stats → verwende `InspectRequest` (3300)
-- Equipment-Details → verwende `InspectEquipment` (3302)
+- Vollständiger Entity-State → verwende `ZoneState` (102) oder `EntitySpawn` (1400)
+- Entity-Spawn/Despawn → verwende `EntitySpawn` (1400) / `EntityDespawn` (1402)
+- Entity-Liste → verwende `ZoneState` (102)
 
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| EntityId | int | Runtime Entity-ID | Ja |
-| CharacterId | long | Persistente Character-ID | Ja |
-| Name | string | Character-Name | Ja |
-| Level | int | Level | Ja |
-| Race | int | Rassen-ID | Ja |
-| Class | int | Klassen-ID | Ja |
-| X | float | Position X | Ja |
-| Y | float | Position Y | Ja |
-| Z | float | Position Z | Ja |
+| Tick | long | Server Tick Number (Sequenz) | Ja |
+| DeltaTime | float | Zeit seit letztem Update (Sekunden) | Ja |
+| ServerTime | long | Server Unix Timestamp (Millisekunden) | Ja |
+| EntityUpdates | List&lt;EntityDeltaUnion&gt; | Liste der Entity-Delta-Objekte | Nein |
 
-### Beispiel Payload
+**EntityDeltaUnion:**
+
+EntityDeltaUnion ist ein **Discriminated Union** der verschiedene Delta-DTO-Typen enthält:
+
 ```csharp
-var playerJoined = new PlayerJoinedZone
+public class EntityDeltaUnion
 {
-    Type = MessageType.PlayerJoinedZone,
-    EntityId = 50002,
-    CharacterId = 98766,
-    Name = "Gimli",
-    Level = 12,
-    Race = 3, // Dwarf
-    Class = 2, // Warrior
-    X = 98.5f,
-    Y = 255.0f,
-    Z = 10.2f
+    public EntityType EntityType { get; init; }
+    public object Delta { get; init; } // Actual delta DTO (ICharacterEntityDelta, INpcEntityDelta, etc.)
+    
+    public Guid GetId() => Delta switch
+    {
+        IDeltaDto<Guid> guidDelta => guidDelta.GetId(),
+        IDeltaDto<int> intDelta => intDelta.GetId(),
+        _ => throw new InvalidOperationException()
+    };
+}
+```
+
+Delta-DTOs werden automatisch aus **Interfaces** generiert und implementieren `IDeltaDto<TId>`:
+
+**ICharacterEntityDelta** (Beispiel):
+| Feld | Typ | Beschreibung | Nullable Pattern |
+|------|-----|--------------|------------------|
+| PersistentId | Guid | Character-ID (immer gesetzt) | Nein |
+| X | float? | Position X | null = unverändert |
+| Y | float? | Position Y | null = unverändert |
+| Z | float? | Position Z | null = unverändert |
+| Rotation | float? | Rotation (Grad) | null = unverändert |
+| CurrentHealth | int? | Aktuelle HP | null = unverändert |
+| MaxHealth | int? | Maximale HP | null = unverändert |
+| CurrentMana | int? | Aktuelles Mana | null = unverändert |
+| MaxMana | int? | Maximales Mana | null = unverändert |
+| IsMoving | bool? | Bewegt sich? | null = unverändert |
+| IsCasting | bool? | Castet Ability? | null = unverändert |
+| TargetId | Guid? | Ziel Entity-ID | null = unverändert |
+| Equipment | EquipmentSnapshotDto? | Equipment-Änderung | null = unverändert |
+
+**INpcEntityDelta** (Beispiel):
+| Feld | Typ | Beschreibung | Nullable Pattern |
+|------|-----|--------------|------------------|
+| PersistentId | Guid | NPC Instance-ID (immer gesetzt) | Nein |
+| X | float? | Position X | null = unverändert |
+| Y | float? | Position Y | null = unverändert |
+| CurrentHealth | int? | Aktuelle HP | null = unverändert |
+| MaxHealth | int? | Maximale HP | null = unverändert |
+| AggroTargetId | Guid? | Aggro-Ziel | null = unverändert |
+| IsInCombat | bool? | Im Kampf? | null = unverändert |
+
+**Nullable Pattern:**
+- Jedes Property ist `nullable` (außer ID)
+- `null` bedeutet: "Property wurde nicht geändert"
+- Client überspringt null-Properties beim Anwenden des Deltas
+- Nur geänderte Properties werden über Netzwerk gesendet
+
+**O(1) Lookup:**
+Alle Delta-DTOs implementieren `IDeltaDto<TId>` für schnellen Zugriff:
+
+```csharp
+public interface IDeltaDto<TId>
+{
+    TId GetId();
+}
+```
+
+Client kann Delta-DTOs in Dictionary speichern:
+```csharp
+var deltaDict = zoneDelta.EntityUpdates.ToDictionary(d => d.GetId());
+```
+
+### Factory Methods
+
+**Server-seitige Erzeugung:**
+
+```csharp
+// Aus kompletter Entity (alle Properties werden gesetzt)
+var delta = character.ToDelta();
+
+// Als EntityDeltaUnion
+var deltaUnion = character.ToDeltaUnion();
+
+// Mehrere Entities
+var entityUpdates = new List<EntityDeltaUnion>
+{
+    character1.ToDeltaUnion(),
+    character2.ToDeltaUnion(),
+    npc1.ToDeltaUnion()
+};
+```
+
+**Manuelle Delta-Erzeugung** (nur geänderte Properties):
+
+```csharp
+var delta = new ICharacterEntityDelta
+{
+    PersistentId = characterId,
+    CurrentHealth = 120,  // Geändert
+    X = 100.5f,          // Geändert
+    // Alle anderen Properties = null (unverändert)
 };
 ```
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| `JoinZone` | 100 | Auslöser für diesen Broadcast |
-| `PlayerLeftZone` | 104 | Gegenstück beim Verlassen |
-| `EntitySpawn` | 1400 | Generische Entity-Spawn Message |
+| `ZoneState` | 102 | Vollständiger State beim Zone-Join |
+| `EntitySpawn` | 1400 | Neue Entity spawnt (erste Sichtung) |
+| `EntityDespawn` | 1402 | Entity verschwindet |
+| `EntityUpdate` | 1404 | Einzelnes Entity-Update (deprecated, verwende ZoneDelta) |
+
+### Verwandte Dokumentation
+- [Dirty Tracking System](../../02-architecture/DIRTY_TRACKING.md) - Architektur & Implementation
+- [Entity Messages (1400-1499)](14-entity.md) - Entity Spawn/Despawn Messages
+
+### Server-Side: Delta-Erzeugung
+
+```csharp
+// In ZoneTickService (25 Hz Game Loop)
+public void BroadcastZoneDelta()
+{
+    var entityUpdates = new List<EntityDeltaUnion>();
+    
+    // Sammle alle Entities mit Dirty Properties
+    foreach (var character in _dirtyCharacters)
+    {
+        entityUpdates.Add(character.ToDeltaUnion());
+        character.ClearDirty(); // Reset Dirty Flags
+    }
+    
+    foreach (var npc in _dirtyNpcs)
+    {
+        entityUpdates.Add(npc.ToDeltaUnion());
+        npc.ClearDirty();
+    }
+    
+    // Nur senden wenn es Updates gibt
+    if (entityUpdates.Count > 0)
+    {
+        var zoneDelta = new ZoneDelta
+        {
+            Type = MessageType.ZoneDelta,
+            Tick = _currentTick,
+            DeltaTime = 0.04f, // 40ms bei 25 Hz
+            ServerTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            EntityUpdates = entityUpdates
+        };
+        
+        BroadcastToZone(zoneDelta);
+    }
+}
+```
+
+### Client-Side: Delta-Anwendung
+
+```csharp
+// Client empfängt ZoneDelta
+public void OnZoneDelta(ZoneDelta delta)
+{
+    // O(1) Lookup für schnelles Anwenden
+    var deltaDict = delta.EntityUpdates.ToDictionary(d => d.GetId());
+    
+    // Eigenen Character updaten
+    if (deltaDict.TryGetValue(myCharacterId, out var myDelta))
+    {
+        ApplyDeltaToCharacter(myCharacter, myDelta);
+    }
+    
+    // Andere Entities updaten
+    foreach (var (entityId, deltaUnion) in deltaDict)
+    {
+        if (entityId == myCharacterId) continue; // Bereits behandelt
+        
+        switch (deltaUnion.Delta)
+        {
+            case ICharacterEntityDelta charDelta:
+                ApplyCharacterDelta(entityId, charDelta);
+                break;
+            case INpcEntityDelta npcDelta:
+                ApplyNpcDelta(entityId, npcDelta);
+                break;
+        }
+    }
+    
+    // Interpolation für smooth movement
+    _lastDeltaTime = delta.DeltaTime;
+    _serverTime = delta.ServerTime;
+}
+
+private void ApplyCharacterDelta(Guid entityId, ICharacterEntityDelta delta)
+{
+    var character = _entityManager.GetCharacter(entityId);
+    
+    // Nur non-null Properties anwenden
+    if (delta.X.HasValue) character.X = delta.X.Value;
+    if (delta.Y.HasValue) character.Y = delta.Y.Value;
+    if (delta.Z.HasValue) character.Z = delta.Z.Value;
+    if (delta.Rotation.HasValue) character.Rotation = delta.Rotation.Value;
+    
+    if (delta.CurrentHealth.HasValue)
+    {
+        character.CurrentHealth = delta.CurrentHealth.Value;
+        _uiManager.UpdateHealthBar(entityId, character.CurrentHealth);
+    }
+    
+    if (delta.MaxHealth.HasValue) character.MaxHealth = delta.MaxHealth.Value;
+    if (delta.CurrentMana.HasValue) character.CurrentMana = delta.CurrentMana.Value;
+    if (delta.MaxMana.HasValue) character.MaxMana = delta.MaxMana.Value;
+    
+    if (delta.IsMoving.HasValue) character.IsMoving = delta.IsMoving.Value;
+    if (delta.IsCasting.HasValue) character.IsCasting = delta.IsCasting.Value;
+    if (delta.TargetId.HasValue) character.TargetId = delta.TargetId.Value;
+    
+    if (delta.Equipment != null)
+    {
+        character.Equipment = delta.Equipment;
+        _renderManager.UpdateEquipment(entityId, delta.Equipment);
+    }
+}
+```
+
+### Beispiel Payload
+
+**Szenario:** 2 Characters bewegen sich, 1 NPC wird angegriffen
+
+```csharp
+var zoneDelta = new ZoneDelta
+{
+    Type = MessageType.ZoneDelta,
+    Tick = 12500,
+    DeltaTime = 0.04f, // 40ms
+    ServerTime = 1703980800000,
+    EntityUpdates = new List<EntityDeltaUnion>
+    {
+        // Character 1: Nur Position geändert
+        new EntityDeltaUnion
+        {
+            EntityType = EntityType.Player,
+            Delta = new ICharacterEntityDelta
+            {
+                PersistentId = Guid.Parse("a3f7c2b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c"),
+                X = 102.3f,
+                Y = 256.8f,
+                Rotation = 45.0f
+                // Alle anderen Properties = null
+            }
+        },
+        
+        // Character 2: Position + Health geändert
+        new EntityDeltaUnion
+        {
+            EntityType = EntityType.Player,
+            Delta = new ICharacterEntityDelta
+            {
+                PersistentId = Guid.Parse("b4e8d3c2-5e6f-7a8b-9c0d-1e2f3a4b5c6d"),
+                X = 98.1f,
+                Y = 260.2f,
+                CurrentHealth = 850,
+                IsInCombat = true
+                // Alle anderen Properties = null
+            }
+        },
+        
+        // NPC: Health + Aggro Target geändert
+        new EntityDeltaUnion
+        {
+            EntityType = EntityType.Npc,
+            Delta = new INpcEntityDelta
+            {
+                PersistentId = Guid.Parse("c5f9e4d3-6f7a-8b9c-0d1e-2f3a4b5c6d7e"),
+                CurrentHealth = 1200,
+                MaxHealth = 2000,
+                AggroTargetId = Guid.Parse("b4e8d3c2-5e6f-7a8b-9c0d-1e2f3a4b5c6d"),
+                IsInCombat = true
+                // Alle anderen Properties = null
+            }
+        }
+    }
+};
+```
+
+**Message-Größe:**
+- ~50-200 Bytes pro Entity (je nach Anzahl geänderter Properties)
+- Typisch: 5-20 Entities pro Delta
+- **Gesamt: ~500-2000 Bytes bei 25 Hz** (akzeptabel für Echtzeit-MMO)
+
+### Vorteile des EntityDeltaUnion-Systems
+
+✅ **Bandbreiten-Effizienz:**
+- Nur geänderte Properties werden gesendet
+- Typisch 80-95% Bandbreiten-Ersparnis vs. vollständige Entities
+
+✅ **Automatische Code-Generierung:**
+- Delta-DTOs werden aus Interfaces generiert
+- Kein manuelles Schreiben von DTO-Klassen
+- Type-Safe und validiert
+
+✅ **O(1) Lookup:**
+- Dictionary-basiert für schnellen Zugriff
+- Keine linearen Suchen nötig
+
+✅ **Flexible:**
+- Neue Entity-Types einfach hinzufügen
+- Neue Properties einfach hinzufügen (zu Interface)
+- Backward-kompatibel (null-Properties)
+
+✅ **Client-Side Prediction:**
+- Client kann eigene Position sofort updaten
+- Server-Delta überschreibt nur bei Abweichung
+- Smooth gameplay ohne Lag
 
 ### Notizen
-- Wird NUR an bereits anwesende Spieler gebroadcastet
-- Der joinierende Spieler selbst empfängt `JoinZone` (100)
-- Client fügt Spieler zur lokalen Entity-Liste hinzu
+- **Frequenz:** 25 Hz (jeder Server-Tick, alle 40ms)
+- **Dirty Tracking:** Nur Entities mit Änderungen werden gesendet
+- **Interpolation:** Client interpoliert zwischen Deltas für smooth movement
+- **Bandwidth:** ~10-50 KB/s pro Client (je nach Anzahl Entities in Zone)
+- **Skalierung:** Unterstützt 100+ Spieler pro Zone
+- **Siehe auch:** [Dirty Tracking Architektur](../../02-architecture/DIRTY_TRACKING.md)
 
 ---
 
@@ -485,7 +782,7 @@ var playerLeft = new PlayerLeftZone
 | Message | ID | Beziehung |
 |---------|-----|-----------|
 | `LeaveZone` | 101 | Client-Request der diesen Broadcast auslöst |
-| `PlayerJoinedZone` | 103 | Gegenstück beim Betreten |
+| `ZoneDelta` | 103 | Entity-Updates (inkl. Despawn via fehlende Updates) |
 | `EntityDespawn` | 1402 | Generische Entity-Despawn Message |
 
 ### Notizen
