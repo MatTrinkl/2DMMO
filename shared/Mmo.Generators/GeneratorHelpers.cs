@@ -120,19 +120,17 @@ public static class GeneratorHelpers
 
     public static string MakeNullable(string typeName)
     {
-        // Check if already nullable or reference type
-        if (typeName.EndsWith("?") || typeName == "string")
+        // Check if already nullable
+        if (typeName.EndsWith("?"))
             return typeName;
             
-        // Value types need ?
-        if (typeName == "int" || typeName == "float" || typeName == "double" || 
-            typeName == "long" || typeName == "byte" || typeName == "uint" ||
-            typeName == "bool" || typeName == "System.Guid" || typeName.StartsWith("System."))
-        {
-            return $"{typeName}?";
-        }
+        // String and other reference types that could be null
+        if (typeName == "string")
+            return typeName;
         
-        return typeName;
+        // All value types need ?
+        // This includes: primitives, System types, and custom structs/records
+        return $"{typeName}?";
     }
 
     public class DirtyTrackingConfig

@@ -1,5 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Entities.Dtos;
+using Mmo.Shared.Entities.Interfaces.Dtos;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -27,13 +28,6 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 ///     <strong>Null Fields:</strong>
 ///     All collection fields are nullable. Null = no changes of that type.
 ///     This minimizes message size when only specific aspects have changed.
-///     </para>
-///     
-///     <para>
-///     <strong>TODO:</strong>
-///     Delta DTO properties will be added here once IEntity is marked with [GenerateDirtyTracking]
-///     and the appropriate [TrackedProperty] attributes are applied. The generators will create
-///     Delta DTOs (e.g., IEntityPositionDelta.g.cs, IEntityStateDelta.g.cs) that will be used here.
 ///     </para>
 /// </remarks>
 [MessagePackObject]
@@ -72,14 +66,27 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     [Key(4)]
     public List<Guid>? DespawnedEntityIds { get; init; }
     
-    // TODO: Add generated Delta DTO properties here once IEntity is marked with [GenerateDirtyTracking]
-    // Example (will be uncommented when generated DTOs are available):
-    // [Key(5)]
-    // public List<IEntityPositionDelta>? PositionUpdates { get; init; }
-    //
-    // [Key(6)]
-    // public List<IEntityStateDelta>? StateUpdates { get; init; }
-    //
-    // [Key(7)]
-    // public ZoneContextDelta? ContextDelta { get; init; }
+    /// <summary>
+    ///     Gets or sets the list of position updates for entities (nullable).
+    ///     Null if no position changes this tick.
+    ///     Auto-generated Delta DTO from IEntity.Position property.
+    /// </summary>
+    [Key(5)]
+    public List<IEntityPositionDelta>? PositionUpdates { get; init; }
+    
+    /// <summary>
+    ///     Gets or sets the list of combat state updates for entities (nullable).
+    ///     Null if no state changes this tick.
+    ///     Auto-generated Delta DTO from ICombatEntity properties (Health, Resource, Combat state).
+    /// </summary>
+    [Key(6)]
+    public List<ICombatEntityStateDelta>? StateUpdates { get; init; }
+    
+    /// <summary>
+    ///     Gets or sets the list of level/custom updates for entities (nullable).
+    ///     Null if no level changes this tick.
+    ///     Auto-generated Delta DTO from ICombatEntity.Level property.
+    /// </summary>
+    [Key(7)]
+    public List<ICombatEntityCustomDelta>? LevelUpdates { get; init; }
 }

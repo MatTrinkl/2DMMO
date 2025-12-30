@@ -8,6 +8,7 @@ namespace Mmo.Shared.Entities.Interfaces;
 
 [GenerateDto(InheritInterfaces = false, DtoName = "EntityDto")]
 [GenerateDtoUnion(UnionName = "EntityDtoUnion", Namespace = "Mmo.Shared.Entities.Dtos")]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
 public interface IEntity
 {
     /// <summary>
@@ -18,5 +19,6 @@ public interface IEntity
 
     EntityType Type { get; }
 
+    [TrackedProperty(DirtyFlags.Position)]
     Position Position { get; set; }
 }
