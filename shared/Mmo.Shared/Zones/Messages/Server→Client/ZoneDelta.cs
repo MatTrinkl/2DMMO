@@ -67,26 +67,11 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     public List<Guid>? DespawnedEntityIds { get; init; }
     
     /// <summary>
-    ///     Gets or sets the list of position updates for entities (nullable).
-    ///     Null if no position changes this tick.
-    ///     Auto-generated Delta DTO from IEntity.Position property.
+    ///     Gets or sets the list of entity updates (nullable).
+    ///     Null if no entity changes this tick.
+    ///     Auto-generated unified Delta DTO from ICombatEntity with all tracked properties as nullable.
+    ///     Only changed properties have non-null values, minimizing bandwidth usage.
     /// </summary>
     [Key(5)]
-    public List<IEntityPositionDelta>? PositionUpdates { get; init; }
-    
-    /// <summary>
-    ///     Gets or sets the list of combat state updates for entities (nullable).
-    ///     Null if no state changes this tick.
-    ///     Auto-generated Delta DTO from ICombatEntity properties (Health, Resource, Combat state).
-    /// </summary>
-    [Key(6)]
-    public List<ICombatEntityStateDelta>? StateUpdates { get; init; }
-    
-    /// <summary>
-    ///     Gets or sets the list of level/custom updates for entities (nullable).
-    ///     Null if no level changes this tick.
-    ///     Auto-generated Delta DTO from ICombatEntity.Level property.
-    /// </summary>
-    [Key(7)]
-    public List<ICombatEntityCustomDelta>? LevelUpdates { get; init; }
+    public List<ICombatEntityDelta>? EntityUpdates { get; init; }
 }
