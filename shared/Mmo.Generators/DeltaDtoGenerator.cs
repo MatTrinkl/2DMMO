@@ -67,7 +67,7 @@ public class DeltaDtoGenerator : IIncrementalGenerator
                         continue;
                         
                     var attr = property.GetAttributes()
-                        .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.TrackedPropertyAttribute");
+                        .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.DirtyTracking.Attributes.TrackDirtyAttribute");
                         
                     if (attr == null || attr.ConstructorArguments.Length == 0)
                         continue;

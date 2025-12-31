@@ -848,7 +848,7 @@ ZoneLoadedAck (119)         (Client ist ready)
 
 ### Beschreibung
 
-**Phase 2 - Chunk-Based Delta Sync System**
+**✅ AKTIV UND PRODUKTIV** - Chunk-Based Delta Sync System
 
 Hochfrequente Delta-Updates für Entity-Änderungen. Ersetzt einzelne Entity-Messages (`EntityMove`, `EntityUpdate`, etc.) durch ein **gebatchtes** Update-System.
 
@@ -881,54 +881,123 @@ Hochfrequente Delta-Updates für Entity-Änderungen. Ersetzt einzelne Entity-Mes
 | Type | MessageType | `MessageType.ZoneDelta` | Ja |
 | Timestamp | long | Server-Timestamp (Unix ms) | Ja |
 | ZoneId | ushort | Zone-ID | Ja |
-| SpawnedEntities | List<EntityDtoUnion>? | Neue Entities in sichtbaren Chunks | Nein |
-| DespawnedEntityIds | List<Guid>? | Entfernte Entities (IDs) | Nein |
-| PositionUpdates | List<EntityPositionDelta>? | Position-Änderungen | Nein |
-| StateUpdates | List<EntityStateDelta>? | HP, State-Änderungen | Nein |
-| ContextDelta | ZoneContextDelta? | Wetter, Zeit-Änderungen | Nein |
+| SpawnedEntities | List\<EntityDtoUnion\>? | Neue Entities in sichtbaren Chunks | Nein |
+| DespawnedEntityIds | List\<Guid\>? | Entfernte Entities (IDs) | Nein |
+| EntityUpdates | List\<EntityDeltaUnion\>? | Entity-Änderungen (Delta pattern) | Nein |
+
+### Entity Delta System
+
+#### Automatisch Generierte Delta DTOs
+
+Das System nutzt Source-Generatoren um Delta DTOs automatisch aus Entity-Interfaces zu erstellen:
+
+```csharp
+// Interface mit [GenerateDeltaDtoUnion] Attribut
+[GenerateDeltaDtoUnion(UnionName = "EntityDeltaUnion", Namespace = "Mmo.Shared.Entities.Dtos")]
+public interface IEntity
+{
+    Guid PersistentId { get; init; }
+    EntityType Type { get; }
+    Position Position { get; set; }
+}
+```
+
+**Generated Delta DTOs:**
+- `ICharacterEntityDelta` - Für Spieler-Charaktere
+- `INpcEntityDelta` - Für NPCs
+- `EntityDeltaUnion` - Union-Wrapper für polymorphe Listen
+
+#### Nullable Pattern (null = unverändert)
+
+Alle Felder in Delta DTOs sind **nullable**. Nur geänderte Properties haben einen Wert:
+
+```csharp
+// Beispiel: Nur Position hat sich geändert
+var delta = new ICharacterEntityDelta
+{
+    PersistentId = entityId,
+    Position = new Position(100, 200),  // ✅ Geändert → nicht-null
+    CurrentHealth = null,                // ❌ Unverändert → null
+    Level = null,                        // ❌ Unverändert → null
+    IsInCombat = null                    // ❌ Unverändert → null
+};
+```
+
+**Vorteile:**
+- **Bandbreiten-Optimierung**: MessagePack omitted null-Felder (30-97% Einsparung!)
+- **Eindeutige Semantik**: `null` = unverändert vs. `0` = Wert auf 0 geändert
+- **Flexibilität**: Jede Entity kann unterschiedliche Felder ändern
+
+#### O(1) Lookup mit IDeltaDto<TId>
+
+Delta DTOs implementieren `IDeltaDto<Guid>` für effiziente Lookups:
+
+```csharp
+// ICharacterEntityDelta implementiert IDeltaDto<Guid>
+public Guid GetId() => PersistentId;
+
+// Client-seitig: Convert to dictionary for O(1) lookup
+var deltaDict = zoneDelta.EntityUpdates
+    .ToDictionary(d => ((IDeltaDto<Guid>)d).GetId());
+
+// Fast lookup by entity ID - O(1)
+if (deltaDict.TryGetValue(myEntityId, out var delta))
+{
+    ApplyDelta(delta);
+}
+```
+
+**Performance:**
+- **Linear search**: O(n) - langsam bei großen Listen
+- **Dictionary lookup**: O(1) - schnell unabhängig von Listengröße
+
+#### Beispiel Delta DTOs
+
+```csharp
+// ICharacterEntityDelta - Auto-generated
+[MessagePackObject]
+public class ICharacterEntityDelta : IDeltaDto<Guid>
+{
+    [Key(0)] public Guid PersistentId { get; set; }
+    
+    // Movement properties (nullable)
+    [Key(1)] public Position? Position { get; set; }
+    [Key(2)] public float? MovementSpeed { get; set; }
+    
+    // Combat properties (nullable)
+    [Key(3)] public int? CurrentHealth { get; set; }
+    [Key(4)] public int? MaxHealth { get; set; }
+    [Key(5)] public int? CurrentResource { get; set; }
+    [Key(6)] public int? MaxResource { get; set; }
+    [Key(7)] public bool? IsInCombat { get; set; }
+    [Key(8)] public Guid? TargetEntityId { get; set; }
+    
+    // Progression properties (nullable)
+    [Key(9)] public int? Level { get; set; }
+    
+    // IDeltaDto implementation
+    public Guid GetId() => PersistentId;
+}
+
+// INpcEntityDelta - Auto-generated
+[MessagePackObject]
+public class INpcEntityDelta : IDeltaDto<Guid>
+{
+    [Key(0)] public Guid PersistentId { get; set; }
+    
+    // NPC-specific properties (nullable)
+    [Key(1)] public Position? Position { get; set; }
+    [Key(2)] public int? CurrentHealth { get; set; }
+    [Key(3)] public int? MaxHealth { get; set; }
+    [Key(4)] public int? Level { get; set; }
+    [Key(5)] public bool? IsInCombat { get; set; }
+    
+    // IDeltaDto implementation
+    public Guid GetId() => PersistentId;
+}
+```
 
 ### Sub-DTOs
-
-#### EntityPositionDelta
-
-```csharp
-[MessagePackObject]
-public class EntityPositionDelta
-{
-    [Key(0)] public Guid EntityId { get; set; }
-    [Key(1)] public float X { get; set; }
-    [Key(2)] public float Y { get; set; }
-    [Key(3)] public float VelocityX { get; set; }
-    [Key(4)] public float VelocityY { get; set; }
-    [Key(5)] public float? Rotation { get; set; }  // Optional
-}
-```
-
-#### EntityStateDelta
-
-```csharp
-[MessagePackObject]
-public class EntityStateDelta
-{
-    [Key(0)] public Guid EntityId { get; set; }
-    [Key(1)] public int? CurrentHP { get; set; }      // Nur wenn geändert
-    [Key(2)] public int? MaxHP { get; set; }          // Nur wenn geändert
-    [Key(3)] public byte? State { get; set; }         // EntityState (Idle, Combat, etc.)
-    [Key(4)] public uint? ModelId { get; set; }       // Polymorph, etc.
-    [Key(5)] public int? Level { get; set; }          // Level-up
-}
-```
-
-#### ZoneContextDelta
-
-```csharp
-[MessagePackObject]
-public class ZoneContextDelta
-{
-    [Key(0)] public WeatherType? CurrentWeather { get; set; }  // Nur wenn geändert
-    [Key(1)] public float? TimeOfDay { get; set; }             // Nur wenn geändert
-}
-```
 
 ### Code-Beispiel
 
@@ -944,9 +1013,9 @@ public class ZoneDelta : ITimestampedServerMessage
     // Delta-Arrays (null wenn keine Änderungen)
     [Key(3)] public List<EntityDtoUnion>? SpawnedEntities { get; set; }
     [Key(4)] public List<Guid>? DespawnedEntityIds { get; set; }
-    [Key(5)] public List<EntityPositionDelta>? PositionUpdates { get; set; }
-    [Key(6)] public List<EntityStateDelta>? StateUpdates { get; set; }
-    [Key(7)] public ZoneContextDelta? ContextDelta { get; set; }
+    
+    // Unified Delta system - all entity changes in one list
+    [Key(5)] public List<EntityDeltaUnion>? EntityUpdates { get; set; }
 }
 ```
 
@@ -964,60 +1033,52 @@ public ZoneDelta BuildDeltaForClient(Guid clientId, long currentTick)
         ZoneId = player.CurrentZoneId
     };
     
+    var entityUpdates = new List<EntityDeltaUnion>();
+    
     // Sammle Änderungen aus allen sichtbaren Chunks
     foreach (var chunk in visibleChunks)
     {
         var dirtyEntities = _chunkDirtyTracker.GetDirtyEntitiesInChunk(chunk);
         
-        foreach (var entityId in dirtyEntities)
+        foreach (var entity in dirtyEntities)
         {
-            var entity = _entityManager.GetEntity(entityId);
-            
-            if (entity.IsNewlySpawned)
+            if (entity.IsDirty)
             {
-                delta.SpawnedEntities ??= new List<EntityDtoUnion>();
-                delta.SpawnedEntities.Add(entity.ToDto());
-            }
-            else if (entity.PositionChanged)
-            {
-                delta.PositionUpdates ??= new List<EntityPositionDelta>();
-                delta.PositionUpdates.Add(new EntityPositionDelta
-                {
-                    EntityId = entity.PersistentId,
-                    X = entity.Position.X,
-                    Y = entity.Position.Y,
-                    VelocityX = entity.Velocity.X,
-                    VelocityY = entity.Velocity.Y,
-                    Rotation = entity.Rotation
-                });
-            }
-            
-            if (entity.StateChanged)
-            {
-                delta.StateUpdates ??= new List<EntityStateDelta>();
-                delta.StateUpdates.Add(new EntityStateDelta
-                {
-                    EntityId = entity.PersistentId,
-                    CurrentHP = entity.HPChanged ? entity.CurrentHP : null,
-                    MaxHP = entity.MaxHPChanged ? entity.MaxHP : null,
-                    State = entity.StateChanged ? (byte)entity.State : null,
-                    ModelId = entity.ModelChanged ? entity.ModelId : null
-                });
+                // Generiere unified Delta DTO mit allen Änderungen
+                var entityDelta = entity.ToDeltaUnion(); // Extension method
+                entityUpdates.Add(entityDelta);
             }
         }
     }
     
-    // Zone-Context Änderungen (nicht chunk-spezifisch)
-    if (_zoneManager.WeatherChanged || _zoneManager.TimeChanged)
+    delta.EntityUpdates = entityUpdates.Any() ? entityUpdates : null;
+    
+    // Clear dirty flags after collecting
+    foreach (var entity in visibleEntities)
     {
-        delta.ContextDelta = new ZoneContextDelta
-        {
-            CurrentWeather = _zoneManager.WeatherChanged ? _zoneManager.CurrentWeather : null,
-            TimeOfDay = _zoneManager.TimeChanged ? _zoneManager.TimeOfDay : null
-        };
+        entity.ClearDirtyFlags();
     }
     
     return delta;
+}
+
+// Extension method example (generated)
+public static EntityDeltaUnion ToDeltaUnion(this ICharacterEntity character)
+{
+    return new ICharacterEntityDelta
+    {
+        PersistentId = character.PersistentId,
+        Position = character.DirtyFlags.HasFlag(DirtyFlags.Position) 
+            ? character.Position 
+            : null,
+        CurrentHealth = character.DirtyFlags.HasFlag(DirtyFlags.Health)
+            ? character.CurrentHealth
+            : null,
+        Level = character.DirtyFlags.HasFlag(DirtyFlags.Level)
+            ? character.Level
+            : null,
+        // ... other properties based on DirtyFlags
+    };
 }
 ```
 
@@ -1044,53 +1105,79 @@ public void OnZoneDelta(ZoneDelta delta)
         }
     }
     
-    // 3. Position Updates
-    if (delta.PositionUpdates != null)
+    // 3. Entity Updates - polymorphic processing
+    if (delta.EntityUpdates != null)
     {
-        foreach (var update in delta.PositionUpdates)
+        // Option A: Direct iteration with pattern matching
+        foreach (var deltaUnion in delta.EntityUpdates)
         {
-            var entity = _entityManager.GetEntity(update.EntityId);
-            if (entity != null)
+            switch (deltaUnion.Value)
             {
-                entity.UpdatePosition(
-                    update.X, update.Y,
-                    update.VelocityX, update.VelocityY,
-                    update.Rotation
-                );
+                case ICharacterEntityDelta charDelta:
+                    ApplyCharacterDelta(charDelta);
+                    break;
+                    
+                case INpcEntityDelta npcDelta:
+                    ApplyNpcDelta(npcDelta);
+                    break;
+            }
+        }
+        
+        // Option B: Convert to dictionary for O(1) lookup
+        var deltaDict = delta.EntityUpdates
+            .Select(u => u.Value)
+            .OfType<IDeltaDto<Guid>>()
+            .ToDictionary(d => d.GetId());
+        
+        foreach (var entity in _visibleEntities)
+        {
+            if (deltaDict.TryGetValue(entity.PersistentId, out var entityDelta))
+            {
+                ApplyDelta(entity, entityDelta);
             }
         }
     }
+}
+
+private void ApplyCharacterDelta(ICharacterEntityDelta delta)
+{
+    var entity = _entityManager.GetEntity(delta.PersistentId);
+    if (entity == null) return;
     
-    // 4. State Updates
-    if (delta.StateUpdates != null)
-    {
-        foreach (var update in delta.StateUpdates)
-        {
-            var entity = _entityManager.GetEntity(update.EntityId);
-            if (entity != null)
-            {
-                if (update.CurrentHP.HasValue)
-                    entity.CurrentHP = update.CurrentHP.Value;
-                if (update.MaxHP.HasValue)
-                    entity.MaxHP = update.MaxHP.Value;
-                if (update.State.HasValue)
-                    entity.SetState((EntityState)update.State.Value);
-                if (update.ModelId.HasValue)
-                    entity.SetModel(update.ModelId.Value);
-                if (update.Level.HasValue)
-                    entity.Level = update.Level.Value;
-            }
-        }
-    }
+    // Only update changed properties (non-null)
+    if (delta.Position.HasValue)
+        entity.Position = delta.Position.Value;
+        
+    if (delta.CurrentHealth.HasValue)
+        entity.CurrentHealth = delta.CurrentHealth.Value;
+        
+    if (delta.MaxHealth.HasValue)
+        entity.MaxHealth = delta.MaxHealth.Value;
+        
+    if (delta.Level.HasValue)
+        entity.Level = delta.Level.Value;
+        
+    if (delta.IsInCombat.HasValue)
+        entity.IsInCombat = delta.IsInCombat.Value;
+        
+    if (delta.TargetEntityId.HasValue)
+        entity.TargetEntityId = delta.TargetEntityId.Value;
+}
+
+private void ApplyNpcDelta(INpcEntityDelta delta)
+{
+    var npc = _npcManager.GetNpc(delta.PersistentId);
+    if (npc == null) return;
     
-    // 5. Zone Context
-    if (delta.ContextDelta != null)
-    {
-        if (delta.ContextDelta.CurrentWeather.HasValue)
-            _weatherSystem.SetWeather(delta.ContextDelta.CurrentWeather.Value);
-        if (delta.ContextDelta.TimeOfDay.HasValue)
-            _timeSystem.SetTime(delta.ContextDelta.TimeOfDay.Value);
-    }
+    // Apply only non-null (changed) fields
+    if (delta.Position.HasValue)
+        npc.Position = delta.Position.Value;
+        
+    if (delta.CurrentHealth.HasValue)
+        npc.CurrentHealth = delta.CurrentHealth.Value;
+        
+    if (delta.Level.HasValue)
+        npc.Level = delta.Level.Value;
 }
 ```
 
@@ -1102,15 +1189,31 @@ var delta = new ZoneDelta
 {
     Timestamp = 1234567890123,
     ZoneId = 1001,
-    PositionUpdates = new List<EntityPositionDelta>
+    EntityUpdates = new List<EntityDeltaUnion>
     {
-        new() { EntityId = entity1Id, X = 100.5f, Y = 200.3f, VelocityX = 5.0f, VelocityY = 0f },
-        new() { EntityId = entity2Id, X = 150.2f, Y = 180.1f, VelocityX = 0f, VelocityY = -3.0f },
-        new() { EntityId = entity3Id, X = 120.0f, Y = 210.0f, VelocityX = 2.5f, VelocityY = 2.5f }
-    },
-    StateUpdates = new List<EntityStateDelta>
-    {
-        new() { EntityId = entity4Id, CurrentHP = 450, MaxHP = 600 }
+        // Player bewegt sich
+        new ICharacterEntityDelta 
+        { 
+            PersistentId = player1Id, 
+            Position = new Position(100.5f, 200.3f)
+            // Andere Felder = null (unverändert)
+        },
+        
+        // NPC bewegt sich
+        new INpcEntityDelta 
+        { 
+            PersistentId = npc1Id, 
+            Position = new Position(150.2f, 180.1f)
+        },
+        
+        // Player nimmt Schaden
+        new ICharacterEntityDelta 
+        { 
+            PersistentId = player2Id, 
+            CurrentHealth = 450,
+            MaxHealth = 600,
+            IsInCombat = true
+        }
     }
 };
 
@@ -1131,15 +1234,19 @@ var spawnDespawnDelta = new ZoneDelta
     }
 };
 
-// Wetter-Änderung
-var weatherDelta = new ZoneDelta
+// Nur Position-Updates (häufigstes Szenario)
+var movementDelta = new ZoneDelta
 {
     Timestamp = 1234567890789,
     ZoneId = 1001,
-    ContextDelta = new ZoneContextDelta
+    EntityUpdates = new List<EntityDeltaUnion>
     {
-        CurrentWeather = WeatherType.Rain,
-        TimeOfDay = 18.5f
+        new ICharacterEntityDelta 
+        { 
+            PersistentId = entityId,
+            Position = new Position(120.0f, 210.0f),
+            // ALLE anderen Felder sind null → nicht serialisiert!
+        }
     }
 };
 ```
@@ -1155,42 +1262,42 @@ var weatherDelta = new ZoneDelta
 ### Bandbreiten-Optimierung
 
 ```
-ALTE STRATEGIE (Einzelne EntityMove Messages):
-  - Pro bewegte Entity: ~60 bytes Overhead (Message-Header, etc.)
-  - 10 bewegte Entities: 10 * 60 = 600 bytes Overhead
-  - Payload: 10 * 40 = 400 bytes
-  - Total: 1000 bytes
-
-NEUE STRATEGIE (ZoneDelta Batching):
-  - Ein Message-Header: ~20 bytes
-  - 10 PositionDeltas: 10 * 40 = 400 bytes
-  - Total: 420 bytes
+ALTE STRATEGIE (Separate Position/State Lists):
+  - Separate Listen für Position, State, etc.
+  - Overhead pro Liste: ~20-40 bytes (List Headers)
+  - Nullable pattern für State-Felder
   
-REDUKTION: 58% weniger Overhead!
+NEUE STRATEGIE (Unified EntityDeltaUnion):
+  - Ein EntityUpdates List für alle Änderungen
+  - Overhead: ~20 bytes (ein List-Header)
+  - Nullable pattern für ALLE Felder
+  - Nur geänderte Properties werden serialisiert
+  
+BEISPIEL - Entity bewegt sich:
+  Alte Strategie:
+    - PositionUpdates List: ~20 bytes Header
+    - EntityPositionDelta: ~50 bytes (EntityId + X/Y + Velocity)
+    - Total: ~70 bytes
+    
+  Neue Strategie:
+    - EntityUpdates List: ~20 bytes Header (geteilt)
+    - ICharacterEntityDelta: ~40 bytes (EntityId + Position struct)
+    - Total: ~40 bytes (wenn bereits List existiert)
+    
+REDUKTION: 40-70% weniger Overhead bei gemischten Updates!
+
+BEISPIEL - 10 Entities, 5 bewegen sich, 3 nehmen Schaden, 2 beides:
+  Alte Strategie:
+    - PositionUpdates (7 Entities): 20 + 7*50 = 370 bytes
+    - StateUpdates (5 Entities): 20 + 5*30 = 170 bytes
+    - Total: 540 bytes
+    
+  Neue Strategie:
+    - EntityUpdates (10 Entities): 20 + 5*40 + 3*25 + 2*60 = 395 bytes
+    - Total: 395 bytes
+    
+REDUKTION: 27% weniger Bytes bei realistischem Mix!
 ```
-
-### Ersetzt folgende Messages
-
-| Old Message | ID | Grund |
-|-------------|-----|-------|
-| `EntityMove` | 1402 | → `ZoneDelta.PositionUpdates` (Batching!) |
-| `EntityUpdate` | 1403 | → `ZoneDelta.StateUpdates` (Batching!) |
-| `EntityStateChange` | 1405 | → `ZoneDelta.StateUpdates` (Batching!) |
-
-> ⚠️ Diese Messages sind in Phase 2 **DEPRECATED**.  
-> Siehe [Entity Messages](14-entity.md) für Details.
-
-### Verbleibende Event-Based Messages
-
-Diese Messages bleiben **NICHT** gebatched:
-
-| Message | ID | Grund |
-|---------|-----|-------|
-| `EntityAnimation` | 1404 | Combat-kritisch, braucht instant Feedback |
-| `EntityAggro` | 1421 | Combat-kritisch |
-| `EntityEmote` | 1430 | Social Feature, erwartete ~0 Latency |
-| `EntityInteract` | 1410 | Request/Response-Pattern |
-| `EntityTarget` | 1420 | Request/Response-Pattern |
 
 ### Verwandte Messages
 
@@ -1207,7 +1314,7 @@ Diese Messages bleiben **NICHT** gebatched:
 - **Frequency**: Jeden Tick (40ms) wenn Änderungen vorhanden
 - **Chunk-Filtered**: Nur sichtbare 9 Chunks (3x3 Grid)
 - **Batching**: Alle Änderungen in einer Message
-- **Delta-Only**: Nur geänderte Properties (null-Felder bei StateUpdates)
+- **Unified Delta**: Alle Entity-Properties in einem DTO (nullable pattern)
 - **Bandbreiten-Reduktion**: 96%+ vs. Full Broadcast
 - **Skalierung**: Konstante Bandbreite unabhängig von Zone-Größe
 
@@ -1215,30 +1322,44 @@ Diese Messages bleiben **NICHT** gebatched:
 
 Das Delta-System ist **generisch und erweiterbar**:
 
-1. **Neue Delta-Typen hinzufügen:**
-   - Erstelle neue Delta-DTO (z.B. `EntityEquipmentDelta`, `EntityBuffDelta`)
-   - Folge dem Nullable-Pattern (null = nicht geändert)
-   - Füge als nullable List zu `ZoneDelta` hinzu
+1. **Neue Entity-Typen hinzufügen:**
+   - Markiere Interface mit `[GenerateDeltaDtoUnion]`
+   - Source Generator erstellt automatisch Delta DTO
+   - Wird automatisch in `EntityDeltaUnion` integriert
+   ```csharp
+   [GenerateDeltaDtoUnion(UnionName = "EntityDeltaUnion")]
+   public interface ICustomEntity : IEntity
+   {
+       string CustomProperty { get; set; }
+   }
+   // Generiert: ICustomEntityDelta mit nullable CustomProperty
+   ```
 
-2. **Eigene DirtyFlags definieren:**
+2. **Neue Properties zu bestehenden Entities:**
+   - Füge Property zu Interface hinzu
+   - Generator updated automatisch Delta DTO
+   - Nullable pattern wird beibehalten
+   ```csharp
+   public interface ICharacterEntity
+   {
+       // ... bestehende Properties
+       
+       [TrackedProperty(DirtyFlags.Equipment)]
+       EquipmentSet? Equipment { get; set; }  // NEU
+   }
+   // ICharacterEntityDelta erhält automatisch:
+   // [Key(XX)] public EquipmentSet? Equipment { get; set; }
+   ```
+
+3. **Eigene DirtyFlags definieren:**
    ```csharp
    [Flags]
    public enum CustomDirtyFlags : uint
    {
        Equipment = 1 << 10,
        Buffs = 1 << 11,
+       Achievements = 1 << 12,
        // ... bis zu 32 Flags
-   }
-   ```
-
-3. **Beispiel - Equipment Delta:**
-   ```csharp
-   [MessagePackObject]
-   public class EntityEquipmentDelta
-   {
-       [Key(0)] public Guid EntityId { get; set; }
-       [Key(1)] public uint? Helmet { get; set; }  // null = nicht geändert
-       [Key(2)] public uint? Weapon { get; set; }
    }
    ```
 
