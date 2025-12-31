@@ -3,166 +3,166 @@ using Mmo.Shared.Entities.Enums;
 namespace Mmo.Shared.Tests.Entities;
 
 /// <summary>
-///     Tests for the DirtyFlags enum.
+///     Tests for the EntityDirtyFlags enum.
 /// </summary>
 public class DirtyFlagsTests
 {
     [Fact]
     public void None_HasZeroValue()
     {
-        Assert.Equal(0u, (uint)DirtyFlags.None);
+        Assert.Equal(0u, (uint)EntityDirtyFlags.None);
     }
-    
+
     [Fact]
     public void Position_HasCorrectBitFlag()
     {
-        Assert.Equal(1u << 0, (uint)DirtyFlags.Position);
-        Assert.Equal(1u, (uint)DirtyFlags.Position);
+        Assert.Equal(1u << 0, (uint)EntityDirtyFlags.Position);
+        Assert.Equal(1u, (uint)EntityDirtyFlags.Position);
     }
-    
+
     [Fact]
     public void Velocity_HasCorrectBitFlag()
     {
-        Assert.Equal(1u << 1, (uint)DirtyFlags.Velocity);
-        Assert.Equal(2u, (uint)DirtyFlags.Velocity);
+        Assert.Equal(1u << 1, (uint)EntityDirtyFlags.Velocity);
+        Assert.Equal(2u, (uint)EntityDirtyFlags.Velocity);
     }
-    
+
     [Fact]
     public void Health_HasCorrectBitFlag()
     {
-        Assert.Equal(1u << 3, (uint)DirtyFlags.Health);
-        Assert.Equal(8u, (uint)DirtyFlags.Health);
+        Assert.Equal(1u << 3, (uint)EntityDirtyFlags.Health);
+        Assert.Equal(8u, (uint)EntityDirtyFlags.Health);
     }
-    
+
     [Fact]
     public void Spawned_HasCorrectBitFlag()
     {
-        Assert.Equal(1u << 30, (uint)DirtyFlags.Spawned);
+        Assert.Equal(1u << 30, (uint)EntityDirtyFlags.Spawned);
     }
-    
+
     [Fact]
     public void Despawned_HasCorrectBitFlag()
     {
-        Assert.Equal(1u << 31, (uint)DirtyFlags.Despawned);
+        Assert.Equal(1u << 31, (uint)EntityDirtyFlags.Despawned);
     }
-    
+
     [Fact]
     public void Movement_CombinesCorrectFlags()
     {
-        var expected = DirtyFlags.Position | DirtyFlags.Velocity | DirtyFlags.Rotation;
-        Assert.Equal(expected, DirtyFlags.Movement);
-        
+        var expected = EntityDirtyFlags.Position | EntityDirtyFlags.Velocity | EntityDirtyFlags.Rotation;
+        Assert.Equal(expected, EntityDirtyFlags.Movement);
+
         // Verify individual flags are included
-        Assert.True(DirtyFlags.Movement.HasFlag(DirtyFlags.Position));
-        Assert.True(DirtyFlags.Movement.HasFlag(DirtyFlags.Velocity));
-        Assert.True(DirtyFlags.Movement.HasFlag(DirtyFlags.Rotation));
+        Assert.True(EntityDirtyFlags.Movement.HasFlag(EntityDirtyFlags.Position));
+        Assert.True(EntityDirtyFlags.Movement.HasFlag(EntityDirtyFlags.Velocity));
+        Assert.True(EntityDirtyFlags.Movement.HasFlag(EntityDirtyFlags.Rotation));
     }
-    
+
     [Fact]
     public void Combat_CombinesCorrectFlags()
     {
-        var expected = DirtyFlags.Health | DirtyFlags.MaxHealth | DirtyFlags.State;
-        Assert.Equal(expected, DirtyFlags.Combat);
-        
+        var expected = EntityDirtyFlags.Health | EntityDirtyFlags.MaxHealth | EntityDirtyFlags.State;
+        Assert.Equal(expected, EntityDirtyFlags.Combat);
+
         // Verify individual flags are included
-        Assert.True(DirtyFlags.Combat.HasFlag(DirtyFlags.Health));
-        Assert.True(DirtyFlags.Combat.HasFlag(DirtyFlags.MaxHealth));
-        Assert.True(DirtyFlags.Combat.HasFlag(DirtyFlags.State));
+        Assert.True(EntityDirtyFlags.Combat.HasFlag(EntityDirtyFlags.Health));
+        Assert.True(EntityDirtyFlags.Combat.HasFlag(EntityDirtyFlags.MaxHealth));
+        Assert.True(EntityDirtyFlags.Combat.HasFlag(EntityDirtyFlags.State));
     }
-    
+
     [Fact]
     public void AllStats_CombinesCorrectFlags()
     {
-        var expected = DirtyFlags.Health | DirtyFlags.MaxHealth | DirtyFlags.Resource | DirtyFlags.MaxResource | DirtyFlags.Level;
-        Assert.Equal(expected, DirtyFlags.AllStats);
-        
+        var expected = EntityDirtyFlags.Health | EntityDirtyFlags.MaxHealth | EntityDirtyFlags.Resource | EntityDirtyFlags.MaxResource | EntityDirtyFlags.Level;
+        Assert.Equal(expected, EntityDirtyFlags.AllStats);
+
         // Verify individual flags are included
-        Assert.True(DirtyFlags.AllStats.HasFlag(DirtyFlags.Health));
-        Assert.True(DirtyFlags.AllStats.HasFlag(DirtyFlags.MaxHealth));
-        Assert.True(DirtyFlags.AllStats.HasFlag(DirtyFlags.Resource));
-        Assert.True(DirtyFlags.AllStats.HasFlag(DirtyFlags.MaxResource));
-        Assert.True(DirtyFlags.AllStats.HasFlag(DirtyFlags.Level));
+        Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.Health));
+        Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.MaxHealth));
+        Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.Resource));
+        Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.MaxResource));
+        Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.Level));
     }
-    
+
     [Fact]
     public void BitwiseOr_CombinesFlags()
     {
-        var combined = DirtyFlags.Position | DirtyFlags.Health;
-        
-        Assert.True(combined.HasFlag(DirtyFlags.Position));
-        Assert.True(combined.HasFlag(DirtyFlags.Health));
-        Assert.False(combined.HasFlag(DirtyFlags.Velocity));
+        var combined = EntityDirtyFlags.Position | EntityDirtyFlags.Health;
+
+        Assert.True(combined.HasFlag(EntityDirtyFlags.Position));
+        Assert.True(combined.HasFlag(EntityDirtyFlags.Health));
+        Assert.False(combined.HasFlag(EntityDirtyFlags.Velocity));
     }
-    
+
     [Fact]
     public void BitwiseAnd_ChecksFlags()
     {
-        var flags = DirtyFlags.Position | DirtyFlags.Health;
-        
-        Assert.NotEqual(DirtyFlags.None, flags & DirtyFlags.Position);
-        Assert.NotEqual(DirtyFlags.None, flags & DirtyFlags.Health);
-        Assert.Equal(DirtyFlags.None, flags & DirtyFlags.Velocity);
+        var flags = EntityDirtyFlags.Position | EntityDirtyFlags.Health;
+
+        Assert.NotEqual(EntityDirtyFlags.None, flags & EntityDirtyFlags.Position);
+        Assert.NotEqual(EntityDirtyFlags.None, flags & EntityDirtyFlags.Health);
+        Assert.Equal(EntityDirtyFlags.None, flags & EntityDirtyFlags.Velocity);
     }
-    
+
     [Fact]
     public void HasFlag_WorksCorrectly()
     {
-        var flags = DirtyFlags.Position | DirtyFlags.Health | DirtyFlags.Velocity;
-        
-        Assert.True(flags.HasFlag(DirtyFlags.Position));
-        Assert.True(flags.HasFlag(DirtyFlags.Health));
-        Assert.True(flags.HasFlag(DirtyFlags.Velocity));
-        Assert.False(flags.HasFlag(DirtyFlags.Rotation));
-        Assert.False(flags.HasFlag(DirtyFlags.MaxHealth));
+        var flags = EntityDirtyFlags.Position | EntityDirtyFlags.Health | EntityDirtyFlags.Velocity;
+
+        Assert.True(flags.HasFlag(EntityDirtyFlags.Position));
+        Assert.True(flags.HasFlag(EntityDirtyFlags.Health));
+        Assert.True(flags.HasFlag(EntityDirtyFlags.Velocity));
+        Assert.False(flags.HasFlag(EntityDirtyFlags.Rotation));
+        Assert.False(flags.HasFlag(EntityDirtyFlags.MaxHealth));
     }
-    
+
     [Fact]
     public void AllFlags_AreUnique()
     {
         // Get all enum values except the combination flags
         var individualFlags = new[]
         {
-            DirtyFlags.Position,
-            DirtyFlags.Velocity,
-            DirtyFlags.Rotation,
-            DirtyFlags.Health,
-            DirtyFlags.MaxHealth,
-            DirtyFlags.Resource,
-            DirtyFlags.MaxResource,
-            DirtyFlags.State,
-            DirtyFlags.Model,
-            DirtyFlags.Level,
-            DirtyFlags.Spawned,
-            DirtyFlags.Despawned
+            EntityDirtyFlags.Position,
+            EntityDirtyFlags.Velocity,
+            EntityDirtyFlags.Rotation,
+            EntityDirtyFlags.Health,
+            EntityDirtyFlags.MaxHealth,
+            EntityDirtyFlags.Resource,
+            EntityDirtyFlags.MaxResource,
+            EntityDirtyFlags.State,
+            EntityDirtyFlags.Model,
+            EntityDirtyFlags.Level,
+            EntityDirtyFlags.Spawned,
+            EntityDirtyFlags.Despawned
         };
-        
+
         // Convert to uint and check uniqueness
         var values = individualFlags.Select(f => (uint)f).ToList();
         var uniqueValues = values.Distinct().ToList();
-        
+
         Assert.Equal(values.Count, uniqueValues.Count);
     }
-    
+
     [Fact]
     public void AllFlags_ArePowersOfTwo()
     {
         // Get all enum values except None and combination flags
         var individualFlags = new[]
         {
-            DirtyFlags.Position,
-            DirtyFlags.Velocity,
-            DirtyFlags.Rotation,
-            DirtyFlags.Health,
-            DirtyFlags.MaxHealth,
-            DirtyFlags.Resource,
-            DirtyFlags.MaxResource,
-            DirtyFlags.State,
-            DirtyFlags.Model,
-            DirtyFlags.Level,
-            DirtyFlags.Spawned,
-            DirtyFlags.Despawned
+            EntityDirtyFlags.Position,
+            EntityDirtyFlags.Velocity,
+            EntityDirtyFlags.Rotation,
+            EntityDirtyFlags.Health,
+            EntityDirtyFlags.MaxHealth,
+            EntityDirtyFlags.Resource,
+            EntityDirtyFlags.MaxResource,
+            EntityDirtyFlags.State,
+            EntityDirtyFlags.Model,
+            EntityDirtyFlags.Level,
+            EntityDirtyFlags.Spawned,
+            EntityDirtyFlags.Despawned
         };
-        
+
         foreach (var flag in individualFlags)
         {
             var value = (uint)flag;
@@ -171,12 +171,12 @@ public class DirtyFlagsTests
                 $"{flag} ({value}) is not a power of 2");
         }
     }
-    
+
     [Theory]
-    [InlineData(DirtyFlags.Position, DirtyFlags.Position, DirtyFlags.Position)]
-    [InlineData(DirtyFlags.Position, DirtyFlags.Health, DirtyFlags.Position | DirtyFlags.Health)]
-    [InlineData(DirtyFlags.Movement, DirtyFlags.Health, DirtyFlags.Position | DirtyFlags.Velocity | DirtyFlags.Rotation | DirtyFlags.Health)]
-    public void BitwiseOr_ProducesExpectedResults(DirtyFlags a, DirtyFlags b, DirtyFlags expected)
+    [InlineData(EntityDirtyFlags.Position, EntityDirtyFlags.Position, EntityDirtyFlags.Position)]
+    [InlineData(EntityDirtyFlags.Position, EntityDirtyFlags.Health, EntityDirtyFlags.Position | EntityDirtyFlags.Health)]
+    [InlineData(EntityDirtyFlags.Movement, EntityDirtyFlags.Health, EntityDirtyFlags.Position | EntityDirtyFlags.Velocity | EntityDirtyFlags.Rotation | EntityDirtyFlags.Health)]
+    public void BitwiseOr_ProducesExpectedResults(EntityDirtyFlags a, EntityDirtyFlags b, EntityDirtyFlags expected)
     {
         var result = a | b;
         Assert.Equal(expected, result);

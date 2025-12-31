@@ -37,7 +37,6 @@ public interface IZoneContext
     Faction? ControllingFaction { get; }
 
     /// <summary>Is the zone currently locked? (Maintenance, Event, etc.)</summary>
-    [TrackDirty("PvPState")]
     bool IsLocked { get; }
 
     /// <summary>Reason for lock.</summary>

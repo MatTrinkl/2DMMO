@@ -1,3 +1,4 @@
+using Mmo.Shared.DirtyTracking;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
 
@@ -8,43 +9,36 @@ namespace Mmo.Shared.Tests.Generators;
 /// </summary>
 public class DirtyTrackingGeneratorTests
 {
-    [Fact]
-    public void TestEntity_ImplementsIDirtyTrackable()
-    {
-        var entity = new TestEntity();
-        
-        Assert.IsAssignableFrom<IDirtyTrackable>(entity);
-    }
-    
+
     [Fact]
     public void TestEntity_IsDirty_InitiallyFalse()
     {
         var entity = new TestEntity();
-        
+
         Assert.False(entity.IsDirty);
-        Assert.Equal(DirtyFlags.None, entity.DirtyFlags);
+        Assert.Equal(EntityDirtyFlags.None, entity.DirtyFlags);
     }
-    
+
     [Fact]
     public void TestEntity_MarkDirty_SetsDirtyFlag()
     {
         var entity = new TestEntity();
-        
-        entity.MarkDirty(DirtyFlags.Position);
-        
+
+        entity.MarkDirty(EntityDirtyFlags.Position);
+
         Assert.True(entity.IsDirty);
-        Assert.True(entity.DirtyFlags.HasFlag(DirtyFlags.Position));
+        Assert.True(entity.DirtyFlags.HasFlag(EntityDirtyFlags.Position));
     }
-    
+
     [Fact]
     public void TestEntity_ClearDirtyFlags_ClearsFlags()
     {
         var entity = new TestEntity();
-        entity.MarkDirty(DirtyFlags.Position);
-        
+        entity.MarkDirty(EntityDirtyFlags.Position);
+
         entity.ClearDirtyFlags();
-        
+
         Assert.False(entity.IsDirty);
-        Assert.Equal(DirtyFlags.None, entity.DirtyFlags);
+        Assert.Equal(EntityDirtyFlags.None, entity.DirtyFlags);
     }
 }

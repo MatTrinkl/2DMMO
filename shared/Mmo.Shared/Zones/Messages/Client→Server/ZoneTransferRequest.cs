@@ -12,7 +12,7 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneTransferRequest)]
-public record ZoneTransferRequest : INetworkMessage
+public record ZoneTransferRequest : IClientMessage
 {
     /// <summary>Target zone ID.</summary>
     [Key(1)]

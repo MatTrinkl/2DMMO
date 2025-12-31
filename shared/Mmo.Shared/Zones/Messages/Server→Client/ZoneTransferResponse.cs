@@ -2,6 +2,7 @@ using MessagePack;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
+using Mmo.Shared.Zones.Enums;
 
 namespace Mmo.Shared.Zones.Messages.Server_Client;
 
@@ -10,31 +11,51 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneTransferResponse)]
-public record ZoneTransferResponse : INetworkMessage
+public record ZoneTransferResponse : IResponseMessage<ZoneTransferResponseErrorCode>
 {
-    /// <summary>Whether the transfer was successful.</summary>
+    /// <inheritdoc/>
+    [Key(0)]
+    public MessageType Type => MessageType.ZoneTransferResponse;
+
+    /// <inheritdoc/>
     [Key(1)]
+    public GlobalErrorCode GlobalError { get; init; }
+
+    /// <inheritdoc/>
+    [Key(2)]
+    public string? ErrorMessage { get; init; }
+
+    /// <inheritdoc/>
+    [Key(3)]
+    public ZoneTransferResponseErrorCode? ErrorCode { get; init; }
+
+    /// <summary>Whether the transfer was successful.</summary>
+    [Key(4)]
     public required bool Success { get; init; }
 
     /// <summary>The new zone ID (only on success).</summary>
-    [Key(2)]
+    [Key(5)]
     public ushort? NewZoneId { get; init; }
 
-    /// <summary>Error code on failure.</summary>
-    [Key(3)]
-    public string? Error { get; init; }
-
-    /// <summary>User-friendly error message.</summary>
-    [Key(4)]
-    public string? ErrorMessage { get; init; }
-
-    [Key(0)] public MessageType Type => MessageType.ZoneTransferResponse;
 
     // ─── Factory Methods ───
 
+    /// <summary>
+    /// Create a new Succeeded response.
+    /// </summary>
+    /// <param name="newZoneId">The new zone id.</param>
+    /// <returns>The complete message.</returns>
     public static ZoneTransferResponse Succeeded(ushort newZoneId)
         => new() { Success = true, NewZoneId = newZoneId };
 
-    public static ZoneTransferResponse Failed(string error, string? message = null)
-        => new() { Success = false, Error = error, ErrorMessage = message };
+    /// <summary>
+    /// Create a new Failed response.
+    /// </summary>
+    /// <param name="globalError">Global Error Code. This overrides the <seealso cref="specificError"/>.</param>
+    /// <param name="specificError">The message specific error.</param>
+    /// <param name="message">Human Readable message.</param>
+    /// <returns>The complete message.</returns>
+    public static ZoneTransferResponse Failed(GlobalErrorCode globalError, ZoneTransferResponseErrorCode specificError,
+        string? message = null)
+        => new() { Success = false, GlobalError = globalError, ErrorCode = specificError, ErrorMessage = message };
 }

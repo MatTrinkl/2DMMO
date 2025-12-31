@@ -1,3 +1,4 @@
+using Mmo.Shared.DirtyTracking.Attributes;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Generators;
 
@@ -11,28 +12,28 @@ namespace Mmo.Shared.Tests.Generators;
 ///     - TestEntityStateDelta.g.cs (if there are health/state properties)
 ///     - Extension methods (ToPositionDelta(), ToStateDelta())
 /// </summary>
-[GenerateDirtyTracking(IdPropertyName = "EntityId")]
+[GenerateDirtyTracking(IdPropertyName = "EntityId", FlagsEnumType = "Mmo.Shared.Entities.Enums.EntityDirtyFlags")]
 public partial class TestEntity
 {
     public Guid EntityId { get; set; }
-    
-    [TrackedProperty(DirtyFlags.Position)]
+
+    [TrackDirty("Position")]
     public float X { get; set; }
-    
-    [TrackedProperty(DirtyFlags.Position)]
+
+    [TrackDirty("Position")]
     public float Y { get; set; }
-    
-    [TrackedProperty(DirtyFlags.Velocity)]
+
+    [TrackDirty("Velocity")]
     public float VelocityX { get; set; }
-    
-    [TrackedProperty(DirtyFlags.Velocity)]
+
+    [TrackDirty("Velocity")]
     public float VelocityY { get; set; }
-    
-    [TrackedProperty(DirtyFlags.Health)]
+
+    [TrackDirty("Health")]
     public int CurrentHP { get; set; }
-    
-    [TrackedProperty(DirtyFlags.MaxHealth)]
+
+    [TrackDirty("MaxHealth")]
     public int MaxHP { get; set; }
-    
+
     public string Name { get; set; } = "";
 }
