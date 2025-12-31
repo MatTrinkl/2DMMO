@@ -96,7 +96,7 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName};");
         sb.AppendLine();
-        sb.AppendLine($"partial class {typeSymbol.Name} : Mmo.Shared.Entities.Interfaces.IDirtyTrackable");
+        sb.AppendLine($"partial class {typeSymbol.Name}");
         sb.AppendLine("{");
         sb.AppendLine($"    private {flagsEnumType} _dirtyFlags = {flagsEnumType}.None;");
         sb.AppendLine();
