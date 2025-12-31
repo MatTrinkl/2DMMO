@@ -45,17 +45,29 @@ public class GenerateDirtyTrackingAttribute : Attribute
 {
     /// <summary>
     ///     Gets or sets the name of the property that serves as the entity identifier.
-    ///     This ID will be automatically included in generated delta DTOs with the [DeltaId] attribute.
+    ///     If not specified, no IDeltaDto interface will be implemented (for singleton objects like ZoneContext).
     /// </summary>
     /// <remarks>
+    ///     <para>
+    ///     Set this for objects that need lookup capability (entities in lists).
+    ///     Leave null/empty for singleton objects where no lookup is needed.
+    ///     </para>
+    ///     
+    ///     <para>
     ///     When specified, the generator will:
     ///     <list type="bullet">
     ///         <item>Include this property in all generated delta DTOs</item>
     ///         <item>Mark it with [DeltaId] attribute for automatic recognition</item>
-    ///         <item>Enable O(1) lookup capabilities in delta collections</item>
+    ///         <item>Implement IDeltaDto&lt;TId&gt; interface for O(1) lookup capabilities</item>
+    ///         <item>Generate GetId() method for dictionary-based lookups</item>
     ///     </list>
+    ///     </para>
     ///     
-    ///     Examples: "PersistentId", "EntityId", "PlayerId", "QuestId"
+    ///     <para>Examples:</para>
+    ///     <list type="bullet">
+    ///         <item>Entities: IdPropertyName = "PersistentId" → generates IDeltaDto&lt;Guid&gt;</item>
+    ///         <item>ZoneContext: IdPropertyName = null → generates plain Delta DTO</item>
+    ///     </list>
     /// </remarks>
     public string? IdPropertyName { get; set; }
     

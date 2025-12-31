@@ -174,20 +174,31 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         sb.AppendLine($"/// </summary>");
         sb.AppendLine("[MessagePackObject]");
         
-        string idType = config.IdPropertyType ?? "System.Guid";
-        string baseTypes = $"IDeltaDto<{idType}>";
-        if (!string.IsNullOrEmpty(unionInterface))
+        // Build base types - only include IDeltaDto if ID property is specified
+        string? baseTypes = null;
+        if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
-            baseTypes += $", {unionInterface}";
+            string idType = config.IdPropertyType ?? "System.Guid";
+            baseTypes = $"IDeltaDto<{idType}>";
         }
         
-        sb.AppendLine($"public class {deltaName} : {baseTypes}");
+        if (!string.IsNullOrEmpty(unionInterface))
+        {
+            baseTypes = string.IsNullOrEmpty(baseTypes) 
+                ? unionInterface 
+                : $"{baseTypes}, {unionInterface}";
+        }
+        
+        sb.AppendLine(string.IsNullOrEmpty(baseTypes) 
+            ? $"public class {deltaName}" 
+            : $"public class {deltaName} : {baseTypes}");
         sb.AppendLine("{");
         
-        // Add ID property
+        // Add ID property (only if specified)
         int keyIndex = 0;
         if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
+            string idType = config.IdPropertyType ?? "System.Guid";
             sb.AppendLine($"    [Key({keyIndex})]");
             sb.AppendLine($"    [DeltaId]");
             sb.AppendLine($"    public {idType} {config.IdPropertyName} {{ get; set; }}");
@@ -205,9 +216,10 @@ public class DeltaDtoGenerator : IIncrementalGenerator
             keyIndex++;
         }
         
-        // Add GetId() method
+        // Add GetId() method (only if ID property is specified)
         if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
+            string idType = config.IdPropertyType ?? "System.Guid";
             sb.AppendLine($"    public {idType} GetId() => {config.IdPropertyName};");
         }
         
