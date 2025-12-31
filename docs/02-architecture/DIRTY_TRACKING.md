@@ -381,7 +381,92 @@ if (deltas.TryGetDelta(entityId, out var delta))
 }
 ```
 
-### 4. Custom DirtyFlags for Different Entity Types
+### 4. Delta DTOs with and without ID
+
+#### With ID (for Lists with Lookup)
+
+For objects that occur in lists and need to be looked up by ID:
+
+```csharp
+[GenerateDirtyTracking(
+    IdPropertyName = "PersistentId",  // ← Specify ID
+    FlagsEnumType = "Mmo.Shared.Entities.Enums.EntityDirtyFlags"
+)]
+public interface IEntity
+{
+    Guid PersistentId { get; }
+    
+    [TrackDirty("Position")]
+    Position Position { get; set; }
+}
+
+// Generated: IEntityDelta : IDeltaDto<Guid>
+// With GetId() for O(1) Dictionary-Lookup
+```
+
+**Generated Code:**
+
+```csharp
+[MessagePackObject]
+public class IEntityDelta : IDeltaDto<System.Guid>
+{
+    [Key(0)]
+    [DeltaId]
+    public System.Guid PersistentId { get; set; }
+    
+    [Key(1)]
+    public Position? Position { get; set; }
+    
+    public System.Guid GetId() => PersistentId;  // For O(1) lookup
+}
+```
+
+#### Without ID (for Singletons)
+
+For objects where there is only one instance (ZoneContext, PlayerStats, etc.):
+
+```csharp
+[GenerateDirtyTracking(
+    // IdPropertyName NOT specified!
+    FlagsEnumType = "Mmo.Shared.Zones.Enums.ZoneDirtyFlags"
+)]
+public interface IZoneContext
+{
+    [TrackDirty("Weather")]
+    WeatherType CurrentWeather { get; set; }
+    
+    [TrackDirty("TimeOfDay")]
+    float TimeOfDay { get; set; }
+}
+
+// Generated: IZoneContextDelta (plain DTO)
+// No IDeltaDto, no GetId() - not needed!
+```
+
+**Generated Code:**
+
+```csharp
+[MessagePackObject]
+public class IZoneContextDelta  // NO IDeltaDto<T>!
+{
+    [Key(0)]
+    public WeatherType? CurrentWeather { get; set; }
+    
+    [Key(1)]
+    public float? TimeOfDay { get; set; }
+    
+    // NO GetId() - not needed for singletons!
+}
+```
+
+**When to use which:**
+
+| Use Case | IdPropertyName | Generated Delta DTO | Use For |
+|----------|----------------|---------------------|---------|
+| **Entities in lists** | `"PersistentId"` | `IEntityDelta : IDeltaDto<Guid>` with `GetId()` | Entities, Players, NPCs, Items in lists |
+| **Singleton objects** | `null` (not specified) | `IZoneContextDelta` (plain DTO, no interface) | Zone context, Guild info, Server config |
+
+### 5. Custom DirtyFlags for Different Entity Types
 
 The system is extensible to other domains:
 
