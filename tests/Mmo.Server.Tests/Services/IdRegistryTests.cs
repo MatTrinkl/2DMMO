@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Entities.Interfaces;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
@@ -338,7 +339,7 @@ public class IdRegistryTests : IDisposable
     /// <summary>
     ///     Simple test entity implementation.
     /// </summary>
-    private class TestEntity : BaseEntity
+    private class TestEntity : BaseEntity, IMutableRuntimeEntity
     {
         /// <summary>Test server ID.</summary>
         private const byte _testServerId = 1;
@@ -358,8 +359,14 @@ public class IdRegistryTests : IDisposable
 
         /// <summary>
         /// Hides base RuntimeId to allow modification after construction.
+        /// Implements IMutableRuntimeEntity for polymorphic access.
         /// </summary>
         public new EntityIdentity RuntimeId { get; private set; }
+        
+        /// <summary>
+        /// Explicit interface implementation to ensure IdRegistry uses this property.
+        /// </summary>
+        EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
         
         public override bool IsTrulyPersistent => false;
         public override EntityType Type => EntityType.Player;

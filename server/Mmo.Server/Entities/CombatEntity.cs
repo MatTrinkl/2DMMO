@@ -1,3 +1,4 @@
+using Mmo.Server.Entities.Interfaces;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Combat.Enums;
@@ -17,7 +18,7 @@ public abstract class CombatEntity(
     Guid persistentId,
     Position position,
     ushort prefabId,
-    EntityIdentity runtimeId) : BaseEntity(runtimeId, persistentId, position), ICombatEntity
+    EntityIdentity runtimeId) : BaseEntity(runtimeId, persistentId, position), ICombatEntity, IMutableRuntimeEntity
 {
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTORS
@@ -49,6 +50,11 @@ public abstract class CombatEntity(
     ///     Todo: get from registry by default.
     /// </summary>
     public new EntityIdentity RuntimeId { get; private set; } = new(1, 0, 0, 0, prefabId);
+    
+    /// <summary>
+    ///     Explicit interface implementation to ensure IdRegistry uses the derived RuntimeId property.
+    /// </summary>
+    EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
 
     public override bool IsTrulyPersistent => true;
     protected virtual bool IsDead => CurrentHealth <= 0;
