@@ -25,7 +25,7 @@ public enum LoginResponseErrorCode : byte
     AccountBanned = 2,
 
     /// <summary>
-    ///     Is sent when <see cref="LoginRequest.ClientVersion" /> dosent match  the accepted server version of the game.
+    ///     Is sent when <see cref="LoginRequest.ClientVersion" /> doesn't match the accepted server version of the game.
     /// </summary>
     VersionMismatch = 3,
 
