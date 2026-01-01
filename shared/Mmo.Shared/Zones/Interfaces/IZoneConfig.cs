@@ -1,25 +1,49 @@
 ﻿using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Generators;
+using Mmo.Shared.Generators.Attributes;
 using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Records;
 
 namespace Mmo.Shared.Zones.Interfaces;
 
 [GenerateDto(DtoName = "ZoneConfigDto")]
+[GenerateListEntry("ZoneListEntry")]
 public interface IZoneConfig
 {
+    [BaseData]
     ushort ZoneId { get; }
+    
+    [IgnoreData]
     string InternalName { get; }
+    
+    [BaseData]
     string DisplayName { get; }
+    
+    [IgnoreData]
     bool Contestable { get; }
+    
+    [OptionalData("ZoneListEntry")]
     PvpZoneType PvpType { get; }
+    
+    [IgnoreData]
     ZoneFlags ZoneFlags { get; }
+    
+    [BaseData]
     int MinLevel { get; }
+    
+    [BaseData]
     int MaxLevel { get; }
+    
+    [IgnoreData]
     Faction? OwningFaction { get; }
+    
+    [IgnoreData]
     ZoneBoundsConfig Bounds { get; }
 
+    [IgnoreData]
     public int? MusicId { get; }
+    
+    [IgnoreData]
     public int? AmbienceId { get; }
 
     // Computed

@@ -3,6 +3,7 @@ using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Zones.Enums;
+using Mmo.Shared.Zones.Interfaces.Generated;
 
 namespace Mmo.Shared.Zones.Messages.Server_Client;
 
