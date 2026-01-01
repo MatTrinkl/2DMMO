@@ -8,31 +8,31 @@ namespace Mmo.Shared.Tests.Generators.TestData;
 [GenerateListEntry("ZoneListEntry")]
 [GenerateListEntry("ZoneMapEntry")]
 [GenerateListEntry("ZoneDungeonEntry")]
-public readonly partial struct ZoneTestData
+public partial class ZoneTestData
 {
     [BaseData] 
-    public ushort Id { get; }
+    public ushort Id { get; init; }
     
     [BaseData] 
-    public string Name { get; }
+    public string Name { get; init; } = "";
     
     [OptionalData("ZoneListEntry", "ZoneDungeonEntry")]
-    public byte RecommendedLevel { get; }
+    public byte RecommendedLevel { get; init; }
     
     [OptionalData("ZoneMapEntry")]
-    public bool IsDiscovered { get; }
+    public bool IsDiscovered { get; init; }
     
     [OptionalData("ZoneDungeonEntry")]
-    public ushort MaxPlayers { get; }
+    public ushort MaxPlayers { get; init; }
     
     [OptionalData("ZoneListEntry")]
-    public int? Cost { get; }
+    public int? Cost { get; init; }
     
     // No attribute = ignored
-    public ZoneBoundsTestData Bounds { get; }
+    public ZoneBoundsTestData Bounds { get; init; }
     
     [IgnoreData]
-    public HashSet<Guid> EntityIds { get; }
+    public HashSet<Guid> EntityIds { get; init; } = new();
 }
 
 /// <summary>

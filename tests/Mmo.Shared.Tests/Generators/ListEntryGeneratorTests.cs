@@ -72,9 +72,7 @@ public class ListEntryGeneratorTests
             Id = 1,
             Name = "Test Zone",
             RecommendedLevel = 10,
-            Cost = 100,
-            Bounds = new ZoneBoundsTestData(),
-            EntityIds = new HashSet<Guid>()
+            Cost = 100
         };
 
         // Act
