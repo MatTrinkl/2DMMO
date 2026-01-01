@@ -1,139 +1,139 @@
-# 🎨 Assets & Ressourcen
+# 🎨 Assets & Resources
 
-## 2DMMO – Asset-Dokumentation
+## 2DMMO – Asset Documentation
 
-**Version:** 1.0.0  
-**Letzte Aktualisierung:** 2025-12-02  
-**Status:** Prototyp-Phase (Placeholder-Assets)
-
----
-
-## 📋 Übersicht
-
-Dieses Dokument listet alle Asset-Anforderungen und Quellen für das Projekt. Für den **Prototyp** verwenden wir kostenlose Placeholder-Assets. Finale Assets werden später erstellt oder in Auftrag gegeben.
+**Version:** 1.1.0  
+**Last Updated:** 2026-01-01  
+**Status:** Prototype Phase (Placeholder Assets)
 
 ---
 
-## 🎯 Asset-Anforderungen (Prototyp)
+## 📋 Overview
 
-### Minimale Anforderungen
+This document lists all asset requirements and sources for the project. For the **prototype** we use free placeholder assets. Final assets will be created or commissioned later.
 
-| Asset-Typ | Benötigt für Prototyp | Priorität |
-|-----------|----------------------|-----------|
-| **Spieler-Sprite** | Ja | 🔴 Hoch |
-| **Basis-Tileset** (Gras) | Ja | 🔴 Hoch |
-| **UI-Font** | Ja (Godot Default OK) | 🟡 Mittel |
-| **Wasser-Tiles** | Optional | 🟢 Niedrig |
-| **Baum/Hindernis** | Optional | 🟢 Niedrig |
-| **Sound-Effekte** | Nein | ⚪ Später |
-| **Musik** | Nein | ⚪ Später |
+---
 
-### Technische Spezifikationen
+## 🎯 Asset Requirements (Prototype)
 
-| Eigenschaft | Wert |
-|-------------|------|
-| **Tile-Größe** | 64x64 Pixel |
-| **Sprite-Größe** | 64x64 Pixel (Charakter) |
-| **Farbtiefe** | 32-bit (RGBA) |
+### Minimum Requirements
+
+| Asset Type | Needed for Prototype | Priority |
+|------------|---------------------|----------|
+| **Player Sprite** | Yes | 🔴 High |
+| **Basic Tileset** (Grass) | Yes | 🔴 High |
+| **UI Font** | Yes (Godot Default OK) | 🟡 Medium |
+| **Water Tiles** | Optional | 🟢 Low |
+| **Tree/Obstacle** | Optional | 🟢 Low |
+| **Sound Effects** | No | ⚪ Later |
+| **Music** | No | ⚪ Later |
+
+### Technical Specifications
+
+| Property | Value |
+|----------|-------|
+| **Tile Size** | 64x64 pixels |
+| **Sprite Size** | 64x64 pixels (character) |
+| **Color Depth** | 32-bit (RGBA) |
 | **Format** | PNG (transparent) |
-| **Stil** | Pixel Art |
+| **Style** | Pixel Art |
 
 ---
 
-## 🆓 Kostenlose Asset-Quellen
+## 🆓 Free Asset Sources
 
-### Top-Empfehlungen für Prototyp
+### Top Recommendations for Prototype
 
-#### 1. Kenney.nl (⭐ Empfohlen)
-> Hochwertige, konsistente Assets. Komplett kostenlos, keine Attribution nötig (CC0).
+#### 1. Kenney.nl (⭐ Recommended)
+> High-quality, consistent assets. Completely free, no attribution needed (CC0).
 
-| Asset-Pack | Link | Passt für |
-|------------|------|-----------|
-| **Tiny Town** | [kenney.nl/assets/tiny-town](https://kenney.nl/assets/tiny-town) | Tiles, Gebäude |
-| **Tiny Dungeon** | [kenney.nl/assets/tiny-dungeon](https://kenney.nl/assets/tiny-dungeon) | Charaktere, Dungeons |
-| **Roguelike RPG Pack** | [kenney.nl/assets/roguelike-rpg-pack](https://kenney.nl/assets/roguelike-rpg-pack) | RPG Tiles & Sprites |
+| Asset Pack | Link | Suitable For |
+|------------|------|--------------|
+| **Tiny Town** | [kenney.nl/assets/tiny-town](https://kenney.nl/assets/tiny-town) | Tiles, buildings |
+| **Tiny Dungeon** | [kenney.nl/assets/tiny-dungeon](https://kenney.nl/assets/tiny-dungeon) | Characters, dungeons |
+| **Roguelike RPG Pack** | [kenney.nl/assets/roguelike-rpg-pack](https://kenney.nl/assets/roguelike-rpg-pack) | RPG tiles & sprites |
 
-**Hinweis:** Kenney Assets sind oft 16x16. Können auf 64x64 skaliert werden (nearest neighbor).
+**Note:** Kenney assets are often 16x16. Can be scaled to 64x64 (nearest neighbor).
 
 ---
 
 #### 2. OpenGameArt.org
-> Community-getriebene Plattform. Verschiedene Lizenzen beachten!
+> Community-driven platform. Note the different licenses!
 
-| Asset-Pack | Link | Lizenz | Passt für |
-|------------|------|--------|-----------|
-| **LPC Sprite Base** | [opengameart.org/content/liberated-pixel-cup-lpc-base-assets](https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-702) | CC-BY-SA 3.0 | Charaktere |
+| Asset Pack | Link | License | Suitable For |
+|------------|------|---------|--------------|
+| **LPC Sprite Base** | [opengameart.org/content/liberated-pixel-cup-lpc-base-assets](https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-702) | CC-BY-SA 3.0 | Characters |
 | **Tiny 16 Basic** | [opengameart.org/content/tiny-16-basic](https://opengameart.org/content/tiny-16-basic) | CC0 | Tiles |
 
 ---
 
 #### 3. itch.io (Free Assets)
-> Große Auswahl, oft von Indie-Entwicklern.
+> Large selection, often from indie developers.
 
-| Asset-Pack | Link | Preis | Passt für |
-|------------|------|-------|-----------|
-| **Ninja Adventure** | [pixel-boy.itch.io/ninja-adventure-asset-pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) | Free | Komplett-Paket |
+| Asset Pack | Link | Price | Suitable For |
+|------------|------|-------|--------------|
+| **Ninja Adventure** | [pixel-boy.itch.io/ninja-adventure-asset-pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) | Free | Complete package |
 
-**Filter für kostenlose Assets:** [itch.io/game-assets/free/tag-pixel-art](https://itch.io/game-assets/free/tag-pixel-art)
+**Filter for free assets:** [itch.io/game-assets/free/tag-pixel-art](https://itch.io/game-assets/free/tag-pixel-art)
 
 ---
 
-## 🎮 Empfohlene Assets für Prototyp
+## 🎮 Recommended Assets for Prototype
 
-### Schnellstart-Paket
+### Quick Start Package
 
 **Ninja Adventure Asset Pack** (All-in-One):
 👉 [https://pixel-boy.itch.io/ninja-adventure-asset-pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack)
 
-Enthält:
-- ✅ Charaktere mit Animationen
-- ✅ Tilesets (Natur, Dungeon, Stadt)
-- ✅ Items & Icons
-- ✅ UI-Elemente
-- ✅ **Kostenlos** (Donation optional)
+Includes:
+- ✅ Characters with animations
+- ✅ Tilesets (nature, dungeon, city)
+- ✅ Items & icons
+- ✅ UI elements
+- ✅ **Free** (donation optional)
 
 ---
 
-## 📐 Asset-Skalierung
+## 📐 Asset Scaling
 
-Da viele kostenlose Assets 16x16 sind, müssen wir auf 64x64 skalieren:
+Since many free assets are 16x16, we need to scale to 64x64:
 
 ### In Godot
-1. Import-Einstellungen öffnen
-2. Filter: "Nearest" (nicht Linear!)
-3. Skalierung im Node: Scale = (4, 4)
+1. Open import settings
+2. Filter: "Nearest" (not Linear!)
+3. Scaling in node: Scale = (4, 4)
 
 ---
 
-## ⚖️ Lizenzen beachten!
+## ⚖️ Watch the Licenses!
 
-| Lizenz | Attribution nötig? | Kommerziell OK? |
-|--------|-------------------|-----------------|
-| **CC0** | ❌ Nein | ✅ Ja |
-| **CC-BY** | ✅ Ja | ✅ Ja |
-| **CC-BY-SA** | ✅ Ja | ✅ Ja (gleiche Lizenz) |
-| **CC-BY-NC** | ✅ Ja | ❌ Nein |
-
----
-
-## 📝 Asset-Tracking
-
-### Verwendete Assets (Prototyp)
-
-| Asset | Quelle | Lizenz | Verwendet für |
-|-------|--------|--------|---------------|
-| *Noch keine* | - | - | - |
+| License | Attribution Required? | Commercial OK? |
+|---------|----------------------|----------------|
+| **CC0** | ❌ No | ✅ Yes |
+| **CC-BY** | ✅ Yes | ✅ Yes |
+| **CC-BY-SA** | ✅ Yes | ✅ Yes (same license) |
+| **CC-BY-NC** | ✅ Yes | ❌ No |
 
 ---
 
-## 🔗 Nützliche Tools
+## 📝 Asset Tracking
 
-| Tool | Link | Zweck |
-|------|------|-------|
-| **Aseprite** | [aseprite.org](https://www.aseprite.org/) | Pixel Art Editor |
-| **Pixilart** | [pixilart.com](https://www.pixilart.com/) | Online Pixel Editor (kostenlos) |
-| **Tiled** | [mapeditor.org](https://www.mapeditor.org/) | Tilemap Editor |
+### Used Assets (Prototype)
+
+| Asset | Source | License | Used For |
+|-------|--------|---------|----------|
+| *None yet* | - | - | - |
 
 ---
 
-*Dieses Dokument wird aktualisiert wenn neue Assets hinzugefügt werden.*
+## 🔗 Useful Tools
+
+| Tool | Link | Purpose |
+|------|------|---------|
+| **Aseprite** | [aseprite.org](https://www.aseprite.org/) | Pixel art editor |
+| **Pixilart** | [pixilart.com](https://www.pixilart.com/) | Online pixel editor (free) |
+| **Tiled** | [mapeditor.org](https://www.mapeditor.org/) | Tilemap editor |
+
+---
+
+*This document will be updated when new assets are added.*

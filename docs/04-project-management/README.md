@@ -1,95 +1,98 @@
-# 📋 Projekt-Management
+# 📋 Project Management
 
-Dieser Bereich enthält **Issue-Tracking, Roadmaps und Planungsdokumente**.
-
----
-
-## 📚 Dokumente in diesem Bereich
-
-### [Issue-Hierarchie](ISSUE_HIERARCHY.md)
-Zeigt die Beziehungen zwischen Issues und die empfohlene Bearbeitungsreihenfolge:
-- Phase 1: Grundlagen & Projektsetup
-- Phase 2: Basis-Netzwerk & Auth-Skelett
-- Phase 3: Gameplay-Loop
-- Phase 4: Testing & Optimierung
-- Abhängigkeiten zwischen Issues
-
-**Zielgruppe**: Entwickler, Projektmanagement
+This section contains **issue tracking, roadmaps and planning documents**.
 
 ---
 
-### [Issue-Aktualisierungs-Leitfaden](ISSUE_UPDATES_GUIDE.md)
-**Konsolidiert:** ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
+## 📚 Documents in This Section
 
-Prozess-Guide für Issue-Updates:
-- Wann Issues aktualisiert werden müssen
-- Templates für Epik-Issues und Sub-Issues
-- Best Practices für Issue-Verwaltung
-- Beispiel-Workflow für Architektur-Änderungen
+### [Issue Hierarchy](ISSUE_HIERARCHY.md)
+Shows the relationships between issues and the recommended processing order:
+- Phase 1: Fundamentals & Project Setup
+- Phase 2: Basic Network & Auth Skeleton
+- Phase 3: Gameplay Loop
+- Phase 4: Testing & Optimization
+- Dependencies between issues
 
-**Zielgruppe**: Projektmanagement, alle Entwickler
+**Target Audience**: Developers, project management
+
+---
+
+### [Issue Updates Guide](ISSUE_UPDATES_GUIDE.md)
+**Consolidated:** ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md
+
+Process guide for issue updates:
+- When issues need to be updated
+- Templates for epic issues and sub-issues
+- Best practices for issue management
+- Example workflow for architecture changes
+
+**Target Audience**: Project management, all developers
 
 ---
 
 ### [Sub-Issues](SUB_ISSUES.md)
-**Aufgeteilt aus:** ISSUES_ROADMAP.md (Teil 1)
+**Split from:** ISSUES_ROADMAP.md (Part 1)
 
-Detaillierte Sub-Issue-Vorschläge für bestehende große Issues:
-- Issue #8: NetworkServer → 3 Sub-Issues
-- Issue #10: Login-Flow → 3 Sub-Issues
-- Issue #11: MessagePack → 3 Sub-Issues
-- Weitere Aufspaltungen für bessere Handhabung
+Detailed sub-issue suggestions for existing large issues:
+- Issue #8: NetworkServer → 3 sub-issues
+- Issue #10: Login Flow → 3 sub-issues
+- Issue #11: MessagePack → 3 sub-issues
+- Further splits for better handling
 
-**Zielgruppe**: Entwickler, Projektmanagement
-
----
-
-### [Feature-Roadmap](FEATURE_ROADMAP.md)
-**Aufgeteilt aus:** ISSUES_ROADMAP.md (Teil 2)
-
-Neue Feature-Issues für Funktionalität bis Ende Phase 4:
-- Phase 2: Verbindungsaufbau, Disconnect-Handling
-- Phase 3: Movement, Collision, Chat
-- Phase 4: Zone-Transfer, NPCs, Performance
-- Alle als Epik-Issues strukturiert
-
-**Zielgruppe**: Projektmanagement, Product Owner
+**Target Audience**: Developers, project management
 
 ---
 
-## 🔗 Verwandte Dokumentation
+### [Feature Roadmap](FEATURE_ROADMAP.md)
+**Split from:** ISSUES_ROADMAP.md (Part 2)
 
-- **Architektur (Zone-System)**: Siehe [ID-System](../02-architecture/ID_SYSTEM.md)
-- **Prototyp-Scope**: Siehe [Prototype Scope](../01-overview/PROTOTYPE_SCOPE.md)
+New feature issues for functionality through end of Phase 4:
+- Phase 2: Connection establishment, disconnect handling
+- Phase 3: Movement, collision, chat
+- Phase 4: Zone transfer, NPCs, performance
+- All structured as epic issues
+
+**Target Audience**: Project management, product owner
+
+---
+
+## 🔗 Related Documentation
+
+- **Architecture (Zone System)**: See [ID System](../02-architecture/ID_SYSTEM.md)
+- **Prototype Scope**: See [Prototype Scope](../01-overview/PROTOTYPE_SCOPE.md)
 
 ---
 
 ## 📊 Workflow
 
 ```
-1. Neue Features identifizieren
+1. Identify new features
    ↓
-2. Issue erstellen (siehe FEATURE_ROADMAP.md)
+2. Create issue (see FEATURE_ROADMAP.md)
    ↓
-3. Hierarchie prüfen (siehe ISSUE_HIERARCHY.md)
+3. Check hierarchy (see ISSUE_HIERARCHY.md)
    ↓
-4. Große Issues in Sub-Issues aufteilen (siehe SUB_ISSUES.md)
+4. Split large issues into sub-issues (see SUB_ISSUES.md)
    ↓
-5. Bei Architektur-Änderungen: ISSUE_UPDATES_GUIDE.md nutzen
+5. For architecture changes: use ISSUE_UPDATES_GUIDE.md
    ↓
-6. Issues bearbeiten (nach Priorisierung)
+6. Work on issues (by priority)
 ```
 
 ---
 
-## 📝 Änderungslog
+## 📝 Changelog
+
+### Version 2.1.0 (2026-01-01)
+- ✅ **Translated**: All documents to English
 
 ### Version 2.0.0 (2025-12-09)
-- ✅ **Konsolidiert**: ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md → ISSUE_UPDATES_GUIDE.md
-- ✅ **Aufgeteilt**: ISSUES_ROADMAP.md → SUB_ISSUES.md + FEATURE_ROADMAP.md
-- ✨ Verbesserte Struktur für bessere Navigierbarkeit
-- 📖 Klarere Kategorisierung der Dokumente
+- ✅ **Consolidated**: ISSUE_UPDATES.md + ZONE_CONCEPT_UPDATES.md → ISSUE_UPDATES_GUIDE.md
+- ✅ **Split**: ISSUES_ROADMAP.md → SUB_ISSUES.md + FEATURE_ROADMAP.md
+- ✨ Improved structure for better navigability
+- 📖 Clearer categorization of documents
 
 ---
 
-**Navigation**: [← Zurück zur Hauptdokumentation](../README.md)
+**Navigation**: [← Back to Main Documentation](../README.md)
