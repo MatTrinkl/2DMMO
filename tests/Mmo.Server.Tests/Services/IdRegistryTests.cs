@@ -333,7 +333,7 @@ public class IdRegistryTests : IDisposable
         Assert.Equal(0, IdRegistry.Instance.GetNextLocalId(1));
     }
 
-    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0), Guid.NewGuid(), new Position(0,0));
+    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0), Guid.NewGuid(), new Position(0, 0));
 
     /// <summary>
     ///     Simple test entity implementation.
