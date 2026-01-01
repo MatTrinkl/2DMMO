@@ -87,7 +87,7 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
 
                 if (unionMembers.Count > 0)
                 {
-                    string unionInterface = GenerateUnionInterface(unionName, unionNamespace, unionMembers);
+                    string unionInterface = GenerateUnionInterface(unionName!, unionNamespace!, unionMembers);
                     context.AddSource($"{unionName}.g.cs",
                         SourceText.From(unionInterface, Encoding.UTF8));
                 }

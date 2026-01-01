@@ -16,7 +16,7 @@ public class ConsoleLog : ILog
 
     public void Warn(string message, params object[] args) => Log(LogLevel.Warn, message, args);
 
-    public void Error(string message, params object[] args) => Log(LogLevel.Error, message, args);
+    public void Error(string? message, params object[] args) => Log(LogLevel.Error, message!, args);
 
     public void Error(Exception ex, string message, params object[] args)
     {

@@ -68,7 +68,7 @@ public class ListEntryGenerator : IIncrementalGenerator
                     string? entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
                     if (string.IsNullOrEmpty(entryTypeName)) continue;
 
-                    string generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName, attr, compilation);
+                    string generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName!, attr, compilation);
                     context.AddSource($"{typeSymbol.Name}.{entryTypeName}.g.cs",
                         SourceText.From(generatedSource, Encoding.UTF8));
                 }
@@ -175,7 +175,7 @@ public class ListEntryGenerator : IIncrementalGenerator
                 ? customNamespace
                 : $"{sourceNamespace}.Generated";
 
-            generatedNamespaces.Add(generatedNamespace);
+            generatedNamespaces.Add(generatedNamespace!);
         }
 
         // Use the first namespace (or default) for the extensions class
@@ -204,7 +204,7 @@ public class ListEntryGenerator : IIncrementalGenerator
             sb.AppendLine($"        return new {entryTypeName}");
             sb.AppendLine("        {");
 
-            var properties = GetPropertiesForEntryType(sourceType, entryTypeName).ToList();
+            var properties = GetPropertiesForEntryType(sourceType, entryTypeName!).ToList();
             for (int i = 0; i < properties.Count; i++)
             {
                 (IPropertySymbol Symbol, bool IsOptional) property = properties[i];

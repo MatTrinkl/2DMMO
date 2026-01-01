@@ -53,7 +53,7 @@ public static class GeneratorHelpers
         // Find the ID property
         if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
-            IPropertySymbol? idProp = typeSymbol.GetMembers(config.IdPropertyName).OfType<IPropertySymbol>()
+            IPropertySymbol? idProp = typeSymbol.GetMembers(config.IdPropertyName!).OfType<IPropertySymbol>()
                 .FirstOrDefault();
             if (idProp != null) config.IdPropertyType = idProp.Type.ToDisplayString();
         }

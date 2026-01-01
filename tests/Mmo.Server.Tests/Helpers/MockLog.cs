@@ -31,10 +31,10 @@ public class MockLog : ILog
         Messages.Add($"[WARN] {FormatMessage(message, args)}");
     }
 
-    public void Error(string message, params object[] args)
+    public void Error(string? message, params object[] args)
     {
-        RawMessages.Add(("ERROR", message, args));
-        Messages.Add($"[ERROR] {FormatMessage(message, args)}");
+        RawMessages.Add(("ERROR", message, args)!);
+        if (message != null) Messages.Add($"[ERROR] {FormatMessage(message, args)}");
     }
 
     public void Error(Exception ex, string message, params object[] args)

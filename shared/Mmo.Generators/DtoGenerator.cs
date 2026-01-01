@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -1176,7 +1176,7 @@ public class DtoGenerator : IIncrementalGenerator
 
         string? sourceNamespace = typeSymbol.ContainingNamespace?.ToDisplayString();
         if (!string.IsNullOrEmpty(sourceNamespace) && sourceNamespace != "<global namespace>")
-            usings.Add(sourceNamespace);
+            usings.Add(sourceNamespace!);
 
         foreach (PropertyData? prop in properties) AddTypeUsings(prop.Symbol.Type, usings);
 
@@ -1192,7 +1192,7 @@ public class DtoGenerator : IIncrementalGenerator
     private static void AddTypeUsings(ITypeSymbol type, HashSet<string> usings)
     {
         string? ns = type.ContainingNamespace?.ToDisplayString();
-        if (!string.IsNullOrEmpty(ns) && ns != "<global namespace>") usings.Add(ns);
+        if (!string.IsNullOrEmpty(ns) && ns != "<global namespace>") usings.Add(ns!);
 
         if (type is INamedTypeSymbol namedType)
             foreach (ITypeSymbol? typeArg in namedType.TypeArguments)
