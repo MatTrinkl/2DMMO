@@ -96,6 +96,7 @@ Desktop.ini
 
 
 # Coverage
+coverage/
 coverage-report/
 **/TestResults/
 
