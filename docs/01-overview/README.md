@@ -1,52 +1,52 @@
-# 🎮 Übersicht & Vision
+# 🎮 Overview & Vision
 
-Dieser Bereich enthält **high-level Projektinformationen** und nicht-technische Dokumentation.
+This section contains **high-level project information** and non-technical documentation.
 
 ---
 
-## 📚 Dokumente in diesem Bereich
+## 📚 Documents in This Section
 
 ### [Game Design Document](GAME_DESIGN_DOCUMENT.md)
-Das zentrale Gameplay-Design-Dokument mit:
-- Vision und Überblick
-- Gameplay-Systeme
-- Rassen & Klassen
-- Welt-Design
-- Progression-Systeme
-- Art Direction
+The central gameplay design document with:
+- Vision and overview
+- Gameplay systems
+- Races & classes
+- World design
+- Progression systems
+- Art direction
 
-**Zielgruppe**: Alle Teammitglieder, Designer, Entwickler
-
----
-
-### [Prototyp-Scope](PROTOTYPE_SCOPE.md)
-Definiert den exakten Umfang des MVP (Minimum Viable Product):
-- Was **muss** implementiert werden
-- Was **nicht** implementiert werden muss
-- Prototyp-Ziele
-- Entwicklungsumgebung
-
-**Zielgruppe**: Entwickler, Projektmanagement
+**Target Audience**: All team members, designers, developers
 
 ---
 
-### [Assets & Ressourcen](ASSETS.md)
-Asset-Anforderungen und Quellen:
-- Technische Spezifikationen (Tile-Größe, Format)
-- Asset-Quellen (Kenney.nl, OpenGameArt, etc.)
-- Lizenzinformationen
-- Prototyp vs. Finale Assets
+### [Prototype Scope](PROTOTYPE_SCOPE.md)
+Defines the exact scope of the MVP (Minimum Viable Product):
+- What **must** be implemented
+- What **does not** need to be implemented
+- Prototype goals
+- Development environment
 
-**Zielgruppe**: Artists, Entwickler
-
----
-
-## 🔗 Verwandte Dokumentation
-
-- **Technische Umsetzung**: Siehe [02-architecture/](../02-architecture/)
-- **Implementierungs-Details**: Siehe [03-technical-details/](../03-technical-details/)
-- **Projekt-Planung**: Siehe [04-project-management/](../04-project-management/)
+**Target Audience**: Developers, project management
 
 ---
 
-**Navigation**: [← Zurück zur Hauptdokumentation](../README.md)
+### [Assets & Resources](ASSETS.md)
+Asset requirements and sources:
+- Technical specifications (tile size, format)
+- Asset sources (Kenney.nl, OpenGameArt, etc.)
+- License information
+- Prototype vs. final assets
+
+**Target Audience**: Artists, developers
+
+---
+
+## 🔗 Related Documentation
+
+- **Technical Implementation**: See [02-architecture/](../02-architecture/)
+- **Implementation Details**: See [03-technical-details/](../03-technical-details/)
+- **Project Planning**: See [04-project-management/](../04-project-management/)
+
+---
+
+**Navigation**: [← Back to Main Documentation](../README.md)

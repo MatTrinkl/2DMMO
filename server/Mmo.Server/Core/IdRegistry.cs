@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Mmo.Server.Core;
 using Mmo.Server.Entities;
+using Mmo.Server.Entities.Interfaces;
+using Mmo.Shared.Entities.Structs;
 
 namespace Mmo.Shared.Core;
 
@@ -139,16 +141,20 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByPersistentId.TryAdd(entity.PersistentId, entity);
 
         // Only register by GlobalKey if entity is assigned to a zone
-        if (entity.RuntimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
+        var runtimeId = GetRuntimeId(entity);
+        if (runtimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(runtimeId.GlobalKey, entity);
     }
 
     /// <inheritdoc />
     public void UnregisterEntity(Guid persistentId)
     {
         if (_entitiesByPersistentId.TryRemove(persistentId, out BaseEntity? entity))
+        {
             // Also remove from GlobalKey lookup if it was assigned
-            if (entity.RuntimeId.IsAssigned)
-                _entitiesByGlobalKey.TryRemove(entity.RuntimeId.GlobalKey, out _);
+            var runtimeId = GetRuntimeId(entity);
+            if (runtimeId.IsAssigned)
+                _entitiesByGlobalKey.TryRemove(runtimeId.GlobalKey, out _);
+        }
 
         // Also clean up any connection mapping
         if (_entityToConnection.TryRemove(persistentId, out Guid connectionId))
@@ -183,7 +189,8 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByGlobalKey.TryRemove(oldGlobalKey, out _);
 
         // Add new GlobalKey mapping if assigned
-        if (entity.RuntimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(entity.RuntimeId.GlobalKey, entity);
+        var runtimeId = GetRuntimeId(entity);
+        if (runtimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(runtimeId.GlobalKey, entity);
     }
 
     /// <summary>
@@ -231,4 +238,13 @@ public sealed class IdRegistry : IIdRegistry
     /// <returns>A unique 32-bit key combining both IDs.</returns>
     private static uint GetZoneShardKey(ushort zoneId, ushort shardId) =>
         ((uint)zoneId << 16) | shardId;
+
+    /// <summary>
+    ///     Gets the RuntimeId from an entity, using the IMutableRuntimeEntity interface
+    ///     when available to get the correct (hidden) RuntimeId value from derived classes.
+    /// </summary>
+    /// <param name="entity">The entity to get RuntimeId from.</param>
+    /// <returns>The entity's RuntimeId.</returns>
+    private static EntityIdentity GetRuntimeId(BaseEntity entity) =>
+        entity is IMutableRuntimeEntity mutableEntity ? mutableEntity.RuntimeId : entity.RuntimeId;
 }

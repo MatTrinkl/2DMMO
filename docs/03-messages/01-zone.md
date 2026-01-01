@@ -13,33 +13,30 @@
 
 -   [Zone Loading Flow (Übersicht)](#-zone-loading-flow-übersicht)
 -   [DTOs](#dtos)
-    -   [ZoneDto](#zonedto)
-    -   [ZoneListItemDto](#zonelistitemdto)
+    -   [ZoneConfigDto](#zoneconfigdto)
+    -   [ZoneContextDto](#zonecontextdto)
+    -   [ZoneListEntry](#zonelistentry)
 -   [Aktive Messages](#aktive-messages)
     -   [LeaveZone (101)](#leavezone-101)
     -   [ZoneState (102)](#zonestate-102)
     -   [ZoneDelta (103)](#zonedelta-103)
-    -   [PlayerJoinedZone (104)](#playerjoinedzone-104)
-    -   [PlayerLeftZone (105)](#playerleftzone-105)
+    -   [CharacterJoinedZone (104)](#characterjoinedzone-104)
+    -   [CharacterLeftZone (105)](#characterleftzone-105)
     -   [ZoneTransferRequest (106)](#zonetransferrequest-106)
     -   [ZoneTransferResponse (107)](#zonetransferresponse-107)
-    -   [ZoneDiscovered (108)](#zonediscovered-108)
-    -   [ZoneListRequest (109)](#zonelistrequest-109)
-    -   [ZoneListResponse (110)](#zonelistresponse-110)
+    -   [ZoneDiscovered (109)](#zonediscovered-109)
+    -   [ZoneListRequest (110)](#zonelistrequest-110)
+    -   [ZoneListResponse (111)](#zonelistresponse-111)
     -   [GetZoneRequest (117)](#getzonerequest-117)
-    -   [ZoneLoadedAck (119)](#zoneloadedack-119)
-    -   [EntityBatch (120)](#entitybatch-120)
+    -   [ZoneLoadedAck (118)](#zoneloadedack-118)
 -   [Phase 2 Messages](#phase-2-messages)
-    -   [ShardTransfer (111)](#shardtransfer-111)
-    -   [ShardListRequest (112)](#shardlistrequest-112)
-    -   [ShardListResponse (113)](#shardlistresponse-113)
-    -   [SubZoneEnter (114)](#subzoneenter-114)
-    -   [SubZoneLeave (115)](#subzoneleave-115)
-    -   [ZonePhaseChange (116)](#zonephasechange-116)
+    -   [ShardTransfer (112)](#shardtransfer-112)
+    -   [ShardListRequest (113)](#shardlistrequest-113)
+    -   [ShardListResponse (114)](#shardlistresponse-114)
+    -   [SubZoneEnter (115)](#subzoneenter-115)
+    -   [SubZoneLeave (116)](#subzoneleave-116)
 -   [Obsolete Messages](#obsolete-messages)
     -   [JoinZone (100)](#joinzone-100-obsolet)
-    -   [ZoneLoadingProgress (107)](#zoneloadingprogress-107-obsolet)
-    -   [GetZoneResponse (118)](#getzoneresponse-118-obsolet)
 
 ---
 
@@ -47,36 +44,47 @@
 
 Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message enthält alle Daten die der Client zum Spawnen braucht.
 
-### Architektur: ZoneDto vs ZoneState
+### Architektur: ZoneConfigDto + ZoneContextDto vs ZoneState
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ZoneDto (statisch, cachebar)                                   │
-│  ├── ZoneId, Name                                               │
-│  ├── Flags (ZoneFlags - PvP, Restrictions, etc.)               │
-│  ├── RecommendedLevel, ControllingFaction                      │
-│  ├── SpawnPoints, Graveyard                                     │
-│  └── Music, Ambience, Bounds                                    │
+│  ZoneConfigDto (statisch, cachebar) - from IZoneConfig          │
+│  ├── ZoneId, DisplayName                                        │
+│  ├── PvpType (PvpZoneType - Sanctuary, Normal, FFA)             │
+│  ├── MinLevel, MaxLevel                                         │
+│  └── (Internal: Bounds, Music, Ambience via config)             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  ZoneState (dynamisch, Runtime)                                 │
-│  ├── ZoneId (Referenz)                                          │
-│  ├── ZoneInfo:  ZoneDto?  (nur bei erstem Besuch)                │
-│  ├── CurrentWeather, TimeOfDay (dynamisch)                      │
-│  ├── StateType (Initial/Transfer/Reconnect/FullSync)           │
-│  ├── MyPlayer:  PlayerEntityDto                                  │
-│  └── Entities:  List<EntityDtoUnion>                             │
+│  ZoneContextDto (dynamisch, Runtime) - from IZoneContext        │
+│  ├── ShardId                                                    │
+│  ├── CurrentWeather (WeatherType)                               │
+│  ├── TimeOfDay (0.0 - 24.0)                                     │
+│  ├── ControllingFaction (Faction?)                              │
+│  ├── IsLocked, LockReason                                       │
+│  └── IsInstance                                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ZoneState (kombiniert, Runtime)                                │
+│  ├── ZoneConfig: ZoneConfigDto (required)                       │
+│  ├── ZoneContext: ZoneContextDto (required)                     │
+│  ├── State: ZoneStateType (FullSync, etc.)                      │
+│  ├── MyCharacter: CharacterEntityDto? (nullable)                │
+│  ├── Entities: List<EntityDtoUnion>                             │
+│  ├── HasMoreEntities, TotalEntitiesCount                        │
+│  └── Timestamp (long)                                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **Vorteile dieser Trennung:**
 
--   **Caching:** Client kann `ZoneDto` lokal speichern
--   **Kleinere Messages:** `ZoneDto` nur bei erstem Besuch einer Zone
--   **Wiederverwendung:** `ZoneDto` in mehreren Messages nutzbar
--   **Separate Updates:** Wetter/Zeit ohne vollen ZoneState änderbar
+-   **Caching:** Client kann `ZoneConfigDto` lokal speichern
+-   **Kleinere Messages:** Config + Context separat in Delta-Updates
+-   **Wiederverwendung:** DTOs in mehreren Messages nutzbar
+-   **Separate Updates:** Wetter/Zeit via ZoneDelta.ZoneContext änderbar
 
 ### Haupt-Flow: Login → Zone
 
@@ -84,7 +92,7 @@ Der Zone-Loading-Prozess wurde vereinfacht. Eine einzige `ZoneState` Message ent
 Client                         Server
   │                              │
   │  CharacterSelectResponse     │
-  │  (SpawnZoneId:  1001)         │
+  │  (SpawnZoneId: 1001)         │
   │◄─────────────────────────────│
   │                              │
   │  GetZoneRequest (117)        │
@@ -92,10 +100,10 @@ Client                         Server
   │─────────────────────────────►│
   │                              │
   │  ZoneState (102)             │
-  │  ├── ZoneInfo: ZoneDto       │  ← Nur bei erstem Besuch!
-  │  ├── CurrentWeather, TimeOfDay│
-  │  ├── StateType:  Initial      │
-  │  ├── MyPlayer: PlayerEntityDto│
+  │  ├── ZoneConfig: ZoneConfigDto│
+  │  ├── ZoneContext: ZoneContextDto│
+  │  ├── State: FullSync         │
+  │  ├── MyCharacter: CharacterEntityDto│
   │  └── Entities: List<EntityDtoUnion>│
   │◄─────────────────────────────│
   │                              │
@@ -200,23 +208,23 @@ Client                         Server
 | Message                | ID  | Richtung           | Zweck                             |
 | ---------------------- | --- | ------------------ | --------------------------------- |
 | `GetZoneRequest`       | 117 | Client → Server    | Zone-Daten anfordern              |
-| `ZoneState`            | 102 | Server → Client    | Zone + MyPlayer + Entities        |
+| `ZoneState`            | 102 | Server → Client    | Zone + MyCharacter + Entities     |
 | `ZoneDelta`            | 103 | Server → Client    | Delta-Updates (jeden Tick)        |
-| `EntityBatch`          | 120 | Server → Client    | Weitere Entities (Chunking)       |
-| `ZoneLoadedAck`        | 119 | Client → Server    | Client bestätigt Ready            |
+| `ZoneLoadedAck`        | 118 | Client → Server    | Client bestätigt Ready            |
 | `ZoneTransferRequest`  | 106 | Client → Server    | Zone wechseln wollen              |
 | `ZoneTransferResponse` | 107 | Server → Client    | Transfer bestätigen/ablehnen      |
 | `LeaveZone`            | 101 | Client → Server    | Logout/Exit/CharacterSwitch       |
-| `PlayerJoinedZone`     | 104 | Server → Broadcast | Neuer Spieler in Zone             |
-| `PlayerLeftZone`       | 105 | Server → Broadcast | Spieler verlässt Zone             |
+| `CharacterJoinedZone`  | 104 | Server → Broadcast | Neuer Spieler in Zone             |
+| `CharacterLeftZone`    | 105 | Server → Broadcast | Spieler verlässt Zone             |
+| `ZoneDiscovered`       | 109 | Server → Client    | Neue Zone entdeckt                |
+| `ZoneListRequest`      | 110 | Client → Server    | Liste aller Zonen anfordern       |
+| `ZoneListResponse`     | 111 | Server → Client    | Liste aller Zonen                 |
 
 ### Obsolete Messages
 
 | Message               | ID  | Ersetzt durch         |
 | --------------------- | --- | --------------------- |
-| `JoinZone`            | 100 | `ZoneState. MyPlayer` |
-| `ZoneLoadingProgress` | 107 | Client lädt lokal     |
-| `GetZoneResponse`     | 118 | `ZoneState` direkt    |
+| `JoinZone`            | 100 | `ZoneState.MyCharacter` |
 
 ---
 
@@ -224,138 +232,142 @@ Client                         Server
 
 ---
 
-## ZoneDto
+## ZoneConfigDto
 
-**Zweck:** Statische Zone-Metadaten die sich selten ändern und client-seitig gecached werden können.
+**Zweck:** Statische Zone-Konfigurationsdaten, automatisch generiert aus `IZoneConfig`.
 
-> **Hinweis:** Verwendet das existierende `ZoneFlags` Enum für Zone-Eigenschaften.
+> **Hinweis:** DTOs werden automatisch aus Interfaces mit `[GenerateDto]` Attribut generiert.
+
+### Felder (aus IZoneConfig)
+
+| Feld        | Typ           | Beschreibung                        | Pflicht |
+| ----------- | ------------- | ----------------------------------- | ------- |
+| ZoneId      | ushort        | Eindeutige Zone-ID                  | Ja      |
+| DisplayName | string        | Anzeigename der Zone                | Ja      |
+| PvpType     | PvpZoneType   | PvP-Regelung (Sanctuary, Normal, FFA) | Ja      |
+| MinLevel    | int           | Empfohlenes Mindest-Level           | Ja      |
+| MaxLevel    | int           | Empfohlenes Höchst-Level            | Ja      |
+
+> **Hinweis:** `InternalName`, `Contestable`, `ZoneFlags`, `OwningFaction`, `Bounds`, `MusicId`, `AmbienceId` sind mit `[IgnoreData]` markiert und nicht im DTO enthalten.
+
+### Interface-Definition
+
+```csharp
+// Mmo.Shared/Zones/Interfaces/IZoneConfig.cs
+[GenerateDto(DtoName = "ZoneConfigDto")]
+[GenerateListEntry("ZoneListEntry")]
+public interface IZoneConfig
+{
+    [BaseData]
+    ushort ZoneId { get; }
+    
+    [IgnoreData]
+    string InternalName { get; }
+    
+    [BaseData]
+    string DisplayName { get; }
+    
+    [IgnoreData]
+    bool Contestable { get; }
+    
+    [OptionalData("ZoneListEntry")]
+    PvpZoneType PvpType { get; }
+    
+    [IgnoreData]
+    ZoneFlags ZoneFlags { get; }
+    
+    [BaseData]
+    int MinLevel { get; }
+    
+    [BaseData]
+    int MaxLevel { get; }
+    
+    // ... weitere IgnoreData Felder
+    
+    // Computed Properties (nicht serialisiert)
+    public bool IsPvpEnabled => PvpType != PvpZoneType.Sanctuary;
+    public bool IsSanctuary => PvpType == PvpZoneType.Sanctuary;
+    public bool IsInstance => ZoneFlags.HasFlag(ZoneFlags.IsInstance);
+    // ...
+}
+```
+
+---
+
+## ZoneContextDto
+
+**Zweck:** Dynamischer Zone-Runtime-State, automatisch generiert aus `IZoneContext`.
+
+### Felder (aus IZoneContext)
+
+| Feld                | Typ          | Beschreibung                            | Pflicht |
+| ------------------- | ------------ | --------------------------------------- | ------- |
+| ShardId             | ushort       | Aktuelle Shard-ID                       | Ja      |
+| CurrentWeather      | WeatherType  | Aktuelles Wetter                        | Ja      |
+| TimeOfDay           | float        | Tageszeit (0.0 - 24.0)                  | Ja      |
+| ControllingFaction  | Faction?     | Kontrollierende Fraktion (null = neutral) | Nein    |
+| IsLocked            | bool         | Zone gesperrt?                          | Ja      |
+| LockReason          | string?      | Sperrgrund                              | Nein    |
+| IsInstance          | bool         | Ist dies eine Instanz?                  | Ja      |
+
+### Interface-Definition
+
+```csharp
+// Mmo.Shared/Zones/Interfaces/IZoneContext.cs
+[GenerateDto(DtoName = "ZoneContextDto")]
+[GenerateDirtyTracking(FlagsEnumType = "Mmo.Shared.Zones.Enums.ZoneDirtyFlags")]
+public interface IZoneContext
+{
+    ushort ShardId { get; }
+    
+    [TrackDirty("Weather")]
+    WeatherType CurrentWeather { get; }
+    
+    [TrackDirty("TimeOfDay")]
+    float TimeOfDay { get; }
+    
+    bool IsNight => TimeOfDay is >= 20f or < 6f;
+    
+    [TrackDirty("ControllingFaction")]
+    Faction? ControllingFaction { get; }
+    
+    bool IsLocked { get; }
+    string? LockReason { get; }
+    bool IsInstance { get; }
+}
+```
+
+---
+
+## ZoneListEntry
+
+**Zweck:** Eintrag für die Zone-Liste, automatisch generiert mit `[GenerateListEntry]`.
 
 ### Felder
 
-| Feld                | Typ        | Beschreibung                                 | Pflicht |
-| ------------------- | ---------- | -------------------------------------------- | ------- |
-| ZoneId              | ushort     | Eindeutige Zone-ID                           | Ja      |
-| Name                | string     | Anzeigename der Zone                         | Ja      |
-| Flags               | ZoneFlags  | Zone-Eigenschaften (PvP, Restrictions, etc.) | Ja      |
-| RecommendedMinLevel | int        | Empfohlenes Mindest-Level                    | Ja      |
-| RecommendedMaxLevel | int        | Empfohlenes Höchst-Level                     | Ja      |
-| ControllingFaction  | Faction?   | Kontrollierende Fraktion (null = neutral)    | Nein    |
-| DefaultSpawnPoint   | Position   | Standard-Spawn-Position für neue Spieler     | Ja      |
-| GraveyardPosition   | Position?  | Friedhof-Position für Wiederbelebung         | Nein    |
-| MusicId             | string     | Musik-Asset-ID                               | Ja      |
-| AmbienceId          | string     | Ambiente-Sound-Asset-ID                      | Ja      |
-| Bounds              | ZoneBounds | Zone-Grenzen (für Minimap)                   | Ja      |
-
-### Existierendes ZoneFlags Enum
-
-Das `ZoneFlags` Enum existiert bereits und ersetzt einen separaten `ZoneType`:
-
-```csharp
-// Mmo.Shared/Zones/Enums/ZoneFlags.cs (bereits vorhanden)
-[Flags]
-public enum ZoneFlags :  ushort
-{
-    None = 0,
-
-    // PvP
-    PvpEnabled = 1 << 0,
-    AutoFlagPvp = 1 << 1,
-
-    // Restrictions
-    NoMounting = 1 << 2,
-    NoFlying = 1 << 3,
-    NoCombat = 1 << 4,
-    NoSpellCast = 1 << 5,
-    NoSummon = 1 << 6,
-
-    // Special
-    IsCapital = 1 << 7,
-    IsInstance = 1 << 8,
-    IsRaid = 1 << 9,
-    IsBattleground = 1 << 10,
-    IsArena = 1 << 11,
-
-    // Environment
-    IsIndoor = 1 << 12,
-    IsUnderwater = 1 << 13,
-
-    // Rest
-    HasRestXp = 1 << 14,
-
-    // NEU: Für Ghost-Zone nach Tod
-    IsGhostZone = 1 << 15
-}
-```
-
-### Code-Beispiel
-
-```csharp
-[MessagePackObject]
-public class ZoneDto
-{
-    [Key(0)] public ushort ZoneId { get; set; }
-    [Key(1)] public string Name { get; set; } = "";
-    [Key(2)] public ZoneFlags Flags { get; set; }
-    [Key(3)] public int RecommendedMinLevel { get; set; }
-    [Key(4)] public int RecommendedMaxLevel { get; set; }
-    [Key(5)] public Faction?  ControllingFaction { get; set; }
-    [Key(6)] public Position DefaultSpawnPoint { get; set; }
-    [Key(7)] public Position? GraveyardPosition { get; set; }
-    [Key(8)] public string MusicId { get; set; } = "";
-    [Key(9)] public string AmbienceId { get; set; } = "";
-    [Key(10)] public ZoneBounds Bounds { get; set; }
-
-    // Convenience Properties (nicht serialisiert)
-    [IgnoreMember] public bool IsPvPEnabled => Flags.HasFlag(ZoneFlags.PvpEnabled);
-    [IgnoreMember] public bool IsInstance => Flags.HasFlag(ZoneFlags.IsInstance);
-    [IgnoreMember] public bool IsCapital => Flags.HasFlag(ZoneFlags.IsCapital);
-    [IgnoreMember] public bool IsSanctuary => Flags.HasFlag(ZoneFlags.NoCombat);
-    [IgnoreMember] public bool HasRestXp => Flags.HasFlag(ZoneFlags.HasRestXp);
-    [IgnoreMember] public bool IsIndoor => Flags.HasFlag(ZoneFlags.IsIndoor);
-    [IgnoreMember] public bool AllowsMounting => ! Flags.HasFlag(ZoneFlags.NoMounting);
-    [IgnoreMember] public bool AllowsFlying => !Flags.HasFlag(ZoneFlags.NoFlying);
-}
-
-/// <summary>
-/// Extension methods for Zone to DTO conversion.
-/// </summary>
-public static class ZoneDtoExtensions
-{
-    /// <summary>
-    /// Converts a Zone to ZoneDto.
-    /// </summary>
-    public static ZoneDto ToDto(this Zone zone) => new()
-    {
-        ZoneId = zone.Id,
-        Name = zone.Name,
-        Flags = zone.Flags,
-        RecommendedMinLevel = zone.RecommendedMinLevel,
-        RecommendedMaxLevel = zone.RecommendedMaxLevel,
-        ControllingFaction = zone.ControllingFaction,
-        DefaultSpawnPoint = zone.DefaultSpawnPoint,
-        GraveyardPosition = zone.GraveyardPosition,
-        MusicId = zone.MusicId,
-        AmbienceId = zone.AmbienceId,
-        Bounds = zone.Bounds
-    };
-}
-```
+| Feld        | Typ           | Beschreibung                            |
+| ----------- | ------------- | --------------------------------------- |
+| ZoneId      | ushort        | Zone-ID                                 |
+| DisplayName | string        | Anzeigename                             |
+| MinLevel    | int           | Mindest-Level                           |
+| MaxLevel    | int           | Max-Level                               |
+| PvpType     | PvpZoneType   | PvP-Regelung (nur in ZoneListEntry)     |
 
 ### Client-Caching
 
 ```csharp
 public class ZoneCache
 {
-    private readonly Dictionary<ushort, ZoneDto> _cache = new();
+    private readonly Dictionary<ushort, ZoneConfigDto> _cache = new();
 
-    public void CacheZone(ZoneDto zone)
+    public void CacheZoneConfig(ZoneConfigDto config)
     {
-        _cache[zone.ZoneId] = zone;
+        _cache[config.ZoneId] = config;
     }
 
-    public ZoneDto?  GetZone(ushort zoneId)
+    public ZoneConfigDto? GetZoneConfig(ushort zoneId)
     {
-        return _cache.TryGetValue(zoneId, out var zone) ? zone : null;
+        return _cache.TryGetValue(zoneId, out var config) ? config : null;
     }
 
     public bool HasZone(ushort zoneId) => _cache.ContainsKey(zoneId);
@@ -364,43 +376,34 @@ public class ZoneCache
 // Verwendung bei ZoneState
 public void OnZoneState(ZoneState state)
 {
-    // ZoneDto cachen wenn vorhanden (erster Besuch)
-    if (state.ZoneInfo != null)
+    // ZoneConfig cachen
+    _zoneCache.CacheZoneConfig(state.ZoneConfig);
+
+    // Dynamischen Context anwenden
+    _weatherSystem.SetWeather(state.ZoneContext.CurrentWeather);
+    _timeSystem.SetTime(state.ZoneContext.TimeOfDay);
+    
+    // MyCharacter spawnen (wenn vorhanden)
+    if (state.MyCharacter != null)
     {
-        _zoneCache.CacheZone(state.ZoneInfo);
+        _playerManager.SpawnMyCharacter(state.MyCharacter);
     }
-
-    // Zone-Infos aus Cache holen
-    var zoneInfo = _zoneCache.GetZone(state.ZoneId);
-    if (zoneInfo == null)
+    
+    // Entities spawnen
+    foreach (var entity in state.Entities)
     {
-        _log.Error("ZoneDto not found for zone {ZoneId}!", state.ZoneId);
-        RequestDisconnect("Missing zone data");
-        return;
+        _entityManager.SpawnEntity(entity);
     }
-
-    // Statische Zone-Daten anwenden
-    _audioManager.PlayMusic(zoneInfo.MusicId);
-    _audioManager.PlayAmbience(zoneInfo. AmbienceId);
-    _minimapManager.SetBounds(zoneInfo.Bounds);
-    _pvpManager.SetPvPState(zoneInfo.IsPvPEnabled);
-
-    // Mount-Button basierend auf Flags
-    _uiManager.SetMountButtonEnabled(zoneInfo.AllowsMounting);
-
-    // Dynamischen State anwenden
-    _weatherSystem.SetWeather(state.CurrentWeather);
-    _timeSystem.SetTime(state.TimeOfDay);
 }
 ```
 
 ### Verwendung in Messages
 
-| Message            | Verwendung                                    |
-| ------------------ | --------------------------------------------- |
-| `ZoneState`        | `ZoneInfo:  ZoneDto?` - nur bei erstem Besuch |
-| `ZoneListResponse` | `List<ZoneListItemDto>` enthält `ZoneDto`     |
-| `ZoneDiscovered`   | `Zone:  ZoneDto` - neue Zone entdeckt         |
+| Message            | Verwendung                                        |
+| ------------------ | ------------------------------------------------- |
+| `ZoneState`        | `ZoneConfig: ZoneConfigDto`, `ZoneContext: ZoneContextDto` |
+| `ZoneListResponse` | `List<ZoneListEntry>` enthält Zone-Übersicht      |
+| `ZoneDelta`        | `ZoneContext: IZoneContextDelta?` für Updates     |
 
 ---
 
@@ -541,10 +544,10 @@ var switchChar = new LeaveZone
 
 | Message                | ID  | Beziehung                           |
 | ---------------------- | --- | ----------------------------------- |
-| `PlayerLeftZone`       | 104 | Broadcast an andere Spieler         |
-| `ZoneTransferRequest`  | 105 | Für Zone-Wechsel (nicht LeaveZone!) |
+| `CharacterLeftZone`    | 105 | Broadcast an andere Spieler         |
+| `ZoneTransferRequest`  | 106 | Für Zone-Wechsel (nicht LeaveZone!) |
 | `CharacterListRequest` | 12  | Nach CharacterSwitch                |
-| `Disconnect`           | 5   | Connection-Level Disconnect         |
+| `ForceDisconnect`      | 5   | Connection-Level Disconnect         |
 
 ---
 
@@ -559,92 +562,51 @@ var switchChar = new LeaveZone
 
 Kompletter Snapshot des Zone-States. Dies ist die **Haupt-Message für Zone-Loading** und enthält:
 
--   **ZoneInfo**: Statische Zone-Daten als `ZoneDto` (nur bei erstem Besuch, sonst `null`)
--   **Dynamischer State**: Wetter, Tageszeit
--   **MyPlayer**: Dein Character als `PlayerEntityDto`
--   **Entities**: Alle anderen Entities **in sichtbaren Chunks** als DTOs
-
-> **Phase 2 Update - Chunk-Based Filtering:**  
-> Ab Phase 2 werden nur Entities in **sichtbaren Chunks** (3x3 Grid um Spieler) gesendet.  
-> Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) für Details.
+-   **ZoneConfig**: Statische Zone-Konfiguration als `ZoneConfigDto`
+-   **ZoneContext**: Dynamischer State (Wetter, Tageszeit) als `ZoneContextDto`
+-   **MyCharacter**: Dein Character als `CharacterEntityDto` (nullable)
+-   **Entities**: Alle anderen Entities als `List<EntityDtoUnion>`
 
 ### StateType Enum
 
-| Wert            | Beschreibung                       | MyPlayer     | ZoneInfo             |
-| --------------- | ---------------------------------- | ------------ | -------------------- |
-| `Initial` (1)   | Erster Login, Character spawnt     | ✅ Enthalten | ✅ Bei erstem Besuch |
-| `Transfer` (2)  | Zone-Wechsel (Portal/Teleport/Tod) | ✅ Enthalten | ✅ Bei erstem Besuch |
-| `Reconnect` (3) | Nach Verbindungsabbruch            | ✅ Enthalten | ❌ null (gecached)   |
-| `FullSync` (4)  | Periodischer Full-Sync             | ❌ null      | ❌ null              |
+| Wert         | Beschreibung                       | MyCharacter  |
+| ------------ | ---------------------------------- | ------------ |
+| `FullSync`   | Periodischer Full-Sync             | ✅/❌        |
 
 ### Payload
 
-| Feld             | Typ                | Beschreibung                            | Pflicht     |
-| ---------------- | ------------------ | --------------------------------------- | ----------- |
-| Type             | MessageType        | `MessageType.ZoneState`                 | Ja          |
-| Timestamp        | long               | Server-Timestamp (Unix ms)              | Ja          |
-| ZoneId           | ushort             | Zone-ID                                 | Ja          |
-| ZoneInfo         | ZoneDto?           | Statische Daten (nur bei erstem Besuch) | Conditional |
-| CurrentWeather   | WeatherType        | Aktuelles Wetter                        | Ja          |
-| TimeOfDay        | float              | 0. 0-24.0 (Stunden)                     | Ja          |
-| StateType        | ZoneStateType      | Initial, Transfer, Reconnect, FullSync  | Ja          |
-| MyPlayer         | PlayerEntityDto?   | Dein Character (null bei FullSync)      | Conditional |
-| Entities         | List\<EntityDtoUnion\> | Alle Entities (max 100 pro Message)     | Ja          |
-| HasMoreEntities  | bool               | Gibt es weitere Entity-Batches?         | Ja          |
-| TotalEntityCount | int                | Gesamtzahl Entities in Zone             | Ja          |
+| Feld               | Typ                    | Beschreibung                     | Pflicht |
+| ------------------ | ---------------------- | -------------------------------- | ------- |
+| Type               | MessageType            | `MessageType.ZoneState`          | Ja      |
+| Timestamp          | long                   | Server-Timestamp (Unix ms)       | Ja      |
+| ZoneConfig         | ZoneConfigDto          | Statische Zone-Konfiguration     | Ja      |
+| ZoneContext        | ZoneContextDto         | Dynamischer Zone-State           | Ja      |
+| Entities           | List\<EntityDtoUnion\> | Alle Entities                    | Ja      |
+| State              | ZoneStateType          | FullSync                         | Ja      |
+| MyCharacter        | CharacterEntityDto?    | Dein Character (nullable)        | Nein    |
+| HasMoreEntities    | bool                   | Gibt es weitere Entities?        | Ja      |
+| TotalEntitiesCount | int                    | Gesamtzahl Entities in Zone      | Ja      |
 
-### Enums
-
-```csharp
-public enum ZoneStateType : byte
-{
-    Initial = 1,    // Erster Login
-    Transfer = 2,   // Zone-Wechsel (Portal, Teleport, Tod, etc.)
-    Reconnect = 3,  // Nach Verbindungsabbruch
-    FullSync = 4    // Periodischer Sync
-}
-
-public enum WeatherType : byte
-{
-    Clear = 1,
-    Cloudy = 2,
-    Rain = 3,
-    HeavyRain = 4,
-    Snow = 5,
-    Blizzard = 6,
-    Fog = 7,
-    Storm = 8,
-    Sandstorm = 9
-}
-```
-
-### Code-Beispiel
+### Code-Beispiel (aktueller Code)
 
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneState)]
-public class ZoneState : ITimestampedServerMessage
+public class ZoneState : IServerMessage, ITimestampedMessage
 {
     [Key(0)] public MessageType Type => MessageType.ZoneState;
-    [Key(1)] public long Timestamp { get; set; }
+    [Key(1)] public long Timestamp { get; init; }
+    [Key(2)] public required ZoneConfigDto ZoneConfig { get; init; }
+    [Key(3)] public required ZoneContextDto ZoneContext { get; init; }
+    [Key(4)] public required List<EntityDtoUnion> Entities { get; init; }
+    [Key(5)] public ZoneStateType State { get; init; } = ZoneStateType.FullSync;
+    [Key(6)] public CharacterEntityDto? MyCharacter { get; init; }
+    [Key(7)] public bool HasMoreEntities { get; init; }
+    [Key(8)] public int TotalEntitiesCount { get; init; }
 
-    // Zone-Referenz
-    [Key(2)] public ushort ZoneId { get; set; }
-
-    // Statische Zone-Daten (nur bei erstem Besuch, sonst null)
-    [Key(3)] public ZoneDto? ZoneInfo { get; set; }
-
-    // Dynamischer Zone-State
-    [Key(4)] public WeatherType CurrentWeather { get; set; }
-    [Key(5)] public float TimeOfDay { get; set; }
-    [Key(6)] public ZoneStateType StateType { get; set; }
-
-    // Spieler-Daten
-    [Key(7)] public PlayerEntityDto? MyPlayer { get; set; }
-
-    // Entities
-    [Key(8)] public List<EntityDtoUnion> Entities { get; set; } = new();
-    [Key(9)] public bool HasMoreEntities { get; set; }
+    [IgnoreMember]
+    public ushort ZoneId => ZoneConfig.ZoneId;
+}
     [Key(10)] public int TotalEntityCount { get; set; }
 }
 ```
@@ -1374,7 +1336,7 @@ Siehe [Dirty-Tracking Architecture](../../02-architecture/DIRTY_TRACKING.md) fü
 
 ---
 
-## PlayerJoinedZone (104)
+## CharacterJoinedZone (104)
 
 **Richtung:** 📡 Broadcast (Server → All Clients in Zone)  
 **Frequenz:** Häufig  
@@ -1387,53 +1349,56 @@ Broadcast an alle Spieler in der Zone wenn ein neuer Spieler spawnt. Der neue Sp
 
 ### Payload
 
-| Feld   | Typ             | Beschreibung                      | Pflicht |
-| ------ | --------------- | --------------------------------- | ------- |
-| Type   | MessageType     | `MessageType.PlayerJoinedZone`    | Ja      |
-| Player | PlayerEntityDto | Komplette sichtbare Spieler-Daten | Ja      |
+| Feld         | Typ               | Beschreibung                       | Pflicht |
+| ------------ | ----------------- | ---------------------------------- | ------- |
+| Type         | MessageType       | `MessageType.CharacterJoinedZone`  | Ja      |
+| JoinedPlayer | CharacterEntityDto| Komplette sichtbare Spieler-Daten  | Ja      |
+| ZoneId       | ushort            | Zone-ID für Validierung            | Ja      |
 
-### Code-Beispiel
+### Code-Beispiel (aktueller Code)
 
 ```csharp
 [MessagePackObject]
-[NetworkMessage(MessageType.PlayerJoinedZone)]
-public class PlayerJoinedZone :  IServerMessage
+[NetworkMessage(MessageType.CharacterJoinedZone)]
+public class CharacterJoinedZone : IServerMessage
 {
-    [Key(0)] public MessageType Type => MessageType.PlayerJoinedZone;
-    [Key(1)] public PlayerEntityDto Player { get; set; } = null!;
+    [Key(0)] public MessageType Type => MessageType.CharacterJoinedZone;
+    [Key(1)] public required CharacterEntityDto JoinedPlayer { get; init; }
+    [Key(2)] public ushort ZoneId { get; init; }
 }
 ```
 
 ### Beispiel Payload
 
 ```csharp
-var playerJoined = new PlayerJoinedZone
+var characterJoined = new CharacterJoinedZone
 {
-    Player = newPlayer.ToDto()
+    JoinedPlayer = newPlayer.ToDto(),
+    ZoneId = zone.ZoneId
 };
 
 // Broadcast an alle AUSSER dem neuen Spieler
-zone.BroadcastExcept(playerJoined, newPlayer. ConnectionId);
+zone.BroadcastExcept(characterJoined, newPlayer.ConnectionId);
 ```
 
 ### Verwandte Messages
 
-| Message          | ID   | Beziehung                                  |
-| ---------------- | ---- | ------------------------------------------ |
-| `ZoneState`      | 102  | Was der neue Spieler selbst erhält         |
-| `PlayerLeftZone` | 104  | Gegenstück beim Verlassen                  |
-| `EntitySpawn`    | 1400 | Generische Entity-Spawn Message (für NPCs) |
+| Message              | ID   | Beziehung                                  |
+| -------------------- | ---- | ------------------------------------------ |
+| `ZoneState`          | 102  | Was der neue Spieler selbst erhält         |
+| `CharacterLeftZone`  | 105  | Gegenstück beim Verlassen                  |
+| `EntitySpawn`        | 1400 | Generische Entity-Spawn Message (für NPCs) |
 
 ### Notizen
 
 -   Wird **NUR** an bereits anwesende Spieler gesendet
 -   Der joinierende Spieler erhält `ZoneState` (102) mit allen Entities
 -   Client fügt Spieler zur lokalen Entity-Liste hinzu
--   Enthält komplettes `PlayerEntityDto` für sofortiges Rendering
+-   Enthält komplettes `CharacterEntityDto` für sofortiges Rendering
 
 ---
 
-## PlayerLeftZone (105)
+## CharacterLeftZone (105)
 
 **Richtung:** 📡 Broadcast (Server → All Clients in Zone)  
 **Frequenz:** Häufig  
@@ -1446,16 +1411,31 @@ Broadcast an alle Spieler wenn ein Spieler die Zone verlässt. Der **Server** se
 
 ### Payload
 
-| Feld     | Typ              | Beschreibung                 | Pflicht |
-| -------- | ---------------- | ---------------------------- | ------- |
-| Type     | MessageType      | `MessageType.PlayerLeftZone` | Ja      |
-| PlayerId | Guid             | PersistentId des Spielers    | Ja      |
-| Reason   | PlayerLeftReason | Grund (vom Server gesetzt)   | Ja      |
+| Feld        | Typ             | Beschreibung                    | Pflicht |
+| ----------- | --------------- | ------------------------------- | ------- |
+| Type        | MessageType     | `MessageType.CharacterLeftZone` | Ja      |
+| CharacterId | Guid            | PersistentId des Characters     | Ja      |
+| LeaveReason | ZoneLeaveReason | Grund (vom Server gesetzt)      | Ja      |
+| ZoneId      | ushort          | Zone-ID für Validierung         | Ja      |
 
-### Enum
+### Code-Beispiel (aktueller Code)
 
 ```csharp
-public enum PlayerLeftReason : byte
+[MessagePackObject]
+[NetworkMessage(MessageType.CharacterLeftZone)]
+public class CharacterLeftZone : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.CharacterLeftZone;
+    [Key(1)] public Guid CharacterId { get; init; }
+    [Key(2)] public ZoneLeaveReason LeaveReason { get; init; }
+    [Key(3)] public ushort ZoneId { get; init; }
+}
+```
+
+### Enum (aus Code)
+
+```csharp
+public enum ZoneLeaveReason : byte
 {
     Logout = 1,       // Spieler hat sich ausgeloggt
     Transfer = 2,     // Spieler wechselt Zone (Portal, Teleport, etc.)

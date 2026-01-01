@@ -76,9 +76,11 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     /// </summary>
     [Key(5)]
     public List<EntityDeltaUnion>? EntityUpdates { get; init; }
+    
     /// <summary>
     /// The delta of the zone context (Weather, Time etc.)
     /// Null if nothing has changed in the context.
     /// </summary>
+    [Key(6)]
     public IZoneContextDelta? ZoneContext { get; init; }
 }

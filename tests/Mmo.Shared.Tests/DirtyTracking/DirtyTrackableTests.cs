@@ -259,8 +259,8 @@ public class DirtyTrackableTests
         // zone.MarkDirty(EntityDirtyFlags.Position); // ❌ Compile error
         
         // This proves different domains are type-safe
-        Assert.IsType<DirtyTrackableBase<EntityDirtyFlags>>(entity);
-        Assert.IsType<DirtyTrackableBase<ZoneDirtyFlags>>(zone);
+        Assert.IsAssignableFrom<DirtyTrackableBase<EntityDirtyFlags>>(entity);
+        Assert.IsAssignableFrom<DirtyTrackableBase<ZoneDirtyFlags>>(zone);
     }
     
     #endregion

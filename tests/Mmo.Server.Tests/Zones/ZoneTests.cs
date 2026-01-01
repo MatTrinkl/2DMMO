@@ -4,6 +4,7 @@ using Mmo.Server.Zones.Configurations;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Zones.Records;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Zones;
@@ -27,8 +28,14 @@ public class ZoneTests : IDisposable
     public void Constructor_SetsAllProperties()
     {
         var bounds = new ZoneBounds(10, 20, 100, 200);
-        var zoneConfig =  new ZoneConfig();
-        var zone = new Zone(new ZoneConfig(),new ZoneContext(zoneConfig));
+        var zoneConfig = new ZoneConfig
+        {
+            ZoneId = 42,
+            InternalName = "TestZone",
+            DisplayName = "Test Zone Display",
+            Bounds = new ZoneBoundsConfig(10, 20, 100, 200)
+        };
+        var zone = new Zone(zoneConfig, new ZoneContext(zoneConfig));
 
         Assert.Equal(42, zone.ZoneId);
         Assert.Equal("TestZone", zone.ZoneName);

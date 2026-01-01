@@ -1,8 +1,10 @@
+using Mmo.Server.Entities.Interfaces;
 using Mmo.Server.Zones;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Records;
+using Mmo.Shared.Entities.Structs;
 
 namespace Mmo.Server.Entities.Services;
 
@@ -53,7 +55,7 @@ public class EntityService : IEntityService
         _log.Debug("Entity spawned: {Type} {Id} in Zone {Zone}",
             entity.GetType().Name, entity.PersistentId, zoneId);
 
-        return SpawnResult.Succeeded(entity.RuntimeId.LocalId, zoneId);
+        return SpawnResult.Succeeded(GetRuntimeId(entity).LocalId, zoneId);
     }
 
     public bool DespawnEntity(Guid persistentId)
@@ -61,14 +63,15 @@ public class EntityService : IEntityService
         if (!IdRegistry.Instance.TryGetEntity(persistentId, out BaseEntity? entity))
             return false;
 
-        ushort zoneId = entity.RuntimeId.ZoneId;
+        var runtimeId = GetRuntimeId(entity);
+        ushort zoneId = runtimeId.ZoneId;
 
         // 1. Aus Zone entfernen
         Zone? zone = _zoneManager.GetZone(zoneId);
         zone?.RemoveEntity(persistentId);
 
         // 2. LocalId freigeben
-        IdRegistry.Instance.ReleaseLocalId(zoneId, 0, entity.RuntimeId.LocalId);
+        IdRegistry.Instance.ReleaseLocalId(zoneId, 0, runtimeId.LocalId);
 
         // 3. Aus IdRegistry entfernen
         IdRegistry.Instance.UnregisterEntity(persistentId);
@@ -83,7 +86,7 @@ public class EntityService : IEntityService
             return [];
 
         // Get all entities in the same zone
-        IEnumerable<BaseEntity> entitiesInZone = _zoneManager.GetEntitiesInZone(playerEntity.RuntimeId.ZoneId);
+        IEnumerable<BaseEntity> entitiesInZone = _zoneManager.GetEntitiesInZone(GetRuntimeId(playerEntity).ZoneId);
 
         // Return all entities except the player itself
         // In a full implementation, this could include visibility checks, distance, etc.
@@ -99,4 +102,11 @@ public class EntityService : IEntityService
 
     public IEnumerable<BaseEntity> GetEntitiesInZone(ushort zoneId)
         => _zoneManager.GetEntitiesInZone(zoneId);
+
+    /// <summary>
+    ///     Gets the RuntimeId from an entity, using the IMutableRuntimeEntity interface
+    ///     when available to get the correct (hidden) RuntimeId value from derived classes.
+    /// </summary>
+    private static EntityIdentity GetRuntimeId(BaseEntity entity) =>
+        entity is IMutableRuntimeEntity mutableEntity ? mutableEntity.RuntimeId : entity.RuntimeId;
 }

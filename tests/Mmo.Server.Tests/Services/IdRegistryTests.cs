@@ -1,4 +1,5 @@
 using Mmo.Server.Entities;
+using Mmo.Server.Entities.Interfaces;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
@@ -333,12 +334,12 @@ public class IdRegistryTests : IDisposable
         Assert.Equal(0, IdRegistry.Instance.GetNextLocalId(1));
     }
 
-    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0),Guid.Empty,new Position(0,0));
+    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0), Guid.NewGuid(), new Position(0, 0));
 
     /// <summary>
     ///     Simple test entity implementation.
     /// </summary>
-    private class TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position) : BaseEntity(runtimeId, persistentId, position),IEntity
+    private class TestEntity : BaseEntity, IMutableRuntimeEntity
     {
         /// <summary>Test server ID.</summary>
         private const byte _testServerId = 1;
@@ -349,12 +350,26 @@ public class IdRegistryTests : IDisposable
         /// <summary>Test prefab ID for player entity (corresponds to PrefabIds.PlayerDefault fallback value).</summary>
         private const ushort _testPrefabId = 1;
 
-        public EntityIdentity RuntimeId { get; private set; } = EntityIdentity.Unassigned(_testPrefabId);
-        public override bool IsTrulyPersistent => false;
+        public TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position) 
+            : base(runtimeId, persistentId, position)
+        {
+            // Hide base RuntimeId with own settable version  
+            RuntimeId = runtimeId;
+        }
 
-        public Guid PersistentId { get; init; } = Guid.NewGuid();
+        /// <summary>
+        /// Hides base RuntimeId to allow modification after construction.
+        /// Implements IMutableRuntimeEntity for polymorphic access.
+        /// </summary>
+        public new EntityIdentity RuntimeId { get; private set; }
+        
+        /// <summary>
+        /// Explicit interface implementation to ensure IdRegistry uses this property.
+        /// </summary>
+        EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
+        
+        public override bool IsTrulyPersistent => false;
         public override EntityType Type => EntityType.Player;
-        public Position Position { get; set; } = new(0, 0);
 
         public override void SetEntityId(ushort localId, ushort zoneId) =>
             RuntimeId = new EntityIdentity(_testServerId, zoneId, _testShardId, localId, _testPrefabId);

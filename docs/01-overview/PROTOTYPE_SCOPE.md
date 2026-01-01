@@ -1,169 +1,169 @@
-# 🎯 Prototyp-Scope
+# 🎯 Prototype Scope
 
-## 2DMMO – Phase 1: Prototyp
+## 2DMMO – Phase 1: Prototype
 
-**Version:** 1.1.0  
-**Letzte Aktualisierung:** 2025-12-02  
-**Status:** In Entwicklung
+**Version:** 1.2.0  
+**Last Updated:** 2026-01-01  
+**Status:** In Development
 
 ---
 
-## 📋 Übersicht
+## 📋 Overview
 
-Dieses Dokument definiert den **exakten Scope** des Prototyps. Es dient als klare Abgrenzung, was implementiert werden muss und was explizit **nicht** Teil des Prototyps ist.
+This document defines the **exact scope** of the prototype. It serves as a clear boundary of what must be implemented and what is explicitly **not** part of the prototype.
 
-### Prototyp-Ziel
+### Prototype Goal
 
-> **Zwei Spieler können sich über das Netzwerk verbinden, sehen sich gegenseitig in einer einfachen 2D-Welt und können sich bewegen.**
+> **Two players can connect over the network, see each other in a simple 2D world, and can move around.**
 
-### Entwicklungsumgebung
+### Development Environment
 
-| Aspekt | Prototyp |
-|--------|----------|
-| **Deployment** | Nur lokal (localhost) |
-| **Authentication** | Nur Username (kein Passwort) |
-| **Datenbank** | Keine (nur In-Memory) |
-| **Redis** | Optional (kann ohne laufen) |
+| Aspect | Prototype |
+|--------|-----------|
+| **Deployment** | Local only (localhost) |
+| **Authentication** | Username only (no password) |
+| **Database** | None (in-memory only) |
+| **Redis** | Optional (can run without) |
 | **TLS** | Optional/Self-signed |
 
 ---
 
-## ✅ Muss implementiert werden
+## ✅ Must Be Implemented
 
-### 1. Server-Grundgerüst
+### 1. Server Foundation
 
-- [ ] TCP Server startet und akzeptiert Verbindungen
-- [ ] MessagePack Serialisierung funktioniert
-- [ ] Game Loop läuft mit 25 Hz (Tick-Rate)
-- [ ] Verbindungs-Management (Connect/Disconnect)
-- [ ] Logging (Console-Output reicht)
+- [ ] TCP Server starts and accepts connections
+- [ ] MessagePack serialization works
+- [ ] Game loop runs at 25 Hz (tick rate)
+- [ ] Connection management (connect/disconnect)
+- [ ] Logging (console output is sufficient)
 
-**Relevante Docs:**
+**Relevant Docs:**
 - [.NET TCP Server](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/socket-services)
 - [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
 
-### 2. Client-Grundgerüst
+### 2. Client Foundation
 
-- [ ] TCP Client verbindet sich zum Server
-- [ ] MessagePack Serialisierung funktioniert
-- [ ] Godot-Szene lädt und zeigt Spielwelt
-- [ ] Input-Handling (WASD oder Pfeiltasten)
-- [ ] Verbindungsstatus-Anzeige (Connected/Disconnected)
+- [ ] TCP Client connects to server
+- [ ] MessagePack serialization works
+- [ ] Godot scene loads and displays game world
+- [ ] Input handling (WASD or arrow keys)
+- [ ] Connection status display (Connected/Disconnected)
 
-**Relevante Docs:**
+**Relevant Docs:**
 - [Godot StreamPeerTCP](https://docs.godotengine.org/en/stable/classes/class_streampeertcp.html)
 - [Godot Input Handling](https://docs.godotengine.org/en/stable/tutorials/inputs/index.html)
 
 ### 3. Shared Library
 
-- [ ] Message-Typen definiert (Enum)
-- [ ] DTOs für alle Nachrichten (MessagePack-Attribute)
-- [ ] Gemeinsame Konstanten (Port, Tick-Rate, etc.)
+- [ ] Message types defined (Enum)
+- [ ] DTOs for all messages (MessagePack attributes)
+- [ ] Shared constants (port, tick rate, etc.)
 
-### 4. Netzwerk-Nachrichten
+### 4. Network Messages
 
-| Message | Richtung | Beschreibung |
-|---------|----------|--------------|
-| `LoginRequest` | Client → Server | Username senden |
-| `LoginResponse` | Server → Client | Erfolg + PlayerId |
-| `PlayerJoined` | Server → Clients | Neuer Spieler ist beigetreten |
-| `PlayerLeft` | Server → Clients | Spieler hat verlassen |
-| `PositionUpdate` | Client → Server | Eigene Position senden |
-| `WorldState` | Server → Clients | Alle Spieler-Positionen |
-| `ChatMessageSend` | Client → Server | Chat-Nachricht senden |
-| `ChatBroadcast` | Server → Clients | Chat-Nachricht empfangen |
+| Message | Direction | Description |
+|---------|-----------|-------------|
+| `LoginRequest` | Client → Server | Send username |
+| `LoginResponse` | Server → Client | Success + PlayerId |
+| `PlayerJoined` | Server → Clients | New player has joined |
+| `PlayerLeft` | Server → Clients | Player has left |
+| `PositionUpdate` | Client → Server | Send own position |
+| `WorldState` | Server → Clients | All player positions |
+| `ChatMessageSend` | Client → Server | Send chat message |
+| `ChatBroadcast` | Server → Clients | Receive chat message |
 
-### 5. Spieler-Bewegung
+### 5. Player Movement
 
-- [ ] Client sendet Input an Server
-- [ ] Server validiert Bewegung (Basis-Check)
-- [ ] Server broadcastet neue Positionen
-- [ ] Client zeigt andere Spieler an korrekter Position
-- [ ] Client-Prediction für flüssige Bewegung (optional aber empfohlen)
+- [ ] Client sends input to server
+- [ ] Server validates movement (basic check)
+- [ ] Server broadcasts new positions
+- [ ] Client displays other players at correct position
+- [ ] Client-side prediction for smooth movement (optional but recommended)
 
-**Relevante Docs:**
+**Relevant Docs:**
 - [Gabriel Gambetta - Client-Side Prediction](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
 - [Valve Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
 
-### 6. Spielwelt (Minimal)
+### 6. Game World (Minimal)
 
-- [ ] Einfache Tilemap (Gras, vielleicht Wasser/Hindernisse)
-- [ ] Feste Größe (z.B. 50x50 Tiles)
-- [ ] Keine Zonen, keine Übergänge
-- [ ] Spieler-Sprite (Placeholder OK)
+- [ ] Simple tilemap (grass, maybe water/obstacles)
+- [ ] Fixed size (e.g., 50x50 tiles)
+- [ ] No zones, no transitions
+- [ ] Player sprite (placeholder OK)
 
-**Relevante Docs:**
+**Relevant Docs:**
 - [Godot TileMap](https://docs.godotengine.org/en/stable/classes/class_tilemap.html)
 - [Godot 2D Tutorial](https://docs.godotengine.org/en/stable/getting_started/first_2d_game/index.html)
 
-### 7. Chat (Basis)
+### 7. Chat (Basic)
 
-- [ ] Texteingabe im Client
-- [ ] Nachricht an Server senden
-- [ ] Server broadcastet an alle
-- [ ] Chat-Anzeige im Client (einfache Liste)
+- [ ] Text input in client
+- [ ] Send message to server
+- [ ] Server broadcasts to all
+- [ ] Chat display in client (simple list)
 
 ---
 
-## ❌ Explizit NICHT im Prototyp
+## ❌ Explicitly NOT in Prototype
 
 ### Gameplay
-- ❌ Kampfsystem
-- ❌ NPCs / Monster
+- ❌ Combat system
+- ❌ NPCs / Monsters
 - ❌ Quests
-- ❌ Inventar / Items
-- ❌ Rassen- oder Klassenwahl
+- ❌ Inventory / Items
+- ❌ Race or class selection
 - ❌ Leveling / XP
-- ❌ Tod / Respawn
+- ❌ Death / Respawn
 
-### Technisch
-- ❌ Echte Authentication (Email, Passwort, OAuth)
-- ❌ Datenbank-Persistenz (PostgreSQL)
-- ❌ Redis-Integration
-- ❌ TLS-Zertifikate (echte)
-- ❌ Cloud-Deployment (Azure)
-- ❌ Zone-Sharding (Code kann vorbereitet sein, aber nicht aktiv)
-- ❌ Load Balancing
-- ❌ Rate Limiting
-- ❌ Grafana Cloud Integration (vorbereitet, aber nicht aktiv)
+### Technical
+- ❌ Real authentication (email, password, OAuth)
+- ❌ Database persistence (PostgreSQL)
+- ❌ Redis integration
+- ❌ TLS certificates (real)
+- ❌ Cloud deployment (Azure)
+- ❌ Zone sharding (code can be prepared, but not active)
+- ❌ Load balancing
+- ❌ Rate limiting
+- ❌ Grafana Cloud integration (prepared but not active)
 
 ### Assets
-- ❌ Finale Grafiken
-- ❌ Animationen (außer Basis-Bewegung)
-- ❌ Sound / Musik
-- ❌ UI-Design (funktional reicht)
+- ❌ Final graphics
+- ❌ Animations (except basic movement)
+- ❌ Sound / Music
+- ❌ UI design (functional is enough)
 
 ---
 
-## 🎨 Placeholder-Assets (Prototyp)
+## 🎨 Placeholder Assets (Prototype)
 
-Für den Prototyp verwenden wir einfache Placeholder:
+For the prototype we use simple placeholders:
 
-| Asset | Beschreibung | Quelle |
-|-------|--------------|--------|
-| **Spieler-Sprite** | Einfaches farbiges Rechteck oder Basic-Sprite | Selbst erstellt oder kostenlos |
-| **Tileset** | Einfaches Gras-Tile, evtl. Wasser | Kostenlose Assets |
-| **Font** | Godot Default oder einfache Pixel-Font | Godot Built-in |
+| Asset | Description | Source |
+|-------|-------------|--------|
+| **Player Sprite** | Simple colored rectangle or basic sprite | Self-created or free |
+| **Tileset** | Simple grass tile, maybe water | Free assets |
+| **Font** | Godot default or simple pixel font | Godot built-in |
 
-**Mögliche Asset-Quellen:**
+**Possible Asset Sources:**
 - [OpenGameArt.org](https://opengameart.org/)
-- [Kenney.nl](https://kenney.nl/assets) ⭐ Empfohlen (CC0)
+- [Kenney.nl](https://kenney.nl/assets) ⭐ Recommended (CC0)
 - [itch.io Free Assets](https://itch.io/game-assets/free)
-- [Ninja Adventure Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) - Komplett-Paket
+- [Ninja Adventure Pack](https://pixel-boy.itch.io/ninja-adventure-asset-pack) - Complete package
 
 ---
 
-## 📐 Technische Spezifikationen
+## 📐 Technical Specifications
 
-### Netzwerk
+### Network
 
-| Parameter | Wert |
-|-----------|------|
-| **Protokoll** | TCP |
+| Parameter | Value |
+|-----------|-------|
+| **Protocol** | TCP |
 | **Port** | 7777 |
-| **Serialisierung** | MessagePack |
-| **Tick-Rate** | 25 Hz |
-| **Max Spieler (Test)** | 2-10 |
+| **Serialization** | MessagePack |
+| **Tick Rate** | 25 Hz |
+| **Max Players (Test)** | 2-10 |
 
 ### Message Frame Format
 
@@ -179,99 +179,99 @@ Für den Prototyp verwenden wir einfache Placeholder:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                    PROTOTYP FLOW                        │
+│                    PROTOTYPE FLOW                       │
 │                                                         │
-│  1. Client startet                                     │
-│     └─► Zeigt "Username eingeben" Dialog               │
+│  1. Client starts                                      │
+│     └─► Shows "Enter username" dialog                  │
 │                                                         │
-│  2. Client verbindet sich                              │
-│     └─► TCP Connect zu localhost:7777                  │
-│     └─► Sendet LoginRequest { Username }               │
+│  2. Client connects                                    │
+│     └─► TCP connect to localhost:7777                  │
+│     └─► Sends LoginRequest { Username }                │
 │                                                         │
-│  3. Server akzeptiert                                  │
-│     └─► Erstellt PlayerId                              │
-│     └─► Sendet LoginResponse { Success, PlayerId }     │
-│     └─► Broadcastet PlayerJoined an andere             │
+│  3. Server accepts                                     │
+│     └─► Creates PlayerId                               │
+│     └─► Sends LoginResponse { Success, PlayerId }      │
+│     └─► Broadcasts PlayerJoined to others              │
 │                                                         │
 │  4. Gameplay Loop                                      │
-│     └─► Client: Input → PositionUpdate an Server       │
-│     └─► Server: Validiert, updated State               │
-│     └─► Server: WorldState an alle Clients (25 Hz)     │
-│     └─► Client: Rendert alle Spieler                   │
+│     └─► Client: Input → PositionUpdate to Server       │
+│     └─► Server: Validates, updates state               │
+│     └─► Server: WorldState to all clients (25 Hz)      │
+│     └─► Client: Renders all players                    │
 │                                                         │
 │  5. Chat                                               │
-│     └─► Client: ChatMessage an Server                  │
-│     └─► Server: Broadcastet an alle                    │
+│     └─► Client: ChatMessage to Server                  │
+│     └─► Server: Broadcasts to all                      │
 │                                                         │
 │  6. Disconnect                                         │
-│     └─► Server: Entfernt Spieler                       │
-│     └─► Server: Broadcastet PlayerLeft                 │
+│     └─► Server: Removes player                         │
+│     └─► Server: Broadcasts PlayerLeft                  │
 └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧪 Akzeptanzkriterien
+## 🧪 Acceptance Criteria
 
-Der Prototyp gilt als **abgeschlossen**, wenn:
+The prototype is **complete** when:
 
-### Muss (Must Have)
-1. ✅ Server startet ohne Fehler
-2. ✅ Client verbindet sich erfolgreich
-3. ✅ Spieler sieht seine eigene Figur
-4. ✅ Zweiter Spieler verbindet sich
-5. ✅ Beide Spieler sehen sich gegenseitig
-6. ✅ Bewegung eines Spielers ist für den anderen sichtbar
-7. ✅ Chat-Nachricht kommt beim anderen an
+### Must Have
+1. ✅ Server starts without errors
+2. ✅ Client connects successfully
+3. ✅ Player sees their own character
+4. ✅ Second player connects
+5. ✅ Both players see each other
+6. ✅ Movement of one player is visible to the other
+7. ✅ Chat message arrives at the other player
 
-### Sollte (Should Have)
-8. ⬜ Bewegung fühlt sich flüssig an (kein starkes Ruckeln)
-9. ⬜ Disconnect wird sauber gehandhabt
-10. ⬜ Mehrere Clients (3+) funktionieren gleichzeitig
+### Should Have
+8. ⬜ Movement feels smooth (no strong stuttering)
+9. ⬜ Disconnect is handled cleanly
+10. ⬜ Multiple clients (3+) work simultaneously
 
-### Kann (Nice to Have)
-11. ⬜ Einfache Tilemap statt leerer Fläche
-12. ⬜ Spielername über dem Charakter
-13. ⬜ Ping/Latenz-Anzeige
+### Nice to Have
+11. ⬜ Simple tilemap instead of empty area
+12. ⬜ Player name above character
+13. ⬜ Ping/latency display
 
 ---
 
-## 📅 Geschätzte Tasks
+## 📅 Estimated Tasks
 
-| Task | Geschätzte Zeit | Abhängigkeiten |
-|------|-----------------|----------------|
+| Task | Estimated Time | Dependencies |
+|------|----------------|--------------|
 | Shared Library (Messages, DTOs) | 2-3h | - |
-| TCP Server Grundgerüst | 3-4h | Shared |
-| TCP Client Grundgerüst | 3-4h | Shared |
-| Login-Flow | 2h | Server, Client |
-| Position-Sync | 4-5h | Login-Flow |
-| Godot-Szene (Basis) | 2-3h | - |
-| Spieler-Rendering | 2-3h | Position-Sync, Szene |
-| Chat | 2h | Login-Flow |
-| Testing & Bugfixing | 3-4h | Alles |
-| **Gesamt** | **~25-30h** | - |
+| TCP Server Foundation | 3-4h | Shared |
+| TCP Client Foundation | 3-4h | Shared |
+| Login Flow | 2h | Server, Client |
+| Position Sync | 4-5h | Login Flow |
+| Godot Scene (Basic) | 2-3h | - |
+| Player Rendering | 2-3h | Position Sync, Scene |
+| Chat | 2h | Login Flow |
+| Testing & Bugfixing | 3-4h | Everything |
+| **Total** | **~25-30h** | - |
 
 ---
 
 ## 🚦 Definition of Done
 
-Ein Feature ist **fertig**, wenn:
+A feature is **done** when:
 
-- [ ] Code ist geschrieben und kompiliert
-- [ ] Keine offensichtlichen Bugs
-- [ ] Funktioniert mit 2 Clients gleichzeitig
-- [ ] Code ist im `main` Branch
+- [ ] Code is written and compiles
+- [ ] No obvious bugs
+- [ ] Works with 2 clients simultaneously
+- [ ] Code is in `main` branch
 
 ---
 
-## 🔗 Nützliche Links
+## 🔗 Useful Links
 
-### Dokumentation
+### Documentation
 - [.NET Docs](https://learn.microsoft.com/en-us/dotnet/)
 - [Godot 4 Docs](https://docs.godotengine.org/en/stable/)
 - [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
 
-### Netzwerk
+### Networking
 - [Gabriel Gambetta - Fast-Paced Multiplayer](https://www.gabrielgambetta.com/client-server-game-architecture.html)
 - [Valve Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
 
@@ -286,13 +286,13 @@ Ein Feature ist **fertig**, wenn:
 
 ---
 
-## 📝 Notizen
+## 📝 Notes
 
-- **Fokus auf Funktionalität, nicht Perfektion**
-- Placeholder-Assets sind OK
-- Code-Qualität ist wichtig, aber Over-Engineering vermeiden
-- Dokumentation kann minimal sein (Code-Kommentare reichen)
+- **Focus on functionality, not perfection**
+- Placeholder assets are OK
+- Code quality is important, but avoid over-engineering
+- Documentation can be minimal (code comments are sufficient)
 
 ---
 
-*Dieses Dokument definiert den Scope. Alles außerhalb ist Phase 2+.*
+*This document defines the scope. Everything outside is Phase 2+.*
