@@ -8,7 +8,7 @@ namespace Mmo.Shared.Zones.Enums;
 public enum ZoneTransferResponseErrorCode : byte
 {
     /// <summary>
-    /// Requested Zone with the given ZoneID dont exits.
+    /// Requested Zone with the given ZoneID doesn't exist.
     /// </summary>
     ZoneNotFound,
 
