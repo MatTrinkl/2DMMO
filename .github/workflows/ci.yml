@@ -177,13 +177,14 @@ jobs:
         with:
           dotnet-version: ${{ env. DOTNET_VERSION }}
 
-      # Tests mit Coverage ausführen
-      - name: Run all tests with coverage
+      # Tests mit Coverage ausführen (ohne Integration Tests, da diese einen laufenden Server benötigen)
+      - name: Run unit tests with coverage
         run: |
           dotnet test Mmo.sln \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
+            --filter "FullyQualifiedName!~Mmo.Integration.Tests" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       # ReportGenerator installieren und Report erstellen

@@ -22,17 +22,17 @@ public static class GeneratorHelpers
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
-        foreach (AttributeSyntax attribute in attributeList.Attributes)
-        {
-            if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                continue;
+            foreach (AttributeSyntax attribute in attributeList.Attributes)
+            {
+                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                    continue;
 
-            INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
-            string fullName = attributeContainingType.ToDisplayString();
+                INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
+                string fullName = attributeContainingType.ToDisplayString();
 
-            if (fullName == attributeFullName)
-                return typeDeclaration;
-        }
+                if (fullName == attributeFullName)
+                    return typeDeclaration;
+            }
 
         return null;
     }
