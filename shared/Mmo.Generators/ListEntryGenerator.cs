@@ -59,10 +59,12 @@ public class ListEntryGenerator : IIncrementalGenerator
 
                 foreach (var attr in listEntryAttributes)
                 {
+                    if (attr.ConstructorArguments.Length == 0) continue;
+                    
                     var entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
                     if (string.IsNullOrEmpty(entryTypeName)) continue;
 
-                    var generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName!, attr, compilation);
+                    var generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName, attr, compilation);
                     context.AddSource($"{typeSymbol.Name}.{entryTypeName}.g.cs", 
                         SourceText.From(generatedSource, Encoding.UTF8));
                 }
@@ -190,6 +192,8 @@ public class ListEntryGenerator : IIncrementalGenerator
 
         foreach (var attr in listEntryAttributes)
         {
+            if (attr.ConstructorArguments.Length == 0) continue;
+            
             var entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
             if (string.IsNullOrEmpty(entryTypeName)) continue;
 
@@ -198,7 +202,7 @@ public class ListEntryGenerator : IIncrementalGenerator
             sb.AppendLine($"        return new {entryTypeName}");
             sb.AppendLine("        {");
 
-            var properties = GetPropertiesForEntryType(sourceType, entryTypeName!).ToList();
+            var properties = GetPropertiesForEntryType(sourceType, entryTypeName).ToList();
             for (int i = 0; i < properties.Count; i++)
             {
                 var property = properties[i];
