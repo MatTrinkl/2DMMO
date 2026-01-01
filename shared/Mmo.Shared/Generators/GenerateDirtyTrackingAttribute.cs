@@ -70,7 +70,7 @@ public class GenerateDirtyTrackingAttribute : Attribute
     ///     </list>
     /// </remarks>
     public string? IdPropertyName { get; set; }
-    
+
     /// <summary>
     ///     Gets or sets the fully qualified name of the flags enum type to use for dirty tracking.
     ///     If not specified, defaults to "Mmo.Shared.Entities.Enums.EntityDirtyFlags".

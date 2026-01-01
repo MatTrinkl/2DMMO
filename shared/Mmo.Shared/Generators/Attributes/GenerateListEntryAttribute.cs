@@ -18,7 +18,7 @@ public sealed class GenerateListEntryAttribute : Attribute
     ///     The name of the generated ListEntry class (e.g., "ZoneListEntry").
     /// </summary>
     public string EntryTypeName { get; }
-    
+
     /// <summary>
     ///     Optional namespace for the generated class. 
     ///     Defaults to source class namespace + ".Generated".

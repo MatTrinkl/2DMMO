@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Zones.Enums;
+namespace Mmo.Shared.Zones.Enums;
 
 /// <summary>
 /// Which type of ZoneList should be returned to the client.

@@ -6,9 +6,9 @@ using Mmo.Server.Zones.Records;
 using Mmo.Server.Zones.Services;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones.Structs;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Prefab;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
 

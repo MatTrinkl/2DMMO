@@ -38,7 +38,7 @@ public class TrackDirtyAttribute : Attribute
     ///     For example, "Position" for EntityDirtyFlags.Position or "Weather" for ZoneDirtyFlags.Weather.
     /// </remarks>
     public string FlagName { get; }
-    
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="TrackDirtyAttribute"/> class.
     /// </summary>
@@ -50,7 +50,7 @@ public class TrackDirtyAttribute : Attribute
     {
         if (string.IsNullOrWhiteSpace(flagName))
             throw new ArgumentException("Flag name cannot be null or whitespace.", nameof(flagName));
-            
+
         FlagName = flagName;
     }
 }

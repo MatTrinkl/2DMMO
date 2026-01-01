@@ -19,7 +19,7 @@ public class ZoneDeltaIntegrationTests
         // Arrange - Only position changed
         var entityId1 = Guid.NewGuid();
         var entityId2 = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -35,10 +35,10 @@ public class ZoneDeltaIntegrationTests
         Assert.Equal(MessageType.ZoneDelta, zoneDelta.Type);
         Assert.NotNull(zoneDelta.EntityUpdates);
         Assert.Equal(2, zoneDelta.EntityUpdates.Count);
-        
+
         var delta1 = (ICharacterEntityDelta)zoneDelta.EntityUpdates[0];
         var delta2 = (ICharacterEntityDelta)zoneDelta.EntityUpdates[1];
-        
+
         Assert.NotNull(delta1.Position);
         Assert.Equal(100f, delta1.Position!.X);
         Assert.NotNull(delta2.Position);
@@ -53,7 +53,7 @@ public class ZoneDeltaIntegrationTests
     {
         // Arrange - Only combat state changed
         var entityId = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -73,7 +73,7 @@ public class ZoneDeltaIntegrationTests
         // Assert
         Assert.NotNull(zoneDelta.EntityUpdates);
         Assert.Single(zoneDelta.EntityUpdates);
-        
+
         var delta = (ICharacterEntityDelta)zoneDelta.EntityUpdates[0];
         Assert.Equal(75, delta.CurrentHealth);
         Assert.Equal(100, delta.MaxHealth);
@@ -87,7 +87,7 @@ public class ZoneDeltaIntegrationTests
     {
         // Arrange - Only level changed
         var entityId = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -101,7 +101,7 @@ public class ZoneDeltaIntegrationTests
         // Assert
         Assert.NotNull(zoneDelta.EntityUpdates);
         Assert.Single(zoneDelta.EntityUpdates);
-        
+
         var delta = (ICharacterEntityDelta)zoneDelta.EntityUpdates[0];
         Assert.Equal(42, delta.Level);
         // Other properties should be null (unchanged)
@@ -135,7 +135,7 @@ public class ZoneDeltaIntegrationTests
         var guid1 = Guid.NewGuid();
         var guid2 = Guid.NewGuid();
         var guid3 = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -168,22 +168,22 @@ public class ZoneDeltaIntegrationTests
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
         Assert.Equal(3, deserialized.EntityUpdates.Count);
-        
+
         var delta1 = (ICharacterEntityDelta)deserialized.EntityUpdates[0];
         var delta2 = (ICharacterEntityDelta)deserialized.EntityUpdates[1];
         var delta3 = (ICharacterEntityDelta)deserialized.EntityUpdates[2];
-        
+
         // Entity 1: Only position changed
         Assert.NotNull(delta1.Position);
         Assert.Equal(10f, delta1.Position!.X);
         Assert.Null(delta1.CurrentHealth);
         Assert.Null(delta1.Level);
-        
+
         // Entity 2: Only health changed
         Assert.Equal(100, delta2.CurrentHealth);
         Assert.Null(delta2.Position);
         Assert.Null(delta2.Level);
-        
+
         // Entity 3: Level and combat state changed
         Assert.Equal(10, delta3.Level);
         Assert.True(delta3.IsInCombat);
@@ -196,7 +196,7 @@ public class ZoneDeltaIntegrationTests
         // Arrange - Mix of Character and NPC deltas
         var characterId = Guid.NewGuid();
         var npcId = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -225,16 +225,16 @@ public class ZoneDeltaIntegrationTests
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
         Assert.Equal(2, deserialized.EntityUpdates.Count);
-        
+
         // Check types
         Assert.IsAssignableFrom<ICharacterEntityDelta>(deserialized.EntityUpdates[0]);
         Assert.IsAssignableFrom<INpcEntityDelta>(deserialized.EntityUpdates[1]);
-        
+
         // Check character delta
         var characterDelta = (ICharacterEntityDelta)deserialized.EntityUpdates[0];
         Assert.Equal(80, characterDelta.CurrentHealth);
         Assert.NotNull(characterDelta.Position);
-        
+
         // Check NPC delta
         var npcDelta = (INpcEntityDelta)deserialized.EntityUpdates[1];
         Assert.Equal(120, npcDelta.CurrentHealth);
@@ -247,7 +247,7 @@ public class ZoneDeltaIntegrationTests
         // Arrange - Delta with all fields set
         var entityId = Guid.NewGuid();
         var targetId = Guid.NewGuid();
-        
+
         var zoneDelta = new ZoneDelta
         {
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -277,7 +277,7 @@ public class ZoneDeltaIntegrationTests
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
         var delta = (ICharacterEntityDelta)deserialized.EntityUpdates[0];
-        
+
         Assert.Equal(entityId, delta.PersistentId);
         Assert.Equal(50, delta.CurrentHealth);
         Assert.Equal(100, delta.MaxHealth);
@@ -350,7 +350,7 @@ public class ZoneDeltaIntegrationTests
         // Arrange
         var guid1 = Guid.NewGuid();
         var guid2 = Guid.NewGuid();
-        
+
         var original = new ZoneDelta
         {
             Timestamp = 1234567890L,
@@ -416,7 +416,7 @@ public class ZoneDeltaIntegrationTests
         Assert.NotNull(delta.Position);
         Assert.Equal(150f, delta.Position!.X);
         Assert.Equal(250f, delta.Position!.Y);
-        
+
         // Verify other fields are null (not transmitted)
         Assert.Null(delta.CurrentHealth);
         Assert.Null(delta.MaxHealth);

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
 using Mmo.Shared.Zones.Messages.Server_Broadcast;
 

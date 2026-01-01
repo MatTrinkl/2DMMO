@@ -350,7 +350,7 @@ public class IdRegistryTests : IDisposable
         /// <summary>Test prefab ID for player entity (corresponds to PrefabIds.PlayerDefault fallback value).</summary>
         private const ushort _testPrefabId = 1;
 
-        public TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position) 
+        public TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position)
             : base(runtimeId, persistentId, position)
         {
             // Hide base RuntimeId with own settable version  
@@ -362,12 +362,12 @@ public class IdRegistryTests : IDisposable
         /// Implements IMutableRuntimeEntity for polymorphic access.
         /// </summary>
         public new EntityIdentity RuntimeId { get; private set; }
-        
+
         /// <summary>
         /// Explicit interface implementation to ensure IdRegistry uses this property.
         /// </summary>
         EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
-        
+
         public override bool IsTrulyPersistent => false;
         public override EntityType Type => EntityType.Player;
 

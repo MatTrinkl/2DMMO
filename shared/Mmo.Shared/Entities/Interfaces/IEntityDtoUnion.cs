@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Npc.Interfaces;
 

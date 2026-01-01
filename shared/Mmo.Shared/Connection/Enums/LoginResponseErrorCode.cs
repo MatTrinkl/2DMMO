@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Constants;
 

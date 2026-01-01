@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Character.Messages.Client_Server;
+using Mmo.Shared.Character.Messages.Client_Server;
 
 namespace Mmo.Shared.Character.Enums;
 

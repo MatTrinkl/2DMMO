@@ -9,7 +9,7 @@ namespace Mmo.Generators;
 public static class GeneratorHelpers
 {
     private const string TrackDirtyAttributeFullName = "Mmo.Shared.DirtyTracking.Attributes.TrackDirtyAttribute";
-    
+
     public static bool IsCandidateForGeneration(SyntaxNode node)
     {
         return node is TypeDeclarationSyntax typeDeclaration &&
@@ -21,17 +21,17 @@ public static class GeneratorHelpers
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
-        foreach (AttributeSyntax attribute in attributeList.Attributes)
-        {
-            if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                continue;
+            foreach (AttributeSyntax attribute in attributeList.Attributes)
+            {
+                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                    continue;
 
-            INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
-            string fullName = attributeContainingType.ToDisplayString();
+                INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
+                string fullName = attributeContainingType.ToDisplayString();
 
-            if (fullName == attributeFullName)
-                return typeDeclaration;
-        }
+                if (fullName == attributeFullName)
+                    return typeDeclaration;
+            }
 
         return null;
     }
@@ -39,10 +39,10 @@ public static class GeneratorHelpers
     public static DirtyTrackingConfig ExtractConfiguration(INamedTypeSymbol typeSymbol)
     {
         var config = new DirtyTrackingConfig();
-        
+
         var attr = typeSymbol.GetAttributes()
             .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute");
-            
+
         if (attr != null)
         {
             foreach (var namedArg in attr.NamedArguments)
@@ -53,7 +53,7 @@ public static class GeneratorHelpers
                 }
             }
         }
-        
+
         // Find the ID property
         if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
@@ -63,32 +63,32 @@ public static class GeneratorHelpers
                 config.IdPropertyType = idProp.Type.ToDisplayString();
             }
         }
-        
+
         return config;
     }
 
     public static Dictionary<string, List<TrackedPropertyInfo>> GroupPropertiesByDirtyFlags(INamedTypeSymbol typeSymbol)
     {
         var groups = new Dictionary<string, List<TrackedPropertyInfo>>();
-        
+
         foreach (var member in typeSymbol.GetMembers())
         {
             if (member is not IPropertySymbol property)
                 continue;
-                
+
             var attr = property.GetAttributes()
                 .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == TrackDirtyAttributeFullName);
-                
+
             if (attr == null || attr.ConstructorArguments.Length == 0)
                 continue;
-                
+
             // TrackDirty uses string flag names
             var flagNameArg = attr.ConstructorArguments[0];
             string flagName = flagNameArg.Value?.ToString() ?? "Unknown";
-            
+
             if (!groups.ContainsKey(flagName))
                 groups[flagName] = new List<TrackedPropertyInfo>();
-                
+
             groups[flagName].Add(new TrackedPropertyInfo
             {
                 Name = property.Name,
@@ -96,7 +96,7 @@ public static class GeneratorHelpers
                 FlagValue = flagName
             });
         }
-        
+
         return groups;
     }
 
@@ -104,13 +104,13 @@ public static class GeneratorHelpers
     {
         // Map DirtyFlags values to group names
         if (flagValue.Value == null) return "Unknown";
-        
+
         uint value = Convert.ToUInt32(flagValue.Value);
-        
+
         // Check for common flag combinations
         if ((value & 0x07) != 0) return "Position"; // Position, Velocity, Rotation
         if ((value & 0x01F8) != 0) return "State";  // Health, MaxHealth, Resource, MaxResource, State, Model, Level
-        
+
         return "Custom";
     }
 
@@ -124,11 +124,11 @@ public static class GeneratorHelpers
         // Check if already nullable
         if (typeName.EndsWith("?"))
             return typeName;
-            
+
         // String and other reference types that could be null
         if (typeName == "string")
             return typeName;
-        
+
         // All value types need ?
         // This includes: primitives, System types, and custom structs/records
         return $"{typeName}?";

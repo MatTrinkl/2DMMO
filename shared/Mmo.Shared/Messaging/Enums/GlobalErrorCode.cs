@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Core.Constants;
+using Mmo.Shared.Core.Constants;
 
 namespace Mmo.Shared.Messaging.Enums;
 

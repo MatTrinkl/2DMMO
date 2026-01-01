@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Generators;
+namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Optional configuration for a property in the generated DTO.

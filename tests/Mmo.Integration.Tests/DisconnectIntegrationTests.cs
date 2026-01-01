@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Mmo.Integration.Tests.Utilities;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages.Server_Client;

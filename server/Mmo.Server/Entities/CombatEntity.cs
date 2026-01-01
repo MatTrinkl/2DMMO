@@ -50,7 +50,7 @@ public abstract class CombatEntity(
     ///     Todo: get from registry by default.
     /// </summary>
     public new EntityIdentity RuntimeId { get; private set; } = new(1, 0, 0, 0, prefabId);
-    
+
     /// <summary>
     ///     Explicit interface implementation to ensure IdRegistry uses the derived RuntimeId property.
     /// </summary>

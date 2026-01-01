@@ -50,7 +50,7 @@ public class DirtyFlagsTests
     public void Movement_CombinesCorrectFlags()
     {
         var expected = EntityDirtyFlags.Position | EntityDirtyFlags.Velocity | EntityDirtyFlags.Rotation;
-        Assert.Equal(expected, EntityDirtyFlags.Movement);
+        Assert.Equal(EntityDirtyFlags.Movement, expected);
 
         // Verify individual flags are included
         Assert.True(EntityDirtyFlags.Movement.HasFlag(EntityDirtyFlags.Position));
@@ -62,7 +62,7 @@ public class DirtyFlagsTests
     public void Combat_CombinesCorrectFlags()
     {
         var expected = EntityDirtyFlags.Health | EntityDirtyFlags.MaxHealth | EntityDirtyFlags.State;
-        Assert.Equal(expected, EntityDirtyFlags.Combat);
+        Assert.Equal(EntityDirtyFlags.Combat, expected);
 
         // Verify individual flags are included
         Assert.True(EntityDirtyFlags.Combat.HasFlag(EntityDirtyFlags.Health));
@@ -74,7 +74,7 @@ public class DirtyFlagsTests
     public void AllStats_CombinesCorrectFlags()
     {
         var expected = EntityDirtyFlags.Health | EntityDirtyFlags.MaxHealth | EntityDirtyFlags.Resource | EntityDirtyFlags.MaxResource | EntityDirtyFlags.Level;
-        Assert.Equal(expected, EntityDirtyFlags.AllStats);
+        Assert.Equal(EntityDirtyFlags.AllStats, expected);
 
         // Verify individual flags are included
         Assert.True(EntityDirtyFlags.AllStats.HasFlag(EntityDirtyFlags.Health));

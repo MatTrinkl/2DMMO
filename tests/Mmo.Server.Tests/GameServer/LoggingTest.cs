@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Mmo.Server.Logging;
-using Moq;
-using static Moq.It;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Prefab;
+using Moq;
+using static Moq.It;
 
 namespace Mmo.Server.Tests.GameServer;
 

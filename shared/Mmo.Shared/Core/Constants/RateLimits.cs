@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Core.Constants;
+namespace Mmo.Shared.Core.Constants;
 
 /// <summary>
 ///     This class references the limit of maximum requests a client can send to the server.

@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Zones.Enums;
+namespace Mmo.Shared.Zones.Enums;
 
 public enum ZoneStateType
 {

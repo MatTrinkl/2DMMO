@@ -105,7 +105,7 @@ public class ListEntryGeneratorTests
     {
         // This test verifies that base data properties exist and are not nullable
         var entry = new ZoneListEntry();
-        
+
         // These properties should exist and not be marked as nullable reference types
         Assert.IsType<ushort>(entry.Id);
         Assert.NotNull(entry.Name); // string is nullable by default, but should be present

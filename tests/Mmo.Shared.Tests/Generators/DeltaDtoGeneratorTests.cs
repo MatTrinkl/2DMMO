@@ -17,8 +17,8 @@ public class DeltaDtoGeneratorTests
         var deltaType = typeof(IZoneContextDelta);
 
         // Should not implement IDeltaDto
-        Assert.False(deltaType.GetInterfaces()
-            .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDeltaDto<>)));
+        Assert.DoesNotContain(deltaType.GetInterfaces()
+, i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDeltaDto<>));
     }
 
     [Fact]
@@ -54,10 +54,10 @@ public class DeltaDtoGeneratorTests
         var deltaType = typeof(IEntityDelta);
 
         // Should implement IDeltaDto<Guid>
-        Assert.True(deltaType.GetInterfaces()
-            .Any(i => i.IsGenericType &&
+        Assert.Contains(deltaType.GetInterfaces()
+, i => i.IsGenericType &&
                       i.GetGenericTypeDefinition() == typeof(IDeltaDto<>) &&
-                      i.GetGenericArguments()[0] == typeof(Guid)));
+                      i.GetGenericArguments()[0] == typeof(Guid));
     }
 
     [Fact]
@@ -91,10 +91,10 @@ public class DeltaDtoGeneratorTests
         var deltaType = typeof(ICharacterEntityDelta);
 
         // Should implement IDeltaDto<Guid>
-        Assert.True(deltaType.GetInterfaces()
-            .Any(i => i.IsGenericType &&
+        Assert.Contains(deltaType.GetInterfaces()
+, i => i.IsGenericType &&
                       i.GetGenericTypeDefinition() == typeof(IDeltaDto<>) &&
-                      i.GetGenericArguments()[0] == typeof(Guid)));
+                      i.GetGenericArguments()[0] == typeof(Guid));
 
         // Should have GetId method
         Assert.NotNull(deltaType.GetMethod("GetId"));

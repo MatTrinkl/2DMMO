@@ -17,21 +17,21 @@ public enum InventoryDirtyFlags : ulong
     ///     No properties have changed.
     /// </summary>
     None = 0,
-    
+
     // ═══════════════════════════════════════════════════════════════
     // INVENTORY SLOTS (Bits 0-31) - Main Bag
     // ═══════════════════════════════════════════════════════════════
-    
-    Slot0  = 1UL << 0,
-    Slot1  = 1UL << 1,
-    Slot2  = 1UL << 2,
-    Slot3  = 1UL << 3,
-    Slot4  = 1UL << 4,
-    Slot5  = 1UL << 5,
-    Slot6  = 1UL << 6,
-    Slot7  = 1UL << 7,
-    Slot8  = 1UL << 8,
-    Slot9  = 1UL << 9,
+
+    Slot0 = 1UL << 0,
+    Slot1 = 1UL << 1,
+    Slot2 = 1UL << 2,
+    Slot3 = 1UL << 3,
+    Slot4 = 1UL << 4,
+    Slot5 = 1UL << 5,
+    Slot6 = 1UL << 6,
+    Slot7 = 1UL << 7,
+    Slot8 = 1UL << 8,
+    Slot9 = 1UL << 9,
     Slot10 = 1UL << 10,
     Slot11 = 1UL << 11,
     Slot12 = 1UL << 12,
@@ -54,11 +54,11 @@ public enum InventoryDirtyFlags : ulong
     Slot29 = 1UL << 29,
     Slot30 = 1UL << 30,
     Slot31 = 1UL << 31,
-    
+
     // ═══════════════════════════════════════════════════════════════
     // ADDITIONAL SLOTS (Bits 32-59) - Additional Bags
     // ═══════════════════════════════════════════════════════════════
-    
+
     Slot32 = 1UL << 32,
     Slot33 = 1UL << 33,
     Slot34 = 1UL << 34,
@@ -87,40 +87,40 @@ public enum InventoryDirtyFlags : ulong
     Slot57 = 1UL << 57,
     Slot58 = 1UL << 58,
     Slot59 = 1UL << 59,
-    
+
     // ═══════════════════════════════════════════════════════════════
     // SPECIAL PROPERTIES (Bits 60-63)
     // ═══════════════════════════════════════════════════════════════
-    
+
     /// <summary>
     ///     Gold/currency amount has changed.
     /// </summary>
     Gold = 1UL << 60,
-    
+
     /// <summary>
     ///     Bank contents have been updated.
     /// </summary>
     BankUpdated = 1UL << 61,
-    
+
     /// <summary>
     ///     Number of bag slots has changed (bag equipped/unequipped).
     /// </summary>
     BagSlotsChanged = 1UL << 62,
-    
+
     // ═══════════════════════════════════════════════════════════════
     // CONVENIENCE COMBINATIONS
     // ═══════════════════════════════════════════════════════════════
-    
+
     /// <summary>
     ///     All slot flags (bits 0-59).
     /// </summary>
     AllSlots = 0x0FFFFFFFFFFFFFFFUL,
-    
+
     /// <summary>
     ///     All special property flags (Gold, Bank, BagSlots).
     /// </summary>
     AllSpecial = Gold | BankUpdated | BagSlotsChanged,
-    
+
     /// <summary>
     ///     All flags set.
     /// </summary>

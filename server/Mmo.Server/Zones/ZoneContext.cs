@@ -53,7 +53,8 @@ public class ZoneContext(ZoneConfig config, ushort shardId = 0) : IZoneContext
     {
         var context = new ZoneContext(config)
         {
-            ControllingFaction = config.OwningFaction, CurrentWeather = config.DefaultWeather,
+            ControllingFaction = config.OwningFaction,
+            CurrentWeather = config.DefaultWeather,
             IsInstance = config.IsInstance
         };
         return context;

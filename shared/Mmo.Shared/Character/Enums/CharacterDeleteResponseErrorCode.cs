@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Character.Enums;
+namespace Mmo.Shared.Character.Enums;
 
 public enum CharacterDeleteResponseErrorCode
 {

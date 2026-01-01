@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 using Mmo.Shared.Connection.Enums;
 
 namespace Mmo.Shared.Connection.Records;

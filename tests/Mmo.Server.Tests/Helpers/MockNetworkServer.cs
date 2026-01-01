@@ -3,9 +3,9 @@ using System.Runtime.CompilerServices;
 using Mmo.Server.Connections;
 using Mmo.Server.Network;
 using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Helpers;

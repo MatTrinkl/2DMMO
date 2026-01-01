@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Generators;
+namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Marks an interface as a DTO Union root for polymorphic serialization.

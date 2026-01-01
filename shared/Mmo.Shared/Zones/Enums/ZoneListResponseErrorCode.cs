@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Zones.Messages.Client_Server;
+using Mmo.Shared.Zones.Messages.Client_Server;
 
 namespace Mmo.Shared.Zones.Enums;
 

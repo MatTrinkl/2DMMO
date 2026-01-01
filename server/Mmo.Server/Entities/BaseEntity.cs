@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Core.Records;
+using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Structs;

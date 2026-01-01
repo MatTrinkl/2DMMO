@@ -33,6 +33,7 @@ public sealed class ClientConnection : IDisposable
     private readonly TcpClient _tcpClient;
 
     private bool _disposed;
+    private int _disconnected;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -269,7 +270,12 @@ public sealed class ClientConnection : IDisposable
         }
         finally
         {
-            OnDisconnected?.Invoke(this, "Connection closed");
+            // Only fire event if Disconnect hasn't already been called
+            if (Interlocked.Exchange(ref _disconnected, 1) == 0)
+            {
+                OnDisconnected?.Invoke(this, "Connection closed");
+            }
+
             Dispose();
         }
     }
@@ -278,10 +284,15 @@ public sealed class ClientConnection : IDisposable
     {
         if (_disposed)
             return;
+
+        // Ensure event fires only once using atomic operation
+        if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+            return;
+
         try
         {
             var forceDisconnectMessage = new ForceDisconnect
-                { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
+            { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
             Send(forceDisconnectMessage);
             _cts.Cancel();
             _tcpClient.Client.Shutdown(SocketShutdown.Send);

@@ -15,10 +15,10 @@ using Mmo.Server.Zones.Records;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Zones.Structs;
 using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Prefab;
+using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Helpers;
 

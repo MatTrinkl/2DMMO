@@ -143,8 +143,11 @@ public class ConnectionHandler(
                     _broadcast.SendToPlayer(outCtx.Connection,
                         new LoginResponse
                         {
-                            Success = true, AccountId = outCtx.PlayerInfo!.AccountId,
-                            AccountName = outCtx.PlayerInfo.Name, IsPremium = false, SessionToken = "TempToken"
+                            Success = true,
+                            AccountId = outCtx.PlayerInfo!.AccountId,
+                            AccountName = outCtx.PlayerInfo.Name,
+                            IsPremium = false,
+                            SessionToken = "TempToken"
                         });
 
                     _log.Info("Player {Name} logged in", outCtx.ServerPlayer!.Name);
@@ -155,7 +158,9 @@ public class ConnectionHandler(
                     _broadcast.SendToPlayer(outCtx.Connection,
                         new LoginResponse
                         {
-                            Success = false, ErrorCode = result.ErrorCode, ErrorMessage = result.ErrorMessage
+                            Success = false,
+                            ErrorCode = result.ErrorCode,
+                            ErrorMessage = result.ErrorMessage
                         });
                 }
             }
