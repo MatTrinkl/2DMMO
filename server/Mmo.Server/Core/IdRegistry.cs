@@ -237,7 +237,7 @@ public sealed class IdRegistry : IIdRegistry
     /// <param name="shardId">The shard ID (0-65535).</param>
     /// <returns>A unique 32-bit key combining both IDs.</returns>
     private static uint GetZoneShardKey(ushort zoneId, ushort shardId) =>
-        ((uint)zoneId << 16) | shardId;
+        (uint)zoneId << 16 | shardId;
 
     /// <summary>
     ///     Gets the RuntimeId from an entity, using the IMutableRuntimeEntity interface

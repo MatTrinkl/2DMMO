@@ -159,7 +159,7 @@ public class DirtyFlagsTests
         {
             uint value = (uint)flag;
             // A power of 2 has only one bit set, so (value & (value - 1)) == 0
-            Assert.True(value > 0 && (value & (value - 1)) == 0,
+            Assert.True(value > 0 && (value & value - 1) == 0,
                 $"{flag} ({value}) is not a power of 2");
         }
     }

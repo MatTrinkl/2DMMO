@@ -22,7 +22,7 @@ public class EntityIdentityTests
         var identity = new EntityIdentity(1, 100, 5, 42, 7);
 
         // GlobalKey = (ServerId << 56) | (ZoneId << 40) | (ShardId << 24) | (LocalId & 0xFFFFFF)
-        long expected = ((long)1 << 56) | ((long)100 << 40) | ((long)5 << 24) | (42 & 0xFFFFFF);
+        long expected = (long)1 << 56 | (long)100 << 40 | (long)5 << 24 | 42 & 0xFFFFFF;
 
         Assert.Equal(expected, identity.GlobalKey);
     }

@@ -83,7 +83,7 @@ public class ZoneService(ZoneManager zoneManager, IBroadcastService broadcast, I
 
         // 7. Update GlobalKey in IdRegistry
         IdRegistry.Instance.UpdateEntityGlobalKey(entity,
-            ((long)entity.RuntimeId.ServerId << 56) | ((long)oldZoneId << 40) | ((long)entity.RuntimeId.ShardId << 24) |
+            (long)entity.RuntimeId.ServerId << 56 | (long)oldZoneId << 40 | (long)entity.RuntimeId.ShardId << 24 |
             entity.RuntimeId.LocalId);
 
         // 8. Set spawn position if provided
