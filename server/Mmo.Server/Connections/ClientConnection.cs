@@ -289,7 +289,7 @@ public sealed class ClientConnection : IDisposable
         try
         {
             var forceDisconnectMessage = new ForceDisconnect
-            { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
+                { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
             Send(forceDisconnectMessage);
             _cts.Cancel();
             _tcpClient.Client.Shutdown(SocketShutdown.Send);

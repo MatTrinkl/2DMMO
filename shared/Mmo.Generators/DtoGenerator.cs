@@ -38,16 +38,16 @@ public class DtoGenerator : IIncrementalGenerator
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
-            foreach (AttributeSyntax attribute in attributeList.Attributes)
-            {
-                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                    continue;
+        foreach (AttributeSyntax attribute in attributeList.Attributes)
+        {
+            if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                continue;
 
-                INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
-                string fullName = attributeContainingType.ToDisplayString();
+            INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
+            string fullName = attributeContainingType.ToDisplayString();
 
-                if (fullName == GenerateDtoAttributeFullName) return typeDeclaration;
-            }
+            if (fullName == GenerateDtoAttributeFullName) return typeDeclaration;
+        }
 
         return null;
     }
@@ -833,15 +833,15 @@ public class DtoGenerator : IIncrementalGenerator
         CollectInterfaceHierarchy(interfaceSymbol, allInterfaces);
 
         foreach (INamedTypeSymbol? iface in allInterfaces)
-            foreach (ISymbol? member in iface.GetMembers())
-                if (member is IPropertySymbol prop &&
-                    prop.GetMethod != null &&
-                    !processedNames.Contains(prop.Name) &&
-                    IsComputedProperty(prop))
-                {
-                    computed.Add(prop);
-                    processedNames.Add(prop.Name);
-                }
+        foreach (ISymbol? member in iface.GetMembers())
+            if (member is IPropertySymbol prop &&
+                prop.GetMethod != null &&
+                !processedNames.Contains(prop.Name) &&
+                IsComputedProperty(prop))
+            {
+                computed.Add(prop);
+                processedNames.Add(prop.Name);
+            }
 
         return computed;
     }
