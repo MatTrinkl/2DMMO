@@ -1,3 +1,4 @@
+using System.Reflection;
 using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Tests.Generators;
@@ -10,8 +11,8 @@ public class DeltaIdAttributeTests
     [Fact]
     public void Attribute_CanBeAppliedToProperty()
     {
-        var type = typeof(TestDeltaWithCustomId);
-        var property = type.GetProperty(nameof(TestDeltaWithCustomId.PlayerId));
+        Type type = typeof(TestDeltaWithCustomId);
+        PropertyInfo? property = type.GetProperty(nameof(TestDeltaWithCustomId.PlayerId));
 
         Assert.NotNull(property);
 
@@ -25,9 +26,9 @@ public class DeltaIdAttributeTests
     public void Attribute_CanIdentifyIdPropertyDynamically()
     {
         // Test that we can find the ID property by scanning for the attribute
-        var type = typeof(TestDeltaWithCustomId);
+        Type type = typeof(TestDeltaWithCustomId);
 
-        var idProperty = type.GetProperties()
+        PropertyInfo? idProperty = type.GetProperties()
             .FirstOrDefault(p => p.GetCustomAttributes(typeof(DeltaIdAttribute), false).Any());
 
         Assert.NotNull(idProperty);
@@ -37,12 +38,12 @@ public class DeltaIdAttributeTests
     [Fact]
     public void Attribute_WorksWithDifferentIdNames()
     {
-        var playerDeltaType = typeof(TestDeltaWithCustomId);
-        var questDeltaType = typeof(TestQuestDelta);
+        Type playerDeltaType = typeof(TestDeltaWithCustomId);
+        Type questDeltaType = typeof(TestQuestDelta);
 
-        var playerIdProperty = playerDeltaType.GetProperties()
+        PropertyInfo? playerIdProperty = playerDeltaType.GetProperties()
             .FirstOrDefault(p => p.GetCustomAttributes(typeof(DeltaIdAttribute), false).Any());
-        var questIdProperty = questDeltaType.GetProperties()
+        PropertyInfo? questIdProperty = questDeltaType.GetProperties()
             .FirstOrDefault(p => p.GetCustomAttributes(typeof(DeltaIdAttribute), false).Any());
 
         Assert.NotNull(playerIdProperty);
@@ -55,7 +56,7 @@ public class DeltaIdAttributeTests
     [Fact]
     public void Attribute_OnlyOneIdPropertyPerClass()
     {
-        var type = typeof(TestDeltaWithCustomId);
+        Type type = typeof(TestDeltaWithCustomId);
 
         var idProperties = type.GetProperties()
             .Where(p => p.GetCustomAttributes(typeof(DeltaIdAttribute), false).Any())
@@ -70,8 +71,7 @@ public class DeltaIdAttributeTests
 /// </summary>
 public class TestDeltaWithCustomId
 {
-    [DeltaId]
-    public Guid PlayerId { get; set; }
+    [DeltaId] public Guid PlayerId { get; set; }
 
     public string? Username { get; set; }
 }
@@ -81,8 +81,7 @@ public class TestDeltaWithCustomId
 /// </summary>
 public class TestQuestDelta
 {
-    [DeltaId]
-    public int QuestId { get; set; }
+    [DeltaId] public int QuestId { get; set; }
 
     public int? Progress { get; set; }
 }

@@ -13,19 +13,23 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneTransferResponse)]
 public record ZoneTransferResponse : IResponseMessage<ZoneTransferResponseErrorCode>
 {
-    /// <inheritdoc/>
+    /// <summary>The new zone ID (only on success).</summary>
+    [Key(5)]
+    public ushort? NewZoneId { get; init; }
+
+    /// <inheritdoc />
     [Key(0)]
     public MessageType Type => MessageType.ZoneTransferResponse;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(1)]
     public GlobalErrorCode GlobalError { get; init; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(2)]
     public string? ErrorMessage { get; init; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(3)]
     public ZoneTransferResponseErrorCode? ErrorCode { get; init; }
 
@@ -33,15 +37,11 @@ public record ZoneTransferResponse : IResponseMessage<ZoneTransferResponseErrorC
     [Key(4)]
     public required bool Success { get; init; }
 
-    /// <summary>The new zone ID (only on success).</summary>
-    [Key(5)]
-    public ushort? NewZoneId { get; init; }
-
 
     // ─── Factory Methods ───
 
     /// <summary>
-    /// Create a new Succeeded response.
+    ///     Create a new Succeeded response.
     /// </summary>
     /// <param name="newZoneId">The new zone id.</param>
     /// <returns>The complete message.</returns>
@@ -49,9 +49,9 @@ public record ZoneTransferResponse : IResponseMessage<ZoneTransferResponseErrorC
         => new() { Success = true, NewZoneId = newZoneId };
 
     /// <summary>
-    /// Create a new Failed response.
+    ///     Create a new Failed response.
     /// </summary>
-    /// <param name="globalError">Global Error Code. This overrides the <seealso cref="specificError"/>.</param>
+    /// <param name="globalError">Global Error Code. This overrides the <seealso cref="specificError" />.</param>
     /// <param name="specificError">The message specific error.</param>
     /// <param name="message">Human Readable message.</param>
     /// <returns>The complete message.</returns>

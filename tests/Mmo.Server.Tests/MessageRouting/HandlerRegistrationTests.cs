@@ -1,8 +1,6 @@
 using Mmo.Server.MessageRouting.Handler;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Messaging.Enums;
-using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.MessageRouting;
 

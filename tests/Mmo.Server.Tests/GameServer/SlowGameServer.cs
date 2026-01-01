@@ -2,8 +2,6 @@ using Mmo.Server.MessageRouting;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities.Structs;
-using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;
 

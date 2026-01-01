@@ -63,7 +63,7 @@ public class EntityService : IEntityService
         if (!IdRegistry.Instance.TryGetEntity(persistentId, out BaseEntity? entity))
             return false;
 
-        var runtimeId = GetRuntimeId(entity);
+        EntityIdentity runtimeId = GetRuntimeId(entity);
         ushort zoneId = runtimeId.ZoneId;
 
         // 1. Aus Zone entfernen

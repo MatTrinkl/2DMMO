@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Mmo.Server.Logging;
-using Mmo.Shared.Entities.Structs;
-using Mmo.Shared.Prefab;
 using Moq;
 using static Moq.It;
 

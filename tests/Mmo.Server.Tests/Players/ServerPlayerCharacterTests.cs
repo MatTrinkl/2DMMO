@@ -23,7 +23,8 @@ public class ServerPlayerCharacterTests
     {
         var persistentId = Guid.NewGuid();
         var connectionId = Guid.NewGuid();
-        var entity = new CharacterEntity(persistentId, Guid.NewGuid(), "TestPlayer", new Position(100, 200), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var entity = new CharacterEntity(persistentId, Guid.NewGuid(), "TestPlayer", new Position(100, 200),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connectionId);
 
         var serverPlayer = new ServerPlayerCharacter(entity, connection);
@@ -37,7 +38,8 @@ public class ServerPlayerCharacterTests
     [Fact]
     public void ConnectedAt_IsSetToCurrentTime()
     {
-        var entity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Test", new Position(0, 0), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var entity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Test", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         DateTimeOffset before = DateTimeOffset.UtcNow;
 
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
@@ -51,7 +53,8 @@ public class ServerPlayerCharacterTests
     [Fact]
     public void LastActivity_CanBeUpdated()
     {
-        var entity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Test", new Position(0, 0), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var entity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Test", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(Guid.NewGuid());
         var serverPlayer = new ServerPlayerCharacter(entity, connection);
         DateTimeOffset originalActivity = serverPlayer.LastActivity;

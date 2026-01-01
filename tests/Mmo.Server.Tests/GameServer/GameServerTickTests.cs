@@ -1,6 +1,4 @@
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Entities.Structs;
-using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;
 

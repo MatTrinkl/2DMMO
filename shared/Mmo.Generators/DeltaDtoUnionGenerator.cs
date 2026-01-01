@@ -7,13 +7,15 @@ using Microsoft.CodeAnalysis.Text;
 namespace Mmo.Generators;
 
 /// <summary>
-/// Source generator for Delta DTO Unions.
-/// Generates union interfaces for polymorphic Delta DTO serialization.
+///     Source generator for Delta DTO Unions.
+///     Generates union interfaces for polymorphic Delta DTO serialization.
 /// </summary>
 [Generator]
 public class DeltaDtoUnionGenerator : IIncrementalGenerator
 {
-    private const string GenerateDeltaDtoUnionAttributeFullName = "Mmo.Shared.Generators.GenerateDeltaDtoUnionAttribute";
+    private const string GenerateDeltaDtoUnionAttributeFullName =
+        "Mmo.Shared.Generators.GenerateDeltaDtoUnionAttribute";
+
     private const string DeltaDtoUnionMemberAttributeFullName = "Mmo.Shared.Generators.DeltaDtoUnionMemberAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -22,7 +24,8 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
         IncrementalValuesProvider<TypeDeclarationSyntax?> typeDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 static (s, _) => GeneratorHelpers.IsCandidateForGeneration(s),
-                static (ctx, _) => GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDeltaDtoUnionAttributeFullName))
+                static (ctx, _) =>
+                    GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDeltaDtoUnionAttributeFullName))
             .Where(static m => m is not null);
 
         IncrementalValueProvider<(Compilation Left, ImmutableArray<TypeDeclarationSyntax?> Right)> compilationAndTypes =
@@ -53,7 +56,7 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
 
             try
             {
-                var attribute = typeSymbol.GetAttributes()
+                AttributeData? attribute = typeSymbol.GetAttributes()
                     .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == GenerateDeltaDtoUnionAttributeFullName);
 
                 if (attribute == null)
@@ -63,13 +66,11 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
                 string? unionName = null;
                 string? unionNamespace = null;
 
-                foreach (var namedArg in attribute.NamedArguments)
-                {
+                foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
                     if (namedArg.Key == "UnionName" && namedArg.Value.Value is string name)
                         unionName = name;
                     else if (namedArg.Key == "Namespace" && namedArg.Value.Value is string ns)
                         unionNamespace = ns;
-                }
 
                 // Default values
                 if (string.IsNullOrEmpty(unionName))
@@ -79,12 +80,10 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
                 }
 
                 if (string.IsNullOrEmpty(unionNamespace))
-                {
                     unionNamespace = $"{typeSymbol.ContainingNamespace.ToDisplayString()}.Dtos";
-                }
 
                 // Find all types that are members of this union
-                var unionMembers = FindUnionMembers(compilation, typeSymbol);
+                List<(int Index, string DeltaTypeName)> unionMembers = FindUnionMembers(compilation, typeSymbol);
 
                 if (unionMembers.Count > 0)
                 {
@@ -108,30 +107,31 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
         }
     }
 
-    private static List<(int Index, string DeltaTypeName)> FindUnionMembers(Compilation compilation, INamedTypeSymbol unionRoot)
+    private static List<(int Index, string DeltaTypeName)> FindUnionMembers(Compilation compilation,
+        INamedTypeSymbol unionRoot)
     {
         var members = new List<(int Index, string DeltaTypeName)>();
 
         // Find all types with [DeltaDtoUnionMember] that reference this union
-        foreach (var syntaxTree in compilation.SyntaxTrees)
+        foreach (SyntaxTree? syntaxTree in compilation.SyntaxTrees)
         {
-            var semanticModel = compilation.GetSemanticModel(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            SemanticModel semanticModel = compilation.GetSemanticModel(syntaxTree);
+            SyntaxNode root = syntaxTree.GetRoot();
 
-            foreach (var typeDeclaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
+            foreach (TypeDeclarationSyntax? typeDeclaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
                 var typeSymbol = semanticModel.GetDeclaredSymbol(typeDeclaration) as INamedTypeSymbol;
                 if (typeSymbol == null)
                     continue;
 
-                var memberAttribute = typeSymbol.GetAttributes()
+                AttributeData? memberAttribute = typeSymbol.GetAttributes()
                     .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == DeltaDtoUnionMemberAttributeFullName);
 
                 if (memberAttribute == null || memberAttribute.ConstructorArguments.Length < 2)
                     continue;
 
                 // Check if this member belongs to our union
-                var unionTypeArg = memberAttribute.ConstructorArguments[1];
+                TypedConstant unionTypeArg = memberAttribute.ConstructorArguments[1];
                 if (unionTypeArg.Value is INamedTypeSymbol referencedUnion &&
                     SymbolEqualityComparer.Default.Equals(referencedUnion, unionRoot))
                 {
@@ -158,15 +158,13 @@ public class DeltaDtoUnionGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {unionNamespace};");
         sb.AppendLine();
-        sb.AppendLine($"/// <summary>");
-        sb.AppendLine($"/// Union interface for polymorphic Delta DTO serialization.");
-        sb.AppendLine($"/// Auto-generated by DeltaDtoUnionGenerator.");
-        sb.AppendLine($"/// </summary>");
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// Union interface for polymorphic Delta DTO serialization.");
+        sb.AppendLine("/// Auto-generated by DeltaDtoUnionGenerator.");
+        sb.AppendLine("/// </summary>");
 
-        foreach (var member in members)
-        {
+        foreach ((int Index, string DeltaTypeName) member in members)
             sb.AppendLine($"[Union({member.Index}, typeof({member.DeltaTypeName}))]");
-        }
 
         sb.AppendLine($"public interface {unionName}");
         sb.AppendLine("{");

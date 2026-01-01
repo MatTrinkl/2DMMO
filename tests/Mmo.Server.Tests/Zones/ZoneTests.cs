@@ -48,7 +48,8 @@ public class ZoneTests : IDisposable
     {
         var zoneConfig = new ZoneConfig();
         var zone = new Zone(new ZoneConfig(), new ZoneContext(zoneConfig));
-        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50), EntityIdentity.Unassigned(0));
+        var player = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(50, 50),
+            EntityIdentity.Unassigned(0));
 
         zone.AddEntity(player.PersistentId);
 
@@ -61,9 +62,12 @@ public class ZoneTests : IDisposable
     {
         var zoneConfig = new ZoneConfig();
         var zone = new Zone(new ZoneConfig(), new ZoneContext(zoneConfig));
-        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10), EntityIdentity.Unassigned(0));
-        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20), EntityIdentity.Unassigned(0));
-        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30), EntityIdentity.Unassigned(0));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(10, 10),
+            EntityIdentity.Unassigned(0));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(20, 20),
+            EntityIdentity.Unassigned(0));
+        var player3 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player3", new Position(30, 30),
+            EntityIdentity.Unassigned(0));
 
         zone.AddEntity(player1.PersistentId);
         zone.AddEntity(player2.PersistentId);

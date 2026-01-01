@@ -10,12 +10,34 @@ namespace Mmo.Shared.Tests.DirtyTracking;
 /// </summary>
 public class DirtyTrackableTests
 {
+    #region Type Safety Tests
+
+    [Fact]
+    public void DifferentFlagTypes_AreNotCompatible()
+    {
+        // This test verifies that the generic constraint prevents mixing flag types
+        // If this compiles, it proves type safety is working
+
+        var entity = new TestEntity();
+        var zone = new TestZone();
+
+        // These should NOT compile (and they don't):
+        // entity.MarkDirty(ZoneDirtyFlags.Weather); // ❌ Compile error
+        // zone.MarkDirty(EntityDirtyFlags.Position); // ❌ Compile error
+
+        // This proves different domains are type-safe
+        Assert.IsAssignableFrom<DirtyTrackableBase<EntityDirtyFlags>>(entity);
+        Assert.IsAssignableFrom<DirtyTrackableBase<ZoneDirtyFlags>>(zone);
+    }
+
+    #endregion
+
     #region Test Entity Classes
 
     private class TestEntity : DirtyTrackableBase<EntityDirtyFlags>
     {
-        private float _x;
         private int _health;
+        private float _x;
 
         public float X
         {
@@ -32,8 +54,8 @@ public class DirtyTrackableTests
 
     private class TestZone : DirtyTrackableBase<ZoneDirtyFlags>
     {
-        private string _weather = "Clear";
         private float _timeOfDay = 12.0f;
+        private string _weather = "Clear";
 
         public string Weather
         {
@@ -239,28 +261,6 @@ public class DirtyTrackableTests
         Assert.True(inventory.HasFlag(InventoryDirtyFlags.Slot1));
         Assert.True(inventory.HasFlag(InventoryDirtyFlags.Slot5));
         Assert.False(inventory.HasFlag(InventoryDirtyFlags.Slot2));
-    }
-
-    #endregion
-
-    #region Type Safety Tests
-
-    [Fact]
-    public void DifferentFlagTypes_AreNotCompatible()
-    {
-        // This test verifies that the generic constraint prevents mixing flag types
-        // If this compiles, it proves type safety is working
-
-        var entity = new TestEntity();
-        var zone = new TestZone();
-
-        // These should NOT compile (and they don't):
-        // entity.MarkDirty(ZoneDirtyFlags.Weather); // ❌ Compile error
-        // zone.MarkDirty(EntityDirtyFlags.Position); // ❌ Compile error
-
-        // This proves different domains are type-safe
-        Assert.IsAssignableFrom<DirtyTrackableBase<EntityDirtyFlags>>(entity);
-        Assert.IsAssignableFrom<DirtyTrackableBase<ZoneDirtyFlags>>(zone);
     }
 
     #endregion

@@ -1,6 +1,4 @@
-using Mmo.Shared.DirtyTracking;
 using Mmo.Shared.Entities.Enums;
-using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Shared.Tests.Generators;
 
@@ -9,7 +7,6 @@ namespace Mmo.Shared.Tests.Generators;
 /// </summary>
 public class DirtyTrackingGeneratorTests
 {
-
     [Fact]
     public void TestEntity_IsDirty_InitiallyFalse()
     {

@@ -14,27 +14,27 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneListResponse)]
 public record ZoneListResponse : IResponseMessage<ZoneListResponseErrorCode>
 {
-    /// <inheritdoc/>
+    /// <summary>The new zone ID (only on success).</summary>
+    [Key(5)]
+    public List<ZoneListEntry> Zones { get; init; } = [];
+
+    /// <inheritdoc />
     [Key(0)]
     public MessageType Type => MessageType.ZoneListResponse;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(1)]
     public GlobalErrorCode GlobalError { get; init; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(2)]
     public string? ErrorMessage { get; init; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     [Key(3)]
     public ZoneListResponseErrorCode? ErrorCode { get; init; }
 
     /// <summary>Whether the transfer was successful.</summary>
     [Key(4)]
     public required bool Success { get; init; }
-
-    /// <summary>The new zone ID (only on success).</summary>
-    [Key(5)]
-    public List<ZoneListEntry> Zones { get; init; } = [];
 }

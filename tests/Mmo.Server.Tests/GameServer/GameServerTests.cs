@@ -114,7 +114,8 @@ public class GameServerTests
 
         // Simulate different message types
         var loginRequest = new LoginRequest { Username = "TestUser", Password = "password123" };
-        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         var positionUpdate =
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(5, 5));
         var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");

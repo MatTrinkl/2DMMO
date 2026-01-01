@@ -18,18 +18,6 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneState)]
 public class ZoneState : IServerMessage, ITimestampedMessage
 {
-    /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneState;
-
-    /// <summary>
-    ///     The timestamp of the message.
-    /// </summary>
-    [Key(1)]
-    public long Timestamp { get; init; }
-
     [Key(2)] public required ZoneConfigDto ZoneConfig { get; init; }
 
     [Key(3)] public required ZoneContextDto ZoneContext { get; init; }
@@ -45,4 +33,16 @@ public class ZoneState : IServerMessage, ITimestampedMessage
     /// </summary>
     [IgnoreMember]
     public ushort ZoneId => ZoneConfig.ZoneId;
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.ZoneState;
+
+    /// <summary>
+    ///     The timestamp of the message.
+    /// </summary>
+    [Key(1)]
+    public long Timestamp { get; init; }
 }

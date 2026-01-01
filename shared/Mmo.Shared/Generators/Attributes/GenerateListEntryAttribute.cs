@@ -1,5 +1,3 @@
-using System;
-
 namespace Mmo.Shared.Generators.Attributes;
 
 /// <summary>
@@ -20,7 +18,7 @@ public sealed class GenerateListEntryAttribute : Attribute
     public string EntryTypeName { get; }
 
     /// <summary>
-    ///     Optional namespace for the generated class. 
+    ///     Optional namespace for the generated class.
     ///     Defaults to source class namespace + ".Generated".
     /// </summary>
     public string? Namespace { get; set; }

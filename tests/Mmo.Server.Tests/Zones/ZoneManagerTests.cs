@@ -3,12 +3,10 @@ using Mmo.Server.Entities;
 using Mmo.Server.Player;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Server.Zones.Configurations;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Prefab;
-using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Zones;
 
@@ -33,7 +31,7 @@ public class ZoneManagerTests : IDisposable
 
     private ZoneManager CreateZoneManager()
     {
-        var defaultZone = TestHelpers.CreateTestZone(0, "default");
+        Zone defaultZone = TestHelpers.CreateTestZone(0, "default");
         var manger = new ZoneManager(0);
         manger.RegisterZone(defaultZone);
         return manger;
@@ -71,7 +69,7 @@ public class ZoneManagerTests : IDisposable
     public void RegisterZone_AddsNewZone()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        var newZone = TestHelpers.CreateTestZone(1, "second");
+        Zone newZone = TestHelpers.CreateTestZone(1, "second");
 
         zoneManager.RegisterZone(newZone);
 
@@ -83,7 +81,7 @@ public class ZoneManagerTests : IDisposable
     public void RegisterZone_DuplicateId_ReturnsFalse()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        var duplicateZone = TestHelpers.CreateTestZone(0, "duplicate");
+        Zone duplicateZone = TestHelpers.CreateTestZone(0, "duplicate");
 
         // TryAdd returns false when key already exists
         bool result = zoneManager.RegisterZone(duplicateZone);

@@ -1,5 +1,4 @@
 using Mmo.Shared.DirtyTracking.Attributes;
-using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Tests.Generators;
@@ -17,23 +16,17 @@ public partial class TestEntity
 {
     public Guid EntityId { get; set; }
 
-    [TrackDirty("Position")]
-    public float X { get; set; }
+    [TrackDirty("Position")] public float X { get; set; }
 
-    [TrackDirty("Position")]
-    public float Y { get; set; }
+    [TrackDirty("Position")] public float Y { get; set; }
 
-    [TrackDirty("Velocity")]
-    public float VelocityX { get; set; }
+    [TrackDirty("Velocity")] public float VelocityX { get; set; }
 
-    [TrackDirty("Velocity")]
-    public float VelocityY { get; set; }
+    [TrackDirty("Velocity")] public float VelocityY { get; set; }
 
-    [TrackDirty("Health")]
-    public int CurrentHP { get; set; }
+    [TrackDirty("Health")] public int CurrentHP { get; set; }
 
-    [TrackDirty("MaxHealth")]
-    public int MaxHP { get; set; }
+    [TrackDirty("MaxHealth")] public int MaxHP { get; set; }
 
     public string Name { get; set; } = "";
 }

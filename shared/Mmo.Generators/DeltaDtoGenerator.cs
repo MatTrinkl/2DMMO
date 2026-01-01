@@ -7,13 +7,14 @@ using Microsoft.CodeAnalysis.Text;
 namespace Mmo.Generators;
 
 /// <summary>
-/// Source generator for Delta DTOs.
-/// Generates delta transfer objects grouped by DirtyFlags for entities marked with [GenerateDirtyTracking].
+///     Source generator for Delta DTOs.
+///     Generates delta transfer objects grouped by DirtyFlags for entities marked with [GenerateDirtyTracking].
 /// </summary>
 [Generator]
 public class DeltaDtoGenerator : IIncrementalGenerator
 {
-    private const string GenerateDirtyTrackingAttributeFullName = "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute";
+    private const string GenerateDirtyTrackingAttributeFullName =
+        "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -21,7 +22,8 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         IncrementalValuesProvider<TypeDeclarationSyntax?> typeDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 static (s, _) => GeneratorHelpers.IsCandidateForGeneration(s),
-                static (ctx, _) => GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDirtyTrackingAttributeFullName))
+                static (ctx, _) =>
+                    GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDirtyTrackingAttributeFullName))
             .Where(static m => m is not null);
 
         IncrementalValueProvider<(Compilation Left, ImmutableArray<TypeDeclarationSyntax?> Right)> compilationAndTypes =
@@ -52,7 +54,7 @@ public class DeltaDtoGenerator : IIncrementalGenerator
 
             try
             {
-                var config = GeneratorHelpers.ExtractConfiguration(typeSymbol);
+                GeneratorHelpers.DirtyTrackingConfig config = GeneratorHelpers.ExtractConfiguration(typeSymbol);
 
                 // Collect all tracked properties (including from base interfaces)
                 var allTrackedProperties = new List<GeneratorHelpers.TrackedPropertyInfo>();
@@ -61,13 +63,15 @@ public class DeltaDtoGenerator : IIncrementalGenerator
                 var allMembers = new List<ISymbol>();
                 CollectAllMembers(typeSymbol, allMembers);
 
-                foreach (var member in allMembers)
+                foreach (ISymbol? member in allMembers)
                 {
                     if (member is not IPropertySymbol property)
                         continue;
 
-                    var attr = property.GetAttributes()
-                        .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.DirtyTracking.Attributes.TrackDirtyAttribute");
+                    AttributeData? attr = property.GetAttributes()
+                        .FirstOrDefault(a =>
+                            a.AttributeClass?.ToDisplayString() ==
+                            "Mmo.Shared.DirtyTracking.Attributes.TrackDirtyAttribute");
 
                     if (attr == null || attr.ConstructorArguments.Length == 0)
                         continue;
@@ -108,7 +112,8 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         }
     }
 
-    private static string GenerateUnifiedDeltaDto(INamedTypeSymbol typeSymbol, GeneratorHelpers.DirtyTrackingConfig config,
+    private static string GenerateUnifiedDeltaDto(INamedTypeSymbol typeSymbol,
+        GeneratorHelpers.DirtyTrackingConfig config,
         List<GeneratorHelpers.TrackedPropertyInfo> properties)
     {
         var sb = new StringBuilder();
@@ -117,41 +122,41 @@ public class DeltaDtoGenerator : IIncrementalGenerator
 
         // Check if this Delta DTO should implement a union interface
         string? unionInterface = null;
-        var unionMemberAttr = typeSymbol.GetAttributes()
-            .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.DeltaDtoUnionMemberAttribute");
+        AttributeData? unionMemberAttr = typeSymbol.GetAttributes()
+            .FirstOrDefault(a =>
+                a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.DeltaDtoUnionMemberAttribute");
 
         if (unionMemberAttr != null && unionMemberAttr.ConstructorArguments.Length >= 2)
         {
-            var unionTypeArg = unionMemberAttr.ConstructorArguments[1];
+            TypedConstant unionTypeArg = unionMemberAttr.ConstructorArguments[1];
             if (unionTypeArg.Value is INamedTypeSymbol unionRootType)
             {
                 // Find the GenerateDeltaDtoUnion attribute on the union root
-                var unionAttr = unionRootType.GetAttributes()
-                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.GenerateDeltaDtoUnionAttribute");
+                AttributeData? unionAttr = unionRootType.GetAttributes()
+                    .FirstOrDefault(a =>
+                        a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.GenerateDeltaDtoUnionAttribute");
 
                 if (unionAttr != null)
                 {
                     string? unionName = null;
                     string? unionNs = null;
 
-                    foreach (var namedArg in unionAttr.NamedArguments)
-                    {
+                    foreach (KeyValuePair<string, TypedConstant> namedArg in unionAttr.NamedArguments)
                         if (namedArg.Key == "UnionName" && namedArg.Value.Value is string name)
                             unionName = name;
                         else if (namedArg.Key == "Namespace" && namedArg.Value.Value is string ns)
                             unionNs = ns;
-                    }
 
                     if (string.IsNullOrEmpty(unionName))
                     {
-                        string typeName = unionRootType.Name.StartsWith("I") ? unionRootType.Name.Substring(1) : unionRootType.Name;
+                        string typeName = unionRootType.Name.StartsWith("I")
+                            ? unionRootType.Name.Substring(1)
+                            : unionRootType.Name;
                         unionName = $"{typeName}DeltaUnion";
                     }
 
                     if (string.IsNullOrEmpty(unionNs))
-                    {
                         unionNs = $"{unionRootType.ContainingNamespace.ToDisplayString()}.Dtos";
-                    }
 
                     unionInterface = $"{unionNs}.{unionName}";
                 }
@@ -167,11 +172,11 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName}.Dtos;");
         sb.AppendLine();
-        sb.AppendLine($"/// <summary>");
+        sb.AppendLine("/// <summary>");
         sb.AppendLine($"/// Unified Delta DTO for {typeSymbol.Name} containing all tracked properties as nullable.");
-        sb.AppendLine($"/// Null values indicate no change for that property.");
-        sb.AppendLine($"/// Auto-generated by DeltaDtoGenerator.");
-        sb.AppendLine($"/// </summary>");
+        sb.AppendLine("/// Null values indicate no change for that property.");
+        sb.AppendLine("/// Auto-generated by DeltaDtoGenerator.");
+        sb.AppendLine("/// </summary>");
         sb.AppendLine("[MessagePackObject]");
 
         // Build base types - only include IDeltaDto if ID property is specified
@@ -183,11 +188,9 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         }
 
         if (!string.IsNullOrEmpty(unionInterface))
-        {
             baseTypes = string.IsNullOrEmpty(baseTypes)
                 ? unionInterface
                 : $"{baseTypes}, {unionInterface}";
-        }
 
         sb.AppendLine(string.IsNullOrEmpty(baseTypes)
             ? $"public class {deltaName}"
@@ -200,14 +203,14 @@ public class DeltaDtoGenerator : IIncrementalGenerator
         {
             string idType = config.IdPropertyType ?? "System.Guid";
             sb.AppendLine($"    [Key({keyIndex})]");
-            sb.AppendLine($"    [DeltaId]");
+            sb.AppendLine("    [DeltaId]");
             sb.AppendLine($"    public {idType} {config.IdPropertyName} {{ get; set; }}");
             sb.AppendLine();
             keyIndex++;
         }
 
         // Add all tracked properties (nullable for delta pattern)
-        foreach (var prop in properties)
+        foreach (GeneratorHelpers.TrackedPropertyInfo? prop in properties)
         {
             string nullableType = GeneratorHelpers.MakeNullable(prop.Type);
             sb.AppendLine($"    [Key({keyIndex})]");
@@ -231,15 +234,9 @@ public class DeltaDtoGenerator : IIncrementalGenerator
     private static void CollectAllMembers(INamedTypeSymbol typeSymbol, List<ISymbol> members)
     {
         // Add members from this type
-        foreach (var member in typeSymbol.GetMembers())
-        {
-            members.Add(member);
-        }
+        foreach (ISymbol? member in typeSymbol.GetMembers()) members.Add(member);
 
         // Recursively collect from base interfaces
-        foreach (var baseInterface in typeSymbol.Interfaces)
-        {
-            CollectAllMembers(baseInterface, members);
-        }
+        foreach (INamedTypeSymbol? baseInterface in typeSymbol.Interfaces) CollectAllMembers(baseInterface, members);
     }
 }

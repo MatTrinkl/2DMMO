@@ -7,12 +7,11 @@ namespace Mmo.Shared.Generators;
 /// </summary>
 /// <remarks>
 ///     <para>
-///     Use this attribute when creating custom delta DTOs where the ID field name varies.
-///     The system can automatically use this field when generating delta update methods.
+///         Use this attribute when creating custom delta DTOs where the ID field name varies.
+///         The system can automatically use this field when generating delta update methods.
 ///     </para>
-///     
 ///     <para>
-///     <strong>Example Usage:</strong>
+///         <strong>Example Usage:</strong>
 ///     </para>
 ///     <code>
 ///     [MessagePackObject]

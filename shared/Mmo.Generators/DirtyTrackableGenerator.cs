@@ -7,13 +7,14 @@ using Microsoft.CodeAnalysis.Text;
 namespace Mmo.Generators;
 
 /// <summary>
-/// Source generator for IDirtyTrackable implementation.
-/// Generates dirty flag tracking functionality for entities marked with [GenerateDirtyTracking].
+///     Source generator for IDirtyTrackable implementation.
+///     Generates dirty flag tracking functionality for entities marked with [GenerateDirtyTracking].
 /// </summary>
 [Generator]
 public class DirtyTrackableGenerator : IIncrementalGenerator
 {
-    private const string GenerateDirtyTrackingAttributeFullName = "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute";
+    private const string GenerateDirtyTrackingAttributeFullName =
+        "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -21,7 +22,8 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
         IncrementalValuesProvider<TypeDeclarationSyntax?> typeDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 static (s, _) => GeneratorHelpers.IsCandidateForGeneration(s),
-                static (ctx, _) => GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDirtyTrackingAttributeFullName))
+                static (ctx, _) =>
+                    GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateDirtyTrackingAttributeFullName))
             .Where(static m => m is not null);
 
         IncrementalValueProvider<(Compilation Left, ImmutableArray<TypeDeclarationSyntax?> Right)> compilationAndTypes =
@@ -56,10 +58,8 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
 
                 // Only add source if implementation was generated (non-empty for classes)
                 if (!string.IsNullOrWhiteSpace(trackableImpl))
-                {
                     context.AddSource($"{typeSymbol.Name}.DirtyTracking.g.cs",
                         SourceText.From(trackableImpl, Encoding.UTF8));
-                }
             }
             catch (Exception ex)
             {
@@ -83,10 +83,8 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
 
         // Only generate for classes, not interfaces
         if (typeSymbol.TypeKind != TypeKind.Class)
-        {
             // For interfaces, return empty string - dirty tracking is added by implementing classes
             return string.Empty;
-        }
 
         // Get the FlagsEnumType by traversing the type hierarchy
         string flagsEnumType = GetFlagsEnumType(typeSymbol);
@@ -111,41 +109,36 @@ public class DirtyTrackableGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// Gets the FlagsEnumType by searching the type hierarchy.
-    /// Checks the type itself first, then all implemented interfaces (including base interfaces).
+    ///     Gets the FlagsEnumType by searching the type hierarchy.
+    ///     Checks the type itself first, then all implemented interfaces (including base interfaces).
     /// </summary>
     private static string GetFlagsEnumType(INamedTypeSymbol typeSymbol)
     {
         // 1. Check the type itself for [GenerateDirtyTracking] attribute
-        var attribute = typeSymbol.GetAttributes()
+        AttributeData? attribute = typeSymbol.GetAttributes()
             .FirstOrDefault(a => a.AttributeClass?.Name == "GenerateDirtyTrackingAttribute");
 
         if (attribute != null)
         {
-            var flagsTypeArg = attribute.NamedArguments
+            KeyValuePair<string, TypedConstant> flagsTypeArg = attribute.NamedArguments
                 .FirstOrDefault(arg => arg.Key == "FlagsEnumType");
 
-            if (flagsTypeArg.Value.Value is string flagsType && !string.IsNullOrWhiteSpace(flagsType))
-            {
-                return flagsType;
-            }
+            if (flagsTypeArg.Value.Value is string flagsType && !string.IsNullOrWhiteSpace(flagsType)) return flagsType;
         }
 
         // 2. Traverse all implemented interfaces (including base interfaces)
-        foreach (var iface in typeSymbol.AllInterfaces)
+        foreach (INamedTypeSymbol? iface in typeSymbol.AllInterfaces)
         {
-            var ifaceAttr = iface.GetAttributes()
+            AttributeData? ifaceAttr = iface.GetAttributes()
                 .FirstOrDefault(a => a.AttributeClass?.Name == "GenerateDirtyTrackingAttribute");
 
             if (ifaceAttr != null)
             {
-                var flagsTypeArg = ifaceAttr.NamedArguments
+                KeyValuePair<string, TypedConstant> flagsTypeArg = ifaceAttr.NamedArguments
                     .FirstOrDefault(arg => arg.Key == "FlagsEnumType");
 
                 if (flagsTypeArg.Value.Value is string flagsType && !string.IsNullOrWhiteSpace(flagsType))
-                {
                     return flagsType;
-                }
             }
         }
 

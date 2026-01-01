@@ -2,9 +2,7 @@ using FluentAssertions;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Constants;
-using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
-using Mmo.Shared.Movement;
 
 namespace Mmo.Shared.Tests.Messages;
 

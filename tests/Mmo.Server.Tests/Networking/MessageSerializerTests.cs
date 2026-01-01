@@ -83,7 +83,8 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_PositionUpdate_RoundTrip()
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var characterEntity = new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var characterEntity = new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         var original = new PositionUpdate(timestamp,
             characterEntity.ToDto(),
             new Position(123.456f, 789.012f));

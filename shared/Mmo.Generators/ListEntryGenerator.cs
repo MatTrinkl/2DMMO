@@ -9,7 +9,9 @@ namespace Mmo.Generators;
 [Generator]
 public class ListEntryGenerator : IIncrementalGenerator
 {
-    private const string GenerateListEntryAttributeFullName = "Mmo.Shared.Generators.Attributes.GenerateListEntryAttribute";
+    private const string GenerateListEntryAttributeFullName =
+        "Mmo.Shared.Generators.Attributes.GenerateListEntryAttribute";
+
     private const string BaseDataAttributeName = "BaseDataAttribute";
     private const string OptionalDataAttributeName = "OptionalDataAttribute";
     private const string IgnoreDataAttributeName = "IgnoreDataAttribute";
@@ -20,12 +22,14 @@ public class ListEntryGenerator : IIncrementalGenerator
         IncrementalValuesProvider<TypeDeclarationSyntax?> classDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 static (s, _) => GeneratorHelpers.IsCandidateForGeneration(s),
-                static (ctx, _) => GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateListEntryAttributeFullName))
+                static (ctx, _) =>
+                    GeneratorHelpers.GetSemanticTargetForGeneration(ctx, GenerateListEntryAttributeFullName))
             .Where(static m => m is not null);
 
         // Combine with compilation
-        IncrementalValueProvider<(Compilation Left, ImmutableArray<TypeDeclarationSyntax?> Right)> compilationAndClasses =
-            context.CompilationProvider.Combine(classDeclarations.Collect());
+        IncrementalValueProvider<(Compilation Left, ImmutableArray<TypeDeclarationSyntax?> Right)>
+            compilationAndClasses =
+                context.CompilationProvider.Combine(classDeclarations.Collect());
 
         // Generate source
         context.RegisterSourceOutput(compilationAndClasses,
@@ -40,11 +44,11 @@ public class ListEntryGenerator : IIncrementalGenerator
 
         var distinctClasses = classes.Where(c => c != null).Distinct().ToList();
 
-        foreach (var typeDeclaration in distinctClasses)
+        foreach (TypeDeclarationSyntax? typeDeclaration in distinctClasses)
         {
             if (typeDeclaration is null) continue;
 
-            var semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
+            SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
             var typeSymbol = semanticModel.GetDeclaredSymbol(typeDeclaration) as INamedTypeSymbol;
             if (typeSymbol is null) continue;
 
@@ -57,20 +61,20 @@ public class ListEntryGenerator : IIncrementalGenerator
 
                 if (!listEntryAttributes.Any()) continue;
 
-                foreach (var attr in listEntryAttributes)
+                foreach (AttributeData? attr in listEntryAttributes)
                 {
                     if (attr.ConstructorArguments.Length == 0) continue;
 
-                    var entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
+                    string? entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
                     if (string.IsNullOrEmpty(entryTypeName)) continue;
 
-                    var generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName, attr, compilation);
+                    string generatedSource = GenerateListEntryClass(typeSymbol, entryTypeName, attr, compilation);
                     context.AddSource($"{typeSymbol.Name}.{entryTypeName}.g.cs",
                         SourceText.From(generatedSource, Encoding.UTF8));
                 }
 
                 // Generate extension methods
-                var extensionSource = GenerateExtensionMethods(typeSymbol, listEntryAttributes, compilation);
+                string extensionSource = GenerateExtensionMethods(typeSymbol, listEntryAttributes, compilation);
                 context.AddSource($"{typeSymbol.Name}.ListEntryExtensions.g.cs",
                     SourceText.From(extensionSource, Encoding.UTF8));
             }
@@ -98,14 +102,14 @@ public class ListEntryGenerator : IIncrementalGenerator
         Compilation compilation)
     {
         var sb = new StringBuilder();
-        var sourceNamespace = sourceType.ContainingNamespace.ToDisplayString();
+        string sourceNamespace = sourceType.ContainingNamespace.ToDisplayString();
 
         // Check if custom namespace is specified
-        var customNamespace = attribute.NamedArguments
+        string? customNamespace = attribute.NamedArguments
             .FirstOrDefault(kvp => kvp.Key == "Namespace")
             .Value.Value?.ToString();
 
-        var generatedNamespace = !string.IsNullOrEmpty(customNamespace)
+        string? generatedNamespace = !string.IsNullOrEmpty(customNamespace)
             ? customNamespace
             : $"{sourceNamespace}.Generated";
 
@@ -121,31 +125,29 @@ public class ListEntryGenerator : IIncrementalGenerator
         sb.AppendLine("{");
 
         int keyIndex = 0;
-        foreach (var property in GetPropertiesForEntryType(sourceType, entryTypeName))
+        foreach ((IPropertySymbol Symbol, bool IsOptional) property in GetPropertiesForEntryType(sourceType,
+                     entryTypeName))
         {
-            var isOptional = property.IsOptional;
-            var type = property.Symbol.Type;
-            var typeName = type.ToDisplayString();
-            var nullableSuffix = isOptional && !IsNullableType(type) ? "?" : "";
+            bool isOptional = property.IsOptional;
+            ITypeSymbol type = property.Symbol.Type;
+            string typeName = type.ToDisplayString();
+            string nullableSuffix = isOptional && !IsNullableType(type) ? "?" : "";
 
             // Add default initialization for non-nullable types to avoid compiler warnings
-            var defaultValue = "";
+            string defaultValue = "";
             if (!isOptional)
             {
                 // For string types use empty string
                 if (type.SpecialType == SpecialType.System_String)
-                {
                     defaultValue = " = \"\";";
-                }
                 // For other non-nullable reference types use default!
                 else if (type.IsReferenceType && type.NullableAnnotation != NullableAnnotation.Annotated)
-                {
                     defaultValue = " = default!;";
-                }
             }
 
             sb.AppendLine($"    [Key({keyIndex})]");
-            sb.AppendLine($"    public {typeName}{nullableSuffix} {property.Symbol.Name} {{ get; set; }}{defaultValue}");
+            sb.AppendLine(
+                $"    public {typeName}{nullableSuffix} {property.Symbol.Name} {{ get; set; }}{defaultValue}");
             sb.AppendLine();
             keyIndex++;
         }
@@ -159,17 +161,17 @@ public class ListEntryGenerator : IIncrementalGenerator
         Compilation compilation)
     {
         var sb = new StringBuilder();
-        var sourceNamespace = sourceType.ContainingNamespace.ToDisplayString();
+        string sourceNamespace = sourceType.ContainingNamespace.ToDisplayString();
 
         // Get all unique generated namespaces
         var generatedNamespaces = new HashSet<string>();
-        foreach (var attr in listEntryAttributes)
+        foreach (AttributeData? attr in listEntryAttributes)
         {
-            var customNamespace = attr.NamedArguments
+            string? customNamespace = attr.NamedArguments
                 .FirstOrDefault(kvp => kvp.Key == "Namespace")
                 .Value.Value?.ToString();
 
-            var generatedNamespace = !string.IsNullOrEmpty(customNamespace)
+            string? generatedNamespace = !string.IsNullOrEmpty(customNamespace)
                 ? customNamespace
                 : $"{sourceNamespace}.Generated";
 
@@ -177,8 +179,8 @@ public class ListEntryGenerator : IIncrementalGenerator
         }
 
         // Use the first namespace (or default) for the extensions class
-        var extensionNamespace = generatedNamespaces.FirstOrDefault() ?? $"{sourceNamespace}.Generated";
-        var sourceTypeName = sourceType.Name;
+        string extensionNamespace = generatedNamespaces.FirstOrDefault() ?? $"{sourceNamespace}.Generated";
+        string sourceTypeName = sourceType.Name;
 
         sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable");
@@ -190,11 +192,11 @@ public class ListEntryGenerator : IIncrementalGenerator
         sb.AppendLine($"public static partial class {sourceTypeName}ListEntryExtensions");
         sb.AppendLine("{");
 
-        foreach (var attr in listEntryAttributes)
+        foreach (AttributeData? attr in listEntryAttributes)
         {
             if (attr.ConstructorArguments.Length == 0) continue;
 
-            var entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
+            string? entryTypeName = attr.ConstructorArguments[0].Value?.ToString();
             if (string.IsNullOrEmpty(entryTypeName)) continue;
 
             sb.AppendLine($"    public static {entryTypeName} To{entryTypeName}(this {sourceTypeName} source)");
@@ -205,8 +207,8 @@ public class ListEntryGenerator : IIncrementalGenerator
             var properties = GetPropertiesForEntryType(sourceType, entryTypeName).ToList();
             for (int i = 0; i < properties.Count; i++)
             {
-                var property = properties[i];
-                var comma = i < properties.Count - 1 ? "," : "";
+                (IPropertySymbol Symbol, bool IsOptional) property = properties[i];
+                string comma = i < properties.Count - 1 ? "," : "";
                 sb.AppendLine($"            {property.Symbol.Name} = source.{property.Symbol.Name}{comma}");
             }
 
@@ -223,12 +225,12 @@ public class ListEntryGenerator : IIncrementalGenerator
         INamedTypeSymbol sourceType,
         string entryTypeName)
     {
-        foreach (var member in sourceType.GetMembers().OfType<IPropertySymbol>())
+        foreach (IPropertySymbol? member in sourceType.GetMembers().OfType<IPropertySymbol>())
         {
             if (member.DeclaredAccessibility != Accessibility.Public) continue;
             if (member.IsStatic) continue;
 
-            var attributes = member.GetAttributes();
+            ImmutableArray<AttributeData> attributes = member.GetAttributes();
 
             // Check for [BaseData] - always included, non-nullable
             if (attributes.Any(a => a.AttributeClass?.Name == BaseDataAttributeName))
@@ -238,7 +240,7 @@ public class ListEntryGenerator : IIncrementalGenerator
             }
 
             // Check for [OptionalData("EntryType1", "EntryType2")]
-            var optionalAttr = attributes.FirstOrDefault(a =>
+            AttributeData? optionalAttr = attributes.FirstOrDefault(a =>
                 a.AttributeClass?.Name == OptionalDataAttributeName);
             if (optionalAttr != null)
             {
@@ -247,10 +249,7 @@ public class ListEntryGenerator : IIncrementalGenerator
                     .Where(v => v != null)
                     .ToList();
 
-                if (entryTypes.Contains(entryTypeName))
-                {
-                    yield return (member, true);
-                }
+                if (entryTypes.Contains(entryTypeName)) yield return (member, true);
             }
 
             // No attribute or [IgnoreData] = skip
@@ -266,7 +265,7 @@ public class ListEntryGenerator : IIncrementalGenerator
         // Check if it's Nullable<T>
         if (type is INamedTypeSymbol namedType && namedType.IsGenericType)
         {
-            var originalDefinition = namedType.OriginalDefinition.ToDisplayString();
+            string originalDefinition = namedType.OriginalDefinition.ToDisplayString();
             if (originalDefinition == "System.Nullable<T>")
                 return true;
         }

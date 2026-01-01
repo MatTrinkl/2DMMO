@@ -5,7 +5,6 @@ using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
-using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Messages.Client_Server;
 using Mmo.Shared.Zones.Messages.Server_Client;
 

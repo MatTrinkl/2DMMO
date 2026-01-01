@@ -16,18 +16,17 @@ public static class DeltaDtoExtensions
     /// <returns>A dictionary keyed by delta ID for O(1) lookup.</returns>
     /// <remarks>
     ///     <para>
-    ///     This method enables efficient lookup of delta DTOs by their ID.
-    ///     Typical use case: Server sends a list of deltas, client converts to dictionary for fast access.
+    ///         This method enables efficient lookup of delta DTOs by their ID.
+    ///         Typical use case: Server sends a list of deltas, client converts to dictionary for fast access.
     ///     </para>
-    ///     
     ///     <para>
-    ///     <strong>Performance:</strong>
-    ///     - Conversion: O(n) where n is the number of deltas
-    ///     - Lookup: O(1) after conversion
+    ///         <strong>Performance:</strong>
+    ///         - Conversion: O(n) where n is the number of deltas
+    ///         - Lookup: O(1) after conversion
     ///     </para>
     /// </remarks>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // Receive delta list from server (using generated Delta DTO)
     /// List&lt;IEntityPositionDelta&gt; positionDeltas = zoneDelta.PositionUpdates;
     /// 
@@ -45,10 +44,8 @@ public static class DeltaDtoExtensions
     /// </example>
     public static Dictionary<TId, TDelta> ToDeltaDictionary<TId, TDelta>(this IEnumerable<TDelta> deltas)
         where TDelta : IDeltaDto<TId>
-        where TId : notnull
-    {
-        return deltas.ToDictionary(delta => delta.GetId());
-    }
+        where TId : notnull =>
+        deltas.ToDictionary(delta => delta.GetId());
 
     /// <summary>
     ///     Tries to get a delta DTO from a collection by ID.
@@ -62,9 +59,9 @@ public static class DeltaDtoExtensions
     /// <returns>True if the delta was found; otherwise, false.</returns>
     /// <remarks>
     ///     <para>
-    ///     <strong>Performance Note:</strong>
-    ///     If you need to perform multiple lookups, use <see cref="ToDeltaDictionary{TId,TDelta}"/> first
-    ///     to avoid repeated linear searches. This method is O(n) for each call.
+    ///         <strong>Performance Note:</strong>
+    ///         If you need to perform multiple lookups, use <see cref="ToDeltaDictionary{TId,TDelta}" /> first
+    ///         to avoid repeated linear searches. This method is O(n) for each call.
     ///     </para>
     /// </remarks>
     public static bool TryGetDelta<TId, TDelta>(this IEnumerable<TDelta> deltas, TId id, out TDelta? delta)

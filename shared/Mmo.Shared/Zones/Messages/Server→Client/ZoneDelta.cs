@@ -1,6 +1,5 @@
 using MessagePack;
 using Mmo.Shared.Entities.Dtos;
-using Mmo.Shared.Entities.Interfaces.Dtos;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -14,39 +13,25 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 /// </summary>
 /// <remarks>
 ///     <para>
-///     <strong>High-Frequency Message:</strong>
-///     This message is sent at 25Hz (every 40ms tick) when there are changes.
-///     Only changed properties are included to minimize bandwidth usage.
+///         <strong>High-Frequency Message:</strong>
+///         This message is sent at 25Hz (every 40ms tick) when there are changes.
+///         Only changed properties are included to minimize bandwidth usage.
 ///     </para>
-///
 ///     <para>
-///     <strong>Extensibility:</strong>
-///     Delta DTOs are automatically generated from entities marked with [GenerateDirtyTracking].
-///     The generators create Delta DTOs grouped by DirtyFlags (Position, State, etc.).
+///         <strong>Extensibility:</strong>
+///         Delta DTOs are automatically generated from entities marked with [GenerateDirtyTracking].
+///         The generators create Delta DTOs grouped by DirtyFlags (Position, State, etc.).
 ///     </para>
-///
 ///     <para>
-///     <strong>Null Fields:</strong>
-///     All collection fields are nullable. Null = no changes of that type.
-///     This minimizes message size when only specific aspects have changed.
+///         <strong>Null Fields:</strong>
+///         All collection fields are nullable. Null = no changes of that type.
+///         This minimizes message size when only specific aspects have changed.
 ///     </para>
 /// </remarks>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneDelta)]
 public class ZoneDelta : IServerMessage, ITimestampedMessage
 {
-    /// <summary>
-    ///     Gets the message type (ZoneDelta).
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneDelta;
-
-    /// <summary>
-    ///     Gets or sets the server timestamp (Unix milliseconds).
-    /// </summary>
-    [Key(1)]
-    public long Timestamp { get; init; }
-
     /// <summary>
     ///     Gets or sets the zone ID.
     /// </summary>
@@ -78,9 +63,21 @@ public class ZoneDelta : IServerMessage, ITimestampedMessage
     public List<EntityDeltaUnion>? EntityUpdates { get; init; }
 
     /// <summary>
-    /// The delta of the zone context (Weather, Time etc.)
-    /// Null if nothing has changed in the context.
+    ///     The delta of the zone context (Weather, Time etc.)
+    ///     Null if nothing has changed in the context.
     /// </summary>
     [Key(6)]
     public IZoneContextDelta? ZoneContext { get; init; }
+
+    /// <summary>
+    ///     Gets the message type (ZoneDelta).
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.ZoneDelta;
+
+    /// <summary>
+    ///     Gets or sets the server timestamp (Unix milliseconds).
+    /// </summary>
+    [Key(1)]
+    public long Timestamp { get; init; }
 }

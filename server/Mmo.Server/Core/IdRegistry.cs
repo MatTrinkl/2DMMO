@@ -141,7 +141,7 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByPersistentId.TryAdd(entity.PersistentId, entity);
 
         // Only register by GlobalKey if entity is assigned to a zone
-        var runtimeId = GetRuntimeId(entity);
+        EntityIdentity runtimeId = GetRuntimeId(entity);
         if (runtimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(runtimeId.GlobalKey, entity);
     }
 
@@ -151,7 +151,7 @@ public sealed class IdRegistry : IIdRegistry
         if (_entitiesByPersistentId.TryRemove(persistentId, out BaseEntity? entity))
         {
             // Also remove from GlobalKey lookup if it was assigned
-            var runtimeId = GetRuntimeId(entity);
+            EntityIdentity runtimeId = GetRuntimeId(entity);
             if (runtimeId.IsAssigned)
                 _entitiesByGlobalKey.TryRemove(runtimeId.GlobalKey, out _);
         }
@@ -189,7 +189,7 @@ public sealed class IdRegistry : IIdRegistry
         _entitiesByGlobalKey.TryRemove(oldGlobalKey, out _);
 
         // Add new GlobalKey mapping if assigned
-        var runtimeId = GetRuntimeId(entity);
+        EntityIdentity runtimeId = GetRuntimeId(entity);
         if (runtimeId.IsAssigned) _entitiesByGlobalKey.TryAdd(runtimeId.GlobalKey, entity);
     }
 

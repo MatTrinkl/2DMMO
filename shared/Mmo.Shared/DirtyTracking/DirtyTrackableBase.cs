@@ -12,30 +12,28 @@ namespace Mmo.Shared.DirtyTracking;
 public abstract class DirtyTrackableBase<TFlags> : IDirtyTrackable<TFlags>
     where TFlags : struct, Enum
 {
-    private TFlags _dirtyFlags;
+    /// <inheritdoc />
+    public TFlags DirtyFlags { get; private set; }
 
     /// <inheritdoc />
-    public TFlags DirtyFlags => _dirtyFlags;
+    public bool IsDirty => !EqualityComparer<TFlags>.Default.Equals(DirtyFlags, default);
 
     /// <inheritdoc />
-    public bool IsDirty => !EqualityComparer<TFlags>.Default.Equals(_dirtyFlags, default);
-
-    /// <inheritdoc />
-    public void ClearDirtyFlags() => _dirtyFlags = default;
+    public void ClearDirtyFlags() => DirtyFlags = default;
 
     /// <inheritdoc />
     public void MarkDirty(TFlags flags)
     {
-        var current = Convert.ToUInt64(_dirtyFlags);
-        var toSet = Convert.ToUInt64(flags);
-        _dirtyFlags = (TFlags)Enum.ToObject(typeof(TFlags), current | toSet);
+        ulong current = Convert.ToUInt64(DirtyFlags);
+        ulong toSet = Convert.ToUInt64(flags);
+        DirtyFlags = (TFlags)Enum.ToObject(typeof(TFlags), current | toSet);
     }
 
     /// <inheritdoc />
     public bool HasFlag(TFlags flags)
     {
-        var current = Convert.ToUInt64(_dirtyFlags);
-        var toCheck = Convert.ToUInt64(flags);
+        ulong current = Convert.ToUInt64(DirtyFlags);
+        ulong toCheck = Convert.ToUInt64(flags);
         return (current & toCheck) == toCheck;
     }
 

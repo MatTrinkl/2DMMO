@@ -122,7 +122,7 @@ public class ZoneDeltaIntegrationTests
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(zoneDelta);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         Assert.Null(deserialized.EntityUpdates);
@@ -145,25 +145,25 @@ public class ZoneDeltaIntegrationTests
                 new ICharacterEntityDelta
                 {
                     PersistentId = guid1,
-                    Position = new Position(10, 20)  // Only position
+                    Position = new Position(10, 20) // Only position
                 },
                 new ICharacterEntityDelta
                 {
                     PersistentId = guid2,
-                    CurrentHealth = 100  // Only health
+                    CurrentHealth = 100 // Only health
                 },
                 new ICharacterEntityDelta
                 {
                     PersistentId = guid3,
                     Level = 10,
-                    IsInCombat = true  // Level and combat state
+                    IsInCombat = true // Level and combat state
                 }
             }
         };
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(zoneDelta);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
@@ -220,7 +220,7 @@ public class ZoneDeltaIntegrationTests
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(zoneDelta);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
@@ -272,7 +272,7 @@ public class ZoneDeltaIntegrationTests
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(zoneDelta);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         Assert.NotNull(deserialized.EntityUpdates);
@@ -305,7 +305,7 @@ public class ZoneDeltaIntegrationTests
                 new ICharacterEntityDelta
                 {
                     PersistentId = Guid.NewGuid(),
-                    CurrentHealth = 75  // Only one field changed
+                    CurrentHealth = 75 // Only one field changed
                 }
             }
         };
@@ -340,7 +340,7 @@ public class ZoneDeltaIntegrationTests
         // Assert - Partial should be significantly smaller
         Assert.True(partialBytes.Length < fullBytes.Length);
         // MessagePack should omit null fields, making partial much smaller
-        var savings = 1.0 - ((double)partialBytes.Length / fullBytes.Length);
+        double savings = 1.0 - (double)partialBytes.Length / fullBytes.Length;
         Assert.True(savings > 0.3, $"Expected >30% savings, got {savings:P}");
     }
 
@@ -376,7 +376,7 @@ public class ZoneDeltaIntegrationTests
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(original);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         Assert.Equal(MessageType.ZoneDelta, deserialized.Type);
@@ -409,7 +409,7 @@ public class ZoneDeltaIntegrationTests
 
         // Act
         byte[] bytes = MessagePackSerializer.Serialize(zoneDelta);
-        var deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
+        ZoneDelta deserialized = MessagePackSerializer.Deserialize<ZoneDelta>(bytes);
 
         // Assert
         var delta = (ICharacterEntityDelta)deserialized.EntityUpdates![0];

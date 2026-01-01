@@ -55,7 +55,8 @@ public class MultiClientDisconnectTests : IAsyncLifetime
 
         // Wait for PlayerLeftZone broadcast
         await Task.Delay(500);
-        CharacterLeftZone? playerLeftZone = await client2.WaitForMessageAsync<CharacterLeftZone>(TimeSpan.FromSeconds(5));
+        CharacterLeftZone? playerLeftZone =
+            await client2.WaitForMessageAsync<CharacterLeftZone>(TimeSpan.FromSeconds(5));
 
         // Assert
         // if (playerLeftZone != null) playerLeftZone.Player.AccountId.Should().Be(disconnectingPlayerId);TODO:Undo comment after fixing playerLeftZone
@@ -82,7 +83,8 @@ public class MultiClientDisconnectTests : IAsyncLifetime
         // Assert - All other clients should receive PlayerLeftZone
         foreach (TestClient client in clients.Skip(1))
         {
-            CharacterLeftZone? playerLeftZone = await client.WaitForMessageAsync<CharacterLeftZone>(TimeSpan.FromSeconds(5));
+            CharacterLeftZone? playerLeftZone =
+                await client.WaitForMessageAsync<CharacterLeftZone>(TimeSpan.FromSeconds(5));
             // playerLeftZone?.Player.AccountId.Should().Be(disconnectingPlayerId);TODO:Undo comment after fixing playerLeftZone
         }
 

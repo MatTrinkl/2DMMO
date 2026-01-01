@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Mmo.Generators;
 
 /// <summary>
-/// Shared helper methods for all dirty-tracking generators.
+///     Shared helper methods for all dirty-tracking generators.
 /// </summary>
 public static class GeneratorHelpers
 {
@@ -16,22 +16,23 @@ public static class GeneratorHelpers
                typeDeclaration.AttributeLists.Count > 0;
     }
 
-    public static TypeDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context, string attributeFullName)
+    public static TypeDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context,
+        string attributeFullName)
     {
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
-            foreach (AttributeSyntax attribute in attributeList.Attributes)
-            {
-                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                    continue;
+        foreach (AttributeSyntax attribute in attributeList.Attributes)
+        {
+            if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                continue;
 
-                INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
-                string fullName = attributeContainingType.ToDisplayString();
+            INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
+            string fullName = attributeContainingType.ToDisplayString();
 
-                if (fullName == attributeFullName)
-                    return typeDeclaration;
-            }
+            if (fullName == attributeFullName)
+                return typeDeclaration;
+        }
 
         return null;
     }
@@ -40,28 +41,21 @@ public static class GeneratorHelpers
     {
         var config = new DirtyTrackingConfig();
 
-        var attr = typeSymbol.GetAttributes()
-            .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute");
+        AttributeData? attr = typeSymbol.GetAttributes()
+            .FirstOrDefault(a =>
+                a.AttributeClass?.ToDisplayString() == "Mmo.Shared.Generators.GenerateDirtyTrackingAttribute");
 
         if (attr != null)
-        {
-            foreach (var namedArg in attr.NamedArguments)
-            {
+            foreach (KeyValuePair<string, TypedConstant> namedArg in attr.NamedArguments)
                 if (namedArg.Key == "IdPropertyName" && namedArg.Value.Value is string idPropName)
-                {
                     config.IdPropertyName = idPropName;
-                }
-            }
-        }
 
         // Find the ID property
         if (!string.IsNullOrEmpty(config.IdPropertyName))
         {
-            var idProp = typeSymbol.GetMembers(config.IdPropertyName).OfType<IPropertySymbol>().FirstOrDefault();
-            if (idProp != null)
-            {
-                config.IdPropertyType = idProp.Type.ToDisplayString();
-            }
+            IPropertySymbol? idProp = typeSymbol.GetMembers(config.IdPropertyName).OfType<IPropertySymbol>()
+                .FirstOrDefault();
+            if (idProp != null) config.IdPropertyType = idProp.Type.ToDisplayString();
         }
 
         return config;
@@ -71,19 +65,19 @@ public static class GeneratorHelpers
     {
         var groups = new Dictionary<string, List<TrackedPropertyInfo>>();
 
-        foreach (var member in typeSymbol.GetMembers())
+        foreach (ISymbol? member in typeSymbol.GetMembers())
         {
             if (member is not IPropertySymbol property)
                 continue;
 
-            var attr = property.GetAttributes()
+            AttributeData? attr = property.GetAttributes()
                 .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == TrackDirtyAttributeFullName);
 
             if (attr == null || attr.ConstructorArguments.Length == 0)
                 continue;
 
             // TrackDirty uses string flag names
-            var flagNameArg = attr.ConstructorArguments[0];
+            TypedConstant flagNameArg = attr.ConstructorArguments[0];
             string flagName = flagNameArg.Value?.ToString() ?? "Unknown";
 
             if (!groups.ContainsKey(flagName))
@@ -109,15 +103,12 @@ public static class GeneratorHelpers
 
         // Check for common flag combinations
         if ((value & 0x07) != 0) return "Position"; // Position, Velocity, Rotation
-        if ((value & 0x01F8) != 0) return "State";  // Health, MaxHealth, Resource, MaxResource, State, Model, Level
+        if ((value & 0x01F8) != 0) return "State"; // Health, MaxHealth, Resource, MaxResource, State, Model, Level
 
         return "Custom";
     }
 
-    public static string GetDeltaDtoName(string typeName, string groupName)
-    {
-        return $"{typeName}{groupName}Delta";
-    }
+    public static string GetDeltaDtoName(string typeName, string groupName) => $"{typeName}{groupName}Delta";
 
     public static string MakeNullable(string typeName)
     {

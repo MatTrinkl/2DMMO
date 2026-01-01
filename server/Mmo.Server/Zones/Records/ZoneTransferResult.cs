@@ -18,7 +18,7 @@ public record ZoneTransferResult
     public Position? SpawnPosition { get; init; }
 
     /// <summary>
-    /// Error code on failure
+    ///     Error code on failure
     /// </summary>
     public ZoneTransferResponseErrorCode ErrorCode { get; init; }
 

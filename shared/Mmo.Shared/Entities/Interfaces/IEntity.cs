@@ -21,6 +21,5 @@ public interface IEntity
 
     EntityType Type { get; }
 
-    [TrackDirty("Position")]
-    Position Position { get; set; }
+    [TrackDirty("Position")] Position Position { get; set; }
 }

@@ -94,9 +94,11 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send PositionUpdate
-        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(5, 5), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(5, 5),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(10, 20)));
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(),
+                new Position(10, 20)));
 
         // Start and run
         gameServer.Start();
@@ -169,7 +171,8 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Queue messages in specific order
-        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(5, 5)));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Hi"));
@@ -206,7 +209,8 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send various message types
-        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         _mockNetworkServer.SimulateMessageReceived(clientId,
             new LoginRequest { Username = "Player1", Password = "password123" });
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());

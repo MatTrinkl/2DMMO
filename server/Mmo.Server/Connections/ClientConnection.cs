@@ -31,9 +31,9 @@ public sealed class ClientConnection : IDisposable
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly NetworkStream _stream;
     private readonly TcpClient _tcpClient;
+    private int _disconnected;
 
     private bool _disposed;
-    private int _disconnected;
 
     // ═══════════════════════════════════════════════════════════════
     // CONSTRUCTOR
@@ -271,10 +271,7 @@ public sealed class ClientConnection : IDisposable
         finally
         {
             // Only fire event if Disconnect hasn't already been called
-            if (Interlocked.Exchange(ref _disconnected, 1) == 0)
-            {
-                OnDisconnected?.Invoke(this, "Connection closed");
-            }
+            if (Interlocked.Exchange(ref _disconnected, 1) == 0) OnDisconnected?.Invoke(this, "Connection closed");
 
             Dispose();
         }
@@ -292,7 +289,7 @@ public sealed class ClientConnection : IDisposable
         try
         {
             var forceDisconnectMessage = new ForceDisconnect
-            { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
+                { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
             Send(forceDisconnectMessage);
             _cts.Cancel();
             _tcpClient.Client.Shutdown(SocketShutdown.Send);

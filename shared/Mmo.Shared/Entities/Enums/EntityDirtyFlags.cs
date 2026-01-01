@@ -9,7 +9,6 @@ namespace Mmo.Shared.Entities.Enums;
 ///     This enum is specific to entity tracking. Other domains use their own flags:
 ///     - ZoneDirtyFlags for zone-level changes (weather, time, etc.)
 ///     - InventoryDirtyFlags for inventory tracking
-///     
 ///     The uint type provides 32 possible flags (bits 0-31).
 /// </remarks>
 [Flags]

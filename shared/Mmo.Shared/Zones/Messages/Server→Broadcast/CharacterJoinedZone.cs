@@ -14,20 +14,20 @@ namespace Mmo.Shared.Zones.Messages.Server_Broadcast;
 public class CharacterJoinedZone : IServerMessage
 {
     /// <summary>
-    ///     The Message Type of this Message.
-    /// </summary>
-    [Key(0)]
-    public MessageType Type => MessageType.CharacterJoinedZone;
-
-    /// <summary>
-    /// Character Entity who joined the zone.
+    ///     Character Entity who joined the zone.
     /// </summary>
     [Key(1)]
     public required CharacterEntityDto JoinedPlayer { get; init; }
 
     /// <summary>
-    /// The ID of the current zone to check for errors and cheating.
+    ///     The ID of the current zone to check for errors and cheating.
     /// </summary>
     [Key(2)]
     public ushort ZoneId { get; init; }
+
+    /// <summary>
+    ///     The Message Type of this Message.
+    /// </summary>
+    [Key(0)]
+    public MessageType Type => MessageType.CharacterJoinedZone;
 }

@@ -51,11 +51,6 @@ public abstract class CombatEntity(
     /// </summary>
     public new EntityIdentity RuntimeId { get; private set; } = new(1, 0, 0, 0, prefabId);
 
-    /// <summary>
-    ///     Explicit interface implementation to ensure IdRegistry uses the derived RuntimeId property.
-    /// </summary>
-    EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
-
     public override bool IsTrulyPersistent => true;
     protected virtual bool IsDead => CurrentHealth <= 0;
     public virtual bool IsAttackable => !IsDead;
@@ -97,6 +92,11 @@ public abstract class CombatEntity(
     public Guid? TargetEntityId { get; set; }
     public Faction Faction { get; init; } = Faction.Neutral;
     public float MovementSpeed { get; set; } = 5.0f;
+
+    /// <summary>
+    ///     Explicit interface implementation to ensure IdRegistry uses the derived RuntimeId property.
+    /// </summary>
+    EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
 
     // ═══════════════════════════════════════════════════════════════
     // IEntity METHODS

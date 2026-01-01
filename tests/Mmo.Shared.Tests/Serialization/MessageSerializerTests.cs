@@ -84,7 +84,6 @@ public class MessageSerializerTests
     // ══════════════════════════════════════════════════════════
 
 
-
     [Fact]
     public void Serialize_PositionBroadcast_RoundTrip()
     {
@@ -289,7 +288,6 @@ public class MessageSerializerTests
 
         Assert.IsType<LeaveZone>(deserialized);
     }
-
 
 
     [Fact]

@@ -10,41 +10,29 @@ namespace Mmo.Shared.Zones.Interfaces;
 [GenerateListEntry("ZoneListEntry")]
 public interface IZoneConfig
 {
-    [BaseData]
-    ushort ZoneId { get; }
+    [BaseData] ushort ZoneId { get; }
 
-    [IgnoreData]
-    string InternalName { get; }
+    [IgnoreData] string InternalName { get; }
 
-    [BaseData]
-    string DisplayName { get; }
+    [BaseData] string DisplayName { get; }
 
-    [IgnoreData]
-    bool Contestable { get; }
+    [IgnoreData] bool Contestable { get; }
 
-    [OptionalData("ZoneListEntry")]
-    PvpZoneType PvpType { get; }
+    [OptionalData("ZoneListEntry")] PvpZoneType PvpType { get; }
 
-    [IgnoreData]
-    ZoneFlags ZoneFlags { get; }
+    [IgnoreData] ZoneFlags ZoneFlags { get; }
 
-    [BaseData]
-    int MinLevel { get; }
+    [BaseData] int MinLevel { get; }
 
-    [BaseData]
-    int MaxLevel { get; }
+    [BaseData] int MaxLevel { get; }
 
-    [IgnoreData]
-    Faction? OwningFaction { get; }
+    [IgnoreData] Faction? OwningFaction { get; }
 
-    [IgnoreData]
-    ZoneBoundsConfig Bounds { get; }
+    [IgnoreData] ZoneBoundsConfig Bounds { get; }
 
-    [IgnoreData]
-    public int? MusicId { get; }
+    [IgnoreData] public int? MusicId { get; }
 
-    [IgnoreData]
-    public int? AmbienceId { get; }
+    [IgnoreData] public int? AmbienceId { get; }
 
     // Computed
     public bool IsPvpEnabled => PvpType != PvpZoneType.Sanctuary;

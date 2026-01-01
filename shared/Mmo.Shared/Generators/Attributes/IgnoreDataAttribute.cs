@@ -1,5 +1,3 @@
-using System;
-
 namespace Mmo.Shared.Generators.Attributes;
 
 /// <summary>

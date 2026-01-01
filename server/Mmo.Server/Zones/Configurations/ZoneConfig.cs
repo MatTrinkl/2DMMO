@@ -4,7 +4,6 @@ using Mmo.Shared.Zones.Configurations;
 using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Interfaces;
 using Mmo.Shared.Zones.Records;
-using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Zones.Configurations;
 

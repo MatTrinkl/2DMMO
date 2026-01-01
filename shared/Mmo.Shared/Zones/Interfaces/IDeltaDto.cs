@@ -7,12 +7,11 @@ namespace Mmo.Shared.Zones.Interfaces;
 /// <typeparam name="TId">The type of the identifier (e.g., Guid, int, long).</typeparam>
 /// <remarks>
 ///     <para>
-///     This interface allows delta DTOs to be efficiently looked up by their ID.
-///     When combined with Dictionary or HashSet, it enables O(1) lookup performance.
+///         This interface allows delta DTOs to be efficiently looked up by their ID.
+///         When combined with Dictionary or HashSet, it enables O(1) lookup performance.
 ///     </para>
-///     
 ///     <para>
-///     <strong>Usage Pattern:</strong>
+///         <strong>Usage Pattern:</strong>
 ///     </para>
 ///     <code>
 ///     // Convert list to dictionary for O(1) lookup

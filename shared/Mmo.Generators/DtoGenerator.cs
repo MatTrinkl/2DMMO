@@ -38,16 +38,16 @@ public class DtoGenerator : IIncrementalGenerator
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
-            foreach (AttributeSyntax attribute in attributeList.Attributes)
-            {
-                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                    continue;
+        foreach (AttributeSyntax attribute in attributeList.Attributes)
+        {
+            if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                continue;
 
-                INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
-                string fullName = attributeContainingType.ToDisplayString();
+            INamedTypeSymbol? attributeContainingType = attributeSymbol.ContainingType;
+            string fullName = attributeContainingType.ToDisplayString();
 
-                if (fullName == GenerateDtoAttributeFullName) return typeDeclaration;
-            }
+            if (fullName == GenerateDtoAttributeFullName) return typeDeclaration;
+        }
 
         return null;
     }
@@ -69,7 +69,7 @@ public class DtoGenerator : IIncrementalGenerator
                 continue;
 
             SemanticModel semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDeclaration);
+            INamedTypeSymbol? typeSymbol = semanticModel.GetDeclaredSymbol(typeDeclaration);
 
             if (typeSymbol == null)
                 continue;
@@ -189,11 +189,13 @@ public class DtoGenerator : IIncrementalGenerator
         // Add union interface if this DTO is a union member
         if (unionMemberInfo != null && unionMemberInfo.RootInterfaceSymbol != null)
         {
-            var unionAttr = GetGenerateDtoUnionAttribute(unionMemberInfo.RootInterfaceSymbol);
+            GenerateDtoUnionAttributeData?
+                unionAttr = GetGenerateDtoUnionAttribute(unionMemberInfo.RootInterfaceSymbol);
             if (unionAttr != null)
             {
                 string unionName = unionAttr.UnionName ?? $"{GetBaseName(unionMemberInfo.RootInterfaceSymbol)}DtoUnion";
-                string unionNamespace = unionAttr.Namespace ?? $"{unionMemberInfo.RootInterfaceSymbol.ContainingNamespace.ToDisplayString()}.Dtos";
+                string unionNamespace = unionAttr.Namespace ??
+                                        $"{unionMemberInfo.RootInterfaceSymbol.ContainingNamespace.ToDisplayString()}.Dtos";
                 string unionFullName = $"{unionNamespace}.{unionName}";
                 if (!interfaces.Contains(unionFullName)) interfaces.Add(unionFullName);
             }
@@ -831,15 +833,15 @@ public class DtoGenerator : IIncrementalGenerator
         CollectInterfaceHierarchy(interfaceSymbol, allInterfaces);
 
         foreach (INamedTypeSymbol? iface in allInterfaces)
-            foreach (ISymbol? member in iface.GetMembers())
-                if (member is IPropertySymbol prop &&
-                    prop.GetMethod != null &&
-                    !processedNames.Contains(prop.Name) &&
-                    IsComputedProperty(prop))
-                {
-                    computed.Add(prop);
-                    processedNames.Add(prop.Name);
-                }
+        foreach (ISymbol? member in iface.GetMembers())
+            if (member is IPropertySymbol prop &&
+                prop.GetMethod != null &&
+                !processedNames.Contains(prop.Name) &&
+                IsComputedProperty(prop))
+            {
+                computed.Add(prop);
+                processedNames.Add(prop.Name);
+            }
 
         return computed;
     }
@@ -1241,6 +1243,6 @@ public class DtoGenerator : IIncrementalGenerator
         public IPropertySymbol Symbol { get; set; } = null!;
         public string? CustomName { get; set; }
         public int ExplicitKey { get; set; } = -1;
-        public bool RequiresSetAccessor { get; set; } = false;
+        public bool RequiresSetAccessor { get; set; }
     }
 }

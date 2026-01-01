@@ -3,7 +3,6 @@ using Mmo.Server.Entities.Interfaces;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Enums;
-using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Structs;
 
 namespace Mmo.Shared.Tests.Entities;
@@ -334,7 +333,8 @@ public class IdRegistryTests : IDisposable
         Assert.Equal(0, IdRegistry.Instance.GetNextLocalId(1));
     }
 
-    private static TestEntity CreateTestEntity() => new(EntityIdentity.Unassigned(0), Guid.NewGuid(), new Position(0, 0));
+    private static TestEntity CreateTestEntity() =>
+        new(EntityIdentity.Unassigned(0), Guid.NewGuid(), new Position(0, 0));
 
     /// <summary>
     ///     Simple test entity implementation.
@@ -358,18 +358,18 @@ public class IdRegistryTests : IDisposable
         }
 
         /// <summary>
-        /// Hides base RuntimeId to allow modification after construction.
-        /// Implements IMutableRuntimeEntity for polymorphic access.
+        ///     Hides base RuntimeId to allow modification after construction.
+        ///     Implements IMutableRuntimeEntity for polymorphic access.
         /// </summary>
         public new EntityIdentity RuntimeId { get; private set; }
 
-        /// <summary>
-        /// Explicit interface implementation to ensure IdRegistry uses this property.
-        /// </summary>
-        EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
-
         public override bool IsTrulyPersistent => false;
         public override EntityType Type => EntityType.Player;
+
+        /// <summary>
+        ///     Explicit interface implementation to ensure IdRegistry uses this property.
+        /// </summary>
+        EntityIdentity IMutableRuntimeEntity.RuntimeId => RuntimeId;
 
         public override void SetEntityId(ushort localId, ushort zoneId) =>
             RuntimeId = new EntityIdentity(_testServerId, zoneId, _testShardId, localId, _testPrefabId);
