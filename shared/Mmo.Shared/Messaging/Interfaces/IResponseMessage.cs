@@ -1,4 +1,4 @@
-﻿using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Messaging.Enums;
 
 namespace Mmo.Shared.Messaging.Interfaces;
 

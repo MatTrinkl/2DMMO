@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Generators;
+namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Includes explicit interfaces which will be implemented in the DTO.

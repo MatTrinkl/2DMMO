@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Generators;
+namespace Mmo.Shared.Generators;
 
 /// <summary>
 ///     Marks a property that should be ignored in the DTO.

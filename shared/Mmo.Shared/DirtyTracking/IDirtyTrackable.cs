@@ -15,12 +15,12 @@ public interface IDirtyTrackable<TFlags> where TFlags : struct, Enum
     ///     Gets the flags indicating which properties have changed.
     /// </summary>
     TFlags DirtyFlags { get; }
-    
+
     /// <summary>
     ///     Gets a value indicating whether any properties have changed.
     /// </summary>
     bool IsDirty { get; }
-    
+
     /// <summary>
     ///     Clears all dirty flags, marking all properties as synchronized.
     /// </summary>
@@ -28,7 +28,7 @@ public interface IDirtyTrackable<TFlags> where TFlags : struct, Enum
     ///     Call this method after successfully sending delta updates to clients.
     /// </remarks>
     void ClearDirtyFlags();
-    
+
     /// <summary>
     ///     Marks specific properties as dirty.
     /// </summary>
@@ -37,7 +37,7 @@ public interface IDirtyTrackable<TFlags> where TFlags : struct, Enum
     ///     This method uses bitwise OR to combine flags with existing dirty state.
     /// </remarks>
     void MarkDirty(TFlags flags);
-    
+
     /// <summary>
     ///     Checks if the specified flags are set.
     /// </summary>

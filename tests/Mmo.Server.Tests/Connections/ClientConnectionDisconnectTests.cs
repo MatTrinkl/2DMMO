@@ -1,4 +1,4 @@
-﻿using Mmo.Server.Connections;
+using Mmo.Server.Connections;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Entities.Structs;

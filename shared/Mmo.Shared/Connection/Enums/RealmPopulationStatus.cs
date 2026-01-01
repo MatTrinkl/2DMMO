@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Connection.Enums;
+namespace Mmo.Shared.Connection.Enums;
 
 /// <summary>
 ///     Describes the population amount of a server.

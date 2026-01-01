@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Connection.Enums;
+namespace Mmo.Shared.Connection.Enums;
 
 public enum RealmType
 {

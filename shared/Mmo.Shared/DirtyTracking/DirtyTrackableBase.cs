@@ -13,16 +13,16 @@ public abstract class DirtyTrackableBase<TFlags> : IDirtyTrackable<TFlags>
     where TFlags : struct, Enum
 {
     private TFlags _dirtyFlags;
-    
+
     /// <inheritdoc />
     public TFlags DirtyFlags => _dirtyFlags;
-    
+
     /// <inheritdoc />
     public bool IsDirty => !EqualityComparer<TFlags>.Default.Equals(_dirtyFlags, default);
-    
+
     /// <inheritdoc />
     public void ClearDirtyFlags() => _dirtyFlags = default;
-    
+
     /// <inheritdoc />
     public void MarkDirty(TFlags flags)
     {
@@ -30,7 +30,7 @@ public abstract class DirtyTrackableBase<TFlags> : IDirtyTrackable<TFlags>
         var toSet = Convert.ToUInt64(flags);
         _dirtyFlags = (TFlags)Enum.ToObject(typeof(TFlags), current | toSet);
     }
-    
+
     /// <inheritdoc />
     public bool HasFlag(TFlags flags)
     {
@@ -38,7 +38,7 @@ public abstract class DirtyTrackableBase<TFlags> : IDirtyTrackable<TFlags>
         var toCheck = Convert.ToUInt64(flags);
         return (current & toCheck) == toCheck;
     }
-    
+
     /// <summary>
     ///     Sets a field value and marks the appropriate dirty flag if the value changed.
     /// </summary>
@@ -62,7 +62,7 @@ public abstract class DirtyTrackableBase<TFlags> : IDirtyTrackable<TFlags>
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
             return false;
-            
+
         field = value;
         MarkDirty(flag);
         return true;

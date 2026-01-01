@@ -1,4 +1,4 @@
-﻿namespace Mmo.Shared.Messaging.Interfaces;
+namespace Mmo.Shared.Messaging.Interfaces;
 
 /// <summary>
 ///     This needs to be used if a client sends a Message to the server.

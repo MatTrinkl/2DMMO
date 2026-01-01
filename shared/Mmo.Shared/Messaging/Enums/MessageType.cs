@@ -56,7 +56,7 @@ public enum MessageType : ushort
     SubZoneEnter = 115,
     SubZoneLeave = 116,
     GetZoneRequest = 117,
-    ZoneLoadedAck= 118,
+    ZoneLoadedAck = 118,
 
     // ═══════════════════════════════════════════════════════════════
     // MOVEMENT / POSITION (0200-0299)

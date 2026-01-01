@@ -49,7 +49,7 @@ public static class DeltaDtoExtensions
     {
         return deltas.ToDictionary(delta => delta.GetId());
     }
-    
+
     /// <summary>
     ///     Tries to get a delta DTO from a collection by ID.
     ///     This is a convenience method that combines dictionary creation and lookup.
