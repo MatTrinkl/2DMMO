@@ -66,7 +66,7 @@ public class MultiClientTests : IAsyncLifetime
 
         // The joined player should be client2
         CharacterJoinedZone? joinedEvent = playerJoinedMessages.FirstOrDefault();
-        //if (joinedEvent != null) joinedEvent.Player.Should().NotBeNull("joined event should contain player data");TODO:Undo comment after fixing playerJOinZone
+        //if (joinedEvent != null) joinedEvent.Player.Should().NotBeNull("joined event should contain player data");TODO:Undo comment after fixing playerJoinZone
 
         // Cleanup
         client1.Dispose();
