@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MessagePack;
 using Mmo.Server.Entities;
+using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
@@ -82,18 +83,21 @@ public class MessageSerializerTests
     public void Serialize_Deserialize_PositionUpdate_RoundTrip()
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var characterEntity = new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f), EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         var original = new PositionUpdate(timestamp,
-            new CharacterEntity(Guid.Empty, Guid.NewGuid(), "Player1", new Position(100f, 200f), EntityIdentity.Unassigned(PrefabIds.PlayerDefault)),
+            characterEntity.ToDto(),
             new Position(123.456f, 789.012f));
 
         byte[] bytes = MessageSerializer.Serialize(original);
 
         var deserialized = (PositionUpdate)MessageSerializer.Deserialize(bytes);
 
-        Debug.Assert(original.EntityOldPosition != null);
-        Debug.Assert(deserialized.EntityOldPosition != null);
-        Assert.Equal(((BaseEntity)original.EntityOldPosition).RuntimeId, ((BaseEntity)deserialized.EntityOldPosition).RuntimeId);
-        Assert.Equal(original.EntityOldPosition.Position.X, deserialized.EntityOldPosition.Position.X);
+        Debug.Assert(original.Entity != null);
+        Debug.Assert(deserialized.Entity != null);
+        var originalDto = (CharacterEntityDto)original.Entity;
+        var deserializedDto = (CharacterEntityDto)deserialized.Entity;
+        Assert.Equal(originalDto.PersistentId, deserializedDto.PersistentId);
+        Assert.Equal(originalDto.Position.X, deserializedDto.Position.X);
         Debug.Assert(original.NewPosition != null);
         Debug.Assert(deserialized.NewPosition != null);
         Assert.Equal(original.NewPosition.Y, deserialized.NewPosition.Y);
