@@ -18,7 +18,6 @@ using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Prefab;
-using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Helpers;
 
@@ -60,7 +59,7 @@ public static class TestHelpers
     /// </summary>
     public static ZoneManager CreateDefaultZoneManager()
     {
-        var defaultZone = CreateTestZone(0, "default");
+        Zone defaultZone = CreateTestZone(0, "default");
         var zoneManager = new ZoneManager(0);
         zoneManager.RegisterZone(defaultZone);
         return zoneManager;
@@ -71,14 +70,14 @@ public static class TestHelpers
     /// </summary>
     public static ZoneManager CreateZoneManagerWithZones(params (ushort id, string name)[] zones)
     {
-        var defaultZone = CreateTestZone(0, "default");
+        Zone defaultZone = CreateTestZone(0, "default");
         var zoneManager = new ZoneManager(0);
         zoneManager.RegisterZone(defaultZone);
 
         foreach ((ushort id, string name) in zones)
         {
             if (id == 0) continue; // Default already exists
-            var zone = CreateTestZone(id, name);
+            Zone zone = CreateTestZone(id, name);
             zoneManager.RegisterZone(zone);
         }
 
