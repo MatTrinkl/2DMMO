@@ -36,27 +36,5 @@ public record ZoneListResponse : IResponseMessage<ZoneListResponseErrorCode>
 
     /// <summary>The new zone ID (only on success).</summary>
     [Key(5)]
-    public List<ZoneListEntry> Zones { get; init; }
-
-
-    // ─── Factory Methods ───
-
-    /// <summary>
-    /// Create a new Succeeded response.
-    /// </summary>
-    /// <param name="newZoneId">The new zone id.</param>
-    /// <returns>The complete message.</returns>
-    public static ZoneTransferResponse Succeeded(ushort newZoneId)
-        => new() { Success = true, NewZoneId = newZoneId };
-
-    /// <summary>
-    /// Create a new Failed response.
-    /// </summary>
-    /// <param name="globalError">Global Error Code. This overrides the <seealso cref="specificError"/>.</param>
-    /// <param name="specificError">The message specific error.</param>
-    /// <param name="message">Human Readable message.</param>
-    /// <returns>The complete message.</returns>
-    public static ZoneTransferResponse Failed(GlobalErrorCode globalError, ZoneTransferResponseErrorCode specificError,
-        string? message = null)
-        => new() { Success = false, GlobalError = globalError, ErrorCode = specificError, ErrorMessage = message };
+    public List<ZoneListEntry> Zones { get; init; } = [];
 }

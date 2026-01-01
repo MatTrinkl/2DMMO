@@ -142,19 +142,6 @@ public class MessageSerializerTests
     // ZONE EVENT MESSAGES
     // ══════════════════════════════════════════════════════════
 
-    [Fact]
-    public void Serialize_JoinZone_RoundTrip()
-    {
-        var playerId = Guid.NewGuid();
-        var original = new JoinZone(playerId);
-
-        byte[] serialized = MessagePackSerializer.Serialize(original);
-        JoinZone deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
-
-        Assert.NotNull(deserialized);
-        Assert.Equal(MessageType.JoinZone, deserialized.Type);
-        Assert.Equal(playerId, deserialized.PlayerId);
-    }
     /*
     [Fact]
     public void Serialize_LeaveZone_RoundTrip()
@@ -215,18 +202,6 @@ public class MessageSerializerTests
         Assert.NotNull(deserialized);
         Assert.Equal("", deserialized.Username);
         Assert.Equal("", deserialized.Password);
-    }
-
-    [Fact]
-    public void Serialize_EmptyGuid_RoundTrip()
-    {
-        var original = new JoinZone(Guid.Empty);
-
-        byte[] serialized = MessagePackSerializer.Serialize(original);
-        JoinZone deserialized = MessagePackSerializer.Deserialize<JoinZone>(serialized);
-
-        Assert.NotNull(deserialized);
-        Assert.Equal(Guid.Empty, deserialized.PlayerId);
     }
 
     [Fact]
@@ -302,17 +277,6 @@ public class MessageSerializerTests
         INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
 
         Assert.IsType<LogoutRequest>(deserialized);
-    }
-
-    [Fact]
-    public void MessageSerializer_Deserialize_JoinZone_ReturnsCorrectType()
-    {
-        var original = new JoinZone(Guid.NewGuid());
-        byte[] serialized = MessageSerializer.Serialize(original);
-
-        INetworkMessage deserialized = MessageSerializer.Deserialize(serialized);
-
-        Assert.IsType<JoinZone>(deserialized);
     }
 
     [Fact]

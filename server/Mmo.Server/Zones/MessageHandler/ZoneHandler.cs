@@ -5,6 +5,7 @@ using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
+using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Messages.Client_Server;
 using Mmo.Shared.Zones.Messages.Server_Client;
 
@@ -29,7 +30,7 @@ public class ZoneHandler(IZoneService zoneService, ILog log) : BaseCategoryHandl
         {
             ctx.GetService<IBroadcastService>().SendToPlayer(ctx.Connection, result.Success
                 ? ZoneTransferResponse.Succeeded(request.TargetZoneId)
-                : ZoneTransferResponse.Failed(result.Error!));
+                : ZoneTransferResponse.Failed(GlobalErrorCode.None, result.ErrorCode, result.Error));
         });
     }
 }

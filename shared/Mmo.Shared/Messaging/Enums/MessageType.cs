@@ -55,7 +55,8 @@ public enum MessageType : ushort
     ShardListResponse = 114,
     SubZoneEnter = 115,
     SubZoneLeave = 116,
-    ZonePhaseChange = 117,
+    GetZoneRequest = 117,
+    ZoneLoadedAck= 118,
 
     // ═══════════════════════════════════════════════════════════════
     // MOVEMENT / POSITION (0200-0299)
