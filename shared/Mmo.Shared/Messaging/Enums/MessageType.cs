@@ -18,8 +18,8 @@ public enum MessageType : ushort
     ReconnectRequest = 6,
     ReconnectResponse = 7,
 
-    [Obsolete("Deprecated: Use S2S_SessionValidate (5000) for server-to-server session validation")]
-    SessionValidate = 8, // DEPRECATED - Replaced by S2S_SessionValidate
+    [Obsolete("Deprecated: Session validation is now done internally. Remove usage of this message type.")]
+    SessionValidate = 8, // DEPRECATED - Internal session validation
 
     CharacterSelectRequest = 9,
     CharacterCreateRequest = 10,
@@ -41,7 +41,7 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // ZONE EVENTS (0100-0199)
     // ═══════════════════════════════════════════════════════════════
-    [Obsolete("Deprecated: Use ZoneState.MyCharacter for character spawn data")]
+    [Obsolete("Deprecated: Character spawn data is now included in ZoneState (102). Remove usage and use ZoneState instead.")]
     JoinZone = 100, // DEPRECATED - Functionality moved to ZoneState (102)
 
     LeaveZone = 101,
@@ -52,7 +52,7 @@ public enum MessageType : ushort
     ZoneTransferRequest = 106,
     ZoneTransferResponse = 107,
 
-    [Obsolete("Deprecated: Client loads assets locally and sends ZoneLoadedAck (118) when ready")]
+    [Obsolete("Deprecated: Remove usage - clients load assets locally and send ZoneLoadedAck (118) when ready.")]
     ZoneLoadingProgress = 108, // DEPRECATED - No longer needed
 
     ZoneDiscovered = 109,
