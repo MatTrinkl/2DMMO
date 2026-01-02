@@ -24,7 +24,7 @@
 
 **Phase 1: Alignment** - ✅ COMPLETE (All 51 categories aligned)
 
-**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 4 Complete)
+**Phase 2: Detail Pass** - ✅ COMPLETE (All batches done)
 
 | Range | Alignment | Detail Pass | Categories |
 |-------|-----------|-------------|------------|
@@ -32,8 +32,8 @@
 | Extended (10-19) | ✅ | 🔵 Detail Done | 10 categories |
 | Social (20-29) | ✅ | 🔵 Detail Done | 10 categories |
 | Advanced (30-39) | ✅ | 🔵 Detail Done | 10 categories |
-| Extended (40-49) | ✅ | ⏳ Batch 5 | 10 categories |
-| S2S (50) | ✅ | 📋 Geplant | 1 category |
+| Extended (40-49) | ✅ | 🔵 Detail Done | 10 categories |
+| S2S (50) | ✅ | 🔵 Detail Done | 1 category (70 messages) |
 
 ---
 
@@ -101,24 +101,24 @@
 
 ### Extended Features (4000-4999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 40 | Bank | 4000-4099 | 25 | ✅ | Completely rewritten to match enum |
-| 41 | Death | 4100-4199 | 24 | ✅ | Completely rewritten to match enum |
-| 42 | Transportation | 4200-4299 | 28 | ✅ | Completely rewritten to match enum |
-| 43 | Notification | 4300-4399 | 20 | ✅ | Completely rewritten to match enum |
-| 44 | Cutscene | 4400-4499 | 6 | ✅ | Verified - aligned with enum |
-| 45 | Housing | 4500-4599 | 6 | ✅ | Verified - aligned with enum |
-| 46 | Event | 4600-4699 | 5 | ✅ | Verified - aligned with enum |
-| 47 | Reserved | 4700-4799 | 0 | ✅ | Reserved for future use |
-| 48 | Reserved | 4800-4899 | 0 | ✅ | Reserved for future use |
-| 49 | Debug | 4900-4999 | 5 | ✅ | Verified - aligned with enum |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 40 | Bank | 4000-4099 | 25 | ✅ | 🔵 Done | Full template for Personal/Guild/Void/Reagent Bank |
+| 41 | Death | 4100-4199 | 24 | ✅ | 🔵 Done | Full template for Death/Ghost/Respawn/Resurrect |
+| 42 | Transportation | 4200-4299 | 28 | ✅ | 🔵 Done | Full template for Flight/Portal/Summon/Vehicle |
+| 43 | Notification | 4300-4399 | 20 | ✅ | 🔵 Done | Full template for Toast/Alert/Boss/Screen |
+| 44 | Cutscene | 4400-4499 | 6 | ✅ | 🔵 Done | Full template for Cutscene/Cinematic |
+| 45 | Housing | 4500-4599 | 6 | ✅ | 🔵 Done | Full template for Housing/Furniture |
+| 46 | Event | 4600-4699 | 5 | ✅ | 🔵 Done | Full template for World Events |
+| 47 | Reserved | 4700-4799 | 0 | ✅ | 🔵 Done | Reserved for future use |
+| 48 | Reserved | 4800-4899 | 0 | ✅ | 🔵 Done | Reserved for future use |
+| 49 | Debug | 4900-4999 | 5 | ✅ | 🔵 Done | Full template for Debug messages |
 
 ### Server-to-Server (5000-5999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 50 | S2S | 5000-5999 | 0 (planned) | ✅ | Server-to-Server - not in enum yet, docs aligned |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 50 | S2S | 5000-5999 | 0 (planned) | ✅ | 🔵 Done | Full template for all 70 S2S messages (Redis Pub/Sub) |
 
 ---
 
