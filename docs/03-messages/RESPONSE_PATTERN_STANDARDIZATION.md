@@ -69,18 +69,18 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 | ChatChannelPassword | ChatChannelPasswordResponse | 444 | ✅ |
 | ChatChannelMute | ChatChannelMuteResponse | 445 | ✅ |
 
-### 05-inventory.md (IDs 520-527) ✅
+### 05-inventory.md (IDs 536-543) ✅
 
 | Request | Neue Response | ID | Status |
 |---------|---------------|-----|--------|
-| ItemMove | ItemMoveResponse | 520 | ✅ |
-| ItemSplit | ItemSplitResponse | 521 | ✅ |
-| ItemUse | ItemUseResponse | 522 | ✅ |
-| ItemDelete | ItemDeleteResponse | 523 | ✅ |
-| ItemStack | ItemStackResponse | 524 | ✅ |
-| ItemSort | ItemSortResponse | 525 | ✅ |
-| ItemLock | ItemLockResponse | 526 | ✅ |
-| BagExpand | BagExpandResponse | 527 | ✅ |
+| ItemMove | ItemMoveResponse | 536 | ✅ |
+| ItemSplit | ItemSplitResponse | 537 | ✅ |
+| ItemUse | ItemUseResponse | 538 | ✅ |
+| ItemDelete | ItemDeleteResponse | 539 | ✅ |
+| ItemStack | ItemStackResponse | 540 | ✅ |
+| ItemSort | ItemSortResponse | 541 | ✅ |
+| ItemLock | ItemLockResponse | 542 | ✅ |
+| BagExpand | BagExpandResponse | 543 | ✅ |
 
 ### 06-character.md (IDs 650-655) ✅
 

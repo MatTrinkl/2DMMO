@@ -70,6 +70,19 @@
   - `ChatChannelPasswordResponse` (444)
   - `ChatChannelMuteResponse` (445)
 
+### Category 05: Inventory (2026-01-02)
+
+- **Fixed:** Message names in docs to match enum (significant discrepancies):
+  - `InventorySync` → `InventoryUpdate`
+  - `ItemAdd` → `InventorySlotUpdate`
+  - `ItemRemove` → `ItemPickup`
+  - And many more...
+- **Added:** Missing response messages to enum (536-543):
+  - `ItemMoveResponse`, `ItemSplitResponse`, `ItemUseResponse`
+  - `ItemDeleteResponse`, `ItemStackResponse`, `ItemSortResponse`
+  - `ItemLockResponse`, `BagExpandResponse`
+- **Fixed:** Response IDs in docs (were 520-527, conflicted with existing entries)
+
 ---
 
 _(Entries will be added as categories are processed)_

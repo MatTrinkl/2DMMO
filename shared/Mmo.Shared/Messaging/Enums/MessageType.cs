@@ -211,6 +211,14 @@ public enum MessageType : ushort
     ItemTooltipRequest = 533,
     ItemTooltipResponse = 534,
     ItemLink = 535,
+    ItemMoveResponse = 536,
+    ItemSplitResponse = 537,
+    ItemUseResponse = 538,
+    ItemDeleteResponse = 539,
+    ItemStackResponse = 540,
+    ItemSortResponse = 541,
+    ItemLockResponse = 542,
+    BagExpandResponse = 543,
 
     // ═══════════════════════════════════════════════════════════════
     // CHARACTER / STATS / PROGRESSION (0600-0699)

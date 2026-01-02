@@ -37,7 +37,7 @@
 | 02 | Movement | 200-299 | 22 | ✅ | Added TeleportResponse (220), JumpResponse (221) |
 | 03 | Combat | 300-399 | 35 | ✅ | Added ThreatListResponse (333), ResurrectionResponse (334) |
 | 04 | Chat | 400-499 | 37 | ✅ | Added response messages (440-445) |
-| 05 | Inventory | 500-599 | 36 | ⏳ | Response IDs need correction |
+| 05 | Inventory | 500-599 | 44 | ✅ | Fixed message names, added responses (536-543) |
 | 06 | Character | 600-699 | 24 | ⏳ | |
 | 07 | Party | 700-799 | 26 | ⏳ | |
 | 08 | Guild | 800-899 | 39 | ⏳ | |

@@ -53,7 +53,7 @@ Das Inventory-System implementiert:
 
 ---
 
-## InventorySync (500)
+## InventoryUpdate (500)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (nur bei Login/Reconnect)  
@@ -182,7 +182,7 @@ Keine - InventorySync kann nicht fehlschlagen (ist initiale Sync)
 
 ---
 
-## ItemAdd (501)
+## InventorySlotUpdate (501)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** ⚡ Sehr häufig (Loot, Crafting, Trading)  
@@ -270,7 +270,7 @@ Keine - Falls kein Platz, wird `InventoryFullNotification` (511) gesendet
 
 ---
 
-## ItemRemove (502)
+## ItemPickup (502)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** ⚡ Sehr häufig (Item-Use, Selling, Crafting)  
@@ -345,7 +345,7 @@ Keine - Server sendet nur bei erfolgreicher Removal
 
 ---
 
-## ItemMove (503)
+## ItemPickupFailed (503)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig (Drag&Drop)  
@@ -453,7 +453,7 @@ var itemSwap = new ItemMove
 
 ---
 
-## ItemSplit (504)
+## ItemDrop (504)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig (Stack-Management)  
@@ -628,7 +628,7 @@ var buffPotion = new ItemUse
 
 ---
 
-## ItemDelete (506)
+## ItemUseResult (506)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -693,7 +693,7 @@ var itemDelete = new ItemDelete
 
 ---
 
-## ItemStack (507)
+## ItemDestroy (507)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -733,7 +733,7 @@ var itemStack = new ItemStack
 
 ---
 
-## ItemSort (508)
+## ItemSplit (508)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -774,7 +774,7 @@ var itemSort = new ItemSort
 
 ---
 
-## ItemLock (509)
+## ItemMerge (509)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -818,7 +818,7 @@ var itemLock = new ItemLock
 
 ---
 
-## BagExpand (510)
+## ItemMove (510)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten (nur via Purchase)  
@@ -884,7 +884,7 @@ var equipBag = new BagExpand
 
 ---
 
-## InventoryFullNotification (511)
+## ItemSwap (511)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig (bei Loot wenn voll)  
@@ -924,7 +924,7 @@ var inventoryFull = new InventoryFullNotification
 
 ---
 
-## ItemMoveResponse (520)
+## ItemMoveResponse (536)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Sehr häufig  
@@ -950,7 +950,7 @@ Antwort auf ItemMove Request. Bestätigt erfolgreiche Item-Bewegung oder gibt Fe
 
 ---
 
-## ItemSplitResponse (521)
+## ItemSplitResponse (537)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -976,7 +976,7 @@ Antwort auf ItemSplit Request. Bestätigt erfolgreichen Stack-Split oder gibt Fe
 
 ---
 
-## ItemUseResponse (522)
+## ItemUseResponse (538)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -1004,7 +1004,7 @@ Antwort auf ItemUse Request. Bestätigt erfolgreiche Item-Nutzung oder gibt Fehl
 
 ---
 
-## ItemDeleteResponse (523)
+## ItemDeleteResponse (539)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1029,7 +1029,7 @@ Antwort auf ItemDelete Request. Bestätigt erfolgreiche Item-Löschung oder gibt
 
 ---
 
-## ItemStackResponse (524)
+## ItemStackResponse (540)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -1054,7 +1054,7 @@ Antwort auf ItemStack Request. Bestätigt erfolgreiches Stack-Merge oder gibt Fe
 
 ---
 
-## ItemSortResponse (525)
+## ItemSortResponse (541)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1073,7 +1073,7 @@ Antwort auf ItemSort Request. Bestätigt erfolgreiche Sortierung oder gibt Fehle
 
 ---
 
-## ItemLockResponse (526)
+## ItemLockResponse (542)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1098,7 +1098,7 @@ Antwort auf ItemLock Request. Bestätigt erfolgreiche Lock-Änderung oder gibt F
 
 ---
 
-## BagExpandResponse (527)
+## BagExpandResponse (543)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Sehr selten  
