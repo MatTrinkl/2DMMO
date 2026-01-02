@@ -109,7 +109,7 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 50 | S2S | 5000-5999 | TBD | ⏳ | Server-to-Server |
+| 50 | S2S | 5000-5999 | 0 (planned) | ✅ | Server-to-Server - not in enum yet, docs aligned |
 
 ---
 
