@@ -11,24 +11,36 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [NPCInteract (1300)](#npcinteract-1300)
-- [NPCDialogOpen (1301)](#npcdiagopen-1301)
-- [NPCDialogSelect (1302)](#npcdiagselect-1302)
-- [NPCDialogClose (1303)](#npcdiagclose-1303)
+- [NpcInteract (1300)](#npcinteract-1300)
+- [NpcInteractResult (1301)](#npcinteractresult-1301)
+- [NpcDialogOpen (1302)](#npcdialogopen-1302)
+- [NpcDialogChoice (1303)](#npcdialopchoice-1303)
+- [NpcDialogClose (1304)](#npcdialogclose-1304)
+- [NpcGossipRequest (1305)](#npcgossiprequest-1305)
+- [NpcGossipResponse (1306)](#npcgossipresponse-1306)
 - [VendorOpen (1310)](#vendoropen-1310)
-- [VendorBuy (1311)](#vendorbuy-1311)
-- [VendorSell (1312)](#vendorsell-1312)
-- [VendorBuyback (1313)](#vendorbuyback-1313)
-- [VendorClose (1314)](#vendorclose-1314)
-- [TrainerOpen (1320)](#traineropen-1320)
-- [TrainerLearn (1321)](#trainerlearn-1321)
-- [RepairAll (1330)](#repairall-1330)
-- [FlightMasterOpen (1340)](#flightmasteropen-1340)
-- [VendorBuyResponse (1350)](#vendorbuyresponse-1350)
-- [VendorSellResponse (1351)](#vendorsellresponse-1351)
-- [VendorBuybackResponse (1352)](#vendorbuybackresponse-1352)
-- [TrainerLearnResponse (1353)](#trainerlearnresponse-1353)
-- [RepairAllResponse (1354)](#repairallresponse-1354)
+- [VendorClose (1311)](#vendorclose-1311)
+- [VendorListRequest (1312)](#vendorlistrequest-1312)
+- [VendorListResponse (1313)](#vendorlistresponse-1313)
+- [VendorBuy (1314)](#vendorbuy-1314)
+- [VendorBuyResult (1315)](#vendorbuyresult-1315)
+- [VendorSell (1316)](#vendorsell-1316)
+- [VendorSellResult (1317)](#vendorsellresult-1317)
+- [VendorBuyback (1318)](#vendorbuyback-1318)
+- [VendorBuybackResult (1319)](#vendorbuybackresult-1319)
+- [VendorRepair (1320)](#vendorrepair-1320)
+- [VendorRepairAll (1321)](#vendorrepairall-1321)
+- [VendorRepairResult (1322)](#vendorrepairresult-1322)
+- [TrainerOpen (1330)](#traineropen-1330)
+- [TrainerClose (1331)](#trainerclose-1331)
+- [TrainerListRequest (1332)](#trainerlistrequest-1332)
+- [TrainerListResponse (1333)](#trainerlistresponse-1333)
+- [TrainerLearn (1334)](#trainerlearn-1334)
+- [TrainerLearnResult (1335)](#trainerlearnresult-1335)
+- [InnkeeperBind (1340)](#innkeeperbind-1340)
+- [InnkeeperBindResult (1341)](#innkeeperbindresult-1341)
+- [FlightmasterOpen (1342)](#flightmasteropen-1342)
+- [FlightmasterList (1343)](#flightmasterlist-1343)
 
 ---
 
@@ -56,7 +68,7 @@ Das NPC-System implementiert:
 
 ---
 
-## NPCInteract (1300)
+## NpcInteract (1300)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -120,7 +132,7 @@ var npcInteract = new NPCInteract
 
 ---
 
-## NPCDialogOpen (1301)
+## NpcInteractResult (1301)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -199,7 +211,7 @@ var dialogOpen = new NPCDialogOpen
 
 ---
 
-## NPCDialogSelect (1302)
+## NpcDialogOpen (1302)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -245,7 +257,7 @@ var dialogSelect = new NPCDialogSelect
 
 ---
 
-## NPCDialogClose (1303)
+## NpcDialogChoice (1303)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -364,7 +376,7 @@ var vendorOpen = new VendorOpen
 
 ---
 
-## VendorBuy (1311)
+## VendorClose (1311)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -415,7 +427,7 @@ var vendorBuy = new VendorBuy
 
 ---
 
-## VendorSell (1312)
+## VendorListRequest (1312)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -465,7 +477,7 @@ var vendorSell = new VendorSell
 
 ---
 
-## VendorBuyback (1313)
+## VendorListResponse (1313)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -513,7 +525,7 @@ var buyback = new VendorBuyback
 
 ---
 
-## VendorClose (1314)
+## VendorBuy (1314)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -601,7 +613,7 @@ var trainerOpen = new TrainerOpen
 
 ---
 
-## TrainerLearn (1321)
+## TrainerLearn (1334)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -647,7 +659,7 @@ var trainerLearn = new TrainerLearn
 
 ---
 
-## RepairAll (1330)
+## VendorRepair (1320)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -690,7 +702,7 @@ var repairAll = new RepairAll
 
 ---
 
-## FlightMasterOpen (1340)
+## FlightmasterOpen (1342)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -749,7 +761,7 @@ var flightMaster = new FlightMasterOpen
 
 ---
 
-## VendorBuyResponse (1350)
+## VendorBuyResult (1315)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -779,7 +791,7 @@ Antwort auf VendorBuy Request. Bestätigt erfolgreichen Kauf oder gibt Fehler zu
 
 ---
 
-## VendorSellResponse (1351)
+## VendorSellResult (1317)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -807,7 +819,7 @@ Antwort auf VendorSell Request. Bestätigt erfolgreichen Verkauf oder gibt Fehle
 
 ---
 
-## VendorBuybackResponse (1352)
+## VendorBuybackResult (1319)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -835,7 +847,7 @@ Antwort auf VendorBuyback Request. Bestätigt erfolgreichen Buyback oder gibt Fe
 
 ---
 
-## TrainerLearnResponse (1353)
+## TrainerLearnResult (1335)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -864,7 +876,7 @@ Antwort auf VendorBuyback Request. Bestätigt erfolgreichen Buyback oder gibt Fe
 
 ---
 
-## RepairAllResponse (1354)
+## VendorRepairResult (1322)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  

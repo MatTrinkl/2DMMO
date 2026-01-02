@@ -435,6 +435,12 @@ public enum MessageType : ushort
     TabTarget = 1214,
     NearestEnemyTarget = 1215,
     NearestFriendTarget = 1216,
+    TargetSelectResponse = 1220,
+    AssistTargetResponse = 1221,
+    MarkTargetResponse = 1222,
+    TabTargetResponse = 1223,
+    NearestEnemyTargetResponse = 1224,
+    NearestFriendTargetResponse = 1225,
 
     // ═══════════════════════════════════════════════════════════════
     // NPC / DIALOG / VENDOR (1300-1399)

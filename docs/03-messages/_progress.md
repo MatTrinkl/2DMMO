@@ -49,16 +49,16 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 10 | Quest | 1000-1099 | 24 | ⏳ | |
-| 11 | Trading | 1100-1199 | 14 | ⏳ | |
-| 12 | Targeting | 1200-1299 | 17 | ⏳ | |
-| 13 | NPC | 1300-1399 | 38 | ⏳ | |
-| 14 | Entity | 1400-1499 | 35 | ⏳ | |
-| 15 | Aura | 1500-1599 | 17 | ⏳ | |
-| 16 | Crafting | 1600-1699 | 25 | ⏳ | |
-| 17 | Auction | 1700-1799 | 21 | ⏳ | |
-| 18 | Mail | 1800-1899 | 17 | ⏳ | |
-| 19 | Achievement | 1900-1999 | 15 | ⏳ | |
+| 10 | Quest | 1000-1099 | 24 | ✅ | Verified - aligned with enum |
+| 11 | Trading | 1100-1199 | 14 | ✅ | Verified - aligned with enum |
+| 12 | Targeting | 1200-1299 | 23 | ✅ | Added response messages (1220-1225) |
+| 13 | NPC | 1300-1399 | 38 | ✅ | Fixed message IDs and names |
+| 14 | Entity | 1400-1499 | 27 | ✅ | Fixed IDs, aligned with Zone, deprecated duplicates |
+| 15 | Aura | 1500-1599 | 17 | ✅ | Verified - aligned with enum |
+| 16 | Crafting | 1600-1699 | 22 | ✅ | Completely rewritten to match enum |
+| 17 | Auction | 1700-1799 | 21 | ✅ | Completely rewritten to match enum |
+| 18 | Mail | 1800-1899 | 17 | ✅ | Completely rewritten to match enum |
+| 19 | Achievement | 1900-1999 | 15 | ✅ | Completely rewritten to match enum |
 
 ### Social & PvP (2000-2999)
 

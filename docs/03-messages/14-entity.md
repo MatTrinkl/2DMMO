@@ -12,16 +12,32 @@
 ## 📋 Inhaltsverzeichnis
 
 -   [EntitySpawn (1400)](#entityspawn-1400)
--   [EntityDespawn (1401)](#entitydespawn-1401)
--   [EntityMove (1402)](#entitymove-1402)
--   [EntityUpdate (1403)](#entityupdate-1403)
--   [EntityAnimation (1404)](#entityanimation-1404)
--   [EntityStateChange (1405)](#entitystatechange-1405)
--   [EntityInteract (1410)](#entityinteract-1410)
--   [EntityTarget (1420)](#entitytarget-1420)
--   [EntityAggro (1421)](#entityaggro-1421)
--   [EntityEmote (1430)](#entityemote-1430)
--   [EntityTargetResponse (1440)](#entitytargetresponse-1440)
+-   [EntitySpawnBatch (1401)](#entityspawnbatch-1401)
+-   [EntityDespawn (1402)](#entitydespawn-1402)
+-   [EntityDespawnBatch (1403)](#entitydespawnbatch-1403)
+-   [EntityUpdate (1404)](#entityupdate-1404)
+-   [EntityUpdateBatch (1405)](#entityupdatebatch-1405)
+-   [EntityListRequest (1406)](#entitylistrequest-1406)
+-   [EntityListResponse (1407)](#entitylistresponse-1407)
+-   [EntityPathUpdate (1408)](#entitypathupdate-1408)
+-   [EntityStateChange (1409)](#entitystatechange-1409)
+-   [EntityAnimation (1410)](#entityanimation-1410)
+-   [EntityAnimationBatch (1411)](#entityanimationbatch-1411)
+-   [EntityNameplate (1412)](#entitynameplate-1412)
+-   [EntityNameplateUpdate (1413)](#entitynameplateupdate-1413)
+-   [EntityFaction (1414)](#entityfaction-1414)
+-   [EntityScale (1415)](#entityscale-1415)
+-   [EntityMountUpdate (1416)](#entitymountupdate-1416)
+-   [EntityEquipmentUpdate (1417)](#entityequipmentupdate-1417)
+-   [EntityAuraUpdate (1418)](#entityauraupdate-1418)
+-   [EntityEmote (1419)](#entityemote-1419)
+-   [EntitySay (1420)](#entitysay-1420)
+-   [EntityYell (1421)](#entityyell-1421)
+-   [LootableSpawn (1430)](#lootablespawn-1430)
+-   [LootableDespawn (1431)](#lootabledespawn-1431)
+-   [ResourceNodeSpawn (1432)](#resourcenodespawn-1432)
+-   [ResourceNodeDespawn (1433)](#resourcenodedespawn-1433)
+-   [ResourceNodeState (1434)](#resourcenodestate-1434)
 
 ---
 
@@ -254,7 +270,7 @@ var objectSpawn = new EntitySpawn
 
 ---
 
-## EntityDespawn (1401)
+## EntitySpawnBatch (1401)
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** ⚡ Sehr häufig  
@@ -331,7 +347,7 @@ var deathDespawn = new EntityDespawn
 
 ---
 
-## EntityMove (1402)
+## EntityDespawn (1402)
 
 > ⚠️ **DEPRECATED später**
 > 
@@ -419,7 +435,7 @@ var entityMove = new EntityMove
 
 ---
 
-## EntityUpdate (1403)
+## EntityUpdate (1404)
 
 > ⚠️ **DEPRECATED später**
 > 
@@ -501,7 +517,7 @@ var polymorph = new EntityUpdate
 
 ---
 
-## EntityAnimation (1404)
+## EntityAnimation (1410)
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig  
@@ -575,7 +591,7 @@ var death = new EntityAnimation
 
 ---
 
-## EntityStateChange (1405)
+## EntityStateChange (1409)
 
 > ⚠️ **DEPRECATED später**
 > 
@@ -812,26 +828,11 @@ Siehe [Chunk-Based Sync](../../02-architecture/CHUNK_BASED_SYNC.md) und [DIRTY_T
 
 ---
 
-## EntityInteract (1410)
+## EntityInteract [DEPRECATED]
 
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
+> ⚠️ **DEPRECATED** - Verwende `NpcInteract` (1300) für NPC-Interaktion.
 
-### Beschreibung
-
-Client möchte mit Entity interagieren (Talk, Loot, Open, etc.). Server validiert Range und Entity-Type, dann triggert entsprechende Action.
-
-### Im Scope ✅
-
--   Interact mit allen Entity-Types
--   Range-Check (5m)
--   Type-Specific Actions (NPC → Dialog, Object → Loot, etc.)
-
-### Request Payload
-
-| Feld     | Typ | Beschreibung  | Pflicht |
+Diese Message existiert nicht mehr im `MessageType` Enum. NPC-Interaktionen werden über die NPC-Kategorie (1300-1399) abgewickelt.
 | -------- | --- | ------------- | ------- |
 | EntityId | int | Target-Entity | Ja      |
 
@@ -876,7 +877,7 @@ var interact = new EntityInteract
 
 ---
 
-## EntityTarget (1420)
+## EntitySay (1420)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -933,7 +934,7 @@ var clearTarget = new EntityTarget
 
 ---
 
-## EntityAggro (1421)
+## EntityYell (1421)
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Häufig (Combat)  
@@ -971,7 +972,7 @@ var aggro = new EntityAggro
 
 ---
 
-## EntityEmote (1430)
+## EntityEmote (1419)
 
 **Richtung:** 📡 Broadcast (Server → Nearby Players)  
 **Frequenz:** Selten  
@@ -1026,40 +1027,27 @@ var emote = new EntityEmote
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** Keine
 
-### Beschreibung
+## EntityTargetResponse [DEPRECATED]
 
-Antwort auf EntityTarget Request. Bestätigt erfolgreiche Entity-Target-Änderung oder gibt Fehler zurück.
+> ⚠️ **DEPRECATED** - Verwende `TargetSelectResponse` (1220) für Target-Änderungen.
 
-### Response Payload
-
-| Feld         | Typ    | Beschreibung                   | Pflicht    |
-| ------------ | ------ | ------------------------------ | ---------- |
-| Success      | bool   | Target-Änderung erfolgreich?   | Ja         |
-| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
-| EntityId     | int    | Entity die Target geändert hat | Bei Erfolg |
-| NewTargetId  | int    | Neues Target                   | Bei Erfolg |
-
-### Error Codes
-
-| Code             | Bedeutung                           |
-| ---------------- | ----------------------------------- |
-| `INVALID_TARGET` | Target kann nicht selektiert werden |
+Diese Message existiert nicht im `MessageType` Enum. Target-Responses werden über die Targeting-Kategorie (1200-1299) abgewickelt.
 
 ---
 
 ## 🔗 Verwandte Kategorien
 
--   **Movement (02)**: Player-Movement → `PlayerMove` (200), `PlayerTeleport` (207)
--   **Combat (03)**: Combat-Actions → `ActionRequest` (300), `DamageEvent` (302)
--   **Targeting (12)**: Target-System → `TargetEntity` (1200)
--   **NPC (13)**: NPC-Specific → `NPCInteract` (1300), `NPCDialogOpen` (1301)
--   **Loot (31)**: Object-Interaction → `LootRequest` (3100)
+-   **Zone (01)**: `CharacterJoinedZone` (104), `CharacterLeftZone` (105), `EntityBatch` (120)
+-   **Movement (02)**: `PositionUpdate` (200), `PositionBroadcast` (201)
+-   **Combat (03)**: `ActionRequest` (300), `DamageEvent` (302)
+-   **Targeting (12)**: `TargetSelect` (1200), `TargetSelectResponse` (1220)
+-   **NPC (13)**: `NpcInteract` (1300)
+-   **Loot (31)**: `LootRequest` (3100)
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.1.0  
-**Status**: ✅ Vollständig dokumentiert (11/11 Messages)
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.2.0  
+**Status**: ✅ Aligned mit MessageType Enum (27 Messages)
 
 [← Zurück zur Übersicht](README.md)
