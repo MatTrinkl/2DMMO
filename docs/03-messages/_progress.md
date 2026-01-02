@@ -10,21 +10,30 @@
 
 ## 📋 Legend
 
-- ✅ **Done** - Category fully aligned (enum + docs match)
-- 🔄 **In Progress** - Currently being worked on
-- ⏳ **Todo** - Not yet started
-- ⚠️ **Issues Found** - Discrepancies identified
+### Alignment Phase (Complete)
+- ✅ **Aligned** - Category enum + docs IDs match
+
+### Detail Pass Phase (Current)
+- 🔵 **Detail Done** - All messages have full template sections
+- 🔄 **In Detail Pass** - Currently being detailed
+- ⏳ **Detail Todo** - Needs full template elaboration
 
 ---
 
 ## 📈 Overall Progress
 
-| Range | Status | Categories |
-|-------|--------|------------|
-| Core (0-9) | ✅ | 10 categories |
-| Extended (10-29) | ⏳ | ~20 categories |
-| Advanced (30-49) | ⏳ | ~20 categories |
-| Reserved/Debug (47-50) | ⏳ | 4 categories |
+**Phase 1: Alignment** - ✅ COMPLETE (All 51 categories aligned)
+
+**Phase 2: Detail Pass** - 🔄 IN PROGRESS
+
+| Range | Alignment | Detail Pass | Categories |
+|-------|-----------|-------------|------------|
+| Core (0-9) | ✅ | 🔄 Batch 1 | 10 categories |
+| Extended (10-19) | ✅ | ⏳ Batch 2 | 10 categories |
+| Social (20-29) | ✅ | ⏳ Batch 3 | 10 categories |
+| Advanced (30-39) | ✅ | ⏳ Batch 4 | 10 categories |
+| Extended (40-49) | ✅ | ⏳ Batch 5 | 10 categories |
+| S2S (50) | ✅ | 📋 Geplant | 1 category |
 
 ---
 
