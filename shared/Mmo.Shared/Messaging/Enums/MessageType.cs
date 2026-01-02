@@ -885,8 +885,10 @@ public enum MessageType : ushort
     PvpSeasonReward = 2814,
     MythicRankingRequest = 2820,
     MythicRankingResponse = 2821,
-    RaidProgressRanking = 2822,
-    AchievementRanking = 2823,
+    RaidProgressRankingRequest = 2822,
+    RaidProgressRankingResponse = 2823,
+    AchievementRankingRequest = 2824,
+    AchievementRankingResponse = 2825,
 
     // ═══════════════════════════════════════════════════════════════
     // TUTORIAL / GUIDE SYSTEM (2900-2999)
