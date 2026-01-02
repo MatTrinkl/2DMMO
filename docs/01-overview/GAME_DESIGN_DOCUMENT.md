@@ -2,77 +2,77 @@
 
 ## 2DMMO – High Fantasy MMO
 
-**Version:** 0.3.0  
-**Letzte Aktualisierung:** 2025-12-02  
-**Status:** In Entwicklung
+**Version:** 0.4.0  
+**Last Updated:** 2026-01-01  
+**Status:** In Development
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## 📋 Table of Contents
 
-1. [Vision & Überblick](#1-vision--überblick)  
-2. [Technische Architektur](#2-technische-architektur)  
-3. [Gameplay-Systeme](#3-gameplay-systeme)  
-4. [Rassen & Klassen](#4-rassen--klassen)  
-5. [Welt-Design](#5-welt-design)  
+1. [Vision & Overview](#1-vision--overview)  
+2. [Technical Architecture](#2-technical-architecture)  
+3. [Gameplay Systems](#3-gameplay-systems)  
+4. [Races & Classes](#4-races--classes)  
+5. [World Design](#5-world-design)  
 6. [Progression](#6-progression)  
-7. [Datenbank-Schema](#7-datenbank-schema)  
+7. [Database Schema](#7-database-schema)  
 8. [Art Direction & UI](#8-art-direction--ui)  
-9. [Meilensteine](#9-meilensteine)  
-10. [Offene Fragen](#10-offene-fragen)
+9. [Milestones](#9-milestones)  
+10. [Open Questions](#10-open-questions)
 
 ---
 
-## 1. Vision & Überblick
+## 1. Vision & Overview
 
 ### 1.1 Elevator Pitch
 
-> Ein 2D Top-Down MMO in einer High-Fantasy-Welt, inspiriert von Klassikern wie World of Warcraft und Guild Wars. Spieler erkunden eine lebendige Welt voller verschiedenster Völker, bekämpfen Monster, schließen sich Gilden an und erleben epische Abenteuer – alles in einem charmanten hochauflösenden Pixel-Art-Stil.
+> A 2D top-down MMO in a high-fantasy world, inspired by classics like World of Warcraft and Guild Wars. Players explore a living world full of diverse races, fight monsters, join guilds, and experience epic adventures – all in a charming high-resolution pixel art style.
 
-### 1.2 Kernfeatures
+### 1.2 Core Features
 
-| Feature | Beschreibung | Status |
-|---------|--------------|--------|
-| **Multiplayer-Welt** | Unbegrenzte Spieleranzahl durch Zone-Sharding | 🔄 In Planung |
-| **Rassen & Klassen** | Vielfältige spielbare Völker und Klassen | 📝 Konzept |
-| **Kampfsystem** | Klassisches Tank/Healer/DPS-System | 📝 Konzept |
-| **Persistente Welt** | Alle Fortschritte werden in Postgres gespeichert | 🔄 In Planung |
-| **Zonen-basierte Welt** | Dynamisch ladende Zonen (WoW-Style) | 📝 Konzept |
-| **PvP-Flagging** | Optionales PvP durch Flagging-System | 📝 Konzept |
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Multiplayer World** | Unlimited player count through zone sharding | 🔄 In Planning |
+| **Races & Classes** | Diverse playable races and classes | 📝 Concept |
+| **Combat System** | Classic Tank/Healer/DPS system | 📝 Concept |
+| **Persistent World** | All progress is saved in Postgres | 🔄 In Planning |
+| **Zone-based World** | Dynamically loading zones (WoW-style) | 📝 Concept |
+| **PvP Flagging** | Optional PvP through flagging system | 📝 Concept |
 
-### 1.3 Zielgruppe
+### 1.3 Target Audience
 
-- Fans klassischer MMORPGs  
-- Spieler, die nostalgischen 2D-Grafikstil schätzen  
-- Casual bis Mid-Core Spieler
+- Fans of classic MMORPGs  
+- Players who appreciate nostalgic 2D graphics  
+- Casual to mid-core players
 
 ### 1.4 Unique Selling Points (USPs)
 
-1. **Vielfalt der Völker** – Weit mehr als nur Menschen und klassische Fantasy-Rassen  
-2. **2D-Charme** – Hochauflösende Pixel Art (64x64) mit modernem Gameplay  
-3. **Skalierbarkeit** – Von Anfang an auf große Spielerzahlen ausgelegt
+1. **Diversity of Races** – Far more than just humans and classic fantasy races  
+2. **2D Charm** – High-resolution pixel art (64x64) with modern gameplay  
+3. **Scalability** – Designed for large player counts from the start
 
 ---
 
-## 2. Technische Architektur
+## 2. Technical Architecture
 
-> **Hinweis:** Detaillierte technische Dokumentation siehe [ARCHITECTURE.md](./ARCHITECTURE.md)
+> **Note:** Detailed technical documentation see [ARCHITECTURE.md](./ARCHITECTURE.md)
 
-### 2.1 Tech-Stack
+### 2.1 Tech Stack
 
-| Komponente | Technologie | Version |
-|-----------|-------------|---------|
+| Component | Technology | Version |
+|-----------|------------|---------|
 | **Game Client** | Godot Engine | 4.3 (.NET Edition) |
-| **Client-Sprache** | C# | 14 |
+| **Client Language** | C# | 14 |
 | **Game Server** | .NET | 10 |
 | **Shared Library** | .NET Class Library | 10 |
 | **Transport** | TCP + TLS | - |
-| **Serialisierung** | MessagePack | Latest |
-| **Datenbank** | PostgreSQL | 16+ |
+| **Serialization** | MessagePack | Latest |
+| **Database** | PostgreSQL | 16+ |
 | **Cache** | Redis | 7+ |
-| **Cloud-Hosting** | Microsoft Azure | Germany West Central |
+| **Cloud Hosting** | Microsoft Azure | Germany West Central |
 
-### 2.2 Architektur-Übersicht
+### 2.2 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -91,7 +91,7 @@
 │                          │                                       │
 │                 ┌────────┴────────┐                              │
 │                 │   PostgreSQL    │                              │
-│                 │   (Persistenz)  │                              │
+│                 │  (Persistence)  │                              │
 │                 └─────────────────┘                              │
 └─────────────────────────────────────────────────────────────────┘
                            │
@@ -103,38 +103,38 @@
          └─────────┘  └─────────┘  └─────────┘
 ```
 
-### 2.3 Zone-Sharding-Konzept
+### 2.3 Zone Sharding Concept
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SPIELWELT                             │
+│                    GAME WORLD                            │
 │                                                          │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
 │  │ Zone A   │  │ Zone B   │  │ Zone C   │               │
-│  │ (Wald)   │──│ (Stadt)  │──│ (Wüste)  │               │
+│  │ (Forest) │──│ (City)   │──│ (Desert) │               │
 │  │ Shard 1  │  │ Shard 1  │  │ Shard 1  │               │
 │  │ Shard 2  │  │ Shard 2  │  │          │               │
 │  │ Shard 3  │  │          │  │          │               │
 │  └──────────┘  └──────────┘  └──────────┘               │
 │                                                          │
-│  → Shards werden dynamisch erstellt bei hoher Last      │
-│  → Spieler können zwischen Shards wechseln              │
-│  → Gilden/Gruppen werden bevorzugt auf gleichem Shard   │
+│  → Shards are created dynamically under high load       │
+│  → Players can switch between shards                    │
+│  → Guilds/groups are preferably on the same shard       │
 │                                                          │
-│  Prototyp: Sharding-ready, aber nur 1 Shard aktiv       │
+│  Prototype: Sharding-ready, but only 1 shard active     │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2.4 Netzwerk-Nachrichten (Shared DTOs)
+### 2.4 Network Messages (Shared DTOs)
 
-Bereits implementiert/geplant:
-- `PlayerPositionUpdate` – Spielerposition synchronisieren
-- `ChatMessage` – Chat-Nachrichten
-- `ActionRequest/ActionResult` – Kampf-Aktionen
+Already implemented/planned:
+- `PlayerPositionUpdate` – Synchronize player position
+- `ChatMessage` – Chat messages
+- `ActionRequest/ActionResult` – Combat actions
 
 ---
 
-## 3. Gameplay-Systeme
+## 3. Gameplay Systems
 
 ### 3.1 Core Gameplay Loop
 
@@ -142,251 +142,251 @@ Bereits implementiert/geplant:
 ┌─────────────────────────────────────────────────────────┐
 │                                                          │
 │   ┌─────────┐    ┌─────────┐    ┌─────────┐             │
-│   │ ERKUNDEN│───▶│ KÄMPFEN │───▶│  LOOTEN │             │
+│   │ EXPLORE │───▶│  FIGHT  │───▶│  LOOT   │             │
 │   └─────────┘    └─────────┘    └─────────┘             │
 │        ▲                              │                  │
 │        │         ┌─────────┐          │                  │
-│        │         │ LEVELN/ │          │                  │
-│        └─────────│ UPGRADEN│◀─────────┘                  │
+│        │         │ LEVEL/  │          │                  │
+│        └─────────│ UPGRADE │◀─────────┘                  │
 │                  └─────────┘                             │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Kampfsystem
+### 3.2 Combat System
 
-**Typ:** Klassisches Tab-Targeting (vorerst)
+**Type:** Classic tab-targeting (for now)
 
-| Rolle | Beschreibung | Beispiel-Klassen |
-|-------|--------------|------------------|
-| **Tank** | Zieht Aggro, hohe Rüstung, schützt die Gruppe | Krieger, Paladin |
-| **Healer** | Heilt Verbündete, Buffs, Debuff-Entfernung | Priester, Druide |
-| **DPS** | Hoher Schaden, Melee oder Ranged | Magier, Schurke, Jäger |
+| Role | Description | Example Classes |
+|------|-------------|-----------------|
+| **Tank** | Draws aggro, high armor, protects the group | Warrior, Paladin |
+| **Healer** | Heals allies, buffs, debuff removal | Priest, Druid |
+| **DPS** | High damage, melee or ranged | Mage, Rogue, Hunter |
 
-**Kampf-Ablauf:**
-1. Spieler wählt Ziel (Tab oder Klick)
-2. Spieler aktiviert Fähigkeit (Hotbar)
-3. Client sendet `ActionRequest` an Server
-4. Server validiert (Range, Cooldown, Mana, etc.)
-5. Server berechnet Schaden/Effekt
-6. Server sendet `ActionResult` an alle betroffenen Clients
-7. Clients zeigen Visualisierung (Animation, Damage-Zahlen)
+**Combat Flow:**
+1. Player selects target (Tab or click)
+2. Player activates ability (hotbar)
+3. Client sends `ActionRequest` to server
+4. Server validates (range, cooldown, mana, etc.)
+5. Server calculates damage/effect
+6. Server sends `ActionResult` to all affected clients
+7. Clients display visualization (animation, damage numbers)
 
-### 3.3 PvP-System
+### 3.3 PvP System
 
-**Typ:** Flagging-System (Optional PvP)
+**Type:** Flagging system (optional PvP)
 
-| Status | Beschreibung | Regeln |
-|--------|--------------|--------|
-| **Unflagged** | PvP deaktiviert (Standard) | Kann nicht angegriffen werden, kann nicht angreifen |
-| **Flagged** | PvP aktiviert | Kann von anderen Flagged-Spielern angegriffen werden | 
+| Status | Description | Rules |
+|--------|-------------|-------|
+| **Unflagged** | PvP disabled (default) | Cannot be attacked, cannot attack |
+| **Flagged** | PvP enabled | Can be attacked by other flagged players | 
 
-**Flagging-Regeln:**
-- Spieler kann PvP-Flag jederzeit aktivieren (sofort aktiv)
-- Deaktivierung erst nach 5 Minuten ohne Kampf möglich
-- Angriff auf Flagged-Spieler flaggt automatisch
-- Spezielle PvP-Zonen können automatisches Flagging erzwingen
+**Flagging Rules:**
+- Player can activate PvP flag at any time (immediately active)
+- Deactivation only possible after 5 minutes without combat
+- Attacking a flagged player automatically flags you
+- Special PvP zones can enforce automatic flagging
 
-### 3.4 Tod & Respawn-System
+### 3.4 Death & Respawn System
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SPIELER STIRBT                        │
+│                    PLAYER DIES                           │
 │                          │                               │
 │                          ▼                               │
 │              ┌───────────────────────┐                   │
-│              │   Geist-Modus aktiv   │                   │
-│              │  (Unsichtbar, kann    │                   │
-│              │   nicht interagieren) │                   │
+│              │   Ghost Mode Active   │                   │
+│              │  (Invisible, cannot   │                   │
+│              │   interact)           │                   │
 │              └───────────┬───────────┘                   │
 │                          │                               │
 │         ┌────────────────┼────────────────┐              │
 │         ▼                                 ▼              │
 │  ┌──────────────┐                 ┌──────────────┐       │
-│  │ GEISTERLAUF  │                 │  FRIEDHOF-   │       │
+│  │  GHOST RUN   │                 │  GRAVEYARD   │       │
 │  │              │                 │  RESPAWN     │       │
-│  │ Laufe zur    │                 │              │       │
-│  │ Leiche zurück│                 │ Sofort am    │       │
-│  │              │                 │ Friedhof     │       │
-│  │ ✓ Kein Debuff│                 │              │       │
-│  │ ✓ Volle HP   │                 │ ✗ Debuff:    │       │
-│  └──────────────┘                 │   "Schwäche" │       │
-│                                   │   (2 Min)    │       │
+│  │ Run back to  │                 │              │       │
+│  │ your corpse  │                 │ Instant at   │       │
+│  │              │                 │ graveyard    │       │
+│  │ ✓ No debuff  │                 │              │       │
+│  │ ✓ Full HP    │                 │ ✗ Debuff:    │       │
+│  └──────────────┘                 │   "Weakness" │       │
+│                                   │   (2 min)    │       │
 │                                   │ ✗ 50% HP     │       │
 │                                   └──────────────┘       │
 └─────────────────────────────────────────────────────────┘
 ```
 
 **Open World:**
-- **Option A: Geisterlauf** – Spieler läuft als Geist zur Leiche, volle Wiederbelebung
-- **Option B: Friedhof-Respawn** – Sofort am nächsten Friedhof mit Debuff "Schwäche" (2 Min, -25% Stats)
+- **Option A: Ghost Run** – Player runs as ghost to corpse, full resurrection
+- **Option B: Graveyard Respawn** – Instant at nearest graveyard with "Weakness" debuff (2 min, -25% stats)
 
-**Instanzen & Raids:**
-- Respawn immer am Instanz-Eingang
-- Kein Geisterlauf möglich
-- Gruppe kann wipen und neu starten
+**Instances & Raids:**
+- Respawn always at instance entrance
+- No ghost run possible
+- Group can wipe and restart
 
-### 3.5 Geplante Systeme (Post-Prototyp)
+### 3.5 Planned Systems (Post-Prototype)
 
-- [ ] Gruppen-System (5er Gruppen)
-- [ ] Dungeons (instanzierte Bereiche)
-- [ ] PvP-Arenen
+- [ ] Party system (5-player groups)
+- [ ] Dungeons (instanced areas)
+- [ ] PvP arenas
 - [ ] Crafting
-- [ ] Auktionshaus
+- [ ] Auction house
 - [ ] Achievements
 - [ ] Mounts
 
 ---
 
-## 4. Rassen & Klassen
+## 4. Races & Classes
 
-### 4.1 Spielbare Rassen (Phase 1 – Klassisch)
+### 4.1 Playable Races (Phase 1 – Classic)
 
-| Rasse | Beschreibung | Rassen-Bonus (Idee) |
-|-------|--------------|---------------------|
-| **Menschen** | Vielseitig, gute Diplomaten | +5% XP-Gewinn |
-| **Elfen** | Magisch begabt, langlebig | +5% Mana |
-| **Zwerge** | Robust, Meister-Handwerker | +5% Rüstung |
-| **Orks** | Kriegerisch, stark | +5% Melee-Schaden |
-| **Halblinge** | Flink, glücklich | +5% Ausweichen |
+| Race | Description | Racial Bonus (Idea) |
+|------|-------------|---------------------|
+| **Humans** | Versatile, good diplomats | +5% XP gain |
+| **Elves** | Magically gifted, long-lived | +5% Mana |
+| **Dwarves** | Robust, master craftsmen | +5% Armor |
+| **Orcs** | Warlike, strong | +5% Melee damage |
+| **Halflings** | Quick, lucky | +5% Dodge |
 
-### 4.2 Geplante Rassen (Phase 2+)
+### 4.2 Planned Races (Phase 2+)
 
-> Die Welt soll vielfältiger sein als klassische Fantasy. Geplante Erweiterungen:
+> The world should be more diverse than classic fantasy. Planned expansions:
 
-- Tiermenschen (Katzenvolk, Echsenmenschen, etc.)
-- Elementarwesen
-- Feenvolk
-- Untote (spielbar?)
-- Konstrukte/Golems
-- *Weitere basierend auf Lore-Entwicklung*
+- Beast-folk (Cat people, Lizardmen, etc.)
+- Elemental beings
+- Fae folk
+- Undead (playable?)
+- Constructs/Golems
+- *More based on lore development*
 
-### 4.3 Klassen (Phase 1)
+### 4.3 Classes (Phase 1)
 
-| Klasse | Rolle | Waffen | Kern-Mechanik |
-|--------|-------|--------|---------------|
-| **Krieger** | Tank/DPS | Schwert, Schild, Axt | Rage-System |
-| **Magier** | DPS | Stab, Zauberbuch | Mana, Elementar-Schaden |
-| **Priester** | Healer | Stab, Symbol | Mana, Heil- & Schutz-Zauber |
-| **Schurke** | DPS | Dolche, Wurfwaffen | Energie, Combo-Punkte |
-| **Jäger** | DPS | Bogen, Fallen | Fokus, Pet-System |
+| Class | Role | Weapons | Core Mechanic |
+|-------|------|---------|---------------|
+| **Warrior** | Tank/DPS | Sword, shield, axe | Rage system |
+| **Mage** | DPS | Staff, spellbook | Mana, elemental damage |
+| **Priest** | Healer | Staff, symbol | Mana, healing & protection spells |
+| **Rogue** | DPS | Daggers, thrown weapons | Energy, combo points |
+| **Hunter** | DPS | Bow, traps | Focus, pet system |
 
-### 4.4 Rassen-Klassen-Matrix
+### 4.4 Race-Class Matrix
 
-> Noch offen – wird im Laufe der Entwicklung definiert.
+> Still open – will be defined during development.
 
 ---
 
-## 5. Welt-Design
+## 5. World Design
 
-### 5.1 Welt-Struktur
+### 5.1 World Structure
 
-Die Spielwelt besteht aus **dynamisch ladenden Zonen**, ähnlich wie in World of Warcraft.
+The game world consists of **dynamically loading zones**, similar to World of Warcraft.
 
 ```
                     ┌─────────────────┐
-                    │   STARTGEBIET   │
+                    │  STARTING AREA  │
                     │   (Level 1-10)  │
                     └────────┬────────┘
                              │
               ┌──────────────┼──────────────┐
               │              │              │
      ┌────────┴────┐  ┌──────┴──────┐  ┌────┴────────┐
-     │ WALDGEBIET  │  │  HAUPTSTADT │  │  KÜSTE      │
-     │ (Level 5-15)│  │  (Hub)      │  │ (Level 5-15)│
+     │ FOREST AREA │  │   CAPITAL   │  │   COAST     │
+     │ (Level 5-15)│  │   (Hub)     │  │ (Level 5-15)│
      └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
             │                │                │
             └────────────────┼────────────────┘
                              │
                     ┌────────┴────────┐
-                    │   HOCHLEVEL-    │
-                    │   GEBIETE       │
+                    │   HIGH-LEVEL    │
+                    │     AREAS       │
                     │   (Level 15+)   │
                     └─────────────────┘
 ```
 
-### 5.2 Zonen-Typen
+### 5.2 Zone Types
 
-| Zonen-Typ | Beschreibung | Beispiele |
-|-----------|--------------|-----------|
-| **Startgebiete** | Rassen-spezifisch, Tutorial | Menschendorf, Elfenwald |
-| **Hauptstädte** | Soziale Hubs, Händler, Gilden | Hauptstadt des Reiches |
-| **Levelgebiete** | Quests, Monster, Erkundung | Düsterer Wald, Wüste |
-| **Dungeons** | Instanziert, Gruppen-Content | Verfluchte Mine |
-| **PvP-Zonen** | Automatisches PvP-Flagging | Grenzlande |
+| Zone Type | Description | Examples |
+|-----------|-------------|----------|
+| **Starting Areas** | Race-specific, tutorial | Human village, Elven forest |
+| **Capital Cities** | Social hubs, merchants, guilds | Capital of the realm |
+| **Leveling Areas** | Quests, monsters, exploration | Dark forest, desert |
+| **Dungeons** | Instanced, group content | Cursed mine |
+| **PvP Zones** | Automatic PvP flagging | Borderlands |
 
-### 5.3 Zonen-Übergang
+### 5.3 Zone Transitions
 
-1. Spieler nähert sich Zonen-Grenze
-2. Client lädt neue Zone im Hintergrund vor
-3. Bei Übertritt: Handoff zum neuen Zone-Server
-4. Nahtloser Übergang (kein Ladebildschirm wenn möglich)
+1. Player approaches zone boundary
+2. Client preloads new zone in background
+3. On crossing: handoff to new zone server
+4. Seamless transition (no loading screen if possible)
 
-### 5.4 Fraktionen
+### 5.4 Factions
 
-> **Status:** Noch offen – abhängig von Lore-Entwicklung
+> **Status:** Still open – depends on lore development
 
-Mögliche Optionen:
-- Keine Fraktionen (alle Spieler neutral)
-- 2 Fraktionen (klassisch)
-- Gilden-basierte Fraktionen (Sandbox)
+Possible options:
+- No factions (all players neutral)
+- 2 factions (classic)
+- Guild-based factions (sandbox)
 
 ---
 
 ## 6. Progression
 
-### 6.1 Level-System
+### 6.1 Level System
 
-| Level-Range | Phase | Inhalte |
+| Level Range | Phase | Content |
 |-------------|-------|---------|
-| 1-10 | Tutorial | Startgebiet, Basis-Mechaniken |
-| 11-30 | Leveling | Hauptstory, erste Dungeons |
-| 31-50 | Endgame-Vorbereitung | Gruppen-Content, Crafting |
-| 50 | Endgame | Raids, PvP, Gear-Grind |
+| 1-10 | Tutorial | Starting area, basic mechanics |
+| 11-30 | Leveling | Main story, first dungeons |
+| 31-50 | Endgame preparation | Group content, crafting |
+| 50 | Endgame | Raids, PvP, gear grind |
 
-**XP-Quellen:**
-- Monster besiegen
-- Quests abschließen
+**XP Sources:**
+- Defeating monsters
+- Completing quests
 - Dungeons/Raids
-- Erkundung (Entdeckungs-XP)
+- Exploration (discovery XP)
 
-### 6.2 Gear-System
+### 6.2 Gear System
 
-**Qualitätsstufen:**
+**Quality Tiers:**
 
-| Farbe | Qualität | Drop-Quelle |
-|-------|----------|-------------|
-| ⬜ Grau | Schrott | Überall |
-| ⬛ Weiß | Normal | Normale Monster |
-| 🟩 Grün | Ungewöhnlich | Elite-Monster, Quests |
-| 🟦 Blau | Selten | Dungeon-Bosse |
-| 🟪 Lila | Episch | Raid-Bosse |
-| 🟧 Orange | Legendär | Spezielle Events/Quests |
+| Color | Quality | Drop Source |
+|-------|---------|-------------|
+| ⬜ Gray | Junk | Everywhere |
+| ⬛ White | Normal | Normal monsters |
+| 🟩 Green | Uncommon | Elite monsters, quests |
+| 🟦 Blue | Rare | Dungeon bosses |
+| 🟪 Purple | Epic | Raid bosses |
+| 🟧 Orange | Legendary | Special events/quests |
 
-**Ausrüstungs-Slots:**
-- Kopf, Schultern, Brust, Hände, Beine, Füße
-- Haupthand, Nebenhand/Schild
-- 2x Ringe, 1x Amulett
-- Umhang, Gürtel
+**Equipment Slots:**
+- Head, shoulders, chest, hands, legs, feet
+- Main hand, off-hand/shield
+- 2x rings, 1x amulet
+- Cloak, belt
 
-### 6.3 Stat-System
+### 6.3 Stat System
 
-| Stat | Wirkung | Primär für |
-|------|---------|------------|
-| **Stärke** | Melee-Schaden, Block | Krieger |
-| **Beweglichkeit** | Crit, Ausweichen | Schurke, Jäger |
-| **Intelligenz** | Spell-Schaden, Mana | Magier |
-| **Willenskraft** | Heilkraft, Mana-Reg | Priester |
-| **Ausdauer** | HP | Alle (Tanks besonders) |
-| **Rüstung** | Schadensreduktion | Tanks |
+| Stat | Effect | Primary For |
+|------|--------|-------------|
+| **Strength** | Melee damage, block | Warrior |
+| **Agility** | Crit, dodge | Rogue, Hunter |
+| **Intelligence** | Spell damage, mana | Mage |
+| **Willpower** | Healing power, mana regen | Priest |
+| **Stamina** | HP | All (especially tanks) |
+| **Armor** | Damage reduction | Tanks |
 
 ---
 
-## 7. Datenbank-Schema
+## 7. Database Schema
 
-### 7.1 Entity-Relationship-Diagramm (vereinfacht)
+### 7.1 Entity-Relationship Diagram (Simplified)
 
-> **Hinweis:** Dieses Diagramm zeigt persistente Datenbank-IDs (UUID/Guid). Für das vollständige ID-System inkl. Runtime-IDs (EntityId, ZoneId, ShardId) siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md).
+> **Note:** This diagram shows persistent database IDs (UUID/Guid). For the complete ID system including runtime IDs (EntityId, ZoneId, ShardId) see [ID System Documentation](../02-architecture/ID_SYSTEM.md).
 
 ```
 ┌─────────────┐       ┌─────────────────┐       ┌─────────────┐
@@ -418,7 +418,7 @@ Mögliche Optionen:
                       └─────────────┘
 ```
 
-### 7.2 Tabellen (Phase 1 - Prototyp)
+### 7.2 Tables (Phase 1 - Prototype)
 
 #### `accounts`
 ```sql
@@ -456,10 +456,10 @@ CREATE TABLE characters (
 );
 ```
 
-### 7.3 Tabellen (Phase 2+)
+### 7.3 Tables (Phase 2+)
 
 ```sql
--- Inventar
+-- Inventory
 CREATE TABLE inventory (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     character_id    UUID REFERENCES characters(id) ON DELETE CASCADE,
@@ -469,7 +469,7 @@ CREATE TABLE inventory (
     UNIQUE(character_id, slot)
 );
 
--- Items (Template-Tabelle)
+-- Items (Template table)
 CREATE TABLE items (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name            VARCHAR(100) NOT NULL,
@@ -481,7 +481,7 @@ CREATE TABLE items (
     icon            VARCHAR(255)
 );
 
--- Gilden
+-- Guilds
 CREATE TABLE guilds (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name            VARCHAR(50) UNIQUE NOT NULL,
@@ -490,7 +490,7 @@ CREATE TABLE guilds (
     bank_gold       BIGINT DEFAULT 0
 );
 
--- Gilden-Mitglieder
+-- Guild members
 CREATE TABLE guild_members (
     guild_id        UUID REFERENCES guilds(id) ON DELETE CASCADE,
     character_id    UUID REFERENCES characters(id) ON DELETE CASCADE,
@@ -504,131 +504,132 @@ CREATE TABLE guild_members (
 
 ## 8. Art Direction & UI
 
-### 8.1 Grafik-Stil
+### 8.1 Graphics Style
 
-**Typ:** Hochauflösende Pixel Art (64x64 Basis)
+**Type:** High-resolution pixel art (64x64 base)
 
-| Element | Spezifikation |
+| Element | Specification |
 |---------|---------------|
-| **Tile-Größe** | 64x64 Pixel |
-| **Charakter-Sprites** | 64x64 Pixel (mit Animationen) |
-| **Farbpalette** | Reich und vielfältig, Fantasy-inspiriert |
-| **Animationen** | Smooth, mind. 8 Frames für Bewegung |
+| **Tile Size** | 64x64 pixels |
+| **Character Sprites** | 64x64 pixels (with animations) |
+| **Color Palette** | Rich and diverse, fantasy-inspired |
+| **Animations** | Smooth, at least 8 frames for movement |
 
-**Referenzen:**
-- Höhere Auflösung als klassische 16-bit
-- Detailliert aber noch klar als Pixel Art erkennbar
-- Moderne Beleuchtung/Shader möglich
+**References:**
+- Higher resolution than classic 16-bit
+- Detailed but still clearly recognizable as pixel art
+- Modern lighting/shaders possible
 
-### 8.2 Audio-Konzept
+### 8.2 Audio Concept
 
-> **Status:** 🚧 WIP – Wird später definiert
+> **Status:** 🚧 WIP – Will be defined later
 
-**Richtlinien:**
-- Stil muss zur Pixel Art passen
-- Optionen: Orchestral mit Retro-Elementen ODER Chiptune/Synth
-- Für Prototyp: Placeholder-Sounds
+**Guidelines:**
+- Style must match pixel art
+- Options: Orchestral with retro elements OR chiptune/synth
+- For prototype: Placeholder sounds
 
-### 8.3 UI-Design
+### 8.3 UI Design
 
-**Stil:** Modern Pixel Art UI
+**Style:** Modern pixel art UI
 
-| Element | Beschreibung |
-|---------|--------------|
-| **Allgemein** | Clean, modern, aber im Pixel-Art-Stil |
-| **Hotbar** | Unten zentriert (klassisches MMO-Layout) |
-| **Minimap** | Oben rechts, eckig mit Pixel-Rahmen |
-| **Chat** | Unten links, semi-transparent |
-| **Inventar** | Grid-basiert, Pixel-Art-Icons |
+| Element | Description |
+|---------|-------------|
+| **General** | Clean, modern, but in pixel art style |
+| **Hotbar** | Centered at bottom (classic MMO layout) |
+| **Minimap** | Top right, angular with pixel frame |
+| **Chat** | Bottom left, semi-transparent |
+| **Inventory** | Grid-based, pixel art icons |
 
-**Referenzen:**
-- Moderne Indie-RPGs mit Pixel Art UI
-- Skalierbar für verschiedene Auflösungen
-- Accessibility-freundlich (Lesbarkeit!)
+**References:**
+- Modern indie RPGs with pixel art UI
+- Scalable for different resolutions
+- Accessibility-friendly (readability!)
 
 ---
 
-## 9. Meilensteine
+## 9. Milestones
 
-### Phase 1: Prototyp (Aktuell)
-> **Ziel:** Zwei Spieler verbinden sich, sehen sich, können sich bewegen  
-> **Umgebung:** Lokal (kein Cloud-Deployment)
+### Phase 1: Prototype (Current)
+> **Goal:** Two players connect, see each other, can move  
+> **Environment:** Local (no cloud deployment)
 
-- [x] Projekt-Struktur aufsetzen
-- [x] Client-Server-Grundkommunikation
-- [ ] Spieler-Bewegung synchronisieren
-- [ ] Einfache Tilemap-Welt
-- [ ] Basis-Chat
+- [x] Set up project structure
+- [x] Basic client-server communication
+- [ ] Synchronize player movement
+- [ ] Simple tilemap world
+- [ ] Basic chat
 
-**Prototyp-Spezifika:**
-- Authentication: Nur Username (kein echtes Login)
-- Sharding: Code ist ready, aber nur 1 Shard aktiv
-- Deployment: Nur lokal
+**Prototype Specifics:**
+- Authentication: Username only (no real login)
+- Sharding: Code is ready, but only 1 shard active
+- Deployment: Local only
 
 ### Phase 2: Core Gameplay
-> **Ziel:** Spielbarer Gameplay-Loop
+> **Goal:** Playable gameplay loop
 
-- [ ] Rassen- und Klassenwahl
-- [ ] Kampfsystem (Basis)
-- [ ] Monster-Spawning
-- [ ] Inventar-System
-- [ ] Persistenz (Postgres)
-- [ ] Tod/Respawn-System
-- [ ] PvP-Flagging
+- [ ] Race and class selection
+- [ ] Combat system (basic)
+- [ ] Monster spawning
+- [ ] Inventory system
+- [ ] Persistence (Postgres)
+- [ ] Death/respawn system
+- [ ] PvP flagging
 - [ ] Authentication (Email + OAuth)
 
 ### Phase 3: Content
-> **Ziel:** Spielbare Demo mit 1-10 Leveln
+> **Goal:** Playable demo with levels 1-10
 
-- [ ] Startgebiet mit Quests
-- [ ] Erste 5 Rassen/Klassen
-- [ ] Erster Dungeon
-- [ ] Gilden-System
+- [ ] Starting area with quests
+- [ ] First 5 races/classes
+- [ ] First dungeon
+- [ ] Guild system
 
 ### Phase 4: Polish & Scale
-> **Ziel:** Beta-Release
+> **Goal:** Beta release
 
-- [ ] Zone-Sharding aktivieren
-- [ ] Load Balancing
-- [ ] Azure-Deployment (Region: Germany West Central / Frankfurt)
-- [ ] Performance-Optimierung
+- [ ] Activate zone sharding
+- [ ] Load balancing
+- [ ] Azure deployment (Region: Germany West Central / Frankfurt)
+- [ ] Performance optimization
 
 ---
 
-## 10. Offene Fragen
+## 10. Open Questions
 
-> Diese Fragen müssen im Laufe der Entwicklung geklärt werden:
+> These questions must be clarified during development:
 
 ### Gameplay
-- [x] ~~Soll PvP optional oder verpflichtend sein?~~ → Flagging-System
-- [x] ~~Wie funktioniert das Respawn-System?~~ → Geisterlauf + Friedhof-Option
-- [ ] Soll es Fraktionen geben? → Abhängig von Lore
+- [x] ~~Should PvP be optional or mandatory?~~ → Flagging system
+- [x] ~~How does the respawn system work?~~ → Ghost run + graveyard option
+- [ ] Should there be factions? → Depends on lore
 
-### Technisch
-- [x] ~~WebSocket oder reines TCP für die Kommunikation?~~ → TCP + TLS
-- [x] ~~Wie oft werden Positionen synchronisiert? (Tick-Rate?)~~ → 25 Hz
-- [x] ~~Caching-Strategie für häufige DB-Zugriffe?~~ → Redis
-- [x] ~~Serialisierung?~~ → MessagePack
-- [x] ~~Authentication für Prototyp?~~ → Nur Username
-- [x] ~~Authentication für Release?~~ → Email + OAuth
-- [x] ~~Sharding für Prototyp?~~ → Code ready, 1 Shard aktiv
-- [x] ~~Azure Region?~~ → Germany West Central (Frankfurt)
+### Technical
+- [x] ~~WebSocket or pure TCP for communication?~~ → TCP + TLS
+- [x] ~~How often are positions synchronized? (Tick rate?)~~ → 25 Hz
+- [x] ~~Caching strategy for frequent DB accesses?~~ → Redis
+- [x] ~~Serialization?~~ → MessagePack
+- [x] ~~Authentication for prototype?~~ → Username only
+- [x] ~~Authentication for release?~~ → Email + OAuth
+- [x] ~~Sharding for prototype?~~ → Code ready, 1 shard active
+- [x] ~~Azure region?~~ → Germany West Central (Frankfurt)
 
 ### Design
-- [x] ~~Grafik-Stil?~~ → Hochauflösende Pixel Art (64x64)
-- [ ] Audio-Konzept? → 🚧 WIP (passend zu Pixel Art)
-- [x] ~~UI-Design-Richtlinien?~~ → Modern Pixel Art UI
+- [x] ~~Graphics style?~~ → High-resolution pixel art (64x64)
+- [ ] Audio concept? → 🚧 WIP (matching pixel art)
+- [x] ~~UI design guidelines?~~ → Modern pixel art UI
 
 ---
 
-## 📝 Änderungshistorie
+## 📝 Changelog
 
-| Version | Datum | Änderungen |
-|---------|-------|------------|
-| 0.1.0 | 2025-12-01 | Erstes GDD erstellt (Prototyp-Fokus) |
-| 0.2.0 | 2025-12-01 | PvP-Flagging, Respawn-System, Art Direction hinzugefügt |
-| 0.3.0 | 2025-12-02 | Technische Entscheidungen finalisiert (TCP, MessagePack, Redis, Auth, Sharding) |
+| Version | Date | Changes |
+|---------|------|---------|
+| 0.1.0 | 2025-12-01 | First GDD created (prototype focus) |
+| 0.2.0 | 2025-12-01 | Added PvP flagging, respawn system, art direction |
+| 0.3.0 | 2025-12-02 | Finalized technical decisions (TCP, MessagePack, Redis, Auth, Sharding) |
+| 0.4.0 | 2026-01-01 | Translated to English |
 
 ---
 
-*Dieses Dokument ist ein lebendes Dokument und wird kontinuierlich erweitert.*
+*This document is a living document and will be continuously updated.*

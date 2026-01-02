@@ -2,20 +2,22 @@ using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.AsyncTask.Interface;
 using Mmo.Server.Connections;
 using Mmo.Server.Connections.MessageHandler;
+using Mmo.Server.Entities;
 using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
+using Mmo.Server.Player;
 using Mmo.Server.Player.Interfaces;
-using Mmo.Server.PlayerService;
 using Mmo.Server.Zones;
+using Mmo.Server.Zones.Configurations;
 using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Authentification.Interfaces;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Helpers;
 
@@ -57,7 +59,7 @@ public static class TestHelpers
     /// </summary>
     public static ZoneManager CreateDefaultZoneManager()
     {
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        Zone defaultZone = CreateTestZone(0, "default");
         var zoneManager = new ZoneManager(0);
         zoneManager.RegisterZone(defaultZone);
         return zoneManager;
@@ -68,18 +70,33 @@ public static class TestHelpers
     /// </summary>
     public static ZoneManager CreateZoneManagerWithZones(params (ushort id, string name)[] zones)
     {
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        Zone defaultZone = CreateTestZone(0, "default");
         var zoneManager = new ZoneManager(0);
         zoneManager.RegisterZone(defaultZone);
 
         foreach ((ushort id, string name) in zones)
         {
             if (id == 0) continue; // Default already exists
-            var zone = new Zone(id, name, new ZoneBounds(0, 0, 1000, 1000));
+            Zone zone = CreateTestZone(id, name);
             zoneManager.RegisterZone(zone);
         }
 
         return zoneManager;
+    }
+
+    /// <summary>
+    ///     Creates a test Zone with the given parameters.
+    /// </summary>
+    public static Zone CreateTestZone(ushort zoneId, string name)
+    {
+        var config = new ZoneConfig
+        {
+            ZoneId = zoneId,
+            InternalName = name,
+            DisplayName = name
+        };
+        var context = ZoneContext.CreateFromConfig(config);
+        return new Zone(config, context);
     }
 
     /// <summary>
@@ -132,11 +149,12 @@ public static class TestHelpers
         float x = 100,
         float y = 100)
     {
-        var entity = new PlayerEntity(
+        var entity = new CharacterEntity(
             persistentId ?? Guid.NewGuid(),
             Guid.NewGuid(),
             name,
-            new Position(x, y)
+            new Position(x, y),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault)
         );
         Guid connId = connectionId ?? Guid.NewGuid();
         ClientConnection connection = _mockNetworkServer.GetOrCreateMockConnection(connId);
@@ -200,7 +218,8 @@ internal class MockBroadcastService : IBroadcastService
     {
     }
 
-    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message)
+        where T : INetworkMessage
     {
     }
 
@@ -208,7 +227,8 @@ internal class MockBroadcastService : IBroadcastService
     {
     }
 
-    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message)
+        where T : INetworkMessage
     {
     }
 }

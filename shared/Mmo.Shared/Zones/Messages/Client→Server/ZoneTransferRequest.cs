@@ -12,7 +12,7 @@ namespace Mmo.Shared.Zones.Messages.Client_Server;
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneTransferRequest)]
-public record ZoneTransferRequest : INetworkMessage
+public record ZoneTransferRequest : IClientMessage
 {
     /// <summary>Target zone ID.</summary>
     [Key(1)]
@@ -26,6 +26,5 @@ public record ZoneTransferRequest : INetworkMessage
     [Key(3)]
     public Position? TargetPosition { get; init; }
 
-    [Key(0)]
-    public MessageType Type => MessageType.ZoneTransferRequest;
+    [Key(0)] public MessageType Type => MessageType.ZoneTransferRequest;
 }

@@ -66,7 +66,7 @@ public struct EntityIdentity : IEquatable<EntityIdentity>
     /// </summary>
     [IgnoreMember]
     public long GlobalKey =>
-        ((long)ServerId << 56) | ((long)ZoneId << 40) | ((long)ShardId << 24) | (uint)(LocalId & 0xFFFFFF);
+        (long)ServerId << 56 | (long)ZoneId << 40 | (long)ShardId << 24 | (uint)(LocalId & 0xFFFFFF);
 
 
     /// <summary>

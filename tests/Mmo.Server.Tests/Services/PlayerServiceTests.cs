@@ -1,12 +1,12 @@
 using Mmo.Server.Connections;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Server.PlayerService.Records;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Shared.Character.Enums;
+using Mmo.Shared.Character.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -22,7 +22,7 @@ public class PlayerServiceTests : IDisposable
     {
         IdRegistry.Instance.Clear();
         _mockNetworkServer = new MockNetworkServer(_mockLog, true);
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        Zone defaultZone = TestHelpers.CreateTestZone(0, "default");
         _zoneManager = new ZoneManager(0);
         _zoneManager.RegisterZone(defaultZone);
         _playerService = new Player.Service.PlayerService(_zoneManager, _mockLog);

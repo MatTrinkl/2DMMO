@@ -1,11 +1,12 @@
 using Mmo.Server.Connections;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Entities;
+using Mmo.Server.Player;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Zones;
 
@@ -30,7 +31,7 @@ public class ZoneManagerTests : IDisposable
 
     private ZoneManager CreateZoneManager()
     {
-        var defaultZone = new Zone(0, "default", new ZoneBounds(0, 0, 1000, 1000));
+        Zone defaultZone = TestHelpers.CreateTestZone(0, "default");
         var manger = new ZoneManager(0);
         manger.RegisterZone(defaultZone);
         return manger;
@@ -38,11 +39,12 @@ public class ZoneManagerTests : IDisposable
 
     private ServerPlayerCharacter CreateServerPlayer(Guid? persistentId = null, Guid? connectionId = null)
     {
-        var entity = new PlayerEntity(
+        var entity = new CharacterEntity(
             persistentId ?? IdRegistry.Instance.GeneratePersistentId(),
             Guid.NewGuid(),
             "TestPlayer",
-            new Position(100, 100)
+            new Position(100, 100),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault)
         );
         Guid connId = connectionId ?? IdRegistry.Instance.GeneratePersistentId();
         ClientConnection connection = _sharedMockNetworkServer.GetOrCreateMockConnection(connId);
@@ -67,7 +69,7 @@ public class ZoneManagerTests : IDisposable
     public void RegisterZone_AddsNewZone()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        var newZone = new Zone(1, "second", new ZoneBounds(0, 0, 500, 500));
+        Zone newZone = TestHelpers.CreateTestZone(1, "second");
 
         zoneManager.RegisterZone(newZone);
 
@@ -79,7 +81,7 @@ public class ZoneManagerTests : IDisposable
     public void RegisterZone_DuplicateId_ReturnsFalse()
     {
         ZoneManager zoneManager = CreateZoneManager();
-        var duplicateZone = new Zone(0, "duplicate", new ZoneBounds(0, 0, 100, 100));
+        Zone duplicateZone = TestHelpers.CreateTestZone(0, "duplicate");
 
         // TryAdd returns false when key already exists
         bool result = zoneManager.RegisterZone(duplicateZone);

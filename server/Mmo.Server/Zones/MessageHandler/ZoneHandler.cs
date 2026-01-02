@@ -29,7 +29,7 @@ public class ZoneHandler(IZoneService zoneService, ILog log) : BaseCategoryHandl
         {
             ctx.GetService<IBroadcastService>().SendToPlayer(ctx.Connection, result.Success
                 ? ZoneTransferResponse.Succeeded(request.TargetZoneId)
-                : ZoneTransferResponse.Failed(result.Error!));
+                : ZoneTransferResponse.Failed(GlobalErrorCode.None, result.ErrorCode, result.Error));
         });
     }
 }

@@ -1,4 +1,5 @@
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Zones.Enums;
 
 namespace Mmo.Server.Zones.Records;
 
@@ -16,7 +17,12 @@ public record ZoneTransferResult
     /// <summary>The spawn position in the new zone.</summary>
     public Position? SpawnPosition { get; init; }
 
-    /// <summary>Error code on failure.</summary>
+    /// <summary>
+    ///     Error code on failure
+    /// </summary>
+    public ZoneTransferResponseErrorCode ErrorCode { get; init; }
+
+    /// <summary>Human Readable Error.</summary>
     public string? Error { get; init; }
 
     // ─── Factory Methods ───
@@ -24,6 +30,6 @@ public record ZoneTransferResult
     public static ZoneTransferResult Succeeded(ushort newZoneId, Position spawnPosition)
         => new() { Success = true, NewZoneId = newZoneId, SpawnPosition = spawnPosition };
 
-    public static ZoneTransferResult Failed(string error)
-        => new() { Success = false, Error = error };
+    public static ZoneTransferResult Failed(ZoneTransferResponseErrorCode errorCode, string error)
+        => new() { Success = false, ErrorCode = errorCode, Error = error };
 }

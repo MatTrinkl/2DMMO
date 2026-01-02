@@ -1,6 +1,6 @@
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Core.Records;
 using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Generators;
 using Mmo.Shared.Movement.Enums;
 
 namespace Mmo.Shared.Character.Interfaces;
@@ -8,33 +8,23 @@ namespace Mmo.Shared.Character.Interfaces;
 /// <summary>
 ///     Interface für Spieler-Charaktere.
 /// </summary>
+[GenerateDto(InheritInterfaces = false, DtoName = "CharacterEntityDto")]
+[DtoUnionMember(0, typeof(IEntity))]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
+[DeltaDtoUnionMember(0, typeof(IEntity))]
 public interface ICharacterEntity : ICombatEntity
 {
     // Character Identity
-    Guid CharacterId { get; }
-    Guid AccountId { get; }
-    Race Race { get; }
-    CharacterClass Class { get; }
-    Gender Gender { get; }
-    string? Title { get; set; }
-
-    // Progression
-    long Experience { get; set; }
-    long ExperienceToNextLevel { get; }
+    Guid CharacterId { get; init; }
+    Race Race { get; init; }
+    CharacterClass Class { get; init; }
+    Gender Gender { get; init; }
+    string? Title { get; init; }
 
     // PvP
     bool IsPvpFlagged { get; set; }
-    int HonorPoints { get; set; }
 
     // State
     CharacterState State { get; set; }
     MovementFlags MovementFlags { get; set; }
-
-    // Currency
-    long Gold { get; set; }
-
-    // Methods
-    bool GainExperience(long amount);
-    void LevelUp();
-    void Respawn(Position position);
 }

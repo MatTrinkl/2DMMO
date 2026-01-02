@@ -1,7 +1,7 @@
 using Mmo.Shared.Account.Interfaces;
 using Mmo.Shared.Core.Records;
 
-namespace Mmo.Server.PlayerService;
+namespace Mmo.Server.Player;
 
 /// <summary>
 ///     Wrapper around ServerPlayer that implements IPlayerInfo.

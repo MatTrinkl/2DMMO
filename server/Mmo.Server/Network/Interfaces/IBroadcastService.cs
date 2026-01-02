@@ -1,5 +1,5 @@
 using Mmo.Server.Connections;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
 
@@ -88,7 +88,8 @@ public interface IBroadcastService
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="characterInPartyAndToExcluded">The character in party to exclude.</param>
     /// <param name="message">The message to broadcast.</param>
-    void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage;
+    void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message)
+        where T : INetworkMessage;
 
     // Guild
     /// <summary>Broadcasts a message to all members of a player's guild.</summary>
@@ -101,5 +102,6 @@ public interface IBroadcastService
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="characterInGuildAndToExcluded">The character in guild to exclude.</param>
     /// <param name="message">The message to broadcast.</param>
-    void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message) where T : INetworkMessage;
+    void BroadcastToGuildExcept<T>(ServerPlayerCharacter characterInGuildAndToExcluded, T message)
+        where T : INetworkMessage;
 }

@@ -16,6 +16,18 @@ dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
 # C# Naming Conventions
+# Private constants - no naming enforcement (mixed conventions exist)
+dotnet_naming_rule.private_constants_no_enforcement.severity = none
+dotnet_naming_rule.private_constants_no_enforcement.symbols = private_constants
+dotnet_naming_rule.private_constants_no_enforcement.style = pascal_case_style
+
+dotnet_naming_symbols.private_constants.applicable_kinds = field
+dotnet_naming_symbols.private_constants.applicable_accessibilities = private
+dotnet_naming_symbols.private_constants.required_modifiers = const
+
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Private non-constant fields should use camelCase with underscore prefix
 dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
 dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_underscore_prefix

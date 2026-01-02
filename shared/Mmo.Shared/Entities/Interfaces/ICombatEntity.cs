@@ -1,42 +1,40 @@
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Combat.Enums;
-using Mmo.Shared.Combat.Records;
+using Mmo.Shared.DirtyTracking.Attributes;
+using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Entities.Interfaces;
 
 /// <summary>
 ///     Interface für alles was kämpfen kann.
 /// </summary>
+[GenerateDto(InheritInterfaces = false, DtoName = "CombatEntityDto")]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId")]
 public interface ICombatEntity : IEntity
 {
     // Identity
-    string DisplayName { get; }
-    int Level { get; set; }
+    string DisplayName { get; init; }
+
+    [TrackDirty("Level")] int Level { get; set; }
 
     // Health & Resource
-    int CurrentHealth { get; set; }
-    int MaxHealth { get; set; }
-    int CurrentResource { get; set; }
-    int MaxResource { get; set; }
-    CombatResourceType CombatResourceType { get; }
+    [TrackDirty("Health")] int CurrentHealth { get; set; }
+
+    [TrackDirty("MaxHealth")] int MaxHealth { get; init; }
+
+    [TrackDirty("Resource")] int CurrentResource { get; set; }
+
+    [TrackDirty("MaxResource")] int MaxResource { get; init; }
+
+    CombatResourceType CombatResourceType { get; init; }
 
     // State
-    bool IsInCombat { get; set; }
-    bool IsDead { get; }
-    bool IsAttackable { get; }
-    Guid? TargetEntityId { get; set; }
-    Faction Faction { get; set; }
+    [TrackDirty("State")] bool IsInCombat { get; set; }
+
+    [TrackDirty("State")] Guid? TargetEntityId { get; set; }
+
+    Faction Faction { get; init; }
 
     // Stats
-    int AttackPower { get; }
-    int Armor { get; }
-    float MovementSpeed { get; set; }
-
-    // Methods
-    bool IsHostileTo(ICombatEntity other);
-    DamageResult TakeDamage(int damage, DamageType damageType, ICombatEntity? source);
-    HealResult ReceiveHeal(int amount, ICombatEntity? source);
-    void Die(ICombatEntity? killer);
-    void EnterCombat(ICombatEntity? enemy);
-    void LeaveCombat();
+    [TrackDirty("Velocity")] float MovementSpeed { get; set; }
 }

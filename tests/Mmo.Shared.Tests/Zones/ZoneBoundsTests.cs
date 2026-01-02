@@ -1,5 +1,5 @@
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones.Configurations;
+using Mmo.Shared.Zones.Records;
 using Mmo.Shared.Zones.Structs;
 
 namespace Mmo.Shared.Tests.Zones;

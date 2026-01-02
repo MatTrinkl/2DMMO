@@ -1,11 +1,14 @@
 using Mmo.Server.Core.Structs;
+using Mmo.Server.Entities;
 using Mmo.Server.Messages;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Movement;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;
 
@@ -110,10 +113,11 @@ public class GameServerTests
         var clientId = Guid.NewGuid();
 
         // Simulate different message types
-        var loginRequest = new LoginRequest("TestUser", "password123");
-        var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var loginRequest = new LoginRequest { Username = "TestUser", Password = "password123" };
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         var positionUpdate =
-            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5));
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(5, 5));
         var chatMessage = new ChatMessage(Guid.NewGuid(), "Test");
 
         _mockNetworkServer.SimulateMessageReceived(clientId, loginRequest);

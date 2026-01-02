@@ -1,5 +1,6 @@
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Authentification.Records;
+using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Core.Interfaces;
 
 namespace Mmo.Server.AuthenticationService;
@@ -34,7 +35,8 @@ public class AuthenticationService(ILog log) : IAuthenticationService
         // TODO: Validate session from Redis/DB
         await Task.Delay(1);
 
-        return new AuthResult(false, Error: "Session validation not implemented");
+        return new AuthResult(false, ErrorCode: LoginResponseErrorCode.InvalidCredentials,
+            ErrorMessage: "Session validation not implemented");
     }
 
     public async Task InvalidateSessionAsync(Guid sessionToken)

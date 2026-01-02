@@ -2,6 +2,8 @@ using System.Buffers;
 using System.Net.Sockets;
 using Mmo.Server.Connections.Enums;
 using Mmo.Shared.Account.Enums;
+using Mmo.Shared.Connection.Enums;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
@@ -29,6 +31,7 @@ public sealed class ClientConnection : IDisposable
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly NetworkStream _stream;
     private readonly TcpClient _tcpClient;
+    private int _disconnected;
 
     private bool _disposed;
 
@@ -169,11 +172,9 @@ public sealed class ClientConnection : IDisposable
     /// </summary>
     public void SetInGame()
     {
-        if (State == ConnectionState.Authenticated)
-        {
-            State = ConnectionState.InGame;
-            _log.Debug("Connection {ConnectionId} is now InGame", Id);
-        }
+        if (State != ConnectionState.Authenticated) return;
+        State = ConnectionState.InGame;
+        _log.Debug("Connection {ConnectionId} is now InGame", Id);
     }
 
     /// <summary>
@@ -193,7 +194,7 @@ public sealed class ClientConnection : IDisposable
     /// </summary>
     public void UpdateLatency(int latencyMs)
     {
-        if (latencyMs < 0 || latencyMs > 10000) return;
+        if (latencyMs is < 0 or > 10000) return;
 
         LatencyMs = latencyMs;
         SmoothedLatencyMs = SmoothedLatencyMs == 0
@@ -226,7 +227,7 @@ public sealed class ClientConnection : IDisposable
 
                 int messageLength = BitConverter.ToInt32(headerBuffer, 0);
 
-                if (messageLength <= 0 || messageLength > 1024 * 1024)
+                if (messageLength is <= 0 or > 1024 * 1024)
                 {
                     _log.Warn("Invalid message length {Length} from {ConnectionId}", messageLength, Id);
                     break;
@@ -242,6 +243,7 @@ public sealed class ClientConnection : IDisposable
                     // Deserialize message
                     INetworkMessage message = MessageSerializer.Deserialize(
                         new ReadOnlyMemory<byte>(bodyBuffer, 0, messageLength));
+                    if (message is not IClientMessage) Disconnect(DisconnectReason.ProtocolError);
 
                     LastActivity = DateTimeOffset.UtcNow;
                     MessagesReceived++;
@@ -268,7 +270,39 @@ public sealed class ClientConnection : IDisposable
         }
         finally
         {
-            OnDisconnected?.Invoke(this, "Connection closed");
+            // Only fire event if Disconnect hasn't already been called
+            if (Interlocked.Exchange(ref _disconnected, 1) == 0) OnDisconnected?.Invoke(this, "Connection closed");
+
+            Dispose();
+        }
+    }
+
+    public void Disconnect(DisconnectReason reason, string? message = null, int reconnectDelayMs = 0)
+    {
+        if (_disposed)
+            return;
+
+        // Ensure event fires only once using atomic operation
+        if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+            return;
+
+        try
+        {
+            var forceDisconnectMessage = new ForceDisconnect
+            { Reason = reason, Message = message, ReconnectDelay = reconnectDelayMs };
+            Send(forceDisconnectMessage);
+            _cts.Cancel();
+            _tcpClient.Client.Shutdown(SocketShutdown.Send);
+            _tcpClient.Close();
+            _log.Debug("Connection {ConnectionId} disconnected", Id);
+        }
+        catch (Exception ex)
+        {
+            _log.Warn("Error while disconnecting {ConnectionId}: Error: {ex}", Id, ex.Message);
+        }
+        finally
+        {
+            OnDisconnected?.Invoke(this, message ?? reason.ToString());
         }
     }
 

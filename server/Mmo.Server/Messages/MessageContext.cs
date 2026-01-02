@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Mmo.Server.Connections;
 using Mmo.Server.Core;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Server.Zones;
 using Mmo.Shared.Account.Enums;
 using Mmo.Shared.Account.Interfaces;
@@ -189,7 +189,9 @@ public sealed class MessageContext : IMessageContext
     public ushort? GetPlayerZone(Guid playerId)
     {
         //Todo: to PlayerService
-        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player) ? null : player?.RuntimeId.ZoneId;
+        return !ZoneManager.TryGetPlayerByPersistentId(playerId, out ServerPlayerCharacter? player)
+            ? null
+            : player?.RuntimeId.ZoneId;
     }
 
     /// <summary>

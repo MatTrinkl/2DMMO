@@ -18,7 +18,6 @@ using Mmo.Server.Zones.Services;
 using Mmo.Shared.Authentification.Interfaces;
 using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Entities.Interfaces;
 
 namespace Mmo.Server.Core;
 
@@ -131,7 +130,7 @@ public class Program
         // ════════════════════════════════════════════════════════════
         // GAME SYSTEMS
         // ════════════════════════════════════════════════════════════
-        services.AddSingleton<ZoneManager>(_ => new ZoneManager(defaultZoneId: 1));
+        services.AddSingleton<ZoneManager>(_ => new ZoneManager(1));
         services.AddSingleton<MessageRouter>();
 
         services.AddSingleton<GameServer>(sp =>

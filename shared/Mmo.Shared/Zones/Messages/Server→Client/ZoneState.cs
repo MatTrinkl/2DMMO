@@ -1,50 +1,38 @@
 using MessagePack;
-using Mmo.Shared.Entities.Interfaces;
+using Mmo.Shared.Character.Interfaces;
+using Mmo.Shared.Entities.Dtos;
 using Mmo.Shared.Messaging.Attributes;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
+using Mmo.Shared.Zones.Enums;
+using Mmo.Shared.Zones.Interfaces;
 
 namespace Mmo.Shared.Zones.Messages.Server_Client;
 
 /// <summary>
 ///     This class updates the state of a zone. It's like a position update of all entities at ones.
+///     Server → Client
+///     Not complete until implemented in server and client.
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.ZoneState)]
-public class ZoneState : ITimestampedMessage
+public class ZoneState : IServerMessage, ITimestampedMessage
 {
-    /// <summary>
-    ///     The constructor used by <see cref="MessagePackSerializer" />.
-    /// </summary>
-    [SerializationConstructor]
-    public ZoneState()
-    {
-    }
+    [Key(2)] public required ZoneConfigDto ZoneConfig { get; init; }
+
+    [Key(3)] public required ZoneContextDto ZoneContext { get; init; }
+
+    [Key(4)] public required List<EntityDtoUnion> Entities { get; init; }
+    [Key(5)] public ZoneStateType State { get; init; } = ZoneStateType.FullSync;
+    [Key(6)] public CharacterEntityDto? MyCharacter { get; init; }
+    [Key(7)] public bool HasMoreEntities { get; init; }
+    [Key(8)] public int TotalEntitiesCount { get; init; }
 
     /// <summary>
-    ///     Creates a new Zone State Message.
+    ///     ID of the zone.
     /// </summary>
-    /// <param name="timestamp">The timestamp of the message.</param>
-    /// <param name="zoneId">The ID of the zone. (Later we need to see how shards work with that).</param>
-    /// <param name="entities">All Entities in this Zone.</param>
-    public ZoneState(long timestamp, ushort zoneId, List<IEntity> entities)
-    {
-        Timestamp = timestamp;
-        ZoneId = zoneId;
-        Entities = entities;
-    }
-
-    /// <summary>
-    ///     ID of the zone. WIP!
-    /// </summary>
-    [Key(2)]
-    public ushort ZoneId { get; set; }
-
-    /// <summary>
-    ///     List of all Entities in this zone.
-    /// </summary>
-    [Key(3)]
-    public List<IEntity> Entities { get; set; } = new();
+    [IgnoreMember]
+    public ushort ZoneId => ZoneConfig.ZoneId;
 
     /// <summary>
     ///     The Message Type of this Message.
@@ -56,5 +44,5 @@ public class ZoneState : ITimestampedMessage
     ///     The timestamp of the message.
     /// </summary>
     [Key(1)]
-    public long Timestamp { get; set; }
+    public long Timestamp { get; init; }
 }

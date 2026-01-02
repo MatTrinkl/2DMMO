@@ -1,55 +1,56 @@
-# 🏗️ Architektur-Dokumentation
+# 🏗️ Architecture Documentation
 
-## 2DMMO – Technische Architektur
+## 2DMMO – Technical Architecture
 
-**Version:** 2.1.0  
-**Letzte Aktualisierung:** 2025-12-26  
-**Status:** Finalisiert für Prototyp-Phase + S2S-Planung + Login-to-Play Flow
-
----
-
-## 📋 Übersicht
-
-Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Die detaillierte Dokumentation ist in folgende Unterseiten aufgeteilt:
-
-### Inhaltsverzeichnis
-
-| # | Dokument | Beschreibung |
-|---|----------|--------------|
-| 1 | [Server-Komponenten](SERVER_COMPONENTS.md) | Gateway, Zone Server, Kommunikation |
-| 2 | [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) | Transport, Message Framing, Connection Flow |
-| 3 | [Message-Spezifikation](MESSAGES.md) | Message Types, DTOs, Serialization |
-| 4 | [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) | Message Handling, Business Logic, Async Operations |
-| 5 | [Game Loop Design](GAME_LOOP.md) | Server Game Loop, Tick Timing |
-| 6 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| 7 | [Login-to-Play Flow](LOGIN_TO_PLAY_FLOW.md) | **NEU** - Kompletter Message Flow von Login bis Ready-to-Play |
-| 8 | [ID-System](ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| 9 | [Redis-Strategie](REDIS.md) | Key Schema, Caching, Pub/Sub |
-| 10 | [Datenbank-Strategie](DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| 11 | [Sicherheit](SECURITY.md) | Security Layers, Input Validation |
-| 12 | [Rate-Limiting](RATE_LIMITING.md) | Rate-Limit Tiers, Algorithmen, Anti-Spam, Anti-DoS |
-| 13 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-| 14 | [Skalierung](SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
-| 15 | [Server-zu-Server Kommunikation](SERVER_TO_SERVER.md) | S2S Messages, Load-Balancing, Multi-Server Architektur |
+**Version:** 2.2.0  
+**Last Updated:** 2026-01-01  
+**Status:** Finalized for Prototype Phase + S2S Planning + Login-to-Play Flow
 
 ---
 
-## Technologie-Stack
+## 📋 Overview
 
-| Komponente | Technologie | Version |
-|-----------|-------------|---------|
+This documentation describes the technical architecture of the 2DMMO project. The detailed documentation is divided into the following sub-pages:
+
+### Table of Contents
+
+| # | Document | Description |
+|---|----------|-------------|
+| 1 | [Server Components](SERVER_COMPONENTS.md) | Gateway, Zone Server, communication |
+| 2 | [Network Protocol](NETWORK_PROTOCOL.md) | Transport, message framing, connection flow |
+| 3 | [Message Specification](MESSAGES.md) | Message types, DTOs, serialization |
+| 4 | [Handler/Service Pattern](HANDLER_SERVICE_PATTERN.md) | Message handling, business logic, async operations |
+| 5 | [Game Loop Design](GAME_LOOP.md) | Server game loop, tick timing |
+| 6 | [Client-Server Sync](CLIENT_SERVER_SYNC.md) | Prediction, interpolation, reconciliation |
+| 7 | [Chunk-Based Sync](CHUNK_BASED_SYNC.md) | **Phase 2** - AOI delta sync, chunk grid, bandwidth optimization |
+| 8 | [Login-to-Play Flow](LOGIN_TO_PLAY_FLOW.md) | Complete message flow from login to ready-to-play |
+| 9 | [ID System](ID_SYSTEM.md) | Entity identity, GlobalKey, ZoneId ranges |
+| 10 | [Redis Strategy](REDIS.md) | Key schema, caching, Pub/Sub |
+| 11 | [Database Strategy](DATABASE.md) | PostgreSQL, write strategies, pooling |
+| 12 | [Security](SECURITY.md) | Security layers, input validation |
+| 13 | [Rate Limiting](RATE_LIMITING.md) | Rate limit tiers, algorithms, anti-spam, anti-DoS |
+| 14 | [Azure Deployment](AZURE_DEPLOYMENT.md) | Container Apps, networking, services |
+| 15 | [Scaling](SCALING.md) | Zone sharding, metrics, auto-scaling |
+| 16 | [Server-to-Server Communication](SERVER_TO_SERVER.md) | S2S messages, load balancing, multi-server architecture |
+
+---
+
+## Technology Stack
+
+| Component | Technology | Version |
+|-----------|------------|---------|
 | **Game Client** | Godot Engine (.NET) | 4.3 |
-| **Programmiersprache** | C# | 14 |
+| **Programming Language** | C# | 14 |
 | **Server Runtime** | .NET | 10 |
 | **Transport** | TCP + TLS | - |
-| **Serialisierung** | MessagePack | Latest |
+| **Serialization** | MessagePack | Latest |
 | **Cache** | Redis | 7+ |
-| **Datenbank** | PostgreSQL | 16+ |
+| **Database** | PostgreSQL | 16+ |
 | **Cloud** | Microsoft Azure | - |
 
 ---
 
-## Architektur-Diagramm
+## Architecture Diagram
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -84,7 +85,7 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 │  │  ┌────────┴─────┐  ┌───────┴────────┐  ┌────────┴─────┐              │ │
 │  │  │ Zone Server  │  │  Zone Server   │  │ Zone Server  │              │ │
 │  │  │              │  │                │  │              │              │ │
-│  │  │  Startzone   │  │   Hauptstadt   │  │    Wald      │    ...       │ │
+│  │  │  Start Zone  │  │    Capital     │  │   Forest     │    ...       │ │
 │  │  │              │  │                │  │              │              │ │
 │  │  │ ┌─────────┐  │  │  ┌─────────┐   │  │ ┌─────────┐  │              │ │
 │  │  │ │ Shard 1 │  │  │  │ Shard 1 │   │  │ │ Shard 1 │  │              │ │
@@ -96,22 +97,22 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 │                                       │                                     │
 │                          ┌────────────┴────────────┐                       │
 │                          │      PostgreSQL         │                       │
-│                          │   (Persistente Daten)   │                       │
+│                          │   (Persistent Data)     │                       │
 │                          └─────────────────────────┘                       │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔗 Nützliche Links
+## 🔗 Useful Links
 
-### Dokumentation
+### Documentation
 - [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md)
 - [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md)
 - [Prototype Scope](../01-overview/PROTOTYPE_SCOPE.md)
-- [Issue Updates Guide](../04-project-management/ISSUE_UPDATES_GUIDE.md) - Issue updates und Zone-Konzept Integration
+- [Issue Updates Guide](../04-project-management/ISSUE_UPDATES_GUIDE.md) - Issue updates and zone concept integration
 
-### Externe Ressourcen
+### External Resources
 - [.NET Documentation](https://learn.microsoft.com/en-us/dotnet/)
 - [Godot Engine Docs](https://docs.godotengine.org/)
 - [MessagePack-CSharp](https://github.com/MessagePack-CSharp/MessagePack-CSharp)
@@ -121,18 +122,19 @@ Diese Dokumentation beschreibt die technische Architektur des 2DMMO-Projekts. Di
 
 ---
 
-## 📝 Änderungshistorie
+## 📝 Changelog
 
-| Version | Datum | Änderungen |
-|---------|-------|------------|
-| 2.1.0 | 2025-12-26 | Hinzugefügt: Login-to-Play Flow Dokumentation mit GetZone Messages |
-| 2.0.0 | 2025-12-25 | Hinzugefügt: Server-zu-Server Kommunikation & Load-Balancing Dokumentation |
-| 1.4.0 | 2025-12-23 | Hinzugefügt: Rate-Limiting Dokumentation |
-| 1.3.0 | 2025-12-22 | Hinzugefügt: Handler/Service-Pattern Dokumentation |
-| 1.2.0 | 2025-12-09 | Hinzugefügt: ID-System Dokumentation |
-| 1.1.0 | 2025-12-02 | Refactoring: Aufteilung in Unterseiten |
-| 1.0.0 | 2025-12-02 | Initiale Architektur-Dokumentation |
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.2.0 | 2026-01-01 | Translated to English |
+| 2.1.0 | 2025-12-26 | Added: Login-to-Play Flow Documentation with GetZone Messages |
+| 2.0.0 | 2025-12-25 | Added: Server-to-Server Communication & Load-Balancing Documentation |
+| 1.4.0 | 2025-12-23 | Added: Rate-Limiting Documentation |
+| 1.3.0 | 2025-12-22 | Added: Handler/Service Pattern Documentation |
+| 1.2.0 | 2025-12-09 | Added: ID System Documentation |
+| 1.1.0 | 2025-12-02 | Refactoring: Split into sub-pages |
+| 1.0.0 | 2025-12-02 | Initial architecture documentation |
 
 ---
 
-*Diese Übersicht verweist auf die detaillierte Architektur-Dokumentation. Bei Fragen oder Ergänzungen bitte ein Issue erstellen.*
+*This overview references the detailed architecture documentation. For questions or additions, please create an issue.*

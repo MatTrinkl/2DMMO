@@ -1,10 +1,13 @@
+using Mmo.Server.Entities;
 using Mmo.Server.Tests.Helpers;
-using Mmo.Shared.Character.Entities;
+using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Movement;
-using Mmo.Shared.System.Messages;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;
 
@@ -72,7 +75,8 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send LoginRequest (handled by ConnectionHandler)
-        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("TestUser", "password123"));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new LoginRequest { Username = "TestUser", Password = "password123" });
 
         // Start and run
         gameServer.Start();
@@ -90,9 +94,11 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send PositionUpdate
-        var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(5, 5));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(5, 5),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(10, 20)));
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(),
+                new Position(10, 20)));
 
         // Start and run
         gameServer.Start();
@@ -147,7 +153,7 @@ public class GameServerInputPhaseTests
 
         // Send Heartbeat
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new Heartbeat(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Guid.NewGuid()));
+            new Heartbeat());
 
         // Start and run
         gameServer.Start();
@@ -165,9 +171,10 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Queue messages in specific order
-        var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(5, 5)));
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(5, 5)));
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Hi"));
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
 
@@ -202,13 +209,15 @@ public class GameServerInputPhaseTests
         var clientId = Guid.NewGuid();
 
         // Send various message types
-        var testEntity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new LoginRequest("Player1", "password123"));
+        var testEntity = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "TestPlayer", new Position(0, 0),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        _mockNetworkServer.SimulateMessageReceived(clientId,
+            new LoginRequest { Username = "Player1", Password = "password123" });
         _mockNetworkServer.SimulateMessageReceived(clientId, new Ping());
         _mockNetworkServer.SimulateMessageReceived(clientId, new ChatMessage(Guid.NewGuid(), "Test"));
         _mockNetworkServer.SimulateMessageReceived(clientId,
-            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity, new Position(1, 1)));
-        _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat(123456789, Guid.NewGuid()));
+            new PositionUpdate(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), testEntity.ToDto(), new Position(1, 1)));
+        _mockNetworkServer.SimulateMessageReceived(clientId, new Heartbeat());
 
         // Start and run
         gameServer.Start();

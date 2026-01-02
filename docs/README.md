@@ -1,124 +1,125 @@
-# 📚 2DMMO Dokumentation
+# 📚 2DMMO Documentation
 
-**Willkommen zur zentralen Dokumentation des 2DMMO-Projekts!**
+**Welcome to the central documentation of the 2DMMO project!**
 
-Diese Dokumentation ist modular aufgebaut und in thematische Bereiche unterteilt. Jeder Bereich enthält spezifische Dokumente zu seinem Thema.
-
----
-
-## 🗂️ Dokumentations-Struktur
-
-### 01 - Übersicht & Vision
-> **High-Level Projektinformationen, Gameplay-Design und Asset-Anforderungen**
-
-| Dokument | Beschreibung |
-|----------|--------------|
-| [Game Design Document](01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay-Vision, Rassen, Klassen, Welt-Design, Progression |
-| [Prototyp-Scope](01-overview/PROTOTYPE_SCOPE.md) | Definition des Prototyp-Umfangs und MVP-Features |
-| [Assets & Ressourcen](01-overview/ASSETS.md) | Asset-Anforderungen, Quellen und Spezifikationen |
-
-### 02 - Architektur
-> **Technische System-Architektur, Netzwerk-Design und Infrastruktur**
-
-| Dokument | Beschreibung |
-|----------|--------------|
-| [Architektur-Übersicht](02-architecture/README.md) | Haupt-Architektur, Tech-Stack, System-Übersicht |
-| [Server-Komponenten](02-architecture/SERVER_COMPONENTS.md) | Gateway, Zone Server, Kommunikation |
-| [Netzwerk-Protokoll](02-architecture/NETWORK_PROTOCOL.md) | Transport, Message Framing, Connection Flow |
-| [Message-Spezifikation](02-architecture/MESSAGES.md) | Message Types, DTOs, Serialization |
-| [Game Loop Design](02-architecture/GAME_LOOP.md) | Server Game Loop, Tick Timing |
-| [Client-Server Sync](02-architecture/CLIENT_SERVER_SYNC.md) | Prediction, Interpolation, Reconciliation |
-| [ID-System](02-architecture/ID_SYSTEM.md) | Entity Identity, GlobalKey, ZoneId Ranges |
-| [Zone-Daten-Architektur](02-architecture/ZONE_DATA_ARCHITECTURE.md) | ZoneBounds, CollisionData, Datenstrukturen |
-| [Redis-Strategie](02-architecture/REDIS.md) | Key Schema, Caching, Pub/Sub |
-| [Datenbank-Strategie](02-architecture/DATABASE.md) | PostgreSQL, Write-Strategien, Pooling |
-| [Sicherheit](02-architecture/SECURITY.md) | Security Layers, Input Validation |
-| [Skalierung](02-architecture/SCALING.md) | Zone Sharding, Metriken, Auto-Scaling |
-| [Azure Deployment](02-architecture/AZURE_DEPLOYMENT.md) | Container Apps, Networking, Services |
-
-### 03 - Messages & Technische Details
-> **Message-Referenz und detaillierte Implementierungs-Entscheidungen**
-
-| Dokument | Beschreibung |
-|----------|--------------|
-| **[📨 Message-Referenz](03-messages/README.md)** | **Vollständige Dokumentation aller 1100+ Network-Messages** |
-| [Technical Design Document](03-technical-details/TECHNICAL_DESIGN.md) | Detaillierte technische Entscheidungen, Thread-Modell, Collision System |
-
-### 04 - Projekt-Management
-> **Issue-Tracking, Roadmaps und Planungsdokumente**
-
-| Dokument | Beschreibung |
-|----------|--------------|
-| [Issue-Hierarchie](04-project-management/ISSUE_HIERARCHY.md) | Issue-Beziehungen und Bearbeitungsreihenfolge |
-| [Issue-Aktualisierungs-Leitfaden](04-project-management/ISSUE_UPDATES_GUIDE.md) | Prozess-Guide für Issue-Updates (Templates, Best Practices) |
-| [Sub-Issues](04-project-management/SUB_ISSUES.md) | Detaillierte Sub-Issue-Vorschläge für große Issues |
-| [Feature-Roadmap](04-project-management/FEATURE_ROADMAP.md) | Neue Features bis Ende Phase 4 |
+This documentation is modular and divided into thematic areas. Each area contains specific documents on its topic.
 
 ---
 
-## 🎯 Schnellstart
+## 🗂️ Documentation Structure
 
-### Für neue Entwickler
-1. Start mit dem [Game Design Document](01-overview/GAME_DESIGN_DOCUMENT.md) für die Vision
-2. Lies die [Architektur-Übersicht](02-architecture/README.md) für das technische Verständnis
-3. Prüfe den [Prototyp-Scope](01-overview/PROTOTYPE_SCOPE.md) für den aktuellen Entwicklungsstand
+### 01 - Overview & Vision
+> **High-level project information, gameplay design and asset requirements**
 
-### Für bestehende Entwickler
-- **Architektur-Fragen**: Siehe [02-architecture/](02-architecture/)
-- **Implementierungs-Details**: Siehe [Technical Design](03-technical-details/TECHNICAL_DESIGN.md)
-- **Issue-Planning**: Siehe [04-project-management/](04-project-management/)
+| Document | Description |
+|----------|-------------|
+| [Game Design Document](01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay vision, races, classes, world design, progression |
+| [Prototype Scope](01-overview/PROTOTYPE_SCOPE.md) | Definition of prototype scope and MVP features |
+| [Assets & Resources](01-overview/ASSETS.md) | Asset requirements, sources and specifications |
 
----
+### 02 - Architecture
+> **Technical system architecture, network design and infrastructure**
 
-## 📝 Dokumentations-Konventionen
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](02-architecture/README.md) | Main architecture, tech stack, system overview |
+| [Server Components](02-architecture/SERVER_COMPONENTS.md) | Gateway, Zone Server, communication |
+| [Network Protocol](02-architecture/NETWORK_PROTOCOL.md) | Transport, message framing, connection flow |
+| [Message Specification](02-architecture/MESSAGES.md) | Message types, DTOs, serialization |
+| [Game Loop Design](02-architecture/GAME_LOOP.md) | Server game loop, tick timing |
+| [Client-Server Sync](02-architecture/CLIENT_SERVER_SYNC.md) | Prediction, interpolation, reconciliation |
+| [Chunk-Based Sync](02-architecture/CHUNK_BASED_SYNC.md) | **Phase 2** - AOI delta sync, chunk grid, bandwidth optimization |
+| [ID System](02-architecture/ID_SYSTEM.md) | Entity identity, GlobalKey, ZoneId ranges |
+| [Zone Data Architecture](02-architecture/ZONE_DATA_ARCHITECTURE.md) | ZoneBounds, CollisionData, data structures |
+| [Redis Strategy](02-architecture/REDIS.md) | Key schema, caching, Pub/Sub |
+| [Database Strategy](02-architecture/DATABASE.md) | PostgreSQL, write strategies, pooling |
+| [Security](02-architecture/SECURITY.md) | Security layers, input validation |
+| [Scaling](02-architecture/SCALING.md) | Zone sharding, metrics, auto-scaling |
+| [Azure Deployment](02-architecture/AZURE_DEPLOYMENT.md) | Container Apps, networking, services |
 
-### Struktur
-- Alle Dokumente verwenden **Markdown** (.md)
-- Emojis in Titeln für bessere Orientierung (z.B. 🏗️, 🎮, 📡)
-- Versionsnummer und Aktualisierungsdatum im Header
-- Ausführliches Inhaltsverzeichnis mit Anchor-Links
+### 03 - Messages & Technical Details
+> **Message reference and detailed implementation decisions**
 
-### Versionierung
-- **Version**: Semantic Versioning (z.B. 1.2.0)
-- **Status**: `In Entwicklung` | `Prototyp-Phase` | `Finalisiert`
-- **Letzte Aktualisierung**: YYYY-MM-DD Format
+| Document | Description |
+|----------|-------------|
+| **[📨 Message Reference](03-messages/README.md)** | **Complete documentation of all 1100+ network messages** |
+| [Technical Design Document](03-technical-details/TECHNICAL_DESIGN.md) | Detailed technical decisions, thread model, collision system |
 
-### Cross-Referenzen
-- Relative Pfade verwenden: `[Link](../02-architecture/README.md)`
-- Anchor-Links für Abschnitte: `[Link](#section-name)`
+### 04 - Project Management
+> **Issue tracking, roadmaps and planning documents**
 
----
-
-## 🔄 Dokumentation erweitern
-
-### Neue Dokumente hinzufügen
-
-1. **Kategorie wählen**: Entscheide, in welchen Ordner das Dokument gehört
-   - `01-overview`: High-level, nicht-technische Informationen
-   - `02-architecture`: System-Design, Architektur-Entscheidungen
-   - `03-technical-details`: Implementierungs-Spezifikationen
-   - `04-project-management`: Issue-Tracking, Planung
-
-2. **Dokument erstellen**: Folge den Konventionen (siehe oben)
-
-3. **Index aktualisieren**: Füge einen Eintrag in dieser README.md hinzu
-
-4. **Links aktualisieren**: Prüfe und aktualisiere alle internen Verlinkungen
-
-### Bestehende Dokumente aktualisieren
-
-1. Versionsnummer erhöhen (falls signifikante Änderungen)
-2. Aktualisierungsdatum anpassen
-3. Änderungslog am Ende des Dokuments pflegen (optional)
+| Document | Description |
+|----------|-------------|
+| [Issue Hierarchy](04-project-management/ISSUE_HIERARCHY.md) | Issue relationships and processing order |
+| [Issue Updates Guide](04-project-management/ISSUE_UPDATES_GUIDE.md) | Process guide for issue updates (templates, best practices) |
+| [Sub-Issues](04-project-management/SUB_ISSUES.md) | Detailed sub-issue suggestions for large issues |
+| [Feature Roadmap](04-project-management/FEATURE_ROADMAP.md) | New features through end of Phase 4 |
 
 ---
 
-## 📊 Dokumentations-Abhängigkeiten
+## 🎯 Quick Start
+
+### For New Developers
+1. Start with the [Game Design Document](01-overview/GAME_DESIGN_DOCUMENT.md) for the vision
+2. Read the [Architecture Overview](02-architecture/README.md) for technical understanding
+3. Check the [Prototype Scope](01-overview/PROTOTYPE_SCOPE.md) for current development status
+
+### For Existing Developers
+- **Architecture Questions**: See [02-architecture/](02-architecture/)
+- **Implementation Details**: See [Technical Design](03-technical-details/TECHNICAL_DESIGN.md)
+- **Issue Planning**: See [04-project-management/](04-project-management/)
+
+---
+
+## 📝 Documentation Conventions
+
+### Structure
+- All documents use **Markdown** (.md)
+- Emojis in titles for better orientation (e.g. 🏗️, 🎮, 📡)
+- Version number and update date in header
+- Detailed table of contents with anchor links
+
+### Versioning
+- **Version**: Semantic Versioning (e.g. 1.2.0)
+- **Status**: `In Development` | `Prototype Phase` | `Finalized`
+- **Last Updated**: YYYY-MM-DD format
+
+### Cross-References
+- Use relative paths: `[Link](../02-architecture/README.md)`
+- Anchor links for sections: `[Link](#section-name)`
+
+---
+
+## 🔄 Extending Documentation
+
+### Adding New Documents
+
+1. **Choose category**: Decide which folder the document belongs in
+   - `01-overview`: High-level, non-technical information
+   - `02-architecture`: System design, architecture decisions
+   - `03-technical-details`: Implementation specifications
+   - `04-project-management`: Issue tracking, planning
+
+2. **Create document**: Follow the conventions (see above)
+
+3. **Update index**: Add an entry in this README.md
+
+4. **Update links**: Check and update all internal links
+
+### Updating Existing Documents
+
+1. Increment version number (for significant changes)
+2. Update the date
+3. Maintain changelog at end of document (optional)
+
+---
+
+## 📊 Documentation Dependencies
 
 ```
 GAME_DESIGN_DOCUMENT (Vision)
     ↓
-ARCHITECTURE (System-Design)
+ARCHITECTURE (System Design)
     ↓
 TECHNICAL_DESIGN (Implementation)
     ↓
@@ -129,13 +130,13 @@ ISSUE_HIERARCHY (Task Breakdown)
 
 ---
 
-## 🆘 Hilfe & Feedback
+## 🆘 Help & Feedback
 
-- **Fragen zur Dokumentation**: Erstelle ein Issue mit Label `documentation`
-- **Fehlende Dokumentation**: Erstelle ein Issue mit Beschreibung des benötigten Inhalts
-- **Verbesserungsvorschläge**: Pull Request oder Issue erstellen
+- **Documentation questions**: Create an issue with label `documentation`
+- **Missing documentation**: Create an issue describing the needed content
+- **Improvement suggestions**: Create a pull request or issue
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-09  
-**Struktur-Version**: 2.0.0
+**Last Updated**: 2026-01-01  
+**Structure Version**: 2.1.0

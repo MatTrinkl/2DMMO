@@ -1,49 +1,25 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
-using MessagePack;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core.Records;
+using Mmo.Shared.DirtyTracking.Attributes;
 using Mmo.Shared.Entities.Enums;
-using Mmo.Shared.Entities.Structs;
-using Mmo.Shared.Npc.Entities;
+using Mmo.Shared.Generators;
 
 namespace Mmo.Shared.Entities.Interfaces;
 
-[Union(0, typeof(PlayerEntity))]
-[Union(1, typeof(NpcEntity))]
+[GenerateDto(InheritInterfaces = false, DtoName = "EntityDto")]
+[GenerateDtoUnion(UnionName = "EntityDtoUnion", Namespace = "Mmo.Shared.Entities.Dtos")]
+[GenerateDirtyTracking(IdPropertyName = "PersistentId", FlagsEnumType = "Mmo.Shared.Entities.Enums.EntityDirtyFlags")]
+[GenerateDeltaDtoUnion(UnionName = "EntityDeltaUnion", Namespace = "Mmo.Shared.Entities.Dtos")]
 public interface IEntity
 {
-    /// <summary>
-    ///     Runtime identity - changes on zone transfer!
-    ///     Use for zone-internal lookups only.
-    /// </summary>
-    EntityIdentity RuntimeId { get; }
-
     /// <summary>
     ///     Stable identity for network communication.
     ///     Never changes, even on zone transfer.
     /// </summary>
-    Guid PersistentId { get; }
-
-    /// <summary>
-    ///     Whether this entity is truly persistent (saved to DB)
-    ///     or just runtime-persistent (exists only this session).
-    /// </summary>
-    bool IsTrulyPersistent { get; }
+    Guid PersistentId { get; init; }
 
     EntityType Type { get; }
-    Position Position { get; set; }
 
-    /// <summary>
-    ///     Sets the runtime identity. Called by Zone when entity is added/transferred.
-    /// </summary>
-    /// <param name="localId">The new local ID within the zone.</param>
-    /// <param name="zoneId">The zone ID.</param>
-    void SetEntityId(ushort localId, ushort zoneId);
-
-    /// <summary>
-    ///     Called when this entity changes zones.
-    /// </summary>
-    /// <param name="newZoneId">The ID of the new zone.</param>
-    void ChangeZone(ushort newZoneId);
+    [TrackDirty("Position")] Position Position { get; set; }
 }

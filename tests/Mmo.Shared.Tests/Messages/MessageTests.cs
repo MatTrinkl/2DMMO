@@ -1,11 +1,8 @@
 using FluentAssertions;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Chat.Messages;
-using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Core.Constants;
-using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
-using Mmo.Shared.Movement;
 
 namespace Mmo.Shared.Tests.Messages;
 
@@ -39,22 +36,10 @@ public class MessageTests
     public void LoginRequest_HasCorrectMessageType()
     {
         // Arrange
-        var loginRequest = new LoginRequest("testuser", "testpass");
+        var loginRequest = new LoginRequest { Username = "testuser", Password = "testpass" };
 
         // Assert
         loginRequest.Type.Should().Be(MessageType.LoginRequest);
-    }
-
-    [Fact]
-    public void PositionUpdate_HasCorrectMessageType()
-    {
-        // Arrange
-        var entity = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player", new Position(10, 20));
-        var newPosition = new Position(30, 40);
-        var positionUpdate = new PositionUpdate(12345, entity, newPosition);
-
-        // Assert
-        positionUpdate.Type.Should().Be(MessageType.PositionUpdate);
     }
 
     [Fact]

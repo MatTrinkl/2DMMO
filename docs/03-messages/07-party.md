@@ -57,6 +57,9 @@ Das Party-System implementiert:
 
 **Level-Range**: Max 10 Level-Differenz für XP-Share (flexible basierend auf höchstem Level)
 
+**🔄 DTO-System:**  
+In Phase 2 wird ein `PartyMemberDto` eingeführt für Party-Listen und Member-Updates. Dies ermöglicht minimale Spieler-Infos ohne sensible Daten. Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
+
 ---
 
 ## PartyInvite (700)

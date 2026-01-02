@@ -2,10 +2,10 @@ using Mmo.Server.Connections;
 using Mmo.Server.Core;
 using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
+using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.System.Messages;
 
 namespace Mmo.Server.Network.Services;
 
@@ -97,7 +97,8 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToPartyExcept<T>(ServerPlayerCharacter characterInPartyAndToExcluded, T message)
+        where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (characterInPartyAndToExcluded.PartyId == null) return;
@@ -116,7 +117,8 @@ public class BroadcastService(GameServer gameServer)
         gameServer.QueueOutgoingMessage(outgoing);
     }
 
-    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter clientInGuildAndToExcluded, T message) where T : INetworkMessage
+    public void BroadcastToGuildExcept<T>(ServerPlayerCharacter clientInGuildAndToExcluded, T message)
+        where T : INetworkMessage
     {
         ArgumentNullException.ThrowIfNull(message);
         if (clientInGuildAndToExcluded?.GuildId == null) return;

@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- Generierte Dateien auch in die DLL einbetten -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,10 +15,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Character\Messages\"/>
-    <Folder Include="Character\Records\"/>
+    <ProjectReference Include="..\Mmo.Generators\Mmo.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Character\Entities\"/>
+    <Folder Include="Combat\Entities\"/>
+    <Folder Include="Entities\Extensions\"/>
     <Folder Include="Entities\Messages\"/>
     <Folder Include="Groups\"/>
+    <Folder Include="Npc\Entities\"/>
   </ItemGroup>
 
 </Project>

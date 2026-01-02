@@ -15,16 +15,16 @@
 - [LoginResponse (2)](#loginresponse-2)
 - [LogoutRequest (3)](#logoutrequest-3)
 - [Heartbeat (4)](#heartbeat-4)
-- [Disconnect (5)](#disconnect-5)
+- [ForceDisconnect (5)](#forcedisconnect-5)
 - [ReconnectRequest (6)](#reconnectrequest-6)
 - [ReconnectResponse (7)](#reconnectresponse-7)
-- [SessionValidate (8)](#sessionvalidate-8)
-- [CharacterSelect (9)](#characterselect-9)
-- [CharacterCreate (10)](#charactercreate-10)
-- [CharacterDelete (11)](#characterdelete-11)
+- [SessionValidate (8) - Deprecated](#sessionvalidate-8)
+- [CharacterSelectRequest (9)](#characterselectrequest-9)
+- [CharacterCreateRequest (10)](#charactercreaterequest-10)
+- [CharacterDeleteRequest (11)](#characterdeleterequest-11)
 - [CharacterListRequest (12)](#characterlistrequest-12)
 - [CharacterListResponse (13)](#characterlistresponse-13)
-- [ServerSelect (14)](#serverselect-14)
+- [ServerSelectRequest (14)](#serverselectrequest-14)
 - [RealmListRequest (15)](#realmlistrequest-15)
 - [RealmListResponse (16)](#realmlistresponse-16)
 - [AccountDataRequest (17)](#accountdatarequest-17)
@@ -333,7 +333,7 @@ var heartbeat = new Heartbeat
 
 ---
 
-## Disconnect (5)
+## ForceDisconnect (5)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -345,69 +345,92 @@ Server fordert Client auf, die Verbindung zu trennen. Kann verschiedene Gründe 
 
 ### Im Scope ✅
 - Forced Disconnect
-- Disconnect-Grund (Code + Message)
-- Reconnect-Erlaubnis (Flag)
+- Disconnect-Grund (DisconnectReason Enum)
+- Reconnect-Erlaubnis (computed property)
 
 ### Nicht im Scope ❌
 - Graceful Logout → Client sendet `LogoutRequest` (3)
 
 ### Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Reason | string | Disconnect-Grund (Code) | Ja |
-| Message | string | Menschenlesbare Nachricht | Ja |
-| CanReconnect | bool | Darf Client reconnecten? | Ja |
-| ReconnectDelay | int | Sekunden bis Reconnect erlaubt | Nein |
+| Feld           | Typ              | Beschreibung                     | Pflicht |
+|----------------|------------------|----------------------------------|---------|
+| Type           | MessageType      | `MessageType.ForceDisconnect`    | Ja      |
+| Reason         | DisconnectReason | Disconnect-Grund (Enum)          | Ja      |
+| Message        | string?          | Menschenlesbare Nachricht        | Nein    |
+| ReconnectDelay | int?             | Sekunden bis Reconnect erlaubt   | Nein    |
 
-### Erwartete Response
-- Keine (Client schließt Connection)
+### DisconnectReason Enum (aus Code)
 
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `LogoutRequest` | 3 | Client-initiierter Disconnect |
-| `KickNotification` | 912 | Admin-Kick mit Details |
-| `BanNotification` | 916 | Ban-Benachrichtigung |
-| `ServerShutdown` | 914 | Shutdown-Warning vor Disconnect |
+```csharp
+public enum DisconnectReason
+{
+    ClientDisconnected,  // Client closed connection gracefully
+    Timeout,             // No heartbeat received
+    NetworkError,        // Network error occurred
+    ServerShutdown,      // Server is shutting down
+    Kicked,              // Client was kicked by server
+    ProtocolError,       // Protocol violation or invalid data
+    Banned,              // Client was banned
+    Maintenance,         // Server maintenance
+    DuplicateLogin,      // Another session with same account
+    VersionMismatch      // Client version incompatible
+}
+```
 
-### Beispiel Payload
+### Code-Beispiel (aktueller Code)
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.ForceDisconnect)]
+public class ForceDisconnect : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.ForceDisconnect;
+    [Key(1)] public DisconnectReason Reason { get; init; }
+    [Key(2)] public string? Message { get; set; }
+    [Key(3)] public int? ReconnectDelay { get; set; }
+    
+    // Computed property (not serialized)
+    [IgnoreMember]
+    public bool CanReconnect => Reason is not (DisconnectReason.Banned or DisconnectReason.VersionMismatch);
+}
+```
+
+### Beispiel Payloads
+
 ```csharp
 // Timeout
-var timeoutDisconnect = new Disconnect
+var timeoutDisconnect = new ForceDisconnect
 {
-    Type = MessageType.Disconnect,
-    Reason = "TIMEOUT",
+    Reason = DisconnectReason.Timeout,
     Message = "Connection timed out due to inactivity",
-    CanReconnect = true,
     ReconnectDelay = 0
 };
 
 // Admin Kick
-var kickDisconnect = new Disconnect
+var kickDisconnect = new ForceDisconnect
 {
-    Type = MessageType.Disconnect,
-    Reason = "KICKED",
+    Reason = DisconnectReason.Kicked,
     Message = "You have been kicked by an administrator",
-    CanReconnect = true,
     ReconnectDelay = 300 // 5 Minuten
 };
 
-// Ban
-var banDisconnect = new Disconnect
+// Ban (CanReconnect = false)
+var banDisconnect = new ForceDisconnect
 {
-    Type = MessageType.Disconnect,
-    Reason = "BANNED",
-    Message = "Your account has been permanently banned",
-    CanReconnect = false
+    Reason = DisconnectReason.Banned,
+    Message = "Your account has been permanently banned"
 };
 ```
 
 ### Disconnect Reasons
-| Reason | CanReconnect | Beschreibung |
-|--------|--------------|--------------|
-| `TIMEOUT` | true | Keine Heartbeats empfangen |
-| `KICKED` | true | Admin-Kick |
-| `BANNED` | false | Account gesperrt |
+| Reason           | CanReconnect | Beschreibung                    |
+|------------------|--------------|--------------------------------|
+| `Timeout`        | true         | Keine Heartbeats empfangen      |
+| `Kicked`         | true         | Admin-Kick                      |
+| `Banned`         | false        | Account gesperrt                |
+| `VersionMismatch`| false        | Client-Version inkompatibel     |
+| `Maintenance`    | true         | Server-Wartung                  |
+| `DuplicateLogin` | true         | Anderer Login mit gleichem Account |
 | `MAINTENANCE` | true | Server-Wartung |
 | `SERVER_SHUTDOWN` | true | Server fährt herunter |
 | `DUPLICATE_LOGIN` | true | Andere Session auf gleichem Account |

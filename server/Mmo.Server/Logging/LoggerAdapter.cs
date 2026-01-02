@@ -50,7 +50,7 @@ public sealed class LoggerAdapter(ILogger logger) : ILog
     ///     <see cref="args" />.
     /// </param>
     /// <param name="args">Objects to replace in the <see cref="messageTemplate" />.</param>
-    public void Error(string messageTemplate, params object[] args)
+    public void Error(string? messageTemplate, params object[] args)
         => logger.LogError(messageTemplate, args);
 
     /// <summary>

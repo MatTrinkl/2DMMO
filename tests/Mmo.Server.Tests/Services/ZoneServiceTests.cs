@@ -1,11 +1,12 @@
+using Mmo.Server.Entities;
 using Mmo.Server.Tests.Helpers;
 using Mmo.Server.Zones;
 using Mmo.Server.Zones.Records;
 using Mmo.Server.Zones.Services;
-using Mmo.Shared.Character.Entities;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Records;
-using Mmo.Shared.Zones.Structs;
+using Mmo.Shared.Entities.Structs;
+using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.Services;
 
@@ -26,8 +27,8 @@ public class ZoneServiceTests : IDisposable
         _zoneService = new ZoneService(_zoneManager, _broadcastService, _log);
 
         // Register test zones
-        var zone0 = new Zone(0, "Starter Zone", new ZoneBounds(0, 0, 1000, 1000));
-        var zone1 = new Zone(1, "Forest Zone", new ZoneBounds(0, 0, 2000, 2000));
+        Zone zone0 = TestHelpers.CreateTestZone(0, "Starter Zone");
+        Zone zone1 = TestHelpers.CreateTestZone(1, "Forest Zone");
         _zoneManager.RegisterZone(zone0);
         _zoneManager.RegisterZone(zone1);
     }
@@ -74,8 +75,10 @@ public class ZoneServiceTests : IDisposable
     public void GetPlayerCount_WithPlayers_ReturnsCorrectCount()
     {
         // Add players to zone
-        var player1 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player1", new Position(100, 100),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player2 = new CharacterEntity(Guid.NewGuid(), Guid.NewGuid(), "Player2", new Position(200, 200),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         player1.SetEntityId(IdRegistry.Instance.GetNextLocalId(0), 0);
         player2.SetEntityId(IdRegistry.Instance.GetNextLocalId(0), 0);
@@ -105,8 +108,10 @@ public class ZoneServiceTests : IDisposable
     {
         var player1Id = Guid.NewGuid();
         var player2Id = Guid.NewGuid();
-        var player1 = new PlayerEntity(player1Id, Guid.NewGuid(), "Player1", new Position(100, 100));
-        var player2 = new PlayerEntity(player2Id, Guid.NewGuid(), "Player2", new Position(200, 200));
+        var player1 = new CharacterEntity(player1Id, Guid.NewGuid(), "Player1", new Position(100, 100),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
+        var player2 = new CharacterEntity(player2Id, Guid.NewGuid(), "Player2", new Position(200, 200),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         player1.SetEntityId(IdRegistry.Instance.GetNextLocalId(0), 0);
         player2.SetEntityId(IdRegistry.Instance.GetNextLocalId(0), 0);
@@ -152,7 +157,8 @@ public class ZoneServiceTests : IDisposable
     {
         // Setup player in zone 0
         var playerId = Guid.NewGuid();
-        var player = new PlayerEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100));
+        var player = new CharacterEntity(playerId, Guid.NewGuid(), "Player", new Position(100, 100),
+            EntityIdentity.Unassigned(PrefabIds.PlayerDefault));
 
         player.SetEntityId(IdRegistry.Instance.GetNextLocalId(0), 0);
         IdRegistry.Instance.RegisterEntity(player);

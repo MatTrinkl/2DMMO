@@ -11,45 +11,55 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [TargetSelect (1200)](#targetselect-1200)
-- [TargetClear (1201)](#targetclear-1201)
-- [TargetUpdate (1202)](#targetupdate-1202)
-- [TargetInfoRequest (1203)](#targetinforequest-1203)
-- [TargetInfoResponse (1204)](#targetinforesponse-1204)
-- [TargetOfTarget (1205)](#targetoftarget-1205)
-- [TargetOfTargetUpdate (1206)](#targetoftargetupdate-1206)
-- [FocusTarget (1207)](#focustarget-1207)
-- [FocusClear (1208)](#focusclear-1208)
-- [AssistTarget (1209)](#assisttarget-1209)
-- [MarkTarget (1210)](#marktarget-1210)
-- [MarkClear (1211)](#markclear-1211)
-- [MarkClearAll (1212)](#markclearall-1212)
-- [MouseoverTarget (1213)](#mouseovertarget-1213)
-- [TabTarget (1214)](#tabtarget-1214)
-- [NearestEnemyTarget (1215)](#nearestenemytarget-1215)
-- [NearestFriendTarget (1216)](#nearestfriendtarget-1216)
-- [TargetSelectResponse (1220)](#targetselectresponse-1220)
-- [AssistTargetResponse (1221)](#assisttargetresponse-1221)
-- [MarkTargetResponse (1222)](#marktargetresponse-1222)
-- [TabTargetResponse (1223)](#tabtargetresponse-1223)
-- [NearestEnemyTargetResponse (1224)](#nearestenemytargetresponse-1224)
-- [NearestFriendTargetResponse (1225)](#nearestfriendtargetresponse-1225)
+-   [TargetSelect (1200)](#targetselect-1200)
+-   [TargetClear (1201)](#targetclear-1201)
+-   [TargetUpdate (1202)](#targetupdate-1202)
+-   [TargetInfoRequest (1203)](#targetinforequest-1203)
+-   [TargetInfoResponse (1204)](#targetinforesponse-1204)
+-   [TargetOfTarget (1205)](#targetoftarget-1205)
+-   [TargetOfTargetUpdate (1206)](#targetoftargetupdate-1206)
+-   [FocusTarget (1207)](#focustarget-1207)
+-   [FocusClear (1208)](#focusclear-1208)
+-   [AssistTarget (1209)](#assisttarget-1209)
+-   [MarkTarget (1210)](#marktarget-1210)
+-   [MarkClear (1211)](#markclear-1211)
+-   [MarkClearAll (1212)](#markclearall-1212)
+-   [MouseoverTarget (1213)](#mouseovertarget-1213)
+-   [TabTarget (1214)](#tabtarget-1214)
+-   [NearestEnemyTarget (1215)](#nearestenemytarget-1215)
+-   [NearestFriendTarget (1216)](#nearestfriendtarget-1216)
+-   [TargetSelectResponse (1220)](#targetselectresponse-1220)
+-   [AssistTargetResponse (1221)](#assisttargetresponse-1221)
+-   [MarkTargetResponse (1222)](#marktargetresponse-1222)
+-   [TabTargetResponse (1223)](#tabtargetresponse-1223)
+-   [NearestEnemyTargetResponse (1224)](#nearestenemytargetresponse-1224)
+-   [NearestFriendTargetResponse (1225)](#nearestfriendtargetresponse-1225)
 
 ---
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für das **Targeting-System** im 2DMMO.
+Diese Kategorie umfasst alle Messages für **Targeting** Funktionalität im 2DMMO.
 
 Das Targeting-System implementiert:
-- Target-Selektion (Click, Tab, Nearest, Mouseover)
-- Target-Information Abfrage
-- Focus-Target (sekundäres Target)
-- Target-of-Target (ToT) Mechanik
-- Raid-Marker und Target-Marking
-- Assist-Functionality für Gruppen
+
+-   Target-Selektion (Click, Tab, Nearest, Mouseover)
+-   Target-Information Abfrage
+-   Focus-Target (sekundäres Target)
+-   Target-of-Target (ToT) Mechanik
+-   Raid-Marker und Target-Marking
+-   Assist-Functionality für Gruppen
 
 **Client Authority**: Target-Selection ist primär client-seitig. Server validiert Target für Actions und sendet Target-Info.
+
+**🔄 DTO-System:**  
+Targeting Messages wie `TargetChanged` (1200) werden in Phase 2 ein `TargetEntityDto` verwenden:
+
+-   Minimale Target-Informationen für UI (Name, Level, Health, Buffs)
+-   Keine sensiblen Server-Daten wie AccountId oder Gold
+-   Optimiert für Target-Frame UI-Updates
+
+Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `TargetEntityDto` Struktur.
 
 ---
 
@@ -61,38 +71,46 @@ Das Targeting-System implementiert:
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Client teilt Server mit dass Entity targetiert wurde. Server sendet Target-Info zurück und trackt Target für Abilities.
 
 ### Im Scope ✅
-- Entity targetieren (Spieler, NPC, Object)
-- Target-Info-Request
-- Server-seitige Target-Tracking
+
+-   Entity targetieren (Spieler, NPC, Object)
+-   Target-Info-Request
+-   Server-seitige Target-Tracking
 
 ### Nicht im Scope ❌
-- Auto-Targeting → verwende `TabTarget` (1214) oder `NearestEnemyTarget` (1215)
-- Focus-Target → verwende `FocusTarget` (1207)
-- Target-Info ohne Targeting → verwende `TargetInfoRequest` (1203)
+
+-   Auto-Targeting → verwende `TabTarget` (1214) oder `NearestEnemyTarget` (1215)
+-   Focus-Target → verwende `FocusTarget` (1207)
+-   Target-Info ohne Targeting → verwende `TargetInfoRequest` (1203)
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity-ID des Targets | Ja |
+
+| Feld     | Typ | Beschreibung          | Pflicht |
+| -------- | --- | --------------------- | ------- |
+| EntityId | int | Entity-ID des Targets | Ja      |
 
 ### Erwartete Response
-- `TargetSelectResponse` (1220)
+
+-   `TargetSelectResponse` (1220)
 
 ### Folge-Messages bei Erfolg
-- `TargetUpdate` (1202) mit neuer Target-ID
-- `TargetInfoResponse` (1204) mit Target-Details
+
+-   `TargetUpdate` (1202) mit neuer Target-ID
+-   `TargetInfoResponse` (1204) mit Target-Details
 
 ### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `TargetUpdate` | 1202 | Server bestätigt Target-Change |
-| `TargetInfoResponse` | 1204 | Target-Details |
-| `TargetClear` | 1201 | Target aufheben |
+
+| Message              | ID   | Beziehung                      |
+| -------------------- | ---- | ------------------------------ |
+| `TargetUpdate`       | 1202 | Server bestätigt Target-Change |
+| `TargetInfoResponse` | 1204 | Target-Details                 |
+| `TargetClear`        | 1201 | Target aufheben                |
 
 ### Beispiel Payload
+
 ```csharp
 var targetSelect = new TargetSelect
 {
@@ -102,10 +120,11 @@ var targetSelect = new TargetSelect
 ```
 
 ### Notizen
-- **Range**: Keine Range-Limit für Targeting (nur für Actions)
-- **Dead Entities**: Tote Entities können targetiert werden (für Rez, Loot)
-- **Friendly Fire**: Eigene Faction kann targetiert werden
-- **UI**: Client zeigt Target-Frame
+
+-   **Range**: Keine Range-Limit für Targeting (nur für Actions)
+-   **Dead Entities**: Tote Entities können targetiert werden (für Rez, Loot)
+-   **Friendly Fire**: Eigene Faction kann targetiert werden
+-   **UI**: Client zeigt Target-Frame
 
 ---
 
@@ -117,15 +136,19 @@ var targetSelect = new TargetSelect
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Client löscht aktuelles Target. Server cleared Target-Tracking.
 
 ### Request Payload
+
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- **Immer:** `TargetUpdate` (1202) mit EntityId=0
+
+-   **Immer:** `TargetUpdate` (1202) mit EntityId=0
 
 ### Beispiel Payload
+
 ```csharp
 var targetClear = new TargetClear
 {
@@ -134,9 +157,10 @@ var targetClear = new TargetClear
 ```
 
 ### Notizen
-- **Hotkey**: Standard Keybind: ESC
-- **Auto-Clear**: Bei Target-Death oder Despawn
-- **Combat**: Clearen im Combat ist erlaubt
+
+-   **Hotkey**: Standard Keybind: ESC
+-   **Auto-Clear**: Bei Target-Death oder Despawn
+-   **Combat**: Clearen im Combat ist erlaubt
 
 ---
 
@@ -148,14 +172,17 @@ var targetClear = new TargetClear
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Server bestätigt Target-Change. Client updated UI.
 
 ### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Neue Target Entity-ID (0 = kein Target) | Ja |
+
+| Feld     | Typ | Beschreibung                            | Pflicht |
+| -------- | --- | --------------------------------------- | ------- |
+| EntityId | int | Neue Target Entity-ID (0 = kein Target) | Ja      |
 
 ### Beispiel Payload
+
 ```csharp
 var targetUpdate = new TargetUpdate
 {
@@ -165,8 +192,9 @@ var targetUpdate = new TargetUpdate
 ```
 
 ### Notizen
-- **EntityId=0**: Bedeutet kein Target
-- **UI**: Client zeigt/versteckt Target-Frame
+
+-   **EntityId=0**: Bedeutet kein Target
+-   **UI**: Client zeigt/versteckt Target-Frame
 
 ---
 
@@ -178,17 +206,21 @@ var targetUpdate = new TargetUpdate
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Fordert detaillierte Info über Entity an ohne zu targetieren. Für Mouseover-Tooltips.
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity-ID | Ja |
+
+| Feld     | Typ | Beschreibung | Pflicht |
+| -------- | --- | ------------ | ------- |
+| EntityId | int | Entity-ID    | Ja      |
 
 ### Erwartete Response
-- **Immer:** `TargetInfoResponse` (1204)
+
+-   **Immer:** `TargetInfoResponse` (1204)
 
 ### Beispiel Payload
+
 ```csharp
 var infoRequest = new TargetInfoRequest
 {
@@ -198,8 +230,9 @@ var infoRequest = new TargetInfoRequest
 ```
 
 ### Notizen
-- **Mouseover**: Für Tooltip-Info ohne Target-Change
-- **Rate-Limit**: Max 10 Requests/Sekunde
+
+-   **Mouseover**: Für Tooltip-Info ohne Target-Change
+-   **Rate-Limit**: Max 10 Requests/Sekunde
 
 ---
 
@@ -211,25 +244,28 @@ var infoRequest = new TargetInfoRequest
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Detaillierte Entity-Informationen. Enthält Name, Level, Health, Faction, etc.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity-ID | Ja |
-| Name | string | Entity-Name | Ja |
-| Level | int | Level | Ja |
-| EntityType | string | "player", "npc", "object" | Ja |
-| Health | int | Current Health | Ja |
-| MaxHealth | int | Max Health | Ja |
-| HealthPercent | float | Health % (0.0-1.0) | Ja |
-| Faction | string | Fraktions-Name | Ja |
-| IsHostile | bool | Ist feindlich? | Ja |
-| IsDead | bool | Ist tot? | Ja |
-| Title | string | Titel (bei Spielern) | Nein |
-| GuildName | string | Guild-Name (bei Spielern) | Nein |
+
+| Feld          | Typ    | Beschreibung              | Pflicht |
+| ------------- | ------ | ------------------------- | ------- |
+| EntityId      | int    | Entity-ID                 | Ja      |
+| Name          | string | Entity-Name               | Ja      |
+| Level         | int    | Level                     | Ja      |
+| EntityType    | string | "player", "npc", "object" | Ja      |
+| Health        | int    | Current Health            | Ja      |
+| MaxHealth     | int    | Max Health                | Ja      |
+| HealthPercent | float  | Health % (0.0-1.0)        | Ja      |
+| Faction       | string | Fraktions-Name            | Ja      |
+| IsHostile     | bool   | Ist feindlich?            | Ja      |
+| IsDead        | bool   | Ist tot?                  | Ja      |
+| Title         | string | Titel (bei Spielern)      | Nein    |
+| GuildName     | string | Guild-Name (bei Spielern) | Nein    |
 
 ### Beispiel Payload
+
 ```csharp
 var infoResponse = new TargetInfoResponse
 {
@@ -250,9 +286,10 @@ var infoResponse = new TargetInfoResponse
 ```
 
 ### Notizen
-- **Privacy**: Gewisse Infos nur bei Friendly/Guild
-- **Health**: Boss-Health als Prozent (nicht absolute Werte)
-- **Caching**: Client kann cachen für Performance
+
+-   **Privacy**: Gewisse Infos nur bei Friendly/Guild
+-   **Health**: Boss-Health als Prozent (nicht absolute Werte)
+-   **Caching**: Client kann cachen für Performance
 
 ---
 
@@ -264,17 +301,21 @@ var infoResponse = new TargetInfoResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Client fragt nach Target-of-Target (ToT). Was targetiert mein Target?
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity-ID | Ja |
+
+| Feld     | Typ | Beschreibung | Pflicht |
+| -------- | --- | ------------ | ------- |
+| EntityId | int | Entity-ID    | Ja      |
 
 ### Erwartete Response
-- **Immer:** `TargetOfTargetUpdate` (1206)
+
+-   **Immer:** `TargetOfTargetUpdate` (1206)
 
 ### Beispiel Payload
+
 ```csharp
 var totRequest = new TargetOfTarget
 {
@@ -284,8 +325,9 @@ var totRequest = new TargetOfTarget
 ```
 
 ### Notizen
-- **Use-Case**: Tank sieht wen Boss targetiert
-- **UI**: ToT-Frame im Target-Frame
+
+-   **Use-Case**: Tank sieht wen Boss targetiert
+-   **UI**: ToT-Frame im Target-Frame
 
 ---
 
@@ -297,16 +339,19 @@ var totRequest = new TargetOfTarget
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Target-of-Target Information. Server sendet automatisch bei Target-Changes.
 
 ### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SourceEntityId | int | Original Entity | Ja |
-| TargetEntityId | int | Was Source targetiert (0 = kein Target) | Ja |
-| TargetName | string | Name des ToT | Nein |
+
+| Feld           | Typ    | Beschreibung                            | Pflicht |
+| -------------- | ------ | --------------------------------------- | ------- |
+| SourceEntityId | int    | Original Entity                         | Ja      |
+| TargetEntityId | int    | Was Source targetiert (0 = kein Target) | Ja      |
+| TargetName     | string | Name des ToT                            | Nein    |
 
 ### Beispiel Payload
+
 ```csharp
 var totUpdate = new TargetOfTargetUpdate
 {
@@ -318,8 +363,9 @@ var totUpdate = new TargetOfTargetUpdate
 ```
 
 ### Notizen
-- **Auto-Update**: Server sendet bei ToT-Change
-- **TargetEntityId=0**: Bedeutet kein Target
+
+-   **Auto-Update**: Server sendet bei ToT-Change
+-   **TargetEntityId=0**: Bedeutet kein Target
 
 ---
 
@@ -331,28 +377,34 @@ var totUpdate = new TargetOfTargetUpdate
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Setzt Focus-Target (sekundäres Target). Bleibt auch wenn Main-Target wechselt.
 
 ### Im Scope ✅
-- Focus-Target setzen
-- Persistent Target (bleibt bei Main-Target-Change)
-- Abilities auf Focus casten
+
+-   Focus-Target setzen
+-   Persistent Target (bleibt bei Main-Target-Change)
+-   Abilities auf Focus casten
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity-ID für Focus | Ja |
+
+| Feld     | Typ | Beschreibung        | Pflicht |
+| -------- | --- | ------------------- | ------- |
+| EntityId | int | Entity-ID für Focus | Ja      |
 
 ### Erwartete Response
-- **Immer:** Server trackt Focus, keine explizite Response
+
+-   **Immer:** Server trackt Focus, keine explizite Response
 
 ### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `FocusClear` | 1208 | Focus aufheben |
-| `TargetSelect` | 1200 | Main-Target |
+
+| Message        | ID   | Beziehung      |
+| -------------- | ---- | -------------- |
+| `FocusClear`   | 1208 | Focus aufheben |
+| `TargetSelect` | 1200 | Main-Target    |
 
 ### Beispiel Payload
+
 ```csharp
 var focusTarget = new FocusTarget
 {
@@ -362,9 +414,10 @@ var focusTarget = new FocusTarget
 ```
 
 ### Notizen
-- **Use-Case**: Boss-Mechanics tracken während Add-Targeting
-- **Abilities**: Können mit @focus Modifier auf Focus gecastet werden
-- **UI**: Separates Focus-Frame
+
+-   **Use-Case**: Boss-Mechanics tracken während Add-Targeting
+-   **Abilities**: Können mit @focus Modifier auf Focus gecastet werden
+-   **UI**: Separates Focus-Frame
 
 ---
 
@@ -376,14 +429,17 @@ var focusTarget = new FocusTarget
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Löscht Focus-Target.
 
 ### Request Payload
+
 Keine zusätzlichen Felder
 
 ### Notizen
-- **Hotkey**: Standard Keybind: SHIFT+F
-- **Auto-Clear**: Bei Focus-Death oder Despawn
+
+-   **Hotkey**: Standard Keybind: SHIFT+F
+-   **Auto-Clear**: Bei Focus-Death oder Despawn
 
 ---
 
@@ -395,21 +451,26 @@ Keine zusätzlichen Felder
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Targetiert das Target von anderem Spieler (Assist). Für koordinierte Angriffe in Gruppen.
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| AssistEntityId | int | Entity-ID des zu assistierenden Spielers | Ja |
+
+| Feld           | Typ | Beschreibung                             | Pflicht |
+| -------------- | --- | ---------------------------------------- | ------- |
+| AssistEntityId | int | Entity-ID des zu assistierenden Spielers | Ja      |
 
 ### Erwartete Response
-- `AssistTargetResponse` (1221)
+
+-   `AssistTargetResponse` (1221)
 
 ### Folge-Messages bei Erfolg
-- `TargetUpdate` (1202) mit Assist-Target
-- `TargetInfoResponse` (1204) mit Target-Details
+
+-   `TargetUpdate` (1202) mit Assist-Target
+-   `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
+
 ```csharp
 var assist = new AssistTarget
 {
@@ -419,9 +480,10 @@ var assist = new AssistTarget
 ```
 
 ### Notizen
-- **Use-Case**: Tank ruft Target, DPS assisten
-- **Hotkey**: Standard Keybind: F (Assist Party-Leader)
-- **Macro**: Oft in Macros verwendet
+
+-   **Use-Case**: Tank ruft Target, DPS assisten
+-   **Hotkey**: Standard Keybind: F (Assist Party-Leader)
+-   **Macro**: Oft in Macros verwendet
 
 ---
 
@@ -433,32 +495,39 @@ var assist = new AssistTarget
 **Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
 
 ### Beschreibung
+
 Markiert Target mit Raid-Marker (Skull, Cross, Square, etc.). Sichtbar für ganze Party/Raid.
 
 ### Im Scope ✅
-- Raid-Marker setzen (8 Symbole)
-- Kill-Order markieren
-- CC-Targets markieren
+
+-   Raid-Marker setzen (8 Symbole)
+-   Kill-Order markieren
+-   CC-Targets markieren
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Zu markierende Entity | Ja |
-| MarkType | byte | Marker-Typ (0-7: Skull, Cross, Square, Moon, Triangle, Diamond, Circle, Star) | Ja |
+
+| Feld     | Typ  | Beschreibung                                                                  | Pflicht |
+| -------- | ---- | ----------------------------------------------------------------------------- | ------- |
+| EntityId | int  | Zu markierende Entity                                                         | Ja      |
+| MarkType | byte | Marker-Typ (0-7: Skull, Cross, Square, Moon, Triangle, Diamond, Circle, Star) | Ja      |
 
 ### Erwartete Response
-- `MarkTargetResponse` (1222)
+
+-   `MarkTargetResponse` (1222)
 
 ### Folge-Messages bei Erfolg
-- Broadcast an Party/Raid Members
+
+-   Broadcast an Party/Raid Members
 
 ### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `MarkClear` | 1211 | Marker entfernen |
+
+| Message        | ID   | Beziehung             |
+| -------------- | ---- | --------------------- |
+| `MarkClear`    | 1211 | Marker entfernen      |
 | `MarkClearAll` | 1212 | Alle Marker entfernen |
 
 ### Beispiel Payload
+
 ```csharp
 var mark = new MarkTarget
 {
@@ -469,15 +538,17 @@ var mark = new MarkTarget
 ```
 
 ### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `NOT_LEADER` | Nicht Party/Raid-Leader | Ignorieren |
-| `NOT_IN_PARTY` | Nicht in Party/Raid | Ignorieren |
+
+| Code           | Bedeutung               | Aktion     |
+| -------------- | ----------------------- | ---------- |
+| `NOT_LEADER`   | Nicht Party/Raid-Leader | Ignorieren |
+| `NOT_IN_PARTY` | Nicht in Party/Raid     | Ignorieren |
 
 ### Notizen
-- **Permission**: Nur Leader können markieren
-- **Visual**: Icon über Entity-Kopf
-- **Use-Case**: Kill-Order, CC-Assignment, Tank-Swap
+
+-   **Permission**: Nur Leader können markieren
+-   **Visual**: Icon über Entity-Kopf
+-   **Use-Case**: Kill-Order, CC-Assignment, Tank-Swap
 
 ---
 
@@ -489,16 +560,19 @@ var mark = new MarkTarget
 **Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
 
 ### Beschreibung
+
 Entfernt Raid-Marker von Entity.
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity mit zu entfernendem Marker | Ja |
+
+| Feld     | Typ | Beschreibung                      | Pflicht |
+| -------- | --- | --------------------------------- | ------- |
+| EntityId | int | Entity mit zu entfernendem Marker | Ja      |
 
 ### Notizen
-- **Permission**: Nur Leader
-- **Auto-Clear**: Bei Entity-Death
+
+-   **Permission**: Nur Leader
+-   **Auto-Clear**: Bei Entity-Death
 
 ---
 
@@ -510,14 +584,17 @@ Entfernt Raid-Marker von Entity.
 **Spezielle Rechte:** 👑 Party-Leader / Raid-Leader
 
 ### Beschreibung
+
 Entfernt alle Raid-Marker.
 
 ### Request Payload
+
 Keine zusätzlichen Felder
 
 ### Notizen
-- **Use-Case**: Nach Boss-Kill, vor neuem Pull
-- **Hotkey**: Oft auf Macro gebunden
+
+-   **Use-Case**: Nach Boss-Kill, vor neuem Pull
+-   **Hotkey**: Oft auf Macro gebunden
 
 ---
 
@@ -529,17 +606,20 @@ Keine zusätzlichen Felder
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Client informiert über Mouseover-Entity. Für Mouseover-Macros und @mouseover Abilities.
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EntityId | int | Entity unter Maus | Ja |
+
+| Feld     | Typ | Beschreibung      | Pflicht |
+| -------- | --- | ----------------- | ------- |
+| EntityId | int | Entity unter Maus | Ja      |
 
 ### Notizen
-- **High-Frequency**: Nur bei Mouseover-Change senden
-- **Rate-Limit**: Max 20/Sekunde
-- **Use-Case**: @mouseover Healing-Macros
+
+-   **High-Frequency**: Nur bei Mouseover-Change senden
+-   **Rate-Limit**: Max 20/Sekunde
+-   **Use-Case**: @mouseover Healing-Macros
 
 ---
 
@@ -551,21 +631,26 @@ Client informiert über Mouseover-Entity. Für Mouseover-Macros und @mouseover A
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Targetiert nächste Entity in Tab-Order (links nach rechts, nah nach fern).
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Reverse | bool | Rückwärts (SHIFT+TAB)? | Nein |
+
+| Feld    | Typ  | Beschreibung           | Pflicht |
+| ------- | ---- | ---------------------- | ------- |
+| Reverse | bool | Rückwärts (SHIFT+TAB)? | Nein    |
 
 ### Erwartete Response
-- `TabTargetResponse` (1223)
+
+-   `TabTargetResponse` (1223)
 
 ### Folge-Messages bei Erfolg
-- `TargetUpdate` (1202) mit nächstem Target
-- `TargetInfoResponse` (1204) mit Target-Details
+
+-   `TargetUpdate` (1202) mit nächstem Target
+-   `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
+
 ```csharp
 var tabTarget = new TabTarget
 {
@@ -575,9 +660,10 @@ var tabTarget = new TabTarget
 ```
 
 ### Notizen
-- **Hotkey**: TAB (forward), SHIFT+TAB (reverse)
-- **Filter**: Nur lebende Enemies
-- **Sort**: Nach Angle dann Distance
+
+-   **Hotkey**: TAB (forward), SHIFT+TAB (reverse)
+-   **Filter**: Nur lebende Enemies
+-   **Sort**: Nach Angle dann Distance
 
 ---
 
@@ -589,19 +675,24 @@ var tabTarget = new TabTarget
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Targetiert nächsten feindlichen Entity (nur Distance, kein Angle).
 
 ### Request Payload
+
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- `NearestEnemyTargetResponse` (1224)
+
+-   `NearestEnemyTargetResponse` (1224)
 
 ### Folge-Messages bei Erfolg
-- `TargetUpdate` (1202) mit nächstem Enemy
-- `TargetInfoResponse` (1204) mit Target-Details
+
+-   `TargetUpdate` (1202) mit nächstem Enemy
+-   `TargetInfoResponse` (1204) mit Target-Details
 
 ### Beispiel Payload
+
 ```csharp
 var nearestEnemy = new NearestEnemyTarget
 {
@@ -610,9 +701,10 @@ var nearestEnemy = new NearestEnemyTarget
 ```
 
 ### Notizen
-- **Use-Case**: Aggro-Übernahme, Quick-Target
-- **Filter**: Nur hostile, lebende Entities
-- **Sort**: Nur nach Distance (nicht Angle)
+
+-   **Use-Case**: Aggro-Übernahme, Quick-Target
+-   **Filter**: Nur hostile, lebende Entities
+-   **Sort**: Nur nach Distance (nicht Angle)
 
 ---
 
@@ -624,22 +716,27 @@ var nearestEnemy = new NearestEnemyTarget
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Targetiert nächsten freundlichen Entity (für Heals/Buffs).
 
 ### Request Payload
+
 Keine zusätzlichen Felder
 
 ### Erwartete Response
-- `NearestFriendTargetResponse` (1225)
+
+-   `NearestFriendTargetResponse` (1225)
 
 ### Folge-Messages bei Erfolg
-- `TargetUpdate` (1202) mit nächstem Friend
-- `TargetInfoResponse` (1204) mit Target-Details
+
+-   `TargetUpdate` (1202) mit nächstem Friend
+-   `TargetInfoResponse` (1204) mit Target-Details
 
 ### Notizen
-- **Use-Case**: Emergency-Heals, Quick-Rez
-- **Filter**: Nur friendly, lebende Entities
-- **Sort**: Nach Distance
+
+-   **Use-Case**: Emergency-Heals, Quick-Rez
+-   **Filter**: Nur friendly, lebende Entities
+-   **Sort**: Nach Distance
 
 ---
 
@@ -651,21 +748,24 @@ Keine zusätzlichen Felder
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf TargetSelect Request. Bestätigt erfolgreiche Target-Selektion oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Target-Selektion erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| TargetId | int | Selektierte Entity-ID | Bei Erfolg |
+
+| Feld         | Typ    | Beschreibung                   | Pflicht    |
+| ------------ | ------ | ------------------------------ | ---------- |
+| Success      | bool   | Target-Selektion erfolgreich?  | Ja         |
+| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
+| TargetId     | int    | Selektierte Entity-ID          | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `ENTITY_NOT_FOUND` | Entity existiert nicht |
-| `OUT_OF_RANGE` | Entity zu weit entfernt |
+
+| Code               | Bedeutung               |
+| ------------------ | ----------------------- |
+| `ENTITY_NOT_FOUND` | Entity existiert nicht  |
+| `OUT_OF_RANGE`     | Entity zu weit entfernt |
 
 ---
 
@@ -677,19 +777,22 @@ Antwort auf TargetSelect Request. Bestätigt erfolgreiche Target-Selektion oder 
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf AssistTarget Request. Bestätigt erfolgreiche Assist-Target-Selektion oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Assist erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| AssistTargetId | int | Target des Assist-Targets | Bei Erfolg |
+
+| Feld           | Typ    | Beschreibung                   | Pflicht    |
+| -------------- | ------ | ------------------------------ | ---------- |
+| Success        | bool   | Assist erfolgreich?            | Ja         |
+| ErrorCode      | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage   | string | Menschenlesbare Fehlermeldung  | Nein       |
+| AssistTargetId | int    | Target des Assist-Targets      | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
+
+| Code        | Bedeutung                     |
+| ----------- | ----------------------------- |
 | `NO_TARGET` | Assist-Target hat kein Target |
 
 ---
@@ -702,20 +805,23 @@ Antwort auf AssistTarget Request. Bestätigt erfolgreiche Assist-Target-Selektio
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf MarkTarget Request. Bestätigt erfolgreiche Target-Markierung oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Mark erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| MarkIcon | int | Mark-Icon (0-8) | Bei Erfolg |
+
+| Feld         | Typ    | Beschreibung                   | Pflicht    |
+| ------------ | ------ | ------------------------------ | ---------- |
+| Success      | bool   | Mark erfolgreich?              | Ja         |
+| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
+| MarkIcon     | int    | Mark-Icon (0-8)                | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_IN_PARTY` | Nicht in Party/Raid |
+
+| Code               | Bedeutung              |
+| ------------------ | ---------------------- |
+| `NOT_IN_PARTY`     | Nicht in Party/Raid    |
 | `NOT_PARTY_LEADER` | Nur Leader darf marken |
 
 ---
@@ -728,19 +834,22 @@ Antwort auf MarkTarget Request. Bestätigt erfolgreiche Target-Markierung oder g
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf TabTarget Request. Bestätigt erfolgreiche Tab-Target-Selektion oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Tab-Target erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| TargetId | int | Neues Target | Bei Erfolg |
+
+| Feld         | Typ    | Beschreibung                   | Pflicht    |
+| ------------ | ------ | ------------------------------ | ---------- |
+| Success      | bool   | Tab-Target erfolgreich?        | Ja         |
+| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
+| TargetId     | int    | Neues Target                   | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
+
+| Code                  | Bedeutung               |
+| --------------------- | ----------------------- |
 | `NO_TARGETS_IN_RANGE` | Keine Targets verfügbar |
 
 ---
@@ -753,20 +862,23 @@ Antwort auf TabTarget Request. Bestätigt erfolgreiche Tab-Target-Selektion oder
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf NearestEnemyTarget Request. Bestätigt erfolgreiche Enemy-Target-Selektion oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Target-Selektion erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| TargetId | int | Nächster Enemy | Bei Erfolg |
-| Distance | float | Distanz zum Enemy | Bei Erfolg |
+
+| Feld         | Typ    | Beschreibung                   | Pflicht    |
+| ------------ | ------ | ------------------------------ | ---------- |
+| Success      | bool   | Target-Selektion erfolgreich?  | Ja         |
+| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
+| TargetId     | int    | Nächster Enemy                 | Bei Erfolg |
+| Distance     | float  | Distanz zum Enemy              | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
+
+| Code                  | Bedeutung                   |
+| --------------------- | --------------------------- |
 | `NO_ENEMIES_IN_RANGE` | Keine Enemies in Reichweite |
 
 ---
@@ -779,20 +891,23 @@ Antwort auf NearestEnemyTarget Request. Bestätigt erfolgreiche Enemy-Target-Sel
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
+
 Antwort auf NearestFriendTarget Request. Bestätigt erfolgreiche Friend-Target-Selektion oder gibt Fehler zurück.
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Success | bool | Target-Selektion erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| TargetId | int | Nächster Friend | Bei Erfolg |
-| Distance | float | Distanz zum Friend | Bei Erfolg |
+
+| Feld         | Typ    | Beschreibung                   | Pflicht    |
+| ------------ | ------ | ------------------------------ | ---------- |
+| Success      | bool   | Target-Selektion erfolgreich?  | Ja         |
+| ErrorCode    | string | Fehlercode falls Success=false | Nein       |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung  | Nein       |
+| TargetId     | int    | Nächster Friend                | Bei Erfolg |
+| Distance     | float  | Distanz zum Friend             | Bei Erfolg |
 
 ### Error Codes
-| Code | Bedeutung |
-|------|-----------|
+
+| Code                  | Bedeutung                   |
+| --------------------- | --------------------------- |
 | `NO_FRIENDS_IN_RANGE` | Keine Friends in Reichweite |
 
 ---

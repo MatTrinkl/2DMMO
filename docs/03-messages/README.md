@@ -1,47 +1,47 @@
 # 📨 Message Reference Documentation
 
-**Version:** 1.0.0  
-**Letzte Aktualisierung:** 2025-12-17  
-**Teil von:** [Dokumentation](../README.md) | [Architektur](../02-architecture/README.md)  
-**Siehe auch:** [Message-Spezifikation](../02-architecture/MESSAGES.md) | [Issue #140](https://github.com/MatTrinkl/2DMMO/issues/140)
+**Version:** 2.1.0  
+**Last Updated:** 2026-01-01  
+**Part of:** [Documentation](../README.md) | [Architecture](../02-architecture/README.md)  
+**See also:** [Message Specification](../02-architecture/MESSAGES.md) | [Issue #140](https://github.com/MatTrinkl/2DMMO/issues/140)
 
 ---
 
-## 📋 Übersicht
+## 📋 Overview
 
-Diese Dokumentation bietet eine vollständige Referenz für **alle MessageTypes** im 2DMMO-Projekt. Jede Message ist detailliert dokumentiert mit:
+This documentation provides a complete reference for **all MessageTypes** in the 2DMMO project. Each message is documented in detail with:
 
-- ✅ Was die Message tut (Im Scope)
-- ❌ Was sie NICHT tut (Nicht im Scope)
-- 📤 Richtung (Client→Server, Server→Client, Broadcast)
-- 🔒 Authentifizierungs-Anforderungen
-- 📊 Request/Response Payload-Struktur
-- 🔗 Verwandte Messages
-- 💡 Beispiel-Code und Error-Handling
+- ✅ What the message does (In Scope)
+- ❌ What it does NOT do (Not in Scope)
+- 📤 Direction (Client→Server, Server→Client, Broadcast)
+- 🔒 Authentication requirements
+- 📊 Request/Response payload structure
+- 🔗 Related messages
+- 💡 Example code and error handling
 
 ---
 
-## 🗂️ Message-Kategorien
+## 🗂️ Message Categories
 
-Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
+2DMMO uses a **100-block system** for O(1) message routing:
 - `Category = MessageType / 100`
-- Jede Kategorie hat 100 Message-IDs (z.B. Connection: 0-99, Zone: 100-199)
-- Ermöglicht schnelles Dispatching ohne Hash-Lookups
+- Each category has 100 message IDs (e.g., Connection: 0-99, Zone: 100-199)
+- Enables fast dispatching without hash lookups
 
-### Prototyp-Phase (In Entwicklung)
+### Prototype Phase (In Development)
 
-| Kategorie | Range | Datei | Messages | Status |
-|-----------|-------|-------|----------|--------|
-| **Connection** | 0000-0099 | [00-connection.md](00-connection.md) | 20 | 🟢 Prototyp |
-| **Zone** | 0100-0199 | [01-zone.md](01-zone.md) | 17 | 🟢 Prototyp |
-| **Movement** | 0200-0299 | [02-movement.md](02-movement.md) | 20 | 🟢 Prototyp |
-| **Chat** | 0400-0499 | [04-chat.md](04-chat.md) | 31 | 🟢 Prototyp |
-| **System** | 0900-0999 | [09-system.md](09-system.md) | 26 | 🟢 Prototyp |
+| Category | Range | File | Messages | Status |
+|----------|-------|------|----------|--------|
+| **Connection** | 0000-0099 | [00-connection.md](00-connection.md) | 20 | 🟢 Prototype |
+| **Zone** | 0100-0199 | [01-zone.md](01-zone.md) | 17 | 🟢 Prototype |
+| **Movement** | 0200-0299 | [02-movement.md](02-movement.md) | 20 | 🟢 Prototype |
+| **Chat** | 0400-0499 | [04-chat.md](04-chat.md) | 31 | 🟢 Prototype |
+| **System** | 0900-0999 | [09-system.md](09-system.md) | 26 | 🟢 Prototype |
 
-### Phase 2 (Geplant)
+### Phase 2 (Planned)
 
-| Kategorie | Range | Datei | Messages | Status |
-|-----------|-------|-------|----------|--------|
+| Category | Range | File | Messages | Status |
+|----------|-------|------|----------|--------|
 | **Combat** | 0300-0399 | [03-combat.md](03-combat.md) | 33 | 🟡 Phase 2 |
 | **Inventory** | 0500-0599 | [05-inventory.md](05-inventory.md) | 36 | 🟡 Phase 2 |
 | **Character** | 0600-0699 | [06-character.md](06-character.md) | 25 | 🟡 Phase 2 |
@@ -69,10 +69,10 @@ Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
 | **Death** | 4100-4199 | [41-death.md](41-death.md) | 24 | 🟡 Phase 2 |
 | **Notification** | 4300-4399 | [43-notification.md](43-notification.md) | 24 | 🟡 Phase 2 |
 
-### Phase 3 (Zukünftig)
+### Phase 3 (Future)
 
-| Kategorie | Range | Datei | Messages | Status |
-|-----------|-------|-------|----------|--------|
+| Category | Range | File | Messages | Status |
+|----------|-------|------|----------|--------|
 | **Crafting** | 1600-1699 | [16-crafting.md](16-crafting.md) | 25 | 🔵 Phase 3 |
 | **Auction** | 1700-1799 | [17-auction.md](17-auction.md) | 21 | 🔵 Phase 3 |
 | **Mail** | 1800-1899 | [18-mail.md](18-mail.md) | 17 | 🔵 Phase 3 |
@@ -90,20 +90,20 @@ Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
 | **Housing** | 4500-4599 | [45-housing.md](45-housing.md) | 6 | 🔵 Phase 3 |
 | **Event** | 4600-4699 | [46-event.md](46-event.md) | 5 | 🔵 Phase 3 |
 
-### Reserviert & Development
+### Reserved & Development
 
-| Kategorie | Range | Datei | Messages | Status |
-|-----------|-------|-------|----------|--------|
-| **Reserved** | 4700-4799 | [47-reserved.md](47-reserved.md) | - | ⚪ Reserviert |
-| **Reserved** | 4800-4899 | [48-reserved.md](48-reserved.md) | - | ⚪ Reserviert |
+| Category | Range | File | Messages | Status |
+|----------|-------|------|----------|--------|
+| **Reserved** | 4700-4799 | [47-reserved.md](47-reserved.md) | - | ⚪ Reserved |
+| **Reserved** | 4800-4899 | [48-reserved.md](48-reserved.md) | - | ⚪ Reserved |
 | **Debug** | 4900-4999 | [49-debug.md](49-debug.md) | 5 | 🟣 Dev |
 
 ### Server-to-Server (Internal)
 
-⚠️ **Wichtig**: Diese Messages sind **AUSSCHLIESSLICH für Server-zu-Server Kommunikation**. Clients senden oder empfangen diese Messages **NIEMALS**.
+⚠️ **Important**: These messages are **EXCLUSIVELY for server-to-server communication**. Clients **NEVER** send or receive these messages.
 
-| Kategorie | Range | Datei | Messages | Status |
-|-----------|-------|-------|----------|--------|
+| Category | Range | File | Messages | Status |
+|----------|-------|------|----------|--------|
 | **S2S Core** | 5000-5099 | [50-server-to-server.md](50-server-to-server.md) | 7 | 🟡 Phase 2 |
 | **S2S Transfer** | 5100-5199 | [50-server-to-server.md](50-server-to-server.md) | 9 | 🟡 Phase 2 |
 | **S2S Cross-Zone** | 5200-5299 | [50-server-to-server.md](50-server-to-server.md) | 9 | 🟡 Phase 2 |
@@ -111,33 +111,33 @@ Das 2DMMO verwendet ein **100-Block-System** für O(1) Message-Routing:
 | **S2S Economy** | 5400-5499 | [50-server-to-server.md](50-server-to-server.md) | 7 | 🔵 Phase 3 |
 | **S2S Admin** | 5500-5599 | [50-server-to-server.md](50-server-to-server.md) | 12 | 🟡 Phase 2 |
 
-**Siehe auch:** [SERVER_TO_SERVER.md](../02-architecture/SERVER_TO_SERVER.md) für vollständige S2S-Architektur-Dokumentation
+**See also:** [SERVER_TO_SERVER.md](../02-architecture/SERVER_TO_SERVER.md) for full S2S architecture documentation
 
 ---
 
-## ➕ Neue Messages Hinzufügen
+## ➕ Adding New Messages
 
-### Automatische Registrierung
+### Automatic Registration
 
-Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes Auto-Registrierungs-System**. Neue Message-Types benötigen **KEINE** manuellen Änderungen am MessageSerializer mehr.
+Since version 1.2.0, the `MessageSerializer` uses an **attribute-based auto-registration system**. New message types require **NO** manual changes to the MessageSerializer anymore.
 
-### Schritt-für-Schritt Anleitung
+### Step-by-Step Guide
 
-1. **Message-Type in Enum definieren** (`shared/Mmo.Shared/Messaging/Enums/MessageType.cs`):
+1. **Define message type in Enum** (`shared/Mmo.Shared/Messaging/Enums/MessageType.cs`):
    ```csharp
    public enum MessageType : byte
    {
        // ... existing types ...
-       NewMessageType = 123,  // Wähle freie ID in passender Kategorie
+       NewMessageType = 123,  // Choose free ID in appropriate category
    }
    ```
 
-2. **Korrekte Interface-Wahl** - **WICHTIG für Security**:
-   - **Client → Server** (Input, Requests): Verwende `IClientMessage` oder `ITimestampedClientMessage`
-   - **Server → Client** (Responses, State): Verwende `IServerMessage` oder `ITimestampedServerMessage`
-   - **NIE** bidirektional - jede Message hat exakt EINE Richtung
+2. **Choose correct Interface** - **IMPORTANT for Security**:
+   - **Client → Server** (Input, Requests): Use `IClientMessage` or `ITimestampedClientMessage`
+   - **Server → Client** (Responses, State): Use `IServerMessage` or `ITimestampedServerMessage`
+   - **NEVER** bidirectional - each message has exactly ONE direction
 
-3. **Message-Klasse erstellen** mit `[NetworkMessage]` Attribut:
+3. **Create message class** with `[NetworkMessage]` attribute:
    ```csharp
    using MessagePack;
    using Mmo.Shared.Messaging.Attributes;
@@ -147,8 +147,8 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
    namespace Mmo.Shared.YourCategory.Messages;
    
    [MessagePackObject]
-   [NetworkMessage(MessageType.NewMessageType)]  // ← Auto-Registrierung
-   public class NewMessageType : IClientMessage  // ← Korrekte Interface-Wahl!
+   [NetworkMessage(MessageType.NewMessageType)]  // ← Auto-registration
+   public class NewMessageType : IClientMessage  // ← Correct interface choice!
    {
        [Key(0)]
        public MessageType Type => MessageType.NewMessageType;
@@ -161,163 +161,211 @@ Seit Version 1.2.0 verwendet der `MessageSerializer` ein **attribute-basiertes A
    }
    ```
 
-4. **Fertig!** Die Message wird beim Programmstart automatisch registriert.
+4. **Done!** The message will be automatically registered at program startup.
 
-### Wichtige Anforderungen
+### Important Requirements
 
-✅ **MUSS vorhanden sein:**
-- `[MessagePackObject]` Attribut auf der Klasse
-- `[NetworkMessage(MessageType.XXX)]` Attribut auf der Klasse
-- **Korrektes Interface**: `IClientMessage` (Client→Server) ODER `IServerMessage` (Server→Client)
-- Für timestamped Messages: `ITimestampedClientMessage` oder `ITimestampedServerMessage`
-- `Type` Property mit `[Key(0)]` Attribut
-- Alle Properties mit aufsteigenden `[Key(n)]` Attributen
+✅ **MUST be present:**
+- `[MessagePackObject]` attribute on the class
+- `[NetworkMessage(MessageType.XXX)]` attribute on the class
+- **Correct Interface**: `IClientMessage` (Client→Server) OR `IServerMessage` (Server→Client)
+- For timestamped messages: `ITimestampedClientMessage` or `ITimestampedServerMessage`
+- `Type` property with `[Key(0)]` attribute
+- All properties with ascending `[Key(n)]` attributes
 
-❌ **NICHT MEHR nötig:**
-- ~~MessageSerializer.Deserialize() erweitern~~
-- ~~Switch-Case Statement updaten~~
-- ~~Manuelle Registrierung~~
+❌ **NO LONGER needed:**
+- ~~Extend MessageSerializer.Deserialize()~~
+- ~~Update switch-case statement~~
+- ~~Manual registration~~
 
 ### Performance
 
-- **O(1) Lookup** per Dictionary
-- **Compiled Expression Delegates** für Near-Native Performance
-- **Validation beim Start**: Duplikate und fehlende Attribute werden erkannt
+- **O(1) Lookup** via Dictionary
+- **Compiled Expression Delegates** for near-native performance
+- **Validation at startup**: Duplicates and missing attributes are detected
 
-### Fehlerbehebung
+### Troubleshooting
 
-**Fehler: "Type XXX has [NetworkMessage] but does not implement INetworkMessage"**
-→ Füge `INetworkMessage` Interface hinzu
+**Error: "Type XXX has [NetworkMessage] but does not implement INetworkMessage"**
+→ Add `INetworkMessage` interface
 
-**Fehler: "Following types implement INetworkMessage but are missing [NetworkMessage] attribute"**
-→ Füge `[NetworkMessage(MessageType.XXX)]` Attribut hinzu
+**Error: "Following types implement INetworkMessage but are missing [NetworkMessage] attribute"**
+→ Add `[NetworkMessage(MessageType.XXX)]` attribute
 
-**Fehler: "Duplicate MessageType registration detected"**
-→ Zwei Klassen verwenden den gleichen MessageType - wähle eine andere ID
-
----
-
-## 🔍 Schnellsuche
-
-### Nach Funktion
-
-- **Verbindung & Login**: [Connection](00-connection.md) | [System](09-system.md)
-- **Welt & Bewegung**: [Zone](01-zone.md) | [Movement](02-movement.md) | [World](26-world.md)
-- **Kampf & Schaden**: [Combat](03-combat.md) | [Targeting](12-targeting.md) | [Death](41-death.md)
-- **Kommunikation**: [Chat](04-chat.md) | [Social](21-social.md) | [Voice](35-voice.md)
-- **Spieler-Progression**: [Character](06-character.md) | [Quest](10-quest.md) | [Achievement](19-achievement.md)
-- **Items & Wirtschaft**: [Inventory](05-inventory.md) | [Trading](11-trading.md) | [Auction](17-auction.md) | [Economy](37-economy.md)
-- **Gruppen-Aktivitäten**: [Party](07-party.md) | [Guild](08-guild.md) | [Instance](24-instance.md)
-- **NPC-Interaktion**: [NPC](13-npc.md) | [Entity](14-entity.md)
-
-### Nach Entwicklungsphase
-
-- **✅ Implementiert (Prototyp)**: Connection, Zone, Movement, Chat, System
-- **🔨 In Arbeit (Phase 2)**: Combat, Inventory, Character, Party, Guild, Quest, Trading, Targeting, NPC, Entity, Aura, Social, Admin, Instance, PvP, World, Tutorial, Loot, Cooldown, Map, Reporting, Economy, Skill, Equipment, Death, Notification
-- **📋 Geplant (Phase 3)**: Crafting, Auction, Mail, Achievement, Mount, Emote, Matchmaking, Leaderboard, Settings, Inspection, Voice, Bank, Transportation, Cutscene, Housing, Event
+**Error: "Duplicate MessageType registration detected"**
+→ Two classes use the same MessageType - choose a different ID
 
 ---
 
-## 📖 Verwendung dieser Dokumentation
+## 🔄 DTO System
 
-### Für Entwickler
+For Server→Client messages, DTOs (Data Transfer Objects) are used to:
+- Protect server-only data (`[ServerOnly]` attributes)
+- Guarantee consistent mappings
+- Ensure compile-time safety
 
-Wenn du eine Message implementierst:
-1. Öffne die passende Kategorie-Datei (z.B. `03-combat.md` für Kampf-Messages)
-2. Finde die Message anhand der ID (z.B. `DamageEvent (302)`)
-3. Lies die **Im Scope** und **Nicht im Scope** Abschnitte
-4. Implementiere entsprechend dem Payload-Schema
-5. Verwende die Beispiele als Vorlage
+See [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) for details.
 
-### Für Designer
+### Available DTOs
 
-Wenn du eine neue Feature-Anforderung hast:
-1. Suche nach der passenden Kategorie
-2. Prüfe ob eine Message bereits existiert, die dein Feature abdeckt
-3. Wenn nicht, prüfe **Nicht im Scope** Abschnitte - vielleicht ist es absichtlich ausgeschlossen
-4. Erstelle ein Issue mit Referenz zur Message-Kategorie
+| DTO | Entity | Used in |
+|-----|--------|---------|
+| `CharacterEntityDto` | `CharacterEntity` | ZoneState (102), CharacterJoinedZone |
+| `NpcEntityDto` | `NpcEntity` | ZoneState (102), EntitySpawn (1400) - 🟡 Planned |
+| `EntityDtoUnion` | Union interface | ZoneState polymorphic list |
 
-### Für Tester
-
-Wenn du einen Bug findest:
-1. Identifiziere die betroffene Message(s)
-2. Prüfe die **Expected Response** und **Error Codes** Abschnitte
-3. Stelle fest ob das Verhalten der Dokumentation entspricht
-4. Wenn nicht, erstelle ein Bug-Report mit Message-Referenz
+**Future DTOs (planned):**
+- `CombatEntityDto` - for Damage/Heal Events (Combat Messages)
+- `PartyMemberDto` - for Party lists (Party Messages)
+- `TargetEntityDto` - for Target Frame (Targeting Messages)
+- `CharacterListItemDto` - for Character Selection (Character Messages)
 
 ---
 
-## 🎨 Dokumentations-Format
+## 🔄 Zone Loading Flow
 
-Jede Message folgt diesem Template:
+The zone loading process has been simplified:
+
+| Step | Message | Description |
+|------|---------|-------------|
+| 1 | `CharacterSelectResponse` | Server communicates SpawnZoneId |
+| 2 | `GetZoneRequest` (117) | Client requests zone |
+| 3 | `ZoneState` (102) | Server sends EVERYTHING (Zone + MyPlayer + Entities) |
+| 4 | `ZoneLoadedAck` (119) | Client confirms readiness |
+| 5 | Updates start | PositionBroadcast, EntityUpdates, etc. |
+
+See [01-zone.md](01-zone.md) for details.
+
+### Obsolete Messages
+
+| Message | ID | Replaced by |
+|---------|-----|-------------|
+| `GetZoneResponse` | 118 | `ZoneState` (102) |
+| `JoinZone` | 100 | `ZoneState.MyPlayer` |
+
+---
+
+## 🔍 Quick Search
+
+### By Function
+
+- **Connection & Login**: [Connection](00-connection.md) | [System](09-system.md)
+- **World & Movement**: [Zone](01-zone.md) | [Movement](02-movement.md) | [World](26-world.md)
+- **Combat & Damage**: [Combat](03-combat.md) | [Targeting](12-targeting.md) | [Death](41-death.md)
+- **Communication**: [Chat](04-chat.md) | [Social](21-social.md) | [Voice](35-voice.md)
+- **Player Progression**: [Character](06-character.md) | [Quest](10-quest.md) | [Achievement](19-achievement.md)
+- **Items & Economy**: [Inventory](05-inventory.md) | [Trading](11-trading.md) | [Auction](17-auction.md) | [Economy](37-economy.md)
+- **Group Activities**: [Party](07-party.md) | [Guild](08-guild.md) | [Instance](24-instance.md)
+- **NPC Interaction**: [NPC](13-npc.md) | [Entity](14-entity.md)
+
+### By Development Phase
+
+- **✅ Implemented (Prototype)**: Connection, Zone, Movement, Chat, System
+- **🔨 In Progress (Phase 2)**: Combat, Inventory, Character, Party, Guild, Quest, Trading, Targeting, NPC, Entity, Aura, Social, Admin, Instance, PvP, World, Tutorial, Loot, Cooldown, Map, Reporting, Economy, Skill, Equipment, Death, Notification
+- **📋 Planned (Phase 3)**: Crafting, Auction, Mail, Achievement, Mount, Emote, Matchmaking, Leaderboard, Settings, Inspection, Voice, Bank, Transportation, Cutscene, Housing, Event
+
+---
+
+## 📖 Using This Documentation
+
+### For Developers
+
+When implementing a message:
+1. Open the appropriate category file (e.g., `03-combat.md` for combat messages)
+2. Find the message by ID (e.g., `DamageEvent (302)`)
+3. Read the **In Scope** and **Not in Scope** sections
+4. Implement according to the payload schema
+5. Use the examples as a template
+
+### For Designers
+
+When you have a new feature requirement:
+1. Search for the appropriate category
+2. Check if a message already exists that covers your feature
+3. If not, check **Not in Scope** sections - perhaps it's intentionally excluded
+4. Create an issue with reference to the message category
+
+### For Testers
+
+When you find a bug:
+1. Identify the affected message(s)
+2. Check the **Expected Response** and **Error Codes** sections
+3. Determine if the behavior matches the documentation
+4. If not, create a bug report with message reference
+
+---
+
+## 🎨 Documentation Format
+
+Each message follows this template:
 
 ```markdown
 ## MessageName (ID)
 
-**Richtung:** 📤 Client → Server | 📥 Server → Client | 📡 Broadcast
-**Frequenz:** Einmalig | Selten | Häufig | ⚡ High-Frequency
-**Authentifizierung:** 🔒 Ja | Nein
-**Spezielle Rechte:** 👑 [Welche] | Keine
+**Direction:** 📤 Client → Server | 📥 Server → Client | 📡 Broadcast
+**Frequency:** Once | Rare | Frequent | ⚡ High-Frequency
+**Authentication:** 🔒 Yes | No
+**Special Permissions:** 👑 [Which] | None
 
-### Beschreibung
-[2-3 Sätze was die Message macht]
+### Description
+[2-3 sentences about what the message does]
 
-### Im Scope ✅
+### In Scope ✅
 - Feature A
 - Feature B
 
-### Nicht im Scope ❌
-- Anderes Feature → verwende `OtherMessage` (ID)
+### Not in Scope ❌
+- Other feature → use `OtherMessage` (ID)
 
 ### Request/Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
 
-### Erwartete Response
-- **Bei Erfolg:** `SuccessMessage` (ID)
-- **Bei Fehler:** `ErrorMessage` (910)
+### Expected Response
+- **On Success:** `SuccessMessage` (ID)
+- **On Error:** `ErrorMessage` (910)
 
-### Verwandte Messages
-| Message | ID | Beziehung |
+### Related Messages
+| Message | ID | Relationship |
 
-### Beispiel Payload
+### Example Payload
 ```csharp
 var message = new MessageName { ... };
 ```
 ```
 
-**Hinweis zu Richtungen:**
-- **📤 Client → Server**: Client sendet Request/Input an Server (verwendet `IClientMessage`)
-- **📥 Server → Client**: Server sendet Response/State an Client (verwendet `IServerMessage`)
-- **📡 Broadcast**: Server sendet an mehrere Clients gleichzeitig (verwendet `IServerMessage`)
-- **🚫 KEINE bidirektionalen Messages** - jede Message hat exakt EINE Richtung!
+**Note on Directions:**
+- **📤 Client → Server**: Client sends request/input to server (uses `IClientMessage`)
+- **📥 Server → Client**: Server sends response/state to client (uses `IServerMessage`)
+- **📡 Broadcast**: Server sends to multiple clients simultaneously (uses `IServerMessage`)
+- **🚫 NO bidirectional messages** - each message has exactly ONE direction!
 
 ---
 
-## 🔗 Verwandte Dokumentation
+## 🔗 Related Documentation
 
-- **[Message-Spezifikation](../02-architecture/MESSAGES.md)** - Technische Details zum Message-System
-- **[Netzwerk-Protokoll](../02-architecture/NETWORK_PROTOCOL.md)** - Transport und Framing
-- **[Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md)** - Message Processing
-- **[Sicherheit](../02-architecture/SECURITY.md)** - Input Validation für Messages
-- **[Game Loop](../02-architecture/GAME_LOOP.md)** - Wann Messages verarbeitet werden
-- **[Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)** - Broadcast-Messages bei Spieler-Disconnects
-- **[Server-zu-Server Kommunikation](../02-architecture/SERVER_TO_SERVER.md)** - S2S-Architektur & Load-Balancing
+- **[Message Specification](../02-architecture/MESSAGES.md)** - Technical details of the message system
+- **[Network Protocol](../02-architecture/NETWORK_PROTOCOL.md)** - Transport and framing
+- **[Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md)** - Message processing
+- **[Security](../02-architecture/SECURITY.md)** - Input validation for messages
+- **[Game Loop](../02-architecture/GAME_LOOP.md)** - When messages are processed
+- **[Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)** - Broadcast messages on player disconnects
+- **[Server-to-Server Communication](../02-architecture/SERVER_TO_SERVER.md)** - S2S architecture & load balancing
 
 ---
 
-## 📊 Statistiken
+## 📊 Statistics
 
-- **Gesamt Messages**: ~1170
-- **Prototyp (Implementiert)**: 114 Messages
-- **Phase 2 (In Arbeit)**: 674 Messages (inkl. 54 S2S)
-- **Phase 3 (Geplant)**: 332 Messages (inkl. 12 S2S)
+- **Total Messages**: ~1170
+- **Prototype (Implemented)**: 114 Messages
+- **Phase 2 (In Progress)**: 674 Messages (incl. 54 S2S)
+- **Phase 3 (Planned)**: 332 Messages (incl. 12 S2S)
 - **Server-to-Server (S2S)**: 70 Messages (5000-5999)
-- **Reserviert**: 200 IDs
+- **Reserved**: 200 IDs
 - **Debug**: 5 Messages
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.0.0  
+**Last Updated**: 2026-01-01  
+**Version**: 2.1.0  
 **Maintainer**: 2DMMO Team

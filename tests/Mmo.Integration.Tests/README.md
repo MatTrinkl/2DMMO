@@ -31,6 +31,7 @@ Mmo.Integration.Tests/
 ## Test Client
 
 The `TestClient` is a standalone C# implementation that:
+
 - Connects to the MMO server via TCP
 - Uses the `Mmo.Shared` library for messages
 - Serializes messages with MessagePack
@@ -57,6 +58,7 @@ client.Dispose();
 ## Running with Docker
 
 See [Docker Testing Documentation](../../docs/03-testing/DOCKER_TESTING.md) for:
+
 - Docker-based testing
 - Multi-container setup
 - CI/CD integration

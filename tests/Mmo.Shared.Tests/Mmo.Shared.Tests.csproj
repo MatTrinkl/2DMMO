@@ -29,6 +29,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Mmo.Shared\Mmo.Shared.csproj"/>
+    <ProjectReference Include="..\..\shared\Mmo.Generators\Mmo.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Sync\"/>
   </ItemGroup>
 
 </Project>

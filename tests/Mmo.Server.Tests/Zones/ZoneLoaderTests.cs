@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Mmo.Shared.Zones.Configurations;
-using Mmo.Shared.Zones.Serialization;
+using Mmo.Server.Zones.Configurations;
+using Mmo.Server.Zones.Serialization;
 
 namespace Mmo.Server.Tests.Zones;
 

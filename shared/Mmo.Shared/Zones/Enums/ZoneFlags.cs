@@ -89,5 +89,10 @@ public enum ZoneFlags : ushort
     /// <summary>
     ///     Rest XP is gained in this zone.
     /// </summary>
-    HasRestXp = 1 << 14
+    HasRestXp = 1 << 14,
+
+    /// <summary>
+    ///     This is a ghost zone.
+    /// </summary>
+    IsGhostZone = 1 << 15
 }

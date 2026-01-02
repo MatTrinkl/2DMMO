@@ -6,18 +6,19 @@ using Mmo.Server.MessageRouting;
 using Mmo.Server.Messages;
 using Mmo.Server.Messages.Enums;
 using Mmo.Server.Network;
-using Mmo.Server.PlayerService;
+using Mmo.Server.Player;
 using Mmo.Server.Zones;
 using Mmo.Shared.Connection.Enums;
-using Mmo.Shared.Connection.Messages;
+using Mmo.Shared.Connection.Messages.Client_Server;
+using Mmo.Shared.Connection.Messages.Server_Client;
 using Mmo.Shared.Core.Constants;
+using Mmo.Shared.Core.Enums;
 using Mmo.Shared.Core.Interfaces;
+using Mmo.Shared.Core.Messages;
 using Mmo.Shared.Core.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
-using Mmo.Shared.System.Enums;
-using Mmo.Shared.System.Messages;
-using Mmo.Shared.Zones.Messages.Server_Brodcast;
+using Mmo.Shared.Zones.Messages.Server_Broadcast;
 
 namespace Mmo.Server.Core;
 
@@ -676,7 +677,7 @@ public class GameServer : IDisposable
                 player.Name, player.RuntimeId.ZoneId, reason ?? "Unknown");
 
             // Broadcast to zone: Player has left
-            var leftMessage = new PlayerLeftZone(player.Entity);
+            var leftMessage = new CharacterLeftZone();
             var outgoing = OutgoingMessage.BroadcastToZoneExcept(
                 leftMessage,
                 player.RuntimeId.ZoneId,
@@ -697,7 +698,7 @@ public class GameServer : IDisposable
             try
             {
                 // Send disconnect message
-                var disconnectMsg = new Disconnect
+                var disconnectMsg = new ForceDisconnect
                 {
                     Reason = DisconnectReason.ServerShutdown,
                     Message = reason
