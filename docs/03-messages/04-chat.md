@@ -1,7 +1,7 @@
-# 💬 Chat Messages (0400-0499)
+# 💬 Chat Messages (0400-0445)
 
 **Kategorie:** 4  
-**Range:** 0400-0499  
+**Range:** 0400-0445 (AKTIV)  
 **Phase:** Prototyp  
 **Status:** 🟢 In Entwicklung
 
@@ -26,6 +26,138 @@ Das Chat-System unterstützt:
 - **Whisper**: 20 Messages/Minute
 - **Channel**: 30 Messages/Minute
 - **Spam-Detection**: 5+ identical Messages = Mute
+
+---
+
+## 🔄 Chat Flow
+
+### Allgemeiner Chat-Flow
+```
+Client                      Zone Server                    Other Clients
+  │                              │                              │
+  │  ChatMessage (400)           │                              │
+  │─────────────────────────────►│                              │
+  │                              │  Validate:                   │
+  │                              │  - Rate Limit                │
+  │                              │  - Profanity Filter          │
+  │                              │  - Permissions               │
+  │                              │                              │
+  │  ChatMessageResponse (440)   │                              │
+  │◄─────────────────────────────│                              │
+  │                              │                              │
+  │                              │  ChatBroadcast (401)         │
+  │                              │─────────────────────────────►│
+  │  ChatBroadcast (401)         │                              │
+  │◄─────────────────────────────│                              │
+```
+
+### Whisper-Flow
+```
+Client A                    Zone Server                    Client B
+  │                              │                              │
+  │  ChatWhisper (402)           │                              │
+  │─────────────────────────────►│                              │
+  │                              │  Lookup Target               │
+  │                              │  Validate (not blocked, etc) │
+  │                              │                              │
+  │  ChatWhisperResponse (403)   │                              │
+  │◄─────────────────────────────│                              │
+  │                              │  ChatWhisperResponse (403)   │
+  │                              │─────────────────────────────►│
+```
+
+### Channel Management Flow
+```
+Client                      Zone Server                    Redis
+  │                              │                              │
+  │  ChatChannelJoin (416)       │                              │
+  │─────────────────────────────►│                              │
+  │                              │  Validate Channel            │
+  │                              │───────────────────────────►  │
+  │                              │                              │
+  │  ChatChannelJoinResponse     │                              │
+  │◄─────────────────────────────│                              │
+  │                              │                              │
+  │  ChatMessage (400)           │                              │
+  │─────────────────────────────►│                              │
+  │                              │  Publish to Channel          │
+  │                              │───────────────────────────►  │
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### ChatChannelType (Enum)
+```csharp
+public enum ChatChannelType : byte
+{
+    Say = 0,      // Local chat (~20m range)
+    Yell = 1,     // Extended range (~50m)
+    Party = 2,    // Party members only
+    Guild = 3,    // Guild members only
+    Raid = 4,     // Raid members only
+    Zone = 5,     // Zone-wide
+    Trade = 6,    // Trade channel
+    Lfg = 7,      // Looking for group
+    System = 8,   // System messages (server-only)
+    Custom = 9    // User-created channels
+}
+```
+
+### ChatMessageDto
+```csharp
+[MessagePackObject]
+public class ChatMessageDto
+{
+    [Key(0)] public MessageType Type { get; set; }
+    [Key(1)] public string Message { get; set; }         // Max 500 chars
+    [Key(2)] public ChatChannelType ChannelType { get; set; }
+    [Key(3)] public string? ChannelName { get; set; }    // For custom channels
+    [Key(4)] public long Timestamp { get; set; }
+}
+```
+
+### ChatBroadcastDto
+```csharp
+[MessagePackObject]
+public class ChatBroadcastDto
+{
+    [Key(0)] public MessageType Type { get; set; }
+    [Key(1)] public long SenderId { get; set; }
+    [Key(2)] public string SenderName { get; set; }
+    [Key(3)] public int SenderLevel { get; set; }
+    [Key(4)] public int SenderClass { get; set; }
+    [Key(5)] public string Message { get; set; }
+    [Key(6)] public ChatChannelType ChannelType { get; set; }
+    [Key(7)] public string? ChannelName { get; set; }
+    [Key(8)] public long Timestamp { get; set; }
+}
+```
+
+### ChannelInfoDto
+```csharp
+[MessagePackObject]
+public class ChannelInfoDto
+{
+    [Key(0)] public string Name { get; set; }
+    [Key(1)] public int MemberCount { get; set; }
+    [Key(2)] public bool HasPassword { get; set; }
+    [Key(3)] public bool IsJoined { get; set; }
+}
+```
+
+### SystemMessageType (Enum)
+```csharp
+public enum SystemMessageType : byte
+{
+    Info = 0,       // General info (white)
+    Warning = 1,    // Warning (yellow)
+    Error = 2,      // Error (red)
+    Achievement = 3,// Achievement unlock (gold)
+    LevelUp = 4     // Level up (blue)
+}
+```
 
 ---
 
@@ -85,7 +217,8 @@ Universelle Chat-Message für alle Channel-Types. Client sendet Message, Server 
 - Text-Message (max 500 Zeichen)
 - Channel-Type (say, yell, party, guild, zone, trade, lfg, custom)
 - Optional: Channel-Name für Custom-Channels
-- Item-Links, Achievement-Links (geplant)
+- Item-Links im Format: `[item:12345:ItemName]`
+- Achievement-Links im Format: `[achievement:567:AchievementName]`
 
 ### Nicht im Scope ❌
 - Private Messages → verwende `ChatWhisper` (402)
@@ -145,7 +278,7 @@ var customChat = new ChatMessage
 - **Profanity-Filter**: Server replaced Schimpfwörter mit "***"
 - **Rate-Limiting**: 10/min (Say/Yell), 30/min (Channels)
 - **Spam-Detection**: 5+ identische Messages = Auto-Mute (5 Minuten)
-- **Item-Links**: Phase 2 - Format: `[item:12345:ItemName]`
+- **Item-Links**: Format: `[item:12345:ItemName]`
 
 ---
 
@@ -223,7 +356,7 @@ Private Nachricht an einen anderen Spieler (Direct Message). Server validiert ob
 
 ### Nicht im Scope ❌
 - Group-Messages → kein Feature
-- Offline-Messages → geplant mit Mail-System (1800)
+- Offline-Messages → verwende Mail-System (1800)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -453,7 +586,7 @@ Client sendet Guild-Chat-Message. Server validiert Guild-Membership und Permissi
 - Persistent Channel (bleibt auch bei Logout aktiv)
 
 ### Nicht im Scope ❌
-- Officer-Chat → geplant Feature (separater Channel)
+- Officer-Chat → separater Channel mit `ChatChannelCreate` (419)
 - Guild-Announcements → verwende `GuildMOTD` (808)
 
 ### Request Payload
@@ -494,7 +627,7 @@ var guildChat = new ChatGuild
 
 ### Notizen
 - **Permissions**: Guild-Ranks können "Use Guild Chat" Permission haben
-- **History**: Server speichert letzte 100 Messages (geplant)
+- **History**: Server speichert letzte 100 Messages
 - **Auto-Join**: Automatisch bei Guild-Membership
 - **Rate-Limit**: 30 Messages/Minute
 - **Alternative**: Kann auch via `ChatMessage` (400) mit ChannelType="guild" gesendet werden
@@ -518,8 +651,8 @@ Server broadcastet Guild-Chat-Message an alle Online-Members der Guild. Enthält
 - Timestamp
 
 ### Nicht im Scope ❌
-- Offline-Message-Queue → geplant Feature
-- Officer-Chat → geplant (separater Channel)
+- Offline-Message-Queue → verwende Mail-System (1800)
+- Officer-Chat → separater Channel mit `ChatChannelCreate`
 
 ### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -551,7 +684,7 @@ var guildBcast = new ChatGuild
 - **UI-Formatting**: Spezielle Farbe für Guild-Chat (z.B. Grün)
 - **Rank-Display**: Client zeigt Rank-Badge neben Name
 - **History**: Client speichert letzte 100 Guild-Messages
-- **Offline-Members**: Erhalten Message nicht später (Hinweis: Message-Queue)
+- **Offline-Members**: Erhalten Message nicht (Hinweis: verwende Mail-System für wichtige Nachrichten)
 - **Cross-Zone**: Funktioniert Zone-übergreifend (über Redis Pub/Sub)
 
 ---
@@ -564,7 +697,7 @@ var guildBcast = new ChatGuild
 **Spezielle Rechte:** Keine (muss in Raid sein)
 
 ### Beschreibung
-**Feature** - Client sendet Raid-Chat-Message. Server validiert Raid-Membership und broadcastet an alle Raid-Members. Für große Gruppen (>5 Spieler).
+Client sendet Raid-Chat-Message. Server validiert Raid-Membership und broadcastet an alle Raid-Members. Für große Gruppen (>5 Spieler).
 
 ### Im Scope ✅
 - Raid-weite Kommunikation (bis 40 Spieler)
@@ -573,7 +706,7 @@ var guildBcast = new ChatGuild
 
 ### Nicht im Scope ❌
 - Party-Chat → verwende `ChatParty` (404) für kleine Gruppen
-- Raid-Warning (Leader-Only) → geplant Feature
+- Raid-Warning (Leader-Only) → verwende `ChatSystem` (410) mit Raid-Leader-Rechten
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -609,7 +742,6 @@ var raidChat = new ChatRaid
 | `MESSAGE_TOO_LONG` | >500 Zeichen | Kürzen |
 
 ### Notizen
-- **Hinweis**: Nicht im Prototyp verfügbar
 - **Auto-Join**: Automatisch bei Raid-Join verfügbar
 - **Auto-Leave**: Channel wird bei Raid-Leave automatisch verlassen
 - **Rate-Limit**: 30 Messages/Minute
@@ -626,7 +758,7 @@ var raidChat = new ChatRaid
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - Server broadcastet Raid-Chat-Message an alle Members des Raids. Enthält Sender-Info, Group-Nummer und Message-Text.
+Server broadcastet Raid-Chat-Message an alle Members des Raids. Enthält Sender-Info, Group-Nummer und Message-Text.
 
 ### Im Scope ✅
 - Broadcast an alle Raid-Members (bis 40 Spieler)
@@ -635,7 +767,7 @@ var raidChat = new ChatRaid
 - Timestamp
 
 ### Nicht im Scope ❌
-- Raid-Warning → geplant (Leader-Only Broadcast)
+- Raid-Warning → verwende `ChatSystem` (410) mit Raid-Leader-Rechten
 - Group-Specific Chat → verwende Party-Chat
 
 ### Broadcast Payload
@@ -665,7 +797,6 @@ var raidBcast = new ChatRaid
 ```
 
 ### Notizen
-- **Hinweis**: Nicht im Prototyp verfügbar
 - **UI-Formatting**: Spezielle Farbe für Raid-Chat (z.B. Orange)
 - **Group-Display**: Client zeigt Group-Nummer in Klammern, z.B. "[G2] Aragorn: ..."
 - **History**: Client speichert letzte 100 Raid-Messages
@@ -709,13 +840,22 @@ Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="zo
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - Trade-Channel für Verkauf/Kauf-Angebote.
+Trade-Channel für Verkauf/Kauf-Angebote. Zone-weiter Channel für Handel-Kommunikation.
+
+### Im Scope ✅
+- Zone-weite Trade-Kommunikation
+- Kauf- und Verkaufsangebote
+- Item-Links im Format: `[item:12345:ItemName]`
+
+### Nicht im Scope ❌
+- Direkthandel → verwende `TradeRequest` (1100)
 
 ### Payload
 Identisch zu `ChatMessage` (400), aber ChannelType="trade"
 
 ### Notizen
-- **Hinweis**: Für Trade-Economy
+- **Spezieller Channel**: Für Trade-Economy dediziert
+- **UI-Farbe**: Typischerweise Braun oder Gold
 
 ---
 
@@ -727,13 +867,22 @@ Identisch zu `ChatMessage` (400), aber ChannelType="trade"
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - Looking-for-Group Channel für Party/Raid-Suche.
+Looking-for-Group Channel für Party/Raid-Suche. Zone-weiter Channel für Gruppensuche.
+
+### Im Scope ✅
+- Zone-weite LFG-Kommunikation
+- Party- und Raid-Suche
+- Dungeon/Raid-Ankündigungen
+
+### Nicht im Scope ❌
+- Automatisches Matchmaking → verwende `MatchmakingQueue` (2700)
 
 ### Payload
 Identisch zu `ChatMessage` (400), aber ChannelType="lfg"
 
 ### Notizen
-- **Hinweis**: Für Group-Finding
+- **Spezieller Channel**: Für Group-Finding dediziert
+- **UI-Farbe**: Typischerweise Grün
 
 ---
 
@@ -1775,7 +1924,92 @@ Antwort auf ChatChannelMute Request. Bestätigt erfolgreiche Mute-Action oder gi
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.1.0
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Chat-Kategorie)
+
+```csharp
+// Chat (0400-0499)
+ChatMessage = 400,
+ChatBroadcast = 401,
+ChatWhisper = 402,
+ChatWhisperResponse = 403,
+ChatParty = 404,
+ChatGuild = 405,
+ChatRaid = 406,
+ChatZone = 407,
+ChatTrade = 408,
+ChatLfg = 409,
+ChatSystem = 410,
+ChatYell = 411,
+ChatSay = 412,
+ChatEmote = 413,
+ChatAfk = 414,
+ChatDnd = 415,
+ChatChannelJoin = 416,
+ChatChannelLeave = 417,
+ChatChannelList = 418,
+ChatChannelCreate = 419,
+ChatChannelDelete = 420,
+ChatChannelPassword = 421,
+ChatChannelMute = 422,
+ChatChannelUnmute = 423,
+ChatChannelKick = 424,
+ChatChannelBan = 425,
+ChatChannelOwner = 426,
+ChatChannelModerator = 427,
+ChatMotd = 428,
+ChatFilter = 429,
+ChatSpamWarning = 430,
+// Gap: 431-439 reserviert
+ChatMessageResponse = 440,
+ChatChannelJoinResponse = 441,
+ChatChannelCreateResponse = 442,
+ChatChannelDeleteResponse = 443,
+ChatChannelPasswordResponse = 444,
+ChatChannelMuteResponse = 445,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| `ChatMessage` | 400 | `ChatMessageResponse` | 440 |
+| `ChatWhisper` | 402 | `ChatWhisperResponse` | 403 |
+| `ChatParty` | 404 | `ChatBroadcast` / `ErrorMessage` | 401 / 910 |
+| `ChatGuild` | 405 | `ChatBroadcast` / `ErrorMessage` | 401 / 910 |
+| `ChatRaid` | 406 | `ChatBroadcast` / `ErrorMessage` | 401 / 910 |
+| `ChatChannelJoin` | 416 | `ChatChannelJoinResponse` | 441 |
+| `ChatChannelCreate` | 419 | `ChatChannelCreateResponse` | 442 |
+| `ChatChannelDelete` | 420 | `ChatChannelDeleteResponse` | 443 |
+| `ChatChannelPassword` | 421 | `ChatChannelPasswordResponse` | 444 |
+| `ChatChannelMute` | 422 | `ChatChannelMuteResponse` | 445 |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/
+├── Messaging/
+│   ├── Enums/
+│   │   └── MessageType.cs          # Chat: 400-445
+│   └── Contracts/
+│       └── Chat/
+│           ├── IChatMessage.cs
+│           ├── IChatBroadcast.cs
+│           ├── IChatWhisper.cs
+│           └── IChatChannelCommand.cs
+└── Dtos/
+    └── Chat/
+        ├── ChatMessageDto.cs
+        ├── ChatBroadcastDto.cs
+        ├── ChatWhisperDto.cs
+        ├── ChatChannelDto.cs
+        └── ChannelInfoDto.cs
+```
 
 [← Zurück zur Übersicht](README.md)
