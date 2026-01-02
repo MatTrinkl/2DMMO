@@ -787,7 +787,7 @@ ZoneLoadedAck (119)         (Client ist ready)
 | `GetZoneRequest`  | 117  | Request der ZoneState auslöst           |
 | `ZoneLoadedAck`   | 119  | Client-Bestätigung nach ZoneState       |
 | `EntityBatch`     | 120  | Weitere Entities bei Chunking           |
-| `EntitySpawn`     | 1400 | Einzelne Entity spawnt später (Runtime) |
+| `EntitySpawn`     | 1400 | Einzelne Entity spawnt während Runtime |
 | `EntityDespawn`   | 1402 | Entity verlässt Zone (Runtime)          |
 | `WeatherUpdate`   | 2600 | Dynamische Wetter-Änderung              |
 | `TimeOfDayUpdate` | 2602 | Zeit-Synchronisation                    |
@@ -2569,25 +2569,6 @@ Spieler verlässt Sub-Zone.
 
 ---
 
-## ZonePhaseChange [RESERVED]
-
-**Hinweis:** Diese Message hat noch keine zugewiesene ID im `MessageType` Enum.
-
-### Beschreibung
-
-Zone ändert visuellen/logischen Zustand basierend auf Quest-Fortschritt (Phasing-System).
-
-### Im Scope ✅
-
--   Unterschiedliche Zone-Zustände pro Spieler
--   Quest-Progress beeinflusst Zone-Aussehen
-
-### Nicht im Scope ❌
-
--   Spieler in unterschiedlichen Phasen können sich nicht sehen → erfordert zusätzliche Server-Logik
-
----
-
 # Obsolete Messages
 
 Die folgenden Messages wurden durch den neuen Zone Loading Flow ersetzt.
@@ -2648,7 +2629,6 @@ ShardListRequest = 112,
 ShardListResponse = 113,
 SubZoneEnter = 114,
 SubZoneLeave = 115,
-// ZonePhaseChange = 116,       // Reserved - keine ID zugewiesen
 GetZoneRequest = 117,
 ZoneLoadedAck = 118,
 EntityBatch = 120,
@@ -2899,7 +2879,7 @@ Mmo.Shared/
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-28  
-**Version:** 2.0.0
+**Letzte Aktualisierung:** 2026-01-02  
+**Version:** 2.1.0
 
 [← Zurück zur Übersicht](README.md)

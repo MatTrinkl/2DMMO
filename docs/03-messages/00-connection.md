@@ -267,12 +267,11 @@ var logoutRequest = new LogoutRequest
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
-- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
-- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
-- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
-- **Phase 2:** Freunde sehen `FriendOffline` (2108)
+- Andere Spieler sehen `CharacterLeftZone` (105) Broadcast
+- Party-Mitglieder sehen `PartyMemberUpdate` (710) mit Online=false
+- Guild-Mitglieder sehen `GuildMemberUpdate` mit Online=false
+- Freunde sehen `FriendOffline` (2108)
 - SessionToken bleibt gültig für Reconnect
-- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
@@ -439,14 +438,13 @@ var banDisconnect = new ForceDisconnect
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
-- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
-- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
-- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
-- **Phase 2:** Freunde sehen `FriendOffline` (2108)
+- Andere Spieler sehen `CharacterLeftZone` (105) Broadcast
+- Party-Mitglieder sehen `PartyMemberUpdate` (710) mit Online=false
+- Guild-Mitglieder sehen `GuildMemberUpdate` mit Online=false
+- Freunde sehen `FriendOffline` (2108)
 - Client sollte Reconnect-Delay respektieren
 - Bei `CanReconnect=false`: SessionToken wird invalidiert
 - Nach Disconnect: Client zeigt Message im UI
-- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
@@ -1362,12 +1360,32 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+
+### Im Scope ✅
+- TLS 1.3 Handshake initiieren
+- Key Exchange für verschlüsselte Kommunikation
+- Certificate Validation
+
+### Nicht im Scope ❌
+- Plaintext-Fallback → immer TLS oder Disconnect
+- Certificate Pinning → standard CA-Validation
+
+### Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ClientPublicKey | byte[] | Client's ECDH Public Key | Ja |
+| SupportedCipherSuites | ushort[] | Unterstützte Cipher Suites | Ja |
+| ClientRandom | byte[32] | 32-Byte Random für Key Derivation | Ja |
+
+### Erwartete Response
+- Server sendet eigene Handshake-Antwort mit Server Public Key
+- Danach: verschlüsselte Kommunikation
 
 ### Notizen
-- Im Prototyp: Nicht implementiert (TCP ohne TLS)
-- Phase 3: TLS 1.3 für alle Verbindungen
-- Server antwortet mit separater `EncryptionHandshakeResponse` Message (nicht bidirektional)
+- Handshake MUSS vor LoginRequest erfolgen
+- Timeout: 5 Sekunden für Handshake-Completion
+- Bei Fehler: Connection wird geschlossen
 
 ---
 
@@ -1379,19 +1397,36 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - Aktiviert/Deaktiviert Message-Kompression.
+Aktiviert/Deaktiviert Message-Kompression für bandwidth-intensive Kommunikation.
 
 ### Im Scope ✅
 - Kompression aktivieren/deaktivieren
-- Kompression-Level wählen
+- Kompression-Level wählen (0-9)
+- LZ4 Fast Compression
+
+### Nicht im Scope ❌
+- Per-Message Kompression → global toggle
+- Asymmetrische Kompression → beide Richtungen gleich
+
+### Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Enabled | bool | Kompression aktiviert? | Ja |
+| Level | byte | Kompression-Level (0-9, 0=fastest) | Ja |
+| Algorithm | CompressionAlgorithm | LZ4 oder Zstd | Ja |
+
+### Erwartete Response
+- Server bestätigt mit gleicher Message (Echo-Pattern)
+- Ab nächster Message: Kompression aktiv/inaktiv
 
 ### Notizen
-- Im Prototyp: Nicht implementiert
-- Phase 3: LZ4 oder Zstd Kompression für Messages
+- Standard: Kompression deaktiviert
+- Empfohlen: Level 3 für Balance aus Speed und Ratio
+- Bei Zone-Loading: temporär Level 6 für bessere Ratio
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0
 
 [← Zurück zur Übersicht](README.md)
