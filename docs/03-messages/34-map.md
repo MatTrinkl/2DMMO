@@ -2,7 +2,7 @@
 
 **Kategorie:** 34  
 **Range:** 3400-3499  
-**Phase:** Phase 2
+
 
 [← Zurück zur Übersicht](README.md)
 

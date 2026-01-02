@@ -2,7 +2,7 @@
 
 **Kategorie:** 25  
 **Range:** 2500-2599  
-**Phase:** Phase 2
+
 
 [← Zurück zur Übersicht](README.md)
 

@@ -2,7 +2,7 @@
 
 **Kategorie:** 17  
 **Range:** 1700-1799  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

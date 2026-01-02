@@ -2,7 +2,7 @@
 
 **Kategorie:** 3  
 **Range:** 0300-0399  
-**Phase:** Phase 2  
+
 **Status:** ✅ Vollständig dokumentiert
 
 [← Zurück zur Übersicht](README.md)
@@ -1240,7 +1240,7 @@ Spieler möchte respawnen (an Graveyard) oder akzeptiert eine Battle-Resurrectio
 - Spirit-Healer Resurrection
 
 ### Nicht im Scope ❌
-- Selbst-Rez → nur bestimmte Klassen (Phase 2)
+- Selbst-Rez → nur bestimmte Klassen (geplant)
 - Auto-Rez → verwende `ResurrectionSickness` (4143)
 
 ### Request Payload

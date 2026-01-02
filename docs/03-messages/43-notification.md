@@ -2,8 +2,8 @@
 
 **Kategorie:** 43  
 **Range:** 4300-4399  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

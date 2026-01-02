@@ -2,7 +2,7 @@
 
 **Kategorie:** 42  
 **Range:** 4200-4299  
-**Phase:** Phase 3  
+
 **Status:** ✅ Dokumentiert
 
 [← Zurück zur Übersicht](README.md)

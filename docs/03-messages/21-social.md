@@ -2,8 +2,8 @@
 
 **Kategorie:** 21  
 **Range:** 2100-2199  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

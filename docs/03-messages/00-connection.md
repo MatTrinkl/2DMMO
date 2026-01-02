@@ -57,7 +57,7 @@ Initiiert den Login-Prozess. Der Client sendet Credentials (Username/Password od
 ### Nicht im Scope ❌
 - Registrierung → verwende externe Account-API
 - Passwort-Reset → verwende externe Account-API
-- OAuth/Social Login → verwende externe Account-API (Phase 3)
+- OAuth/Social Login → verwende externe Account-API (geplant)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -769,7 +769,7 @@ Erstellt einen neuen Character für den Account. Server validiert Namen, Rasse, 
 
 ### Nicht im Scope ❌
 - Account-Registrierung → externe API
-- Premium-Features → Phase 3
+- Premium-Features → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -919,7 +919,7 @@ Löscht einen Character permanent. Sicherheits-Mechanismus: Character wird erst 
 
 ### Nicht im Scope ❌
 - Sofortiges Löschen (Security-Risiko)
-- Character-Transfer → Phase 3
+- Character-Transfer → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -1362,7 +1362,7 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 3 Feature** - TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+**Feature** - TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
 
 ### Notizen
 - Im Prototyp: Nicht implementiert (TCP ohne TLS)
@@ -1379,7 +1379,7 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 3 Feature** - Aktiviert/Deaktiviert Message-Kompression.
+**Feature** - Aktiviert/Deaktiviert Message-Kompression.
 
 ### Im Scope ✅
 - Kompression aktivieren/deaktivieren

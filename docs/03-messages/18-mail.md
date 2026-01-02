@@ -2,7 +2,7 @@
 
 **Kategorie:** 18  
 **Range:** 1800-1899  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

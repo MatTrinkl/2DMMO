@@ -516,7 +516,7 @@ Client initiiert Sprung. Server validiert ob Sprung erlaubt ist (nicht in Air, n
 
 ### Nicht im Scope ❌
 - Falling → automatisch durch Physics
-- Double-Jump → Phase 2 Feature
+- Double-Jump → geplant Feature
 - Jump-Ability (z.B. Leap) → verwende `ActionRequest` (300)
 
 ### Request Payload
@@ -792,7 +792,7 @@ var stuckResp = new StuckResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client bittet um Pathfinding-Calculation für Auto-Travel (z.B. zu NPC, Quest-Marker, Party-Member).
+**Feature** - Client bittet um Pathfinding-Calculation für Auto-Travel (z.B. zu NPC, Quest-Marker, Party-Member).
 
 ### Im Scope ✅
 - Ziel-Position oder Ziel-Entity
@@ -816,7 +816,7 @@ var stuckResp = new StuckResponse
 - **Bei Fehler:** `ErrorMessage` (910)
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp implementiert
+- **Hinweis**: Nicht im Prototyp implementiert
 - **Use-Case**: Auto-Travel, Follow
 
 ---
@@ -829,7 +829,7 @@ var stuckResp = new StuckResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Server sendet berechneten Path als Waypoint-Liste.
+**Feature** - Server sendet berechneten Path als Waypoint-Liste.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -838,7 +838,7 @@ var stuckResp = new StuckResponse
 | Waypoints | List<Vector2> | Path-Punkte | Bei Success |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 
 ---
 
@@ -949,7 +949,7 @@ var swimMode = new MovementModeChange
 
 ### Notizen
 - **Swimming**: 60% Speed, kein Jump, kein Cast
-- **Flying**: 150% Speed (Phase 2)
+- **Flying**: 150% Speed (geplant)
 - **Falling**: Kontrollierter Fall mit Air-Control
 - **Mounted**: Siehe MountSummon
 

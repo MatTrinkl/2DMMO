@@ -2,8 +2,8 @@
 
 **Kategorie:** 05  
 **Range:** 500-599  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -175,7 +175,7 @@ Keine - InventorySync kann nicht fehlschlagen (ist initiale Sync)
 
 ### Notizen
 - **Loading-Time**: Kann 100-500ms dauern bei vielen Items
-- **Compression**: Message wird komprimiert bei >50 Items (Phase 3)
+- **Compression**: Message wird komprimiert bei >50 Items (geplant)
 - **Caching**: Client cached Inventory-State lokal
 - **Max Items**: Max 100 Items im Inventory (16 Backpack + 4x21 Bags)
 - **Gold-Format**: Stored als Copper (1 Gold = 10000 Copper)
@@ -701,7 +701,7 @@ var itemDelete = new ItemDelete
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client fordert Auto-Stacking aller Items an. Server merget alle stackbaren Items.
+**Feature** - Client fordert Auto-Stacking aller Items an. Server merget alle stackbaren Items.
 
 ### Im Scope ✅
 - Auto-Merge aller Stacks vom gleichen Type
@@ -728,7 +728,7 @@ var itemStack = new ItemStack
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Performance**: Kann bis zu 2 Sekunden dauern bei vollem Inventory
 
 ---
@@ -741,7 +741,7 @@ var itemStack = new ItemStack
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client fordert Auto-Sort des Inventory an. Server sortiert nach Typ, Qualität, oder Name.
+**Feature** - Client fordert Auto-Sort des Inventory an. Server sortiert nach Typ, Qualität, oder Name.
 
 ### Im Scope ✅
 - Sort nach Type, Quality, Name
@@ -770,7 +770,7 @@ var itemSort = new ItemSort
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 
 ---
 
@@ -880,7 +880,7 @@ var equipBag = new BagExpand
 ### Notizen
 - **Costs**: 16→20: 10 Gold, 20→24: 100 Gold
 - **Max Size**: Backpack: 24, Bags: 20
-- **Phase 2**: Bag-System vollständig implementiert
+- **Hinweis**: Bag-System vollständig implementiert
 
 ---
 

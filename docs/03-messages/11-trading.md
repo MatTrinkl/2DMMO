@@ -2,8 +2,8 @@
 
 **Kategorie:** 11  
 **Range:** 1100-1199  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

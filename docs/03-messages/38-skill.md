@@ -2,8 +2,8 @@
 
 **Kategorie:** 38  
 **Range:** 3800-3899  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

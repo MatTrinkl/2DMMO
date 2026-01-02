@@ -2,7 +2,7 @@
 
 **Kategorie:** 30  
 **Range:** 3000-3099  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

@@ -85,7 +85,7 @@ Universelle Chat-Message für alle Channel-Types. Client sendet Message, Server 
 - Text-Message (max 500 Zeichen)
 - Channel-Type (say, yell, party, guild, zone, trade, lfg, custom)
 - Optional: Channel-Name für Custom-Channels
-- Item-Links, Achievement-Links (Phase 2)
+- Item-Links, Achievement-Links (geplant)
 
 ### Nicht im Scope ❌
 - Private Messages → verwende `ChatWhisper` (402)
@@ -223,7 +223,7 @@ Private Nachricht an einen anderen Spieler (Direct Message). Server validiert ob
 
 ### Nicht im Scope ❌
 - Group-Messages → kein Feature
-- Offline-Messages → Phase 2 mit Mail-System (1800)
+- Offline-Messages → geplant mit Mail-System (1800)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -453,7 +453,7 @@ Client sendet Guild-Chat-Message. Server validiert Guild-Membership und Permissi
 - Persistent Channel (bleibt auch bei Logout aktiv)
 
 ### Nicht im Scope ❌
-- Officer-Chat → Phase 2 Feature (separater Channel)
+- Officer-Chat → geplant Feature (separater Channel)
 - Guild-Announcements → verwende `GuildMOTD` (808)
 
 ### Request Payload
@@ -494,7 +494,7 @@ var guildChat = new ChatGuild
 
 ### Notizen
 - **Permissions**: Guild-Ranks können "Use Guild Chat" Permission haben
-- **History**: Server speichert letzte 100 Messages (Phase 2)
+- **History**: Server speichert letzte 100 Messages (geplant)
 - **Auto-Join**: Automatisch bei Guild-Membership
 - **Rate-Limit**: 30 Messages/Minute
 - **Alternative**: Kann auch via `ChatMessage` (400) mit ChannelType="guild" gesendet werden
@@ -518,8 +518,8 @@ Server broadcastet Guild-Chat-Message an alle Online-Members der Guild. Enthält
 - Timestamp
 
 ### Nicht im Scope ❌
-- Offline-Message-Queue → Phase 2 Feature
-- Officer-Chat → Phase 2 (separater Channel)
+- Offline-Message-Queue → geplant Feature
+- Officer-Chat → geplant (separater Channel)
 
 ### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -551,7 +551,7 @@ var guildBcast = new ChatGuild
 - **UI-Formatting**: Spezielle Farbe für Guild-Chat (z.B. Grün)
 - **Rank-Display**: Client zeigt Rank-Badge neben Name
 - **History**: Client speichert letzte 100 Guild-Messages
-- **Offline-Members**: Erhalten Message nicht in Phase 1 (Phase 2: Message-Queue)
+- **Offline-Members**: Erhalten Message nicht später (Hinweis: Message-Queue)
 - **Cross-Zone**: Funktioniert Zone-übergreifend (über Redis Pub/Sub)
 
 ---
@@ -564,7 +564,7 @@ var guildBcast = new ChatGuild
 **Spezielle Rechte:** Keine (muss in Raid sein)
 
 ### Beschreibung
-**Phase 2 Feature** - Client sendet Raid-Chat-Message. Server validiert Raid-Membership und broadcastet an alle Raid-Members. Für große Gruppen (>5 Spieler).
+**Feature** - Client sendet Raid-Chat-Message. Server validiert Raid-Membership und broadcastet an alle Raid-Members. Für große Gruppen (>5 Spieler).
 
 ### Im Scope ✅
 - Raid-weite Kommunikation (bis 40 Spieler)
@@ -573,7 +573,7 @@ var guildBcast = new ChatGuild
 
 ### Nicht im Scope ❌
 - Party-Chat → verwende `ChatParty` (404) für kleine Gruppen
-- Raid-Warning (Leader-Only) → Phase 2 Feature
+- Raid-Warning (Leader-Only) → geplant Feature
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -609,7 +609,7 @@ var raidChat = new ChatRaid
 | `MESSAGE_TOO_LONG` | >500 Zeichen | Kürzen |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp verfügbar
+- **Hinweis**: Nicht im Prototyp verfügbar
 - **Auto-Join**: Automatisch bei Raid-Join verfügbar
 - **Auto-Leave**: Channel wird bei Raid-Leave automatisch verlassen
 - **Rate-Limit**: 30 Messages/Minute
@@ -626,7 +626,7 @@ var raidChat = new ChatRaid
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Server broadcastet Raid-Chat-Message an alle Members des Raids. Enthält Sender-Info, Group-Nummer und Message-Text.
+**Feature** - Server broadcastet Raid-Chat-Message an alle Members des Raids. Enthält Sender-Info, Group-Nummer und Message-Text.
 
 ### Im Scope ✅
 - Broadcast an alle Raid-Members (bis 40 Spieler)
@@ -635,7 +635,7 @@ var raidChat = new ChatRaid
 - Timestamp
 
 ### Nicht im Scope ❌
-- Raid-Warning → Phase 2 (Leader-Only Broadcast)
+- Raid-Warning → geplant (Leader-Only Broadcast)
 - Group-Specific Chat → verwende Party-Chat
 
 ### Broadcast Payload
@@ -665,7 +665,7 @@ var raidBcast = new ChatRaid
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp verfügbar
+- **Hinweis**: Nicht im Prototyp verfügbar
 - **UI-Formatting**: Spezielle Farbe für Raid-Chat (z.B. Orange)
 - **Group-Display**: Client zeigt Group-Nummer in Klammern, z.B. "[G2] Aragorn: ..."
 - **History**: Client speichert letzte 100 Raid-Messages
@@ -709,13 +709,13 @@ Identisch zu `ChatMessage` (400) und `ChatBroadcast` (401), aber ChannelType="zo
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Trade-Channel für Verkauf/Kauf-Angebote.
+**Feature** - Trade-Channel für Verkauf/Kauf-Angebote.
 
 ### Payload
 Identisch zu `ChatMessage` (400), aber ChannelType="trade"
 
 ### Notizen
-- **Phase 2**: Für Trade-Economy
+- **Hinweis**: Für Trade-Economy
 
 ---
 
@@ -727,13 +727,13 @@ Identisch zu `ChatMessage` (400), aber ChannelType="trade"
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Looking-for-Group Channel für Party/Raid-Suche.
+**Feature** - Looking-for-Group Channel für Party/Raid-Suche.
 
 ### Payload
 Identisch zu `ChatMessage` (400), aber ChannelType="lfg"
 
 ### Notizen
-- **Phase 2**: Für Group-Finding
+- **Hinweis**: Für Group-Finding
 
 ---
 

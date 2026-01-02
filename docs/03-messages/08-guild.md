@@ -2,8 +2,8 @@
 
 **Kategorie:** 08  
 **Range:** 800-899  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -48,7 +48,7 @@
 Diese Kategorie umfasst alle Messages für das **Guild-System** im 2DMMO.
 
 Das Guild-System implementiert:
-- **Guild-Creation**: Charter-System mit Signatures (Phase 2: vereinfacht)
+- **Guild-Creation**: Charter-System mit Signatures (Hinweis: vereinfacht)
 - **Rank-System**: 10 Ranks (0=GM, 1=Officer, 2-9=Members) mit Permissions
 - **Guild-Chat**: Dedizierter Chat-Channel → siehe `ChatGuild` (405)
 - **Guild-Bank**: Shared Storage mit Tabs und Permissions
@@ -58,7 +58,7 @@ Das Guild-System implementiert:
 
 **Server Authority**: Alle Guild-Changes sind server-authoritative.
 
-**Guild-Size**: Max 100 Members (Standard), 500 (mit Perks in Phase 3)
+**Guild-Size**: Max 100 Members (Standard), 500 (mit Perks später)
 
 **Guild-Bank**: 8 Tabs, je 98 Slots
 
@@ -89,9 +89,9 @@ Im Prototyp wird die Guild sofort erstellt. In Phase 2 ist ein Charter-System ge
 - Name-Validation (Profanity-Filter, Uniqueness)
 
 ### Nicht im Scope ❌
-- Charter-System → Phase 2 (9 Signatures erforderlich)
-- Guild-Tabard Design → Phase 3
-- Guild-Level → Phase 3
+- Charter-System → geplant (9 Signatures erforderlich)
+- Guild-Tabard Design → geplant
+- Guild-Level → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -193,7 +193,7 @@ Guild-Member mit Invite-Permission sendet Guild-Einladung an Spieler. Target erh
 
 ### Nicht im Scope ❌
 - Offline-Invites → nicht möglich
-- Mass-Invite → Phase 3
+- Mass-Invite → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -458,7 +458,7 @@ var guildKick = new GuildKick
 **Spezielle Rechte:** 👑 Guild Master (Rank 0)
 
 ### Beschreibung
-Guild Master löst Guild komplett auf. Alle Members werden entfernt, Guild-Bank-Items verschwinden (oder verteilt in Phase 2).
+Guild Master löst Guild komplett auf. Alle Members werden entfernt, Guild-Bank-Items verschwinden (oder verteilt später).
 
 ### Im Scope ✅
 - Vollständige Guild-Auflösung
@@ -495,7 +495,7 @@ var guildDisband = new GuildDisband
 ### Notizen
 - **GM-Only**: Nur Guild Master
 - **Confirmation**: Muss exakten Guild-Namen eintippen
-- **Bank-Items**: Verschwinden (Phase 2: per Mail an Members verteilt)
+- **Bank-Items**: Verschwinden (Hinweis: per Mail an Members verteilt)
 - **Chat-Notification**: "The guild has been disbanded by the Guild Master."
 - **No Refund**: Keine Rückerstattung der 100 Gold Creation-Cost
 
@@ -809,7 +809,7 @@ Liste aller Guild-Members mit Details (Level, Class, Rank, Online-Status, Last-O
 | IsOnline | bool | Online? |
 | LastOnline | long | Last-Online Timestamp |
 | JoinedAt | long | Join-Timestamp |
-| Note | string | Public-Note (Phase 2) |
+| Note | string | Public-Note (geplant) |
 
 ### Beispiel Payload
 ```csharp
@@ -889,10 +889,10 @@ Member deposited Item in Guild-Bank. Erfordert Permission für spezifischen Bank
 - Item von Inventory zu Bank
 - Tab-Selection
 - Permission-Check pro Tab
-- Daily-Limit (Phase 2)
+- Daily-Limit (geplant)
 
 ### Nicht im Scope ❌
-- Gold-Deposit → Phase 2
+- Gold-Deposit → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |

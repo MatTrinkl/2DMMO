@@ -253,8 +253,8 @@ See [01-zone.md](01-zone.md) for details.
 ### By Development Phase
 
 - **✅ Implemented (Prototype)**: Connection, Zone, Movement, Chat, System
-- **🔨 In Progress (Phase 2)**: Combat, Inventory, Character, Party, Guild, Quest, Trading, Targeting, NPC, Entity, Aura, Social, Admin, Instance, PvP, World, Tutorial, Loot, Cooldown, Map, Reporting, Economy, Skill, Equipment, Death, Notification
-- **📋 Planned (Phase 3)**: Crafting, Auction, Mail, Achievement, Mount, Emote, Matchmaking, Leaderboard, Settings, Inspection, Voice, Bank, Transportation, Cutscene, Housing, Event
+- **🔨 In Progress (geplant)**: Combat, Inventory, Character, Party, Guild, Quest, Trading, Targeting, NPC, Entity, Aura, Social, Admin, Instance, PvP, World, Tutorial, Loot, Cooldown, Map, Reporting, Economy, Skill, Equipment, Death, Notification
+- **📋 Planned (geplant)**: Crafting, Auction, Mail, Achievement, Mount, Emote, Matchmaking, Leaderboard, Settings, Inspection, Voice, Bank, Transportation, Cutscene, Housing, Event
 
 ---
 

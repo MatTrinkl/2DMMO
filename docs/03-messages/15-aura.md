@@ -2,8 +2,8 @@
 
 **Kategorie:** 15  
 **Range:** 1500-1599  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

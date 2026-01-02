@@ -2,7 +2,7 @@
 
 **Kategorie:** 22  
 **Range:** 2200-2299  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

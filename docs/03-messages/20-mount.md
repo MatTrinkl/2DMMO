@@ -2,7 +2,7 @@
 
 **Kategorie:** 20  
 **Range:** 2000-2099  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

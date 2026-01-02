@@ -2,7 +2,7 @@
 
 **Kategorie:** 36  
 **Range:** 3600-3699  
-**Phase:** Phase 2
+
 
 [← Zurück zur Übersicht](README.md)
 

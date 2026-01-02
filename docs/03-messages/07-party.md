@@ -2,8 +2,8 @@
 
 **Kategorie:** 07  
 **Range:** 700-799  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -44,14 +44,14 @@ Das Party-System implementiert:
 - **Group-Formation**: Invites, Accept, Decline, Auto-Join
 - **Party-Management**: Leader-Promotion, Kick, Disband
 - **Member-Tracking**: HP/Mana, Position, Status (Online/Offline/Dead)
-- **Loot-System**: Group-Loot, Round-Robin, Master-Looter, Need-Before-Greed (Phase 2)
+- **Loot-System**: Group-Loot, Round-Robin, Master-Looter, Need-Before-Greed (geplant)
 - **XP-Sharing**: XP-Bonus für Gruppe (10-20% je nach Größe)
 - **Ready-Check**: Für Dungeon/Boss-Pulls
 - **Party-Chat**: Dedizierter Chat-Channel → siehe `ChatParty` (404)
 
 **Server Authority**: Alle Party-Changes sind server-authoritative.
 
-**Party-Size**: Max 5 Spieler (Raid = 40 Spieler in Phase 2)
+**Party-Size**: Max 5 Spieler (Raid = 40 Spieler später)
 
 **XP-Range**: Max 100m zwischen Party-Members für XP-Share
 
@@ -79,9 +79,9 @@ Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party 
 - Cross-Zone Invites
 
 ### Nicht im Scope ❌
-- Raid-Invites → Phase 2 (RaidInvite Message)
+- Raid-Invites → geplant (RaidInvite Message)
 - Offline-Invites → nicht möglich
-- Guild-Mass-Invite → Phase 3
+- Guild-Mass-Invite → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -723,7 +723,7 @@ var memberOffline = new PartyMemberOffline
 **Spezielle Rechte:** 👑 Party-Leader
 
 ### Beschreibung
-**Phase 2 Feature** - Party-Leader ändert Loot-Mode. Bestimmt wie Loot verteilt wird.
+**Feature** - Party-Leader ändert Loot-Mode. Bestimmt wie Loot verteilt wird.
 
 ### Im Scope ✅
 - Loot-Mode-Change
@@ -760,7 +760,7 @@ var lootMode = new PartyLootMode
 | `PLAYER_NOT_IN_PARTY` | Master-Looter nicht in Party | - |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Default**: Group-Loot (alle können looten)
 - **Loot-Modes**:
   - **Group-Loot**: Jeder kann looten
@@ -1014,7 +1014,7 @@ Antwort auf PartyDisband Request. Bestätigt erfolgreiche Party-Auflösung oder 
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf PartyLootMode Request. Bestätigt erfolgreiche Loot-Mode-Änderung oder gibt Fehler zurück.
+**Feature** - Antwort auf PartyLootMode Request. Bestätigt erfolgreiche Loot-Mode-Änderung oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |

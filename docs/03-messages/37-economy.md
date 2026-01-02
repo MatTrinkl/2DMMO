@@ -2,8 +2,8 @@
 
 **Kategorie:** 37  
 **Range:** 3700-3799  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 

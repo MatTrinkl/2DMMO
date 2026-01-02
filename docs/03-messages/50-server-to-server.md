@@ -2,7 +2,7 @@
 
 **Kategorien:** 50-55  
 **Range:** 5000-5999  
-**Phase:** Phase 2 & 3  
+
 **Status:** 🟡 In Planung
 
 [← Zurück zur Übersicht](README.md)

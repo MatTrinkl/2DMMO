@@ -19,11 +19,11 @@
 
 ## 📈 Overall Progress
 
-| Phase | Status | Categories |
+| Range | Status | Categories |
 |-------|--------|------------|
-| Prototype (0-9) | ⏳ | 5 categories |
-| Phase 2 (10-29) | ⏳ | ~20 categories |
-| Phase 3 (30-49) | ⏳ | ~20 categories |
+| Core (0-9) | ✅ | 10 categories |
+| Extended (10-29) | ⏳ | ~20 categories |
+| Advanced (30-49) | ⏳ | ~20 categories |
 | Reserved/Debug (47-50) | ⏳ | 4 categories |
 
 ---
@@ -109,7 +109,7 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 50 | S2S | 5000-5999 | TBD | ⏳ | Phase 2 |
+| 50 | S2S | 5000-5999 | TBD | ⏳ | Server-to-Server |
 
 ---
 

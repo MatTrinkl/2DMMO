@@ -2,8 +2,8 @@
 
 **Kategorie:** 13  
 **Range:** 1300-1399  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -39,9 +39,9 @@ Diese Kategorie umfasst alle Messages für **NPC-Interaction und Service-NPCs** 
 Das NPC-System implementiert:
 - **Dialog-System**: Tree-based Dialogs mit Branching
 - **Vendor-System**: Buy/Sell Items, Buyback-Feature
-- **Trainer-System**: Learn Skills/Spells (Phase 2)
+- **Trainer-System**: Learn Skills/Spells (geplant)
 - **Repair-System**: Repair Equipment
-- **Flight-Master**: Fast-Travel zwischen Points (Phase 2)
+- **Flight-Master**: Fast-Travel zwischen Points (geplant)
 - **Quest-Givers**: Quest-Interaction → siehe Quest-Category (1000-1099)
 
 **NPC-Types**:
@@ -116,7 +116,7 @@ var npcInteract = new NPCInteract
 - **Range**: Max 5m
 - **Facing**: Spieler dreht sich automatisch zum NPC
 - **UI**: Server öffnet entsprechendes UI
-- **Busy-State**: NPCs können nur von 1 Spieler gleichzeitig genutzt werden (Phase 2: Queue-System)
+- **Busy-State**: NPCs können nur von 1 Spieler gleichzeitig genutzt werden (Hinweis: Queue-System)
 
 ---
 
@@ -550,7 +550,7 @@ var vendorClose = new VendorClose
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Server öffnet Trainer-UI mit verfügbaren Skills/Spells.
+**Feature** - Server öffnet Trainer-UI mit verfügbaren Skills/Spells.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -596,7 +596,7 @@ var trainerOpen = new TrainerOpen
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Class-Specific**: Trainer nur für bestimmte Klassen
 
 ---
@@ -609,7 +609,7 @@ var trainerOpen = new TrainerOpen
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client lernt Skill vom Trainer.
+**Feature** - Client lernt Skill vom Trainer.
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -643,7 +643,7 @@ var trainerLearn = new TrainerLearn
 | `WRONG_CLASS` | Skill für andere Klasse | - |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 
 ---
 
@@ -698,7 +698,7 @@ var repairAll = new RepairAll
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Server öffnet Flight-Master-UI mit verfügbaren Flugzielen.
+**Feature** - Server öffnet Flight-Master-UI mit verfügbaren Flugzielen.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -744,7 +744,7 @@ var flightMaster = new FlightMasterOpen
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Discovery**: Muss Flight-Point erst entdecken (nahe kommen)
 
 ---
@@ -843,7 +843,7 @@ Antwort auf VendorBuyback Request. Bestätigt erfolgreichen Buyback oder gibt Fe
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf TrainerLearn Request. Bestätigt erfolgreiches Skill-Learning oder gibt Fehler zurück.
+**Feature** - Antwort auf TrainerLearn Request. Bestätigt erfolgreiches Skill-Learning oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -897,7 +897,7 @@ Antwort auf RepairAll Request. Bestätigt erfolgreiche Reparatur oder gibt Fehle
 - **Inventory (05)**: Item-Buy/Sell → `ItemAdd` (501), `ItemRemove` (502)
 - **Economy (37)**: Gold-Transactions → `GoldUpdate` (3703)
 - **Quest (10)**: Quest-NPCs → `QuestAccept` (1000), `QuestComplete` (1002)
-- **Skills (17)**: Skill-Learning → `SkillLearned` Event (Phase 2)
+- **Skills (17)**: Skill-Learning → `SkillLearned` Event (geplant)
 
 ---
 

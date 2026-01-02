@@ -254,7 +254,7 @@ var netStats = new NetworkStats
 
 ### Notizen
 - **Debug-Tool**: Primär für Diagnostics und Support
-- **On-Demand**: Client kann Request senden (Phase 2)
+- **On-Demand**: Client kann Request senden (geplant)
 - **Bandwidth-Monitoring**: Hilfreich für Mobile-Clients
 
 ---
@@ -854,7 +854,7 @@ Server-Zeit-Synchronisation. Client kann Clock-Offset berechnen.
 - Time-Sync
 
 ### Nicht im Scope ❌
-- Game-Time (Day/Night-Cycle) → Phase 2
+- Game-Time (Day/Night-Cycle) → geplant
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |

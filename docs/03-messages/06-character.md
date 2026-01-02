@@ -2,8 +2,8 @@
 
 **Kategorie:** 06  
 **Range:** 600-699  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -40,20 +40,20 @@ Diese Kategorie umfasst alle Messages für **Character-Management, Progression, 
 Das Character-System implementiert:
 - **Progression-System**: XP, Leveling (max Level 60), Stat-Points
 - **Attribute-System**: Strength, Dexterity, Intelligence, Stamina, Spirit
-- **Talent-System**: Talent-Trees mit Specializations (Phase 2)
-- **Title-System**: Achievement-basierte Titles (Phase 2)
+- **Talent-System**: Talent-Trees mit Specializations (geplant)
+- **Title-System**: Achievement-basierte Titles (geplant)
 - **Appearance-System**: Character-Customization (Hairstyle, Color, etc.)
 - **Resource-System**: HP, Mana, Energy, Rage (class-abhängig)
-- **Rested-XP**: Bonus-XP für Offline-Zeit (Phase 2)
+- **Rested-XP**: Bonus-XP für Offline-Zeit (geplant)
 
 **Server Authority**: Alle Character-Changes sind server-authoritative.
 
-**Level-Cap**: Max Level 60 (Prototyp), 100 (Phase 2)
+**Level-Cap**: Max Level 60 (Prototyp), 100 (geplant)
 
 **XP-Curve**: Exponential (Level 1→2: 100 XP, Level 59→60: 1.000.000 XP)
 
 **🔄 DTO-System:**  
-Character-Selection Messages wie `CharacterList` (601) werden in Phase 2 ein `CharacterListItemDto` verwenden:
+Character-Selection Messages wie `CharacterList` (601) werden später ein `CharacterListItemDto` verwenden:
 - Minimale Character-Infos für Selection-Screen (Name, Level, Race, Class, Location)
 - Keine sensiblen Daten wie AccountId, Gold, oder Experience
 - Optimiert für schnelle Character-Selection UI
@@ -86,7 +86,7 @@ Diese Message wird beim Character-Select und nach Login gesendet. Nachfolgende U
 ### Nicht im Scope ❌
 - Equipment → verwende `EquipmentSync` (3900)
 - Inventory → verwende `InventorySync` (500)
-- Talents → verwende `TalentTreeSync` (Phase 2)
+- Talents → verwende `TalentTreeSync` (geplant)
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -366,7 +366,7 @@ var levelUp = new LevelUp
 - **HP/Mana**: Automatisch auf 100% restored
 - **Stat-Points**: 5 pro Level
 - **Talent-Points**: 1 pro Level (ab Level 10)
-- **Max-Level**: 60 (Prototyp), 100 (Phase 2)
+- **Max-Level**: 60 (Prototyp), 100 (geplant)
 - **Broadcast-Range**: 50m Radius
 
 ---
@@ -444,7 +444,7 @@ var questXP = new ExperienceGain
 
 ### Notizen
 - **UI-Display**: "+150 XP (Goblin Warrior)" als Floating-Text
-- **Rested-XP**: +50% Bonus für Offline-Zeit (Phase 2)
+- **Rested-XP**: +50% Bonus für Offline-Zeit (geplant)
 - **Party-Sharing**: XP wird geteilt in Party (mit Bonus für Gruppe)
 - **Level-Cap**: Bei Max-Level wird XP nicht mehr angezeigt
 
@@ -510,7 +510,7 @@ Client möchte verfügbare Stat-Points in Attribute investieren. Server validier
 - Auto-Recalculation von Derived Stats
 
 ### Nicht im Scope ❌
-- Attribute-Decrease → nur via Respec (Phase 2)
+- Attribute-Decrease → nur via Respec (geplant)
 - Talent-Points → verwende `TalentLearn` (620)
 
 ### Request Payload
@@ -582,7 +582,7 @@ var attributeIncrease = new AttributeIncrease
   - **Stamina**: +10 HP pro Point
   - **Spirit**: +5 Mana Regen/5s pro Point
 - **Cap**: Max 999 pro Attribute (praktisch unmöglich zu erreichen)
-- **No Refund**: Keine Respec im Prototyp (Phase 2: Respec für Gold)
+- **No Refund**: Keine Respec im Prototyp (Hinweis: Respec für Gold)
 
 ---
 
@@ -599,14 +599,14 @@ Client ändert Character-Appearance (Hairstyle, Hair-Color, etc.). Erfordert Bar
 ### Im Scope ✅
 - Hairstyle-Change
 - Hair-Color-Change
-- Face-Type-Change (Phase 2)
+- Face-Type-Change (geplant)
 - Skin-Color-Change (Phase 2, race-restricted)
 - Cost-Validation
 
 ### Nicht im Scope ❌
-- Race-Change → Phase 3 Feature
+- Race-Change → geplant Feature
 - Class-Change → nicht möglich
-- Name-Change → Phase 3 via Support
+- Name-Change → geplant via Support
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -651,7 +651,7 @@ var customize = new CharacterCustomize
 ### Notizen
 - **Cost**: 10 Gold für Hairstyle/Color-Change
 - **Prototyp**: Nur Hairstyle + HairColor verfügbar
-- **Phase 2**: Face-Type, Skin-Color
+- **Hinweis**: Face-Type, Skin-Color
 - **Barber-Shop**: Nur in Hauptstädten
 - **Preview**: Client zeigt Preview vor Bestätigung
 
@@ -665,7 +665,7 @@ var customize = new CharacterCustomize
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client möchte Talent lernen. Server validiert ob Talent-Points vorhanden, Voraussetzungen erfüllt, und aktiviert Talent.
+**Feature** - Client möchte Talent lernen. Server validiert ob Talent-Points vorhanden, Voraussetzungen erfüllt, und aktiviert Talent.
 
 ### Im Scope ✅
 - Talent-Learning
@@ -713,7 +713,7 @@ var talentLearn = new TalentLearn
 | `INVALID_SPECIALIZATION` | Talent für andere Spec | Spec wechseln |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Talent-Points**: 1 pro Level ab Level 10
 - **Talent-Trees**: 3 Trees pro Class
 - **Max-Rank**: Meist 5 Ranks pro Talent
@@ -728,7 +728,7 @@ var talentLearn = new TalentLearn
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client möchte alle Talents zurücksetzen (Respec). Kostet Gold (Preis steigt mit jeder Respec).
+**Feature** - Client möchte alle Talents zurücksetzen (Respec). Kostet Gold (Preis steigt mit jeder Respec).
 
 ### Im Scope ✅
 - Vollständiger Talent-Reset
@@ -759,7 +759,7 @@ var talentReset = new TalentReset
 | `NO_TALENTS_LEARNED` | Keine Talents gelernt | - |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Cost**: 1 Gold (1. Respec), 5 Gold (2.), 10 Gold (3.), max 50 Gold
 - **Cooldown**: 24h zwischen Respecs
 
@@ -773,7 +773,7 @@ var talentReset = new TalentReset
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client wechselt Specialization (z.B. Warrior: Arms → Protection). Resettet alle Talents.
+**Feature** - Client wechselt Specialization (z.B. Warrior: Arms → Protection). Resettet alle Talents.
 
 ### Im Scope ✅
 - Spec-Change
@@ -807,7 +807,7 @@ var specChange = new SpecializationChange
 | `INSUFFICIENT_GOLD` | Nicht genug Gold | Gold farmen |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Cost**: 50 Gold
 - **Cooldown**: 7 Tage
 
@@ -821,7 +821,7 @@ var specChange = new SpecializationChange
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Client wählt einen Achievement-basierten Title. Title wird über/unter Character-Name angezeigt.
+**Feature** - Client wählt einen Achievement-basierten Title. Title wird über/unter Character-Name angezeigt.
 
 ### Im Scope ✅
 - Title-Equip
@@ -852,7 +852,7 @@ var titleChange = new TitleChange
 | `INVALID_TITLE` | Title existiert nicht | - |
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Titles**: Via Achievements freigeschaltet
 - **Display**: Über/Unter Character-Name
 
@@ -904,7 +904,7 @@ var appearanceUpdate = new AppearanceUpdate
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Update des Rested-XP Bonus. Spieler erhält +50% XP für Offline-Zeit (max 1.5 Level).
+**Feature** - Update des Rested-XP Bonus. Spieler erhält +50% XP für Offline-Zeit (max 1.5 Level).
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -925,7 +925,7 @@ var restedXPUpdate = new RestedXPUpdate
 ```
 
 ### Notizen
-- **Phase 2**: Nicht im Prototyp
+- **Hinweis**: Nicht im Prototyp
 - **Accrual**: 5% eines Levels pro 8h Offline (in Inn/City)
 - **Max**: 1.5 Level
 - **Bonus**: +50% XP
@@ -1061,7 +1061,7 @@ var errorResponse = new CharacterCustomizeResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf TalentLearn Request. Bestätigt erfolgreiche Talent-Aktivierung oder gibt Fehler zurück.
+**Feature** - Antwort auf TalentLearn Request. Bestätigt erfolgreiche Talent-Aktivierung oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -1091,7 +1091,7 @@ var errorResponse = new CharacterCustomizeResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf TalentReset Request. Bestätigt erfolgreichen Reset oder gibt Fehler zurück.
+**Feature** - Antwort auf TalentReset Request. Bestätigt erfolgreichen Reset oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -1118,7 +1118,7 @@ var errorResponse = new CharacterCustomizeResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf SpecializationChange Request. Bestätigt erfolgreichen Spec-Wechsel oder gibt Fehler zurück.
+**Feature** - Antwort auf SpecializationChange Request. Bestätigt erfolgreichen Spec-Wechsel oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -1145,7 +1145,7 @@ var errorResponse = new CharacterCustomizeResponse
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 2 Feature** - Antwort auf TitleChange Request. Bestätigt erfolgreichen Title-Wechsel oder gibt Fehler zurück.
+**Feature** - Antwort auf TitleChange Request. Bestätigt erfolgreichen Title-Wechsel oder gibt Fehler zurück.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |

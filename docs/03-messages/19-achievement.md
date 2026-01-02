@@ -2,7 +2,7 @@
 
 **Kategorie:** 19  
 **Range:** 1900-1999  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

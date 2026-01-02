@@ -2,8 +2,8 @@
 
 **Kategorie:** 12  
 **Range:** 1200-1299  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -53,7 +53,7 @@ Das Targeting-System implementiert:
 **Client Authority**: Target-Selection ist primär client-seitig. Server validiert Target für Actions und sendet Target-Info.
 
 **🔄 DTO-System:**  
-Targeting Messages wie `TargetChanged` (1200) werden in Phase 2 ein `TargetEntityDto` verwenden:
+Targeting Messages wie `TargetChanged` (1200) werden später ein `TargetEntityDto` verwenden:
 
 -   Minimale Target-Informationen für UI (Name, Level, Health, Buffs)
 -   Keine sensiblen Server-Daten wie AccountId oder Gold

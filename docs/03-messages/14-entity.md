@@ -2,8 +2,8 @@
 
 **Kategorie:** 14  
 **Range:** 1400-1499  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+
+
 
 [← Zurück zur Übersicht](README.md)
 
@@ -51,7 +51,7 @@ Das Entity-System ist die Basis für alle Game-Objects:
 **Visibility-Range**: 50m Radius (configurable per Zone)
 
 **🔄 DTO-System & Dirty-Tracking:**  
-Entity Messages verwenden in Phase 2 **automatisch generierte DTOs** und **Delta DTO Unions**:
+Entity Messages verwenden später **automatisch generierte DTOs** und **Delta DTO Unions**:
 
 -   `EntitySpawn` verwendet `EntityDtoUnion` (polymorphes Interface für Characters, NPCs, etc.)
 -   `EntityUpdate` ist ersetzt durch **`ZoneDelta.EntityUpdates`** mit **Delta DTO Unions**
@@ -333,7 +333,7 @@ var deathDespawn = new EntityDespawn
 
 ## EntityMove (1402)
 
-> ⚠️ **DEPRECATED in Phase 2**
+> ⚠️ **DEPRECATED später**
 > 
 > This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
 > Position changes are now sent via `IEntityPositionDelta` or entity-specific Delta DTOs like `ICharacterEntityDelta`.
@@ -414,14 +414,14 @@ var entityMove = new EntityMove
 -   **Velocity**: Für smooth Interpolation
 -   **Timestamp**: Für Latency-Compensation
 -   **Batching**: Multiple EntityMoves werden gebatched
--   **Delta-Compression**: Nur Changes werden gesendet (Phase 3)
+-   **Delta-Compression**: Nur Changes werden gesendet (geplant)
 -   **Performance**: Größter Bandwidth-Consumer im Game
 
 ---
 
 ## EntityUpdate (1403)
 
-> ⚠️ **DEPRECATED in Phase 2**
+> ⚠️ **DEPRECATED später**
 > 
 > This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
 > State changes (HP, Level, Combat-State, etc.) are now sent via Delta DTOs like `ICharacterEntityDelta` or `INpcEntityDelta`.
@@ -577,7 +577,7 @@ var death = new EntityAnimation
 
 ## EntityStateChange (1405)
 
-> ⚠️ **DEPRECATED in Phase 2**
+> ⚠️ **DEPRECATED später**
 > 
 > This message is replaced by **`ZoneDelta.EntityUpdates`** (with Delta DTO Unions) for better batching performance.
 > State changes are now included in Delta DTOs (e.g., `IsInCombat`, `IsDead` properties in entity-specific Delta DTOs).

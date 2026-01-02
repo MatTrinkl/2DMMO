@@ -2,7 +2,7 @@
 
 **Kategorie:** 35  
 **Range:** 3500-3599  
-**Phase:** Phase 3  
+
 **Status:** ✅ Dokumentiert
 
 [← Zurück zur Übersicht](README.md)

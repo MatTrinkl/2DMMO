@@ -2,7 +2,7 @@
 
 **Kategorie:** 16  
 **Range:** 1600-1699  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 

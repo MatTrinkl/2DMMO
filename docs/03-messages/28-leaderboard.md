@@ -2,7 +2,7 @@
 
 **Kategorie:** 28  
 **Range:** 2800-2899  
-**Phase:** Phase 3
+
 
 [← Zurück zur Übersicht](README.md)
 
