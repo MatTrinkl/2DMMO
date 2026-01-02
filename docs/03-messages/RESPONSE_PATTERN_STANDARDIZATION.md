@@ -53,8 +53,8 @@ Dieses Dokument dokumentiert die Standardisierung von Request/Response-Patterns 
 
 | Request | Neue Response | ID | Status |
 |---------|---------------|-----|--------|
-| ThreatListRequest | ThreatListResponse | 321 | ✅ |
-| ResurrectionRequest | ResurrectionResponse | 322 | ✅ |
+| ThreatListRequest | ThreatListResponse | 333 | ✅ |
+| ResurrectionRequest | ResurrectionResponse | 334 | ✅ |
 
 **Notiz:** ActionResult (301) bereits korrekt mit Success-Pattern!
 

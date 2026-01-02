@@ -47,6 +47,29 @@
   - `ZoneLoadingProgress` (108) - Client loads locally, sends `ZoneLoadedAck` (118)
 - **Changed:** `ZonePhaseChange` marked as planned feature (no ID assigned yet)
 
+### Category 02: Movement (2026-01-02)
+
+- **Added:** Missing response messages to enum:
+  - `TeleportResponse` (220)
+  - `JumpResponse` (221)
+
+### Category 03: Combat (2026-01-02)
+
+- **Added:** Missing response messages to enum:
+  - `ThreatListResponse` (333)
+  - `ResurrectionResponse` (334)
+- **Fixed:** Docs had wrong IDs (321, 322 were already used by AggroTransfer and TauntEvent)
+
+### Category 04: Chat (2026-01-02)
+
+- **Added:** Missing response messages to enum (440-445):
+  - `ChatMessageResponse` (440)
+  - `ChatChannelJoinResponse` (441)
+  - `ChatChannelCreateResponse` (442)
+  - `ChatChannelDeleteResponse` (443)
+  - `ChatChannelPasswordResponse` (444)
+  - `ChatChannelMuteResponse` (445)
+
 ---
 
 _(Entries will be added as categories are processed)_

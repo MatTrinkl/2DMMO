@@ -89,6 +89,8 @@ public enum MessageType : ushort
     PullEvent = 217,
     RootEvent = 218,
     StunMovement = 219,
+    TeleportResponse = 220,
+    JumpResponse = 221,
 
     // ═══════════════════════════════════════════════════════════════
     // COMBAT (0300-0399)
@@ -126,6 +128,8 @@ public enum MessageType : ushort
     ShieldBroken = 330,
     Resurrection = 331,
     CombatStateSync = 332,
+    ThreatListResponse = 333,
+    ResurrectionResponse = 334,
 
     // ═══════════════════════════════════════════════════════════════
     // CHAT (0400-0499)
@@ -161,6 +165,12 @@ public enum MessageType : ushort
     ChatMotd = 428,
     ChatFilter = 429,
     ChatSpamWarning = 430,
+    ChatMessageResponse = 440,
+    ChatChannelJoinResponse = 441,
+    ChatChannelCreateResponse = 442,
+    ChatChannelDeleteResponse = 443,
+    ChatChannelPasswordResponse = 444,
+    ChatChannelMuteResponse = 445,
 
     // ═══════════════════════════════════════════════════════════════
     // INVENTORY / ITEMS (0500-0599)

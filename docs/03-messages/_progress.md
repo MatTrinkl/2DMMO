@@ -34,10 +34,10 @@
 |-----|------|-------|------------|------------|-------|
 | 00 | Connection | 0-99 | 24 | ✅ | Fixed naming discrepancies, added [Obsolete] |
 | 01 | Zone | 100-199 | 19 | ✅ | Fixed ID mismatches, added [Obsolete] markers |
-| 02 | Movement | 200-299 | 20 | ⏳ | |
-| 03 | Combat | 300-399 | 33 | ⏳ | |
-| 04 | Chat | 400-499 | 31 | ⏳ | |
-| 05 | Inventory | 500-599 | 36 | ⏳ | |
+| 02 | Movement | 200-299 | 22 | ✅ | Added TeleportResponse (220), JumpResponse (221) |
+| 03 | Combat | 300-399 | 35 | ✅ | Added ThreatListResponse (333), ResurrectionResponse (334) |
+| 04 | Chat | 400-499 | 37 | ✅ | Added response messages (440-445) |
+| 05 | Inventory | 500-599 | 36 | ⏳ | Response IDs need correction |
 | 06 | Character | 600-699 | 24 | ⏳ | |
 | 07 | Party | 700-799 | 26 | ⏳ | |
 | 08 | Guild | 800-899 | 39 | ⏳ | |

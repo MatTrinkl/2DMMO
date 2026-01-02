@@ -1396,7 +1396,7 @@ Full Combat-State Synchronisation (nach Reconnect oder Zone-Transfer).
 
 ---
 
-## ThreatListResponse (321)
+## ThreatListResponse (333)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1422,7 +1422,7 @@ Antwort auf ThreatListRequest. Liefert die Threat-Liste einer Entity.
 
 ---
 
-## ResurrectionResponse (322)
+## ResurrectionResponse (334)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
