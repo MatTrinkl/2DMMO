@@ -2,7 +2,6 @@
 
 **Kategorie:** 47  
 **Range:** 4700-4799  
-**Phase:** Reserved  
 **Status:** ⚪ Reserviert
 
 [← Zurück zur Übersicht](README.md)

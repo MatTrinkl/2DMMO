@@ -2,7 +2,6 @@
 
 **Kategorie:** 48  
 **Range:** 4800-4899  
-**Phase:** Reserved  
 **Status:** ⚪ Reserviert
 
 [← Zurück zur Übersicht](README.md)

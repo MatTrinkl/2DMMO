@@ -94,16 +94,16 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 40 | Bank | 4000-4099 | 19 | ⏳ | |
-| 41 | Death | 4100-4199 | 24 | ⏳ | |
-| 42 | Transportation | 4200-4299 | 28 | ⏳ | |
-| 43 | Notification | 4300-4399 | 24 | ⏳ | |
-| 44 | Cutscene | 4400-4499 | 6 | ⏳ | |
-| 45 | Housing | 4500-4599 | 6 | ⏳ | |
-| 46 | Event | 4600-4699 | 5 | ⏳ | |
-| 47 | Reserved | 4700-4799 | 0 | ⏳ | |
-| 48 | Reserved | 4800-4899 | 0 | ⏳ | |
-| 49 | Debug | 4900-4999 | 5 | ⏳ | |
+| 40 | Bank | 4000-4099 | 25 | ✅ | Completely rewritten to match enum |
+| 41 | Death | 4100-4199 | 24 | ✅ | Completely rewritten to match enum |
+| 42 | Transportation | 4200-4299 | 28 | ✅ | Completely rewritten to match enum |
+| 43 | Notification | 4300-4399 | 20 | ✅ | Completely rewritten to match enum |
+| 44 | Cutscene | 4400-4499 | 6 | ✅ | Verified - aligned with enum |
+| 45 | Housing | 4500-4599 | 6 | ✅ | Verified - aligned with enum |
+| 46 | Event | 4600-4699 | 5 | ✅ | Verified - aligned with enum |
+| 47 | Reserved | 4700-4799 | 0 | ✅ | Reserved for future use |
+| 48 | Reserved | 4800-4899 | 0 | ✅ | Reserved for future use |
+| 49 | Debug | 4900-4999 | 5 | ✅ | Verified - aligned with enum |
 
 ### Server-to-Server (5000-5999)
 
@@ -118,7 +118,7 @@
 | Date | Decision | Reason |
 |------|----------|--------|
 | 2026-01-02 | MessageType enum is SOT | Defined in problem statement |
-| | | |
+| 2026-01-02 | Categories 40-49 aligned | Extended features complete |
 
 ---
 
