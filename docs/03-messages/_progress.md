@@ -4,6 +4,8 @@
 **Last Updated:** 2026-01-02  
 **Goal:** Align `MessageType` enum as Source of Truth with all documentation in `03-messages/`
 
+> **Wichtig:** Messages werden phasenlos dokumentiert. Phasen beziehen sich nur auf Feature-Implementierung, nicht auf Message-Kategorisierung.
+
 ---
 
 ## 📋 Legend
@@ -41,7 +43,7 @@
 | 06 | Character | 600-699 | 30 | ✅ | Fixed names, added responses (650-655) |
 | 07 | Party | 700-799 | 33 | ✅ | Fixed names, added responses (740-746) |
 | 08 | Guild | 800-899 | 50 | ✅ | Fixed names, added responses (840-850) |
-| 09 | System | 900-999 | 26 | ⏳ | |
+| 09 | System | 900-999 | 26 | ✅ | Verified - aligned with enum |
 
 ### Gameplay Features (1000-1999)
 
