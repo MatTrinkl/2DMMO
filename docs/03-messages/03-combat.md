@@ -59,7 +59,6 @@
   - [CombatStateSync (332)](#combatstatesc-332)
   - [ThreatListResponse (333)](#threatlistresponse-333)
   - [ResurrectionResponse (334)](#resurrectionresponse-334)
-- [🧪 Phase 2 Messages (Geplant)](#-phase-2-messages-geplant)
 - [🗑️ Obsolete Messages](#️-obsolete-messages)
 - [📎 Anhang](#-anhang)
   - [MessageType Enum Updates](#messagetype-enum-updates)
@@ -1792,20 +1791,6 @@ Antwort auf Resurrection Request. Bestätigt erfolgreiche Wiederbelebung oder gi
 | `OUT_OF_RANGE` | Zu weit entfernt |
 | `INSUFFICIENT_MANA` | Nicht genug Mana |
 | `IN_COMBAT` | Im Kampf |
-
----
-
-## 🧪 Phase 2 Messages (Geplant)
-
-Die folgenden Combat-Features sind für Phase 2 geplant:
-
-| Feature | Beschreibung | Geplante IDs |
-|---------|--------------|--------------|
-| **Stance-System** | Combat-Stances (Defensive, Aggressive, etc.) | 335-339 |
-| **Weapon-Swap** | Schneller Waffenwechsel im Combat | 340-342 |
-| **Combo-Builder** | Erweiterte Combo-Mechanics | 343-349 |
-| **Pet-Combat** | Combat-Actions für Begleiter | 350-359 |
-| **Dual-Target** | Gleichzeitig zwei Targets | 360-365 |
 
 ---
 
