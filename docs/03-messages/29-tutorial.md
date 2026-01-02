@@ -696,22 +696,26 @@ Server-Antwort auf Skip-Request.
 |------|-----|-----|--------------|---------|
 | Type | MessageType | 0 | `MessageType.TutorialSkipResponse` | Ja |
 | Success | bool | 1 | Skip erfolgreich? | Ja |
-| TutorialId | ushort | 2 | Tutorial-ID | Ja |
-| ErrorCode | TutorialErrorCode | 3 | Fehlercode (wenn !Success) | Nein |
-| Revision | uint | 4 | State-Revision | Ja |
+| GlobalError | GlobalErrorCode? | 2 | Globaler Fehlercode | Nein |
+| ErrorMessage | string? | 3 | Fehlermeldung | Nein |
+| ErrorCode | TutorialErrorCode? | 4 | Spezifischer Fehlercode | Nein |
+| TutorialId | ushort | 5 | Tutorial-ID | Ja |
+| Revision | uint | 6 | State-Revision | Ja |
 
 ### Code-Beispiel
 
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.TutorialSkipResponse)]
-public class TutorialSkipResponse : IServerMessage
+public class TutorialSkipResponse : IResponseMessage<TutorialErrorCode>
 {
     [Key(0)] public MessageType Type => MessageType.TutorialSkipResponse;
     [Key(1)] public bool Success { get; init; }
-    [Key(2)] public ushort TutorialId { get; init; }
-    [Key(3)] public TutorialErrorCode ErrorCode { get; init; }
-    [Key(4)] public uint Revision { get; init; }
+    [Key(2)] public GlobalErrorCode? GlobalError { get; init; }
+    [Key(3)] public string? ErrorMessage { get; init; }
+    [Key(4)] public TutorialErrorCode? ErrorCode { get; init; }
+    [Key(5)] public ushort TutorialId { get; init; }
+    [Key(6)] public uint Revision { get; init; }
 }
 ```
 
@@ -770,22 +774,26 @@ Server-Antwort auf Reset-Request.
 |------|-----|-----|--------------|---------|
 | Type | MessageType | 0 | `MessageType.TutorialResetResponse` | Ja |
 | Success | bool | 1 | Reset erfolgreich? | Ja |
-| TutorialId | ushort | 2 | Tutorial-ID | Ja |
-| ErrorCode | TutorialErrorCode | 3 | Fehlercode | Nein |
-| Revision | uint | 4 | State-Revision | Ja |
+| GlobalError | GlobalErrorCode? | 2 | Globaler Fehlercode | Nein |
+| ErrorMessage | string? | 3 | Fehlermeldung | Nein |
+| ErrorCode | TutorialErrorCode? | 4 | Spezifischer Fehlercode | Nein |
+| TutorialId | ushort | 5 | Tutorial-ID | Ja |
+| Revision | uint | 6 | State-Revision | Ja |
 
 ### Code-Beispiel
 
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.TutorialResetResponse)]
-public class TutorialResetResponse : IServerMessage
+public class TutorialResetResponse : IResponseMessage<TutorialErrorCode>
 {
     [Key(0)] public MessageType Type => MessageType.TutorialResetResponse;
     [Key(1)] public bool Success { get; init; }
-    [Key(2)] public ushort TutorialId { get; init; }
-    [Key(3)] public TutorialErrorCode ErrorCode { get; init; }
-    [Key(4)] public uint Revision { get; init; }
+    [Key(2)] public GlobalErrorCode? GlobalError { get; init; }
+    [Key(3)] public string? ErrorMessage { get; init; }
+    [Key(4)] public TutorialErrorCode? ErrorCode { get; init; }
+    [Key(5)] public ushort TutorialId { get; init; }
+    [Key(6)] public uint Revision { get; init; }
 }
 ```
 
@@ -1027,20 +1035,24 @@ Server bestätigt Hint-Dismiss.
 |------|-----|-----|--------------|---------|
 | Type | MessageType | 0 | `MessageType.HintDismissResponse` | Ja |
 | Success | bool | 1 | Dismiss erfolgreich? | Ja |
-| HintId | uint | 2 | Hint-ID | Ja |
-| ErrorCode | TutorialErrorCode | 3 | Fehlercode | Nein |
+| GlobalError | GlobalErrorCode? | 2 | Globaler Fehlercode | Nein |
+| ErrorMessage | string? | 3 | Fehlermeldung | Nein |
+| ErrorCode | TutorialErrorCode? | 4 | Spezifischer Fehlercode | Nein |
+| HintId | uint | 5 | Hint-ID | Ja |
 
 ### Code-Beispiel
 
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.HintDismissResponse)]
-public class HintDismissResponse : IServerMessage
+public class HintDismissResponse : IResponseMessage<TutorialErrorCode>
 {
     [Key(0)] public MessageType Type => MessageType.HintDismissResponse;
     [Key(1)] public bool Success { get; init; }
-    [Key(2)] public uint HintId { get; init; }
-    [Key(3)] public TutorialErrorCode ErrorCode { get; init; }
+    [Key(2)] public GlobalErrorCode? GlobalError { get; init; }
+    [Key(3)] public string? ErrorMessage { get; init; }
+    [Key(4)] public TutorialErrorCode? ErrorCode { get; init; }
+    [Key(5)] public uint HintId { get; init; }
 }
 ```
 
@@ -1099,20 +1111,24 @@ Server bestätigt Category-Deaktivierung.
 |------|-----|-----|--------------|---------|
 | Type | MessageType | 0 | `MessageType.HintDisableResponse` | Ja |
 | Success | bool | 1 | Erfolgreich? | Ja |
-| Category | string | 2 | Category | Ja |
-| ErrorCode | TutorialErrorCode | 3 | Fehlercode | Nein |
+| GlobalError | GlobalErrorCode? | 2 | Globaler Fehlercode | Nein |
+| ErrorMessage | string? | 3 | Fehlermeldung | Nein |
+| ErrorCode | TutorialErrorCode? | 4 | Spezifischer Fehlercode | Nein |
+| Category | string | 5 | Category | Ja |
 
 ### Code-Beispiel
 
 ```csharp
 [MessagePackObject]
 [NetworkMessage(MessageType.HintDisableResponse)]
-public class HintDisableResponse : IServerMessage
+public class HintDisableResponse : IResponseMessage<TutorialErrorCode>
 {
     [Key(0)] public MessageType Type => MessageType.HintDisableResponse;
     [Key(1)] public bool Success { get; init; }
-    [Key(2)] public string Category { get; init; } = "";
-    [Key(3)] public TutorialErrorCode ErrorCode { get; init; }
+    [Key(2)] public GlobalErrorCode? GlobalError { get; init; }
+    [Key(3)] public string? ErrorMessage { get; init; }
+    [Key(4)] public TutorialErrorCode? ErrorCode { get; init; }
+    [Key(5)] public string Category { get; init; } = "";
 }
 ```
 
