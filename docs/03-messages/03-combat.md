@@ -1,32 +1,377 @@
-# ⚔️ Combat Messages (0300-0399)
+# ⚔️ Combat Messages (0300-0334)
 
 **Kategorie:** 3  
-**Range:** 0300-0399  
-
-**Status:** ✅ Vollständig dokumentiert
+**Range:** 0300-0334 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
 ---
 
-## 📋 Übersicht
+## 📋 Inhaltsverzeichnis
 
-Diese Kategorie umfasst alle Messages für das **Combat-System** im 2DMMO.
+- [🔄 Combat Flow (Übersicht)](#-combat-flow-übersicht)
+  - [Action-Request Flow](#action-request-flow)
+  - [Damage/Heal Flow](#damageheal-flow)
+  - [Threat/Aggro Flow](#threataggro-flow)
+  - [Death/Resurrection Flow](#deathresurrection-flow)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+  - [DamageType](#damagetype)
+  - [DeathReason](#deathreason)
+  - [RezType](#reztype)
+  - [CombatResultType](#combatresulttype)
+  - [ThreatEntry](#threatentry)
+  - [AoETarget](#aoetarget)
+- [📩 Aktive Messages (0300-0334)](#-aktive-messages-0300-0334)
+  - [ActionRequest (300)](#actionrequest-300)
+  - [ActionResult (301)](#actionresult-301)
+  - [DamageEvent (302)](#damageevent-302)
+  - [DeathEvent (303)](#deathevent-303)
+  - [HealEvent (304)](#healevent-304)
+  - [MissEvent (305)](#missevent-305)
+  - [DodgeEvent (306)](#dodgeevent-306)
+  - [ParryEvent (307)](#parryevent-307)
+  - [BlockEvent (308)](#blockevent-308)
+  - [CriticalHitEvent (309)](#criticalhitevent-309)
+  - [CombatStart (310)](#combatstart-310)
+  - [CombatEnd (311)](#combatend-311)
+  - [ThreatUpdate (312)](#threatupdate-312)
+  - [ThreatListRequest (313)](#threatlistrequest-313)
+  - [InterruptEvent (314)](#interruptevent-314)
+  - [ReflectEvent (315)](#reflectevent-315)
+  - [AbsorbEvent (316)](#absorbevent-316)
+  - [LifestealEvent (317)](#lifestealevent-317)
+  - [ExecutePhase (318)](#executephase-318)
+  - [EnrageEvent (319)](#enrageevent-319)
+  - [CombatLogEntry (320)](#combatlogentry-320)
+  - [AggroTransfer (321)](#aggrotransfer-321)
+  - [TauntEvent (322)](#tauntevent-322)
+  - [FeintEvent (323)](#feintevent-323)
+  - [CounterAttack (324)](#counterattack-324)
+  - [ComboFinisher (325)](#combofinisher-325)
+  - [AreaDamage (326)](#areadamage-326)
+  - [DamageOverTime (327)](#damageovertime-327)
+  - [HealOverTime (328)](#healovertime-328)
+  - [ShieldApplied (329)](#shieldapplied-329)
+  - [ShieldBroken (330)](#shieldbroken-330)
+  - [Resurrection (331)](#resurrection-331)
+  - [CombatStateSync (332)](#combatstatesc-332)
+  - [ThreatListResponse (333)](#threatlistresponse-333)
+  - [ResurrectionResponse (334)](#resurrectionresponse-334)
+- [🧪 Phase 2 Messages (Geplant)](#-phase-2-messages-geplant)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
+  - [MessageType Enum Updates](#messagetype-enum-updates)
+  - [Neue Enums](#neue-enums)
 
-Das Combat-System implementiert server-authoritative Kampfmechaniken mit:
-- Action-basiertes Kampfsystem (Abilities, Spells, Attacks)
-- Damage/Healing Calculation mit verschiedenen Ergebnissen (Hit, Miss, Dodge, Parry, Block, Crit)
-- Threat/Aggro-System für PvE-Tanking
-- Combat State Management (In/Out of Combat)
-- Advanced Mechanics (Reflect, Absorb, Lifesteal, Execute)
-- Boss Mechanics (Enrage Timer)
-- Combat Logging für DPS-Meters
-- Combo-Systeme mit Finishers
-- DoT/HoT (Damage/Heal over Time)
-- Absorption Shields
-- Resurrection-System
+---
 
-**Server Authority**: Alle Combat-Berechnungen erfolgen server-seitig. Client sendet Action-Requests, Server validiert und broadcasted die Events.
+## 🔄 Combat Flow (Übersicht)
+
+Das Combat-System implementiert **server-authoritative** Kampfmechaniken. Der Server ist die einzige Autorität für alle Berechnungen. Der Client sendet Action-Requests, der Server validiert und broadcasted die Events an alle relevanten Clients.
+
+### Kernprinzipien
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  SERVER-AUTHORITATIVE COMBAT                                    │
+│  ├── Client: Sendet nur Requests (ActionRequest)                │
+│  ├── Server: Validiert, berechnet, entscheidet                  │
+│  ├── Server: Broadcasted Results an alle in Range               │
+│  └── Client: Rendert Results (Damage Numbers, VFX, Sounds)      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Combat-System Features
+
+| Feature | Beschreibung | Messages |
+|---------|--------------|----------|
+| **Action System** | Abilities, Spells, Basic Attacks | 300, 301 |
+| **Damage/Heal** | Damage Types, Critical Hits, Overkill | 302, 304, 309 |
+| **Avoidance** | Miss, Dodge, Parry, Block | 305-308 |
+| **Combat State** | In/Out Combat, Regen, Mount Restrictions | 310, 311 |
+| **Threat/Aggro** | Threat Table, Taunt, Feint | 312, 313, 321-323 |
+| **Advanced** | Reflect, Absorb, Lifesteal, Execute | 315-318 |
+| **DoT/HoT** | Damage/Heal Over Time | 327, 328 |
+| **Shields** | Absorption Shields | 316, 329, 330 |
+| **Boss Mechanics** | Enrage Timer | 319 |
+| **AoE** | Area Damage | 326 |
+| **Combo** | Finisher-System | 325 |
+| **Death/Rez** | Death, Resurrection | 303, 331, 334 |
+| **Logging** | Combat Log für DPS-Meters | 320 |
+
+### Action-Request Flow
+
+```
+Client                         Server                      All Clients
+  │                              │                              │
+  │  ActionRequest (300)         │                              │
+  │  ├── ActionId: 123           │                              │
+  │  ├── TargetId: 456           │                              │
+  │  └── SequenceNumber: 789     │                              │
+  │─────────────────────────────►│                              │
+  │                              │                              │
+  │                              │  ┌─ Validate Cooldown        │
+  │                              │  ├─ Validate Range/LoS       │
+  │                              │  ├─ Validate Resources       │
+  │                              │  ├─ Validate Target          │
+  │                              │  └─ Calculate Damage/Heal    │
+  │                              │                              │
+  │  ActionResult (301)          │                              │
+  │◄─────────────────────────────│                              │
+  │                              │                              │
+  │                              │  DamageEvent (302)           │
+  │◄─────────────────────────────│─────────────────────────────►│
+  │                              │  (Broadcast to all in range) │
+```
+
+### Damage/Heal Flow
+
+```
+Server calculates combat outcome:
+
+   ┌───────────────────────────────────────────────────────────┐
+   │                    COMBAT CALCULATION                     │
+   └───────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Hit-Check      │
+                    │  Base: 95%      │
+                    └────────┬────────┘
+                             │
+            ┌────────────────┼────────────────┐
+            │                │                │
+            ▼                ▼                ▼
+       ┌────────┐       ┌────────┐       ┌────────┐
+       │ MISS   │       │ DODGE  │       │ HIT    │
+       │ (305)  │       │ (306)  │       │        │
+       └────────┘       └────────┘       └───┬────┘
+                                             │
+                              ┌──────────────┼──────────────┐
+                              │              │              │
+                              ▼              ▼              ▼
+                         ┌────────┐    ┌────────┐    ┌────────┐
+                         │ PARRY  │    │ BLOCK  │    │ DAMAGE │
+                         │ (307)  │    │ (308)  │    │ (302)  │
+                         └────────┘    └────────┘    └───┬────┘
+                                                        │
+                                              ┌─────────┼─────────┐
+                                              │         │         │
+                                              ▼         ▼         ▼
+                                         ┌────────┐ ┌────────┐ ┌────────┐
+                                         │ NORMAL │ │ CRIT   │ │ KILL   │
+                                         │        │ │ (309)  │ │ (303)  │
+                                         └────────┘ └────────┘ └────────┘
+```
+
+### Threat/Aggro Flow
+
+```
+Party Fight:
+
+Tank                Server                  Boss NPC
+  │                    │                       │
+  │  ActionRequest     │                       │
+  │  (Attack Boss)     │                       │
+  │───────────────────►│  +1000 Threat         │
+  │                    │──────────────────────►│
+  │                    │                       │
+  │                    │  ThreatUpdate (312)   │
+  │◄───────────────────│───────────────────────│
+  │                    │                       │
+  │                    │                       │
+DPS                    │                       │
+  │  ActionRequest     │                       │
+  │  (Big Damage)      │                       │
+  │───────────────────►│  +800 Threat          │
+  │                    │──────────────────────►│
+  │                    │                       │
+  │                    │  ThreatUpdate (312)   │
+  │◄───────────────────│───────────────────────│
+  │                    │                       │
+  │                    │                       │
+                       │  If DPS > Tank:       │
+                       │  AggroTransfer (321)  │
+                       │◄──────────────────────│
+                       │                       │
+                       │  Boss attacks DPS!    │
+```
+
+### Death/Resurrection Flow
+
+```
+Player                  Server               All Clients
+  │                        │                      │
+  │  (HP reaches 0)        │                      │
+  │                        │                      │
+  │                        │  DeathEvent (303)    │
+  │◄───────────────────────│─────────────────────►│
+  │                        │                      │
+  │  (Show Death UI)       │                      │
+  │                        │                      │
+  │  Resurrection (331)    │                      │
+  │  RezType: Graveyard    │                      │
+  │───────────────────────►│                      │
+  │                        │                      │
+  │  ResurrectionResponse  │                      │
+  │  (334)                 │                      │
+  │◄───────────────────────│                      │
+  │                        │                      │
+  │                        │  Resurrection Event  │
+  │◄───────────────────────│─────────────────────►│
+  │                        │  (Broadcast)         │
+```
+
+### Message-Übersicht
+
+| Message | ID | Richtung | Frequenz | Zweck |
+|---------|-----|----------|----------|-------|
+| `ActionRequest` | 300 | C→S | Häufig | Initiiert Combat-Action |
+| `ActionResult` | 301 | S→C | Häufig | Bestätigt Action-Ausführung |
+| `DamageEvent` | 302 | Broadcast | ⚡ High | Damage-Notification |
+| `DeathEvent` | 303 | Broadcast | Selten | Entity ist gestorben |
+| `HealEvent` | 304 | Broadcast | Häufig | Healing-Notification |
+| `MissEvent` | 305 | Broadcast | Häufig | Angriff verfehlt |
+| `DodgeEvent` | 306 | Broadcast | Häufig | Ausweichen |
+| `ParryEvent` | 307 | Broadcast | Häufig | Parieren |
+| `BlockEvent` | 308 | Broadcast | Häufig | Blocken mit Shield |
+| `CriticalHitEvent` | 309 | Broadcast | Häufig | Kritischer Treffer |
+| `CombatStart` | 310 | S→C | Selten | Combat-State Enter |
+| `CombatEnd` | 311 | S→C | Selten | Combat-State Exit |
+| `ThreatUpdate` | 312 | S→Party | Häufig | Threat-Table Update |
+| `ThreatListRequest` | 313 | C→S | Selten | Request Threat-Liste |
+| `InterruptEvent` | 314 | Broadcast | Häufig | Cast interrupted |
+| `ReflectEvent` | 315 | Broadcast | Selten | Damage reflektiert |
+| `AbsorbEvent` | 316 | Broadcast | Häufig | Damage absorbiert |
+| `LifestealEvent` | 317 | Broadcast | Häufig | HP durch Damage |
+| `ExecutePhase` | 318 | Broadcast | Selten | Target <20% HP |
+| `EnrageEvent` | 319 | Broadcast | Selten | Boss enraged |
+| `CombatLogEntry` | 320 | S→C | ⚡ High | DPS-Meter Daten |
+| `AggroTransfer` | 321 | Broadcast | Selten | Aggro wechselt |
+| `TauntEvent` | 322 | Broadcast | Häufig | Tank tauntet |
+| `FeintEvent` | 323 | Broadcast | Selten | Threat-Reduction |
+| `CounterAttack` | 324 | Broadcast | Selten | Counter nach Parry |
+| `ComboFinisher` | 325 | Broadcast | Häufig | Finisher-Move |
+| `AreaDamage` | 326 | Broadcast | Häufig | AoE-Damage |
+| `DamageOverTime` | 327 | Broadcast | ⚡ High | DoT-Tick |
+| `HealOverTime` | 328 | Broadcast | ⚡ High | HoT-Tick |
+| `ShieldApplied` | 329 | Broadcast | Häufig | Absorb-Shield |
+| `ShieldBroken` | 330 | Broadcast | Häufig | Shield aufgebraucht |
+| `Resurrection` | 331 | C→S/Broadcast | Selten | Respawn/Rez |
+| `CombatStateSync` | 332 | S→C | Selten | Full-State nach Reconnect |
+| `ThreatListResponse` | 333 | S→C | Selten | Threat-Liste Response |
+| `ResurrectionResponse` | 334 | S→C | Selten | Rez-Request Response |
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### DamageType
+
+**Zweck:** Typ des Schadens für Mitigation-Berechnung.
+
+```csharp
+public enum DamageType : byte
+{
+    Physical = 1,   // Reduziert durch Armor
+    Magical = 2,    // Reduziert durch Magic Resistance
+    True = 3        // Ignoriert alle Mitigation
+}
+```
+
+**Verwendung:**
+- Physical: Melee-Attacks, Ranged Physical
+- Magical: Spells, Elemental Damage
+- True: Percentage-Based, Execute-Damage
+
+### DeathReason
+
+**Zweck:** Grund für den Tod einer Entity.
+
+```csharp
+public enum DeathReason : byte
+{
+    Combat = 1,         // Getötet durch Entity
+    FallDamage = 2,     // Zu tief gefallen
+    Drowning = 3,       // Ertrunken
+    Environment = 4,    // Lava, Gift, etc.
+    Suicide = 5,        // /kill Command
+    Disconnected = 6    // Disconnect während Combat
+}
+```
+
+### RezType
+
+**Zweck:** Art der Wiederbelebung.
+
+```csharp
+public enum RezType : byte
+{
+    GraveyardRespawn = 0,  // Normale Respawn am Graveyard
+    AcceptBattleRez = 1,   // Battle-Rez akzeptieren
+    SpiritHealer = 2       // Spirit Healer (mit Rez-Sickness)
+}
+```
+
+**Eigenschaften:**
+
+| RezType | HP% | Mana% | Cooldown | Debuff |
+|---------|-----|-------|----------|--------|
+| GraveyardRespawn | 50% | 50% | Keiner | Keiner |
+| AcceptBattleRez | 30% | 20% | 10 min | Keiner |
+| SpiritHealer | 100% | 100% | Keiner | 10 min Rez-Sickness |
+
+### CombatResultType
+
+**Zweck:** Ergebnis eines Combat-Checks.
+
+```csharp
+public enum CombatResultType : byte
+{
+    Hit = 1,
+    Miss = 2,
+    Dodge = 3,
+    Parry = 4,
+    Block = 5,
+    Critical = 6,
+    Absorb = 7,
+    Reflect = 8
+}
+```
+
+### ThreatEntry
+
+**Zweck:** Eintrag in der Threat-Table.
+
+```csharp
+[MessagePackObject]
+public class ThreatEntry
+{
+    [Key(0)] public Guid EntityId { get; set; }
+    [Key(1)] public int ThreatAmount { get; set; }
+    [Key(2)] public float Percentage { get; set; }  // % von Top-Threat
+}
+```
+
+### AoETarget
+
+**Zweck:** Target-Information für Area-Damage.
+
+```csharp
+[MessagePackObject]
+public class AoETarget
+{
+    [Key(0)] public Guid TargetId { get; set; }
+    [Key(1)] public int Damage { get; set; }
+    [Key(2)] public bool IsCritical { get; set; }
+}
+```
+
+---
+
+## 📩 Aktive Messages (0300-0334)
 
 ---
 
@@ -1450,18 +1795,183 @@ Antwort auf Resurrection Request. Bestätigt erfolgreiche Wiederbelebung oder gi
 
 ---
 
-## 🔗 Verwandte Kategorien
+## 🧪 Phase 2 Messages (Geplant)
 
-- **Movement (02)**: Crowd Control Effects (Root, Stun) → `RootEvent` (218), `StunMovement` (219)
-- **Aura (15)**: Buffs/Debuffs die Combat beeinflussen → `BuffApplied` (1500), `DebuffApplied` (1501)
-- **Targeting (12)**: Target-Selection für Combat → `TargetEntity` (1200)
-- **Character (06)**: HP/Mana/Resources → `ResourceUpdate` (604)
-- **Loot (31)**: Rewards nach Combat → `LootGenerated` (3100)
+Die folgenden Combat-Features sind für Phase 2 geplant:
+
+| Feature | Beschreibung | Geplante IDs |
+|---------|--------------|--------------|
+| **Stance-System** | Combat-Stances (Defensive, Aggressive, etc.) | 335-339 |
+| **Weapon-Swap** | Schneller Waffenwechsel im Combat | 340-342 |
+| **Combo-Builder** | Erweiterte Combo-Mechanics | 343-349 |
+| **Pet-Combat** | Combat-Actions für Begleiter | 350-359 |
+| **Dual-Target** | Gleichzeitig zwei Targets | 360-365 |
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.1.0  
-**Status**: ✅ Vollständig dokumentiert (35/35 Messages)
+## 🗑️ Obsolete Messages
+
+Derzeit keine obsoleten Messages in der Combat-Kategorie.
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Combat Range)
+
+```csharp
+// ═══════════════════════════════════════════════════════════════
+// COMBAT (0300-0399)
+// ═══════════════════════════════════════════════════════════════
+ActionRequest = 300,
+ActionResult = 301,
+DamageEvent = 302,
+DeathEvent = 303,
+HealEvent = 304,
+MissEvent = 305,
+DodgeEvent = 306,
+ParryEvent = 307,
+BlockEvent = 308,
+CriticalHitEvent = 309,
+CombatStart = 310,
+CombatEnd = 311,
+ThreatUpdate = 312,
+ThreatListRequest = 313,
+InterruptEvent = 314,
+ReflectEvent = 315,
+AbsorbEvent = 316,
+LifestealEvent = 317,
+ExecutePhase = 318,
+EnrageEvent = 319,
+CombatLogEntry = 320,
+AggroTransfer = 321,
+TauntEvent = 322,
+FeintEvent = 323,
+CounterAttack = 324,
+ComboFinisher = 325,
+AreaDamage = 326,
+DamageOverTime = 327,
+HealOverTime = 328,
+ShieldApplied = 329,
+ShieldBroken = 330,
+Resurrection = 331,
+CombatStateSync = 332,
+ThreatListResponse = 333,
+ResurrectionResponse = 334,
+```
+
+### Neue Enums (Combat-spezifisch)
+
+Die folgenden Enums sind für das Combat-System erforderlich:
+
+```csharp
+// Mmo.Shared/Combat/Enums/DamageType.cs
+public enum DamageType : byte
+{
+    Physical = 1,   // Reduziert durch Armor
+    Magical = 2,    // Reduziert durch Magic Resistance
+    True = 3        // Ignoriert alle Mitigation
+}
+
+// Mmo.Shared/Combat/Enums/DeathReason.cs
+public enum DeathReason : byte
+{
+    Combat = 1,
+    FallDamage = 2,
+    Drowning = 3,
+    Environment = 4,
+    Suicide = 5,
+    Disconnected = 6
+}
+
+// Mmo.Shared/Combat/Enums/RezType.cs
+public enum RezType : byte
+{
+    GraveyardRespawn = 0,
+    AcceptBattleRez = 1,
+    SpiritHealer = 2
+}
+
+// Mmo.Shared/Combat/Enums/CombatResultType.cs
+public enum CombatResultType : byte
+{
+    Hit = 1,
+    Miss = 2,
+    Dodge = 3,
+    Parry = 4,
+    Block = 5,
+    Critical = 6,
+    Absorb = 7,
+    Reflect = 8
+}
+```
+
+### Datei-Struktur (Combat)
+
+```
+Mmo.Shared/
+├── Combat/
+│   ├── Enums/
+│   │   ├── DamageType.cs
+│   │   ├── DeathReason.cs
+│   │   ├── RezType.cs
+│   │   └── CombatResultType.cs
+│   ├── Dtos/
+│   │   ├── ThreatEntry.cs
+│   │   └── AoETarget.cs
+│   └── Messages/
+│       ├── ActionRequest.cs
+│       ├── ActionResult.cs
+│       ├── DamageEvent.cs
+│       ├── DeathEvent.cs
+│       ├── HealEvent.cs
+│       ├── MissEvent.cs
+│       ├── DodgeEvent.cs
+│       ├── ParryEvent.cs
+│       ├── BlockEvent.cs
+│       ├── CriticalHitEvent.cs
+│       ├── CombatStart.cs
+│       ├── CombatEnd.cs
+│       ├── ThreatUpdate.cs
+│       ├── ThreatListRequest.cs
+│       ├── ThreatListResponse.cs
+│       ├── InterruptEvent.cs
+│       ├── ReflectEvent.cs
+│       ├── AbsorbEvent.cs
+│       ├── LifestealEvent.cs
+│       ├── ExecutePhase.cs
+│       ├── EnrageEvent.cs
+│       ├── CombatLogEntry.cs
+│       ├── AggroTransfer.cs
+│       ├── TauntEvent.cs
+│       ├── FeintEvent.cs
+│       ├── CounterAttack.cs
+│       ├── ComboFinisher.cs
+│       ├── AreaDamage.cs
+│       ├── DamageOverTime.cs
+│       ├── HealOverTime.cs
+│       ├── ShieldApplied.cs
+│       ├── ShieldBroken.cs
+│       ├── Resurrection.cs
+│       ├── ResurrectionResponse.cs
+│       └── CombatStateSync.cs
+```
+
+### Verwandte Kategorien
+
+| Kategorie | Beschreibung | Message-Range |
+|-----------|--------------|---------------|
+| Movement (02) | Crowd Control (Root, Stun) | 0200-0299 |
+| Aura (15) | Buffs/Debuffs | 1500-1599 |
+| Targeting (12) | Target-Selection | 1200-1299 |
+| Character (06) | HP/Mana/Resources | 0600-0699 |
+| Loot (31) | Rewards nach Combat | 3100-3199 |
+| Death (41) | Death-System (erweitert) | 4100-4199 |
+
+---
+
+**Letzte Aktualisierung:** 2026-01-02  
+**Version:** 3.0.0  
+**Status:** ✅ Vollständig dokumentiert (35/35 Messages)
 
 [← Zurück zur Übersicht](README.md)
