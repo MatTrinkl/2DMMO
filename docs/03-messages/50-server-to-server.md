@@ -2,8 +2,8 @@
 
 **Kategorien:** 50-55  
 **Range:** 5000-5999  
-**Phase:** Phase 2 & 3  
-**Status:** 🟡 In Planung
+
+**Status:** 📋 Geplant (noch nicht im MessageType enum)
 
 [← Zurück zur Übersicht](README.md)
 
@@ -25,12 +25,12 @@ Diese Kategorie umfasst **alle Server-zu-Server (S2S) Messages** im 2DMMO.
 
 | Kategorie | Range | Zweck | Status |
 |-----------|-------|-------|--------|
-| **S2S Core** | 5000-5099 | Session, Health, Discovery | 🟡 Phase 2 |
-| **S2S Transfer** | 5100-5199 | Zone/Shard-Transfers | 🟡 Phase 2 |
-| **S2S Cross-Zone** | 5200-5299 | Cross-Zone Features | 🟡 Phase 2 |
-| **S2S Matchmaking** | 5300-5399 | Matchmaking & Instances | 🟡 Phase 2 |
-| **S2S Economy** | 5400-5499 | Auction & Economy | 🔵 Phase 3 |
-| **S2S Admin** | 5500-5599 | Admin & Monitoring | 🟡 Phase 2 |
+| **S2S Core** | 5000-5099 | Session, Health, Discovery | 📋 Geplant |
+| **S2S Transfer** | 5100-5199 | Zone/Shard-Transfers | 📋 Geplant |
+| **S2S Cross-Zone** | 5200-5299 | Cross-Zone Features | 📋 Geplant |
+| **S2S Matchmaking** | 5300-5399 | Matchmaking & Instances | 📋 Geplant |
+| **S2S Economy** | 5400-5499 | Auction & Economy | 📋 Geplant |
+| **S2S Admin** | 5500-5599 | Admin & Monitoring | 📋 Geplant |
 
 ---
 
@@ -1318,8 +1318,7 @@ new S2S_AdminCommand
 ## 📊 Statistiken
 
 - **Gesamt S2S Messages**: 70
-- **Phase 2 (In Arbeit)**: 58 Messages
-- **Phase 3 (Geplant)**: 12 Messages
+- **Status**: Geplant (nicht im MessageType enum)
 - **Kategorien**: 6 (50-55)
 
 ---

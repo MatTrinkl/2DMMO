@@ -17,7 +17,10 @@ public enum MessageType : ushort
     ForceDisconnect = 5,
     ReconnectRequest = 6,
     ReconnectResponse = 7,
-    SessionValidate = 8, //Deprecated
+
+    [Obsolete("Deprecated: Session validation is now done internally. Remove usage of this message type.")]
+    SessionValidate = 8, // DEPRECATED - Internal session validation
+
     CharacterSelectRequest = 9,
     CharacterCreateRequest = 10,
     CharacterDeleteRequest = 11,
@@ -38,7 +41,9 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // ZONE EVENTS (0100-0199)
     // ═══════════════════════════════════════════════════════════════
-    JoinZone = 100,
+    [Obsolete("Deprecated: Character spawn data is now included in ZoneState (102). Remove usage and use ZoneState instead.")]
+    JoinZone = 100, // DEPRECATED - Functionality moved to ZoneState (102)
+
     LeaveZone = 101,
     ZoneState = 102,
     ZoneDelta = 103,
@@ -46,7 +51,10 @@ public enum MessageType : ushort
     CharacterLeftZone = 105,
     ZoneTransferRequest = 106,
     ZoneTransferResponse = 107,
-    ZoneLoadingProgress = 108,
+
+    [Obsolete("Deprecated: Remove usage - clients load assets locally and send ZoneLoadedAck (118) when ready.")]
+    ZoneLoadingProgress = 108, // DEPRECATED - No longer needed
+
     ZoneDiscovered = 109,
     ZoneListRequest = 110,
     ZoneListResponse = 111,
@@ -81,6 +89,8 @@ public enum MessageType : ushort
     PullEvent = 217,
     RootEvent = 218,
     StunMovement = 219,
+    TeleportResponse = 220,
+    JumpResponse = 221,
 
     // ═══════════════════════════════════════════════════════════════
     // COMBAT (0300-0399)
@@ -118,6 +128,8 @@ public enum MessageType : ushort
     ShieldBroken = 330,
     Resurrection = 331,
     CombatStateSync = 332,
+    ThreatListResponse = 333,
+    ResurrectionResponse = 334,
 
     // ═══════════════════════════════════════════════════════════════
     // CHAT (0400-0499)
@@ -153,6 +165,12 @@ public enum MessageType : ushort
     ChatMotd = 428,
     ChatFilter = 429,
     ChatSpamWarning = 430,
+    ChatMessageResponse = 440,
+    ChatChannelJoinResponse = 441,
+    ChatChannelCreateResponse = 442,
+    ChatChannelDeleteResponse = 443,
+    ChatChannelPasswordResponse = 444,
+    ChatChannelMuteResponse = 445,
 
     // ═══════════════════════════════════════════════════════════════
     // INVENTORY / ITEMS (0500-0599)
@@ -193,6 +211,14 @@ public enum MessageType : ushort
     ItemTooltipRequest = 533,
     ItemTooltipResponse = 534,
     ItemLink = 535,
+    ItemMoveResponse = 536,
+    ItemSplitResponse = 537,
+    ItemUseResponse = 538,
+    ItemDeleteResponse = 539,
+    ItemStackResponse = 540,
+    ItemSortResponse = 541,
+    ItemLockResponse = 542,
+    BagExpandResponse = 543,
 
     // ═══════════════════════════════════════════════════════════════
     // CHARACTER / STATS / PROGRESSION (0600-0699)
@@ -220,6 +246,12 @@ public enum MessageType : ushort
     GenderChange = 622,
     RestXpUpdate = 623,
     RestStateChange = 624,
+    AttributeIncreaseResponse = 650,
+    CharacterCustomizeResponse = 651,
+    TalentLearnResponse = 652,
+    TalentResetResponse = 653,
+    SpecializationChangeResponse = 654,
+    TitleChangeResponse = 655,
 
     // ═══════════════════════════════════════════════════════════════
     // GROUP / PARTY (0700-0799)
@@ -250,6 +282,13 @@ public enum MessageType : ushort
     PartyMarkerClear = 723,
     PartyDifficultyVote = 724,
     PartyDifficultySet = 725,
+    PartyAcceptResponse = 740,
+    PartyLeaveResponse = 741,
+    PartyKickResponse = 742,
+    PartyPromoteResponse = 743,
+    PartyDisbandResponse = 744,
+    PartyLootModeResponse = 745,
+    PartyReadyCheckStartResponse = 746,
 
     // ═══════════════════════════════════════════════════════════════
     // GUILD (0800-0899)
@@ -293,6 +332,17 @@ public enum MessageType : ushort
     GuildAllianceInvite = 836,
     GuildAllianceResponse = 837,
     GuildAllianceLeave = 838,
+    GuildCreateResponse = 840,
+    GuildLeaveResponse = 841,
+    GuildKickResponse = 842,
+    GuildDisbandResponse = 843,
+    GuildPromoteResponse = 844,
+    GuildDemoteResponse = 845,
+    GuildRankEditResponse = 846,
+    GuildMOTDResponse = 847,
+    GuildMessageResponse = 848,
+    GuildBankDepositResponse = 849,
+    GuildBankWithdrawResponse = 850,
 
     // ═══════════════════════════════════════════════════════════════
     // PING / LATENCY / SYSTEM (0900-0999)
@@ -385,6 +435,12 @@ public enum MessageType : ushort
     TabTarget = 1214,
     NearestEnemyTarget = 1215,
     NearestFriendTarget = 1216,
+    TargetSelectResponse = 1220,
+    AssistTargetResponse = 1221,
+    MarkTargetResponse = 1222,
+    TabTargetResponse = 1223,
+    NearestEnemyTargetResponse = 1224,
+    NearestFriendTargetResponse = 1225,
 
     // ═══════════════════════════════════════════════════════════════
     // NPC / DIALOG / VENDOR (1300-1399)

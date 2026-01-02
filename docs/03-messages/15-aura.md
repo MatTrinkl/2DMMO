@@ -1,9 +1,9 @@
-# ✨ Aura / Buff / Debuff Messages (1500-1599)
+# ✨ Aura / Buff / Debuff Messages (1500-1516)
 
 **Kategorie:** 15  
-**Range:** 1500-1599  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+**Range:** 1500-1516 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,47 +11,221 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [BuffApplied (1500)](#buffapplied-1500)
-- [BuffRemoved (1501)](#buffremoved-1501)
-- [BuffRefreshed (1502)](#buffrefreshed-1502)
-- [BuffStackUpdate (1503)](#buffstackupdate-1503)
-- [DebuffApplied (1504)](#debuffapplied-1504)
-- [DebuffRemoved (1505)](#debuffremoved-1505)
-- [AuraListSync (1506)](#auralistsync-1506)
-- [AuraUpdate (1507)](#auraupdate-1507)
-- [DispelRequest (1508)](#dispelrequest-1508)
-- [DispelResult (1509)](#dispelresult-1509)
-- [StealRequest (1510)](#stealrequest-1510)
-- [StealResult (1511)](#stealresult-1511)
-- [PurgeRequest (1512)](#purgerequest-1512)
-- [PurgeResult (1513)](#purgeresult-1513)
-- [AuraImmune (1514)](#auraimmune-1514)
-- [AuraResist (1515)](#auraresist-1515)
-- [BuffCategoryUpdate (1516)](#buffcategoryupdate-1516)
+- [🔄 Aura Flow](#-aura-flow)
+  - [Server-Authoritative Architecture](#server-authoritative-architecture)
+  - [Buff/Debuff Application Flow](#buffdebuff-application-flow)
+  - [Dispel Flow](#dispel-flow)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+  - [AuraType enum](#auratype-enum)
+  - [RemovalReason enum](#removalreason-enum)
+  - [ActiveAuraDto](#activeauradto)
+  - [Wichtige Konstanten](#wichtige-konstanten)
+- [📩 Aktive Messages (1500-1516)](#-aktive-messages-1500-1516)
+  - [BuffApplied (1500)](#buffapplied-1500)
+  - [BuffRemoved (1501)](#buffremoved-1501)
+  - [BuffRefreshed (1502)](#buffrefreshed-1502)
+  - [BuffStackUpdate (1503)](#buffstackupdate-1503)
+  - [DebuffApplied (1504)](#debuffapplied-1504)
+  - [DebuffRemoved (1505)](#debuffremoved-1505)
+  - [AuraListSync (1506)](#auralistsync-1506)
+  - [AuraUpdate (1507)](#auraupdate-1507)
+  - [DispelRequest (1508)](#dispelrequest-1508)
+  - [DispelResult (1509)](#dispelresult-1509)
+  - [StealRequest (1510)](#stealrequest-1510)
+  - [StealResult (1511)](#stealresult-1511)
+  - [PurgeRequest (1512)](#purgerequest-1512)
+  - [PurgeResult (1513)](#purgeresult-1513)
+  - [AuraImmune (1514)](#auraimmune-1514)
+  - [AuraResist (1515)](#auraresist-1515)
+  - [BuffCategoryUpdate (1516)](#buffcategoryupdate-1516)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
+  - [MessageType Enum](#messagetype-enum)
+  - [Request/Response Paare](#requestresponse-paare)
+  - [Datei-Struktur](#datei-struktur)
 
 ---
 
-## 📋 Übersicht
+## 🔄 Aura Flow
 
-Diese Kategorie umfasst alle Messages für das **Aura/Buff/Debuff-System** im 2DMMO.
+### Server-Authoritative Architecture
 
-Das Aura-System implementiert:
-- Buff-Application und Removal (Friendly Effects)
-- Debuff-Application und Removal (Hostile Effects)
-- Stack-Management für stackable Auras
-- Aura-Refresh Mechanik (Duration-Reset)
-- Dispel-System (Magic, Curse, Disease, Poison)
-- Buff-Steal Mechanik
-- Purge-System (Remove all Buffs)
-- Aura-Immunity und Resistance
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SERVER-AUTHORITY                              │
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
+│  │ Aura-Manager │────│ Combat-Calc  │────│ Timer-System │       │
+│  └──────────────┘    └──────────────┘    └──────────────┘       │
+│         │                                        │               │
+│         ▼                                        ▼               │
+│  ┌────────────────────────────────────────────────┐             │
+│  │              Aura-State (Server-Owned)         │             │
+│  │  - EntityId → List<ActiveAura>                 │             │
+│  │  - Duration-Tracking (ms)                      │             │
+│  │  - Stack-Management                            │             │
+│  │  - Immunity-Lists                              │             │
+│  └────────────────────────────────────────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
+                           │
+                           ▼ Broadcast
+            ┌──────────────┴──────────────┐
+            │                             │
+       ┌────▼────┐                   ┌────▼────┐
+       │ Client1 │                   │ Client2 │
+       │ (UI)    │                   │ (UI)    │
+       └─────────┘                   └─────────┘
+```
 
-**Server Authority**: Alle Aura-Operations sind server-seitig. Client sendet Requests (Dispel, Steal, Purge), Server validiert und broadcasted Results.
+### Buff/Debuff Application Flow
 
-**Aura-Types**: Magic, Physical, Curse, Disease, Poison, Bleed
+```
+Client                          Server                        Other Clients
+   │                               │                               │
+   │ [Skill casts Buff/Debuff]     │                               │
+   │  CombatActionRequest(300)     │                               │
+   │──────────────────────────────►│                               │
+   │                               │                               │
+   │                               │ Server validates:             │
+   │                               │ - Caster has ability          │
+   │                               │ - Target valid                │
+   │                               │ - Not immune                  │
+   │                               │ - Cooldown available          │
+   │                               │                               │
+   │                               │ ┌─────────────────────────┐   │
+   │                               │ │ RESIST ROLL:            │   │
+   │                               │ │ - Base resist chance    │   │
+   │                               │ │ - Level difference      │   │
+   │                               │ │ - Resistance stats      │   │
+   │                               │ └─────────────────────────┘   │
+   │                               │                               │
+   │ [ON RESIST]                   │                               │
+   │◄─────────────────────────────[│]─────────────────────────────►│
+   │       AuraResist(1515)        │       AuraResist(1515)        │
+   │                               │                               │
+   │ [ON SUCCESS - Buff]           │                               │
+   │◄─────────────────────────────[│]─────────────────────────────►│
+   │       BuffApplied(1500)       │       BuffApplied(1500)       │
+   │                               │                               │
+   │ [ON SUCCESS - Debuff]         │                               │
+   │◄─────────────────────────────[│]─────────────────────────────►│
+   │       DebuffApplied(1504)     │       DebuffApplied(1504)     │
+   │                               │                               │
+   │ [ON IMMUNE]                   │                               │
+   │◄─────────────────────────────[│]─────────────────────────────►│
+   │       AuraImmune(1514)        │       AuraImmune(1514)        │
+   │                               │                               │
+```
+
+### Dispel Flow
+
+```
+Healer                          Server                        Target/Others
+   │                               │                               │
+   │  DispelRequest(1508)          │                               │
+   │  {TargetEntityId, DispelType} │                               │
+   │──────────────────────────────►│                               │
+   │                               │                               │
+   │                               │ Server validates:             │
+   │                               │ - In range                    │
+   │                               │ - Has dispellable aura        │
+   │                               │ - Dispel type matches         │
+   │                               │ - Cooldown available          │
+   │                               │                               │
+   │ [ON SUCCESS]                  │                               │
+   │◄──────────────────────────────│                               │
+   │       DispelResult(1509)      │                               │
+   │       {Success=true}          │                               │
+   │                               │                               │
+   │◄─────────────────────────────[│]─────────────────────────────►│
+   │       DebuffRemoved(1505)     │       DebuffRemoved(1505)     │
+   │       {Reason="dispelled"}    │       {Reason="dispelled"}    │
+   │                               │                               │
+   │ [ON NO AURAS]                 │                               │
+   │◄──────────────────────────────│                               │
+   │       DispelResult(1509)      │                               │
+   │       {ErrorCode=             │                               │
+   │        "NO_DISPELLABLE_AURAS"}│                               │
+   │                               │                               │
+```
 
 ---
 
-## BuffApplied (1500)
+## 🧱 DTOs / Enums / Interfaces
+
+### AuraType enum
+
+```csharp
+public enum AuraType : byte
+{
+    Magic = 0,      // Magische Buffs/Debuffs (dispellable)
+    Physical = 1,   // Physische Effekte (nicht dispellable)
+    Curse = 2,      // Flüche (dispellable mit Remove Curse)
+    Disease = 3,    // Krankheiten (dispellable mit Cleanse Disease)
+    Poison = 4,     // Gifte (dispellable mit Cleanse Poison)
+    Bleed = 5       // Blutungen (nicht dispellable)
+}
+```
+
+### RemovalReason enum
+
+```csharp
+public enum RemovalReason : byte
+{
+    Expired = 0,    // Duration abgelaufen
+    Dispelled = 1,  // Durch Dispel entfernt
+    Cancelled = 2,  // Manuell abgebrochen
+    Death = 3,      // Entfernt durch Tod
+    Stolen = 4,     // Gestohlen (Spellsteal)
+    Replaced = 5    // Ersetzt durch stärkeren Buff
+}
+```
+
+### ActiveAuraDto
+
+```csharp
+[MessagePackObject]
+public class ActiveAuraDto
+{
+    [Key(0)]
+    public uint AuraId { get; set; }
+    
+    [Key(1)]
+    public int CasterEntityId { get; set; }
+    
+    [Key(2)]
+    public int RemainingDurationMs { get; set; }
+    
+    [Key(3)]
+    public int Stacks { get; set; }
+    
+    [Key(4)]
+    public bool IsBuff { get; set; }
+    
+    [Key(5)]
+    public AuraType AuraType { get; set; }
+    
+    [Key(6)]
+    public bool Dispellable { get; set; }
+}
+```
+
+### Wichtige Konstanten
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|--------------|
+| `MAX_BUFFS_PER_ENTITY` | 40 | Max. Buffs pro Entity |
+| `MAX_DEBUFFS_PER_ENTITY` | 16 | Max. Debuffs pro Entity |
+| `DEFAULT_BUFF_DURATION_MS` | 1800000 | 30 Minuten |
+| `MAX_STACKS` | 99 | Maximale Stack-Anzahl |
+| `DISPEL_RANGE` | 40f | Reichweite für Dispel |
+| `PURGE_COOLDOWN_MS` | 120000 | 2 Minuten Cooldown |
+
+---
+
+## 📩 Aktive Messages (1500-1516)
+
+### BuffApplied (1500)
 
 **Richtung:** 📡 Broadcast (Server → All in Range)  
 **Frequenz:** Häufig  
@@ -113,7 +287,7 @@ var buffApplied = new BuffApplied
 
 ---
 
-## BuffRemoved (1501)
+### BuffRemoved (1501)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -148,7 +322,7 @@ var buffRemoved = new BuffRemoved
 
 ---
 
-## BuffRefreshed (1502)
+### BuffRefreshed (1502)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -183,7 +357,7 @@ var buffRefreshed = new BuffRefreshed
 
 ---
 
-## BuffStackUpdate (1503)
+### BuffStackUpdate (1503)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -220,7 +394,7 @@ var stackUpdate = new BuffStackUpdate
 
 ---
 
-## DebuffApplied (1504)
+### DebuffApplied (1504)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -264,7 +438,7 @@ var debuffApplied = new DebuffApplied
 
 ---
 
-## DebuffRemoved (1505)
+### DebuffRemoved (1505)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -287,7 +461,7 @@ Debuff wurde entfernt.
 
 ---
 
-## AuraListSync (1506)
+### AuraListSync (1506)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (Login, Reconnect)  
@@ -350,7 +524,7 @@ var auraSync = new AuraListSync
 
 ---
 
-## AuraUpdate (1507)
+### AuraUpdate (1507)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -375,7 +549,7 @@ Generische Aura-Update Message (Alternative zu spezifischen Messages).
 
 ---
 
-## DispelRequest (1508)
+### DispelRequest (1508)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -428,7 +602,7 @@ var dispelRequest = new DispelRequest
 
 ---
 
-## DispelResult (1509)
+### DispelResult (1509)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -464,7 +638,7 @@ var dispelResult = new DispelResult
 
 ---
 
-## StealRequest (1510)
+### StealRequest (1510)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -490,7 +664,7 @@ Buff-Steal Spell. Entfernt Buff von Enemy und applied auf Self.
 
 ---
 
-## StealResult (1511)
+### StealResult (1511)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -509,7 +683,7 @@ Ergebnis des Buff-Steal-Versuchs.
 
 ---
 
-## PurgeRequest (1512)
+### PurgeRequest (1512)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -535,7 +709,7 @@ Mass-Dispel. Entfernt ALLE Buffs von Enemy oder alle Debuffs von Friendly.
 
 ---
 
-## PurgeResult (1513)
+### PurgeResult (1513)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -553,7 +727,7 @@ Ergebnis des Purge-Versuchs.
 
 ---
 
-## AuraImmune (1514)
+### AuraImmune (1514)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Selten  
@@ -585,7 +759,7 @@ var auraImmune = new AuraImmune
 
 ---
 
-## AuraResist (1515)
+### AuraResist (1515)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Häufig  
@@ -617,7 +791,7 @@ var auraResist = new AuraResist
 
 ---
 
-## BuffCategoryUpdate (1516)
+### BuffCategoryUpdate (1516)
 
 **Richtung:** 📡 Broadcast  
 **Frequenz:** Selten  
@@ -640,7 +814,82 @@ Kategorie-basiertes Buff-Update. Für Buff-Gruppen (z.B. "Stat-Buffs", "Defensiv
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## 🗑️ Obsolete Messages
+
+*Keine obsoleten Messages in dieser Kategorie.*
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum
+
+```csharp
+// BUFFS / DEBUFFS / AURAS (1500-1599)
+
+BuffApplied = 1500,
+BuffRemoved = 1501,
+BuffRefreshed = 1502,
+BuffStackUpdate = 1503,
+DebuffApplied = 1504,
+DebuffRemoved = 1505,
+AuraListSync = 1506,
+AuraUpdate = 1507,
+DispelRequest = 1508,
+DispelResult = 1509,
+StealRequest = 1510,
+StealResult = 1511,
+PurgeRequest = 1512,
+PurgeResult = 1513,
+AuraImmune = 1514,
+AuraResist = 1515,
+BuffCategoryUpdate = 1516,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID | Beschreibung |
+|---------|-----|----------|-----|--------------|
+| `DispelRequest` | 1508 | `DispelResult` | 1509 | Dispel Debuff/Buff |
+| `StealRequest` | 1510 | `StealResult` | 1511 | Buff-Steal (Spellsteal) |
+| `PurgeRequest` | 1512 | `PurgeResult` | 1513 | Mass-Dispel |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/
+├── Messaging/
+│   ├── Enums/
+│   │   └── MessageType.cs          # Aura Messages 1500-1516
+│   └── Messages/
+│       └── Aura/
+│           ├── BuffApplied.cs
+│           ├── BuffRemoved.cs
+│           ├── BuffRefreshed.cs
+│           ├── BuffStackUpdate.cs
+│           ├── DebuffApplied.cs
+│           ├── DebuffRemoved.cs
+│           ├── AuraListSync.cs
+│           ├── AuraUpdate.cs
+│           ├── DispelRequest.cs
+│           ├── DispelResult.cs
+│           ├── StealRequest.cs
+│           ├── StealResult.cs
+│           ├── PurgeRequest.cs
+│           ├── PurgeResult.cs
+│           ├── AuraImmune.cs
+│           ├── AuraResist.cs
+│           └── BuffCategoryUpdate.cs
+└── Entities/
+    └── Aura/
+        ├── ActiveAuraDto.cs
+        ├── AuraType.cs
+        └── RemovalReason.cs
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0
 
 [← Zurück zur Übersicht](README.md)

@@ -2,7 +2,7 @@
 
 **Kategorie:** 45  
 **Range:** 4500-4599  
-**Phase:** Phase 3  
+
 **Status:** ✅ Dokumentiert
 
 [← Zurück zur Übersicht](README.md)

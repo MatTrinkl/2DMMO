@@ -2,7 +2,6 @@
 
 **Kategorie:** 49  
 **Range:** 4900-4999  
-**Phase:** Development  
 **Status:** ✅ Dokumentiert
 
 [← Zurück zur Übersicht](README.md)

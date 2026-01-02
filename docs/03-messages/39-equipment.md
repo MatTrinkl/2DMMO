@@ -1,9 +1,7 @@
-# ⚔️ Equipment / Gear Messages (3900-3999)
+# 🛡️ Equipment / Gear Messages (3900-3999)
 
 **Kategorie:** 39  
 **Range:** 3900-3999  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
 
 [← Zurück zur Übersicht](README.md)
 
@@ -12,315 +10,240 @@
 ## 📋 Inhaltsverzeichnis
 
 - [EquipItem (3900)](#equipitem-3900)
+- [EquipItemResult (3901)](#equipitemresult-3901)
 - [UnequipItem (3902)](#unequipitem-3902)
+- [UnequipItemResult (3903)](#unequipitemresult-3903)
 - [EquipmentSync (3904)](#equipmentsync-3904)
+- [EquipmentSlotUpdate (3905)](#equipmentslotupdate-3905)
 - [DurabilityUpdate (3910)](#durabilityupdate-3910)
 - [DurabilityWarning (3911)](#durabilitywarning-3911)
+- [ItemBroken (3912)](#itembroken-3912)
 - [GemSocket (3920)](#gemsocket-3920)
+- [GemSocketResult (3921)](#gemsocketresult-3921)
+- [GemRemove (3922)](#gemremove-3922)
 - [EnchantApply (3930)](#enchantapply-3930)
+- [EnchantApplyResult (3931)](#enchantapplyresult-3931)
+- [EnchantRemove (3932)](#enchantremove-3932)
+- [ReforgeOpen (3940)](#reforgeopen-3940)
+- [ReforgePreview (3941)](#reforgepreview-3941)
 - [ReforgeConfirm (3942)](#reforgeconfirm-3942)
+- [ReforgeResult (3943)](#reforgeresult-3943)
 - [SetBonusUpdate (3950)](#setbonusupdate-3950)
+- [SetBonusActivate (3951)](#setbonusactivate-3951)
+- [SetBonusDeactivate (3952)](#setbonusdeactivate-3952)
 - [WeaponSwapRequest (3960)](#weaponswaprequest-3960)
+- [WeaponSwapResult (3961)](#weaponswapresult-3961)
 - [OutfitSave (3970)](#outfitsave-3970)
+- [OutfitLoad (3971)](#outfitload-3971)
+- [OutfitDelete (3972)](#outfitdelete-3972)
+- [OutfitList (3973)](#outfitlist-3973)
 
 ---
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **Equipment- und Gear-Management** im 2DMMO.
-
-Das Equipment-System implementiert:
-- Equipment-Slots (Head, Chest, Legs, Weapon, etc.)
-- Durability-System (Wear & Repair)
-- Gem-Socketing
-- Enchantments
-- Reforging (Stat-Rerolling)
-- Set-Bonuses
-- Weapon-Swapping
-- Outfit-System (Saved Equipment-Sets)
-
-**Server Authority**: Alle Equipment-Changes sind server-authoritative.
+Diese Kategorie umfasst alle Messages für **Equipment und Gear** im 2DMMO.
 
 ---
 
 ## EquipItem (3900)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Equipt Item aus Inventory.
+Client rüstet Item aus.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| InventorySlot | byte | Source-Slot | Ja |
-| EquipSlot | byte | Target Equipment-Slot | Ja |
+---
 
-### Erwartete Response
-- **Bei Erfolg:** `EquipItemResult` (3901)
-- **Bei Fehler:** `EquipItemResult` (3901) mit ErrorCode
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `WRONG_SLOT` | Item passt nicht in Slot | Richtigen Slot wählen |
-| `LEVEL_TOO_LOW` | Level-Requirement nicht erfüllt | Leveln |
-| `CLASS_RESTRICTION` | Falsche Klasse | Anderes Item |
-
-### Notizen
-- **Auto-Equip**: Double-Click equipt automatisch
-- **Swap**: Wenn Slot belegt, wird altes Item in Inventory getauscht
+## EquipItemResult (3901)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Equip.
 
 ---
 
 ## UnequipItem (3902)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Unequipt Item (zurück ins Inventory).
+Client entfernt Item.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Equipment-Slot | Ja |
+---
 
-### Erwartete Response
-- **Bei Erfolg:** Item in Inventory
-- **Bei Fehler:** `UnequipItemResult` (3903)
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `INVENTORY_FULL` | Kein Platz | Platz schaffen |
+## UnequipItemResult (3903)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Unequip.
 
 ---
 
 ## EquipmentSync (3904)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten (Login)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Sync komplettes Equipment nach Login.
+Equipment-Sync bei Login.
 
-### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlots | List<EquipSlotInfo> | Alle Slots | Ja |
+---
 
-**EquipSlotInfo**:
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| SlotIndex | byte | Slot (0=Head, 1=Neck, etc.) |
-| ItemId | uint | Equipped Item (0=empty) |
-| Durability | int | Current Durability |
-| MaxDurability | int | Max Durability |
+## EquipmentSlotUpdate (3905)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Equipment-Slot geändert.
 
 ---
 
 ## DurabilityUpdate (3910)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Durability eines Items hat sich geändert.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Equipment-Slot | Ja |
-| NewDurability | int | Neue Durability | Ja |
-| MaxDurability | int | Max Durability | Ja |
-
-### Notizen
-- **Loss**: Durability sinkt bei Tod, Skills, Blocks
-- **Repair**: Bei NPC oder mit Repair-Kit
-- **Yellow**: Bei <50% Durability Icon wird gelb
+Haltbarkeit geändert.
 
 ---
 
 ## DurabilityWarning (3911)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Warning dass Durability niedrig ist.
+Haltbarkeit niedrig.
 
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Slot mit low Durability | Ja |
-| DurabilityPercent | float | Prozent (0.0-1.0) | Ja |
+---
 
-### Notizen
-- **Threshold**: Warning bei <10%
-- **UI**: Rotes Blink-Icon
+## ItemBroken (3912)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Item ist kaputt.
 
 ---
 
 ## GemSocket (3920)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Sockt Gem in Item.
+Client sockelt Edelstein.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Equipment-Slot | Ja |
-| SocketIndex | byte | Socket-Index (0-2) | Ja |
-| GemItemId | uint | Gem-Item-ID | Ja |
+---
 
-### Erwartete Response
-- **Bei Erfolg:** `GemSocketResult` (3921)
-- **Bei Fehler:** `GemSocketResult` (3921)
+## GemSocketResult (3921)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Socket.
 
-### Notizen
-- **Sockets**: Items haben 0-3 Sockets
-- **Permanent**: Gems sind permanent (außer Extract)
-- **Bonus**: Matching Socket-Colors geben Bonus
+---
+
+## GemRemove (3922)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client entfernt Edelstein.
 
 ---
 
 ## EnchantApply (3930)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Applied Enchant auf Item.
+Client wendet Verzauberung an.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Equipment-Slot | Ja |
-| EnchantId | uint | Enchant-ID | Ja |
+---
 
-### Erwartete Response
-- **Bei Erfolg:** `EnchantApplyResult` (3931)
-- **Bei Fehler:** `EnchantApplyResult` (3931)
+## EnchantApplyResult (3931)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Enchant.
 
-### Notizen
-- **Overwrite**: Neuer Enchant ersetzt alten
-- **Slots**: Weapon, Gloves, Boots, Chest können enchanted werden
-- **Cost**: Enchant-Materials + Gold
+---
+
+## EnchantRemove (3932)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client entfernt Verzauberung.
+
+---
+
+## ReforgeOpen (3940)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client öffnet Reforge-UI.
+
+---
+
+## ReforgePreview (3941)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server zeigt Reforge-Preview.
 
 ---
 
 ## ReforgeConfirm (3942)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Bestätigt Reforge (Stat-Rerolling).
+Client bestätigt Reforge.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| EquipSlot | byte | Equipment-Slot | Ja |
-| FromStatType | string | Zu reduzierender Stat | Ja |
-| ToStatType | string | Zu erhöhender Stat | Ja |
+---
 
-### Notizen
-- **Use-Case**: Unwanted Stat → Wanted Stat
-- **Percentage**: 40% des Stats wird konvertiert
-- **Cost**: Gold-Cost
+## ReforgeResult (3943)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Reforge-Ergebnis.
 
 ---
 
 ## SetBonusUpdate (3950)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Set-Bonus Status-Update.
+Set-Bonus geändert.
 
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SetId | uint | Item-Set-ID | Ja |
-| PiecesEquipped | int | Equipped Pieces | Ja |
-| ActiveBonuses | List<uint> | Aktive Bonus-IDs | Ja |
+---
 
-### Notizen
-- **Tiers**: 2-Set, 4-Set, 6-Set Bonuses
-- **Examples**: "+5% Crit", "Procs extra damage"
+## SetBonusActivate (3951)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Set-Bonus aktiviert.
+
+---
+
+## SetBonusDeactivate (3952)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Set-Bonus deaktiviert.
 
 ---
 
 ## WeaponSwapRequest (3960)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Swappt Waffen (Main-Hand ↔ Off-Hand).
+Client wechselt Waffen-Set.
 
-### Request Payload
-Keine zusätzlichen Felder
+---
 
-### Erwartete Response
-- **Bei Erfolg:** `WeaponSwapResult` (3961)
-
-### Notizen
-- **Hotkey**: Standard ~-Key
-- **GCD**: Löst kurzen GCD aus (1s)
-- **Use-Case**: Ranged ↔ Melee Swap
+## WeaponSwapResult (3961)
+**Richtung:** �� Server → Client
+### Beschreibung
+Server bestätigt Waffen-Wechsel.
 
 ---
 
 ## OutfitSave (3970)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Speichert aktuelles Equipment als Outfit.
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| OutfitName | string | Outfit-Name | Ja |
-| OutfitSlot | byte | Slot (0-9, max 10 Outfits) | Ja |
-
-### Notizen
-- **Quick-Change**: Schnelles Equipment-Swapping
-- **Use-Case**: Tank ↔ DPS Sets
+Client speichert Outfit.
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## OutfitLoad (3971)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client lädt Outfit.
+
+---
+
+## OutfitDelete (3972)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client löscht Outfit.
+
+---
+
+## OutfitList (3973)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Outfit-Liste.
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0  
+**Status**: ✅ Aligned mit MessageType Enum (28 Messages)
 
 [← Zurück zur Übersicht](README.md)

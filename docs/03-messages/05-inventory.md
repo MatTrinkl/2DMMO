@@ -1,9 +1,9 @@
-# 🎒 Inventory Messages (500-599)
+# 🎒 Inventory / Items Messages (0500-0543)
 
-**Kategorie:** 05  
-**Range:** 500-599  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+**Kategorie:** 5  
+**Range:** 0500-0543 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,49 +11,244 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [InventorySync (500)](#inventorysync-500)
-- [ItemAdd (501)](#itemadd-501)
-- [ItemRemove (502)](#itemremove-502)
-- [ItemMove (503)](#itemmove-503)
-- [ItemSplit (504)](#itemsplit-504)
+### 🔄 Flow-Diagramme
+- [Inventory-Flow (Übersicht)](#-inventory-flow-übersicht)
+- [Item-Movement-Flow](#item-movement-flow)
+- [Item-Use-Flow](#item-use-flow)
+- [Enchant/Socket-Flow](#enchantsocket-flow)
+
+### 🧱 DTOs & Enums
+- [InventoryItemDto](#inventoryitemdto)
+- [BagInfoDto](#baginfodto)
+- [ItemSlotType Enum](#itemslottype-enum)
+- [ItemQuality Enum](#itemquality-enum)
+
+### 📩 Messages (0500-0543) — Reihenfolge laut MessageType.cs
+- [InventoryUpdate (500)](#inventoryupdate-500)
+- [InventorySlotUpdate (501)](#inventoryslotupdate-501)
+- [ItemPickup (502)](#itempickup-502)
+- [ItemPickupFailed (503)](#itempickupfailed-503)
+- [ItemDrop (504)](#itemdrop-504)
 - [ItemUse (505)](#itemuse-505)
-- [ItemDelete (506)](#itemdelete-506)
-- [ItemStack (507)](#itemstack-507)
-- [ItemSort (508)](#itemsort-508)
-- [ItemLock (509)](#itemlock-509)
-- [BagExpand (510)](#bagexpand-510)
-- [InventoryFullNotification (511)](#inventoryfullnotification-511)
-- [ItemMoveResponse (520)](#itemmoveresponse-520)
-- [ItemSplitResponse (521)](#itemsplitresponse-521)
-- [ItemUseResponse (522)](#itemuseresponse-522)
-- [ItemDeleteResponse (523)](#itemdeleteresponse-523)
-- [ItemStackResponse (524)](#itemstackresponse-524)
-- [ItemSortResponse (525)](#itemsortresponse-525)
-- [ItemLockResponse (526)](#itemlockresponse-526)
-- [BagExpandResponse (527)](#bagexpandresponse-527)
+- [ItemUseResult (506)](#itemuseresult-506)
+- [ItemDestroy (507)](#itemdestroy-507)
+- [ItemSplit (508)](#itemsplit-508)
+- [ItemMerge (509)](#itemmerge-509)
+- [ItemMove (510)](#itemmove-510)
+- [ItemSwap (511)](#itemswap-511)
+- [ItemLock (512)](#itemlock-512)
+- [ItemUnlock (513)](#itemunlock-513)
+- [ItemCooldownStart (514)](#itemcooldownstart-514)
+- [ItemCooldownEnd (515)](#itemcooldownend-515)
+- [ItemDurabilityChange (516)](#itemdurabilitychange-516)
+- [ItemRepair (517)](#itemrepair-517)
+- [ItemRepairAll (518)](#itemrepairall-518)
+- [ItemEnchant (519)](#itemenchant-519)
+- [ItemEnchantResult (520)](#itemenchantresult-520)
+- [ItemSocket (521)](#itemsocket-521)
+- [ItemSocketResult (522)](#itemsocketresult-522)
+- [ItemUpgrade (523)](#itemupgrade-523)
+- [ItemUpgradeResult (524)](#itemupgraderesult-524)
+- [ItemTransmog (525)](#itemtransmog-525)
+- [ItemTransmogResult (526)](#itemtransmogresult-526)
+- [ItemSalvage (527)](#itemsalvage-527)
+- [ItemSalvageResult (528)](#itemsalvageresult-528)
+- [ItemIdentify (529)](#itemidentify-529)
+- [ItemIdentifyResult (530)](#itemidentifyresult-530)
+- [BagSort (531)](#bagsort-531)
+- [BagExpand (532)](#bagexpand-532)
+- [ItemTooltipRequest (533)](#itemtooltiprequest-533)
+- [ItemTooltipResponse (534)](#itemtooltipresponse-534)
+- [ItemLink (535)](#itemlink-535)
+- [ItemMoveResponse (536)](#itemmoveresponse-536)
+- [ItemSplitResponse (537)](#itemsplitresponse-537)
+- [ItemUseResponse (538)](#itemuseresponse-538)
+- [ItemDeleteResponse (539)](#itemdeleteresponse-539)
+- [ItemStackResponse (540)](#itemstackresponse-540)
+- [ItemSortResponse (541)](#itemsortresponse-541)
+- [ItemLockResponse (542)](#itemlockresponse-542)
+- [BagExpandResponse (543)](#bagexpandresponse-543)
+
+### 🗑️ Obsolete Messages
+- Keine
+
+### 📎 Anhang
+- [MessageType Enum (Inventory-Bereich)](#messagetype-enum-inventory-bereich)
+- [Request/Response Paare](#requestresponse-paare)
+- [Datei-Struktur](#datei-struktur)
 
 ---
 
-## 📋 Übersicht
+## 🔄 Inventory-Flow (Übersicht)
 
-Diese Kategorie umfasst alle Messages für das **Inventory-System** im 2DMMO.
+### Grundprinzip: Server-Authoritative Inventory
 
-Das Inventory-System implementiert:
-- **Multi-Bag System**: Backpack + 4 zusätzliche Bags (erweiterbar)
-- **Item Stacking**: Items können bis zum MaxStack gestackt werden
-- **Drag & Drop**: Client-side Drag&Drop mit Server-Validation
-- **Auto-Stacking**: Neue Items werden automatisch zu bestehenden Stacks hinzugefügt
-- **Sorting**: Auto-Sort nach Typ, Qualität, oder Name
-- **Item Locking**: Items können gelockt werden (verhindert versehentliches Löschen/Verkaufen)
-- **Inventory Capacity**: Backpack: 16 Slots, zusätzliche Bags: 8-20 Slots (je nach Qualität)
+\`\`\`
+┌─────────────────────────────────────────────────────────────────┐
+│                    INVENTORY SYSTEM ARCHITEKTUR                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Client (UI)              Gateway              Zone Server        │
+│     │                        │                      │             │
+│     │  User Action           │                      │             │
+│     │  (Drag & Drop)         │                      │             │
+│     │─────────────────────────────────────────────►│             │
+│     │                        │                      │             │
+│     │                        │              ┌───────┴───────┐    │
+│     │                        │              │ VALIDATION     │    │
+│     │                        │              │ - Slot exists? │    │
+│     │                        │              │ - Item locked? │    │
+│     │                        │              │ - Permission?  │    │
+│     │                        │              └───────┬───────┘    │
+│     │                        │                      │             │
+│     │  Response              │                      │             │
+│     │◄─────────────────────────────────────────────│             │
+│     │                        │                      │             │
+│     │  (UI Update)           │                      │             │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
 
-**Server Authority**: Alle Inventory-Changes sind server-authoritative. Client sendet Requests, Server validiert und broadcastet Changes.
+WICHTIG: Client kann NIEMALS Inventory-State direkt ändern!
+         Alle Änderungen müssen vom Server bestätigt werden.
+\`\`\`
 
-**Performance**: Inventory-Updates werden gebatched (max 20 Updates/Sekunde).
+### Item-Movement-Flow
+
+\`\`\`
+Client                    Server                    
+  │                          │                      
+  │  (User drags item        │                      
+  │   from Slot A to B)      │                      
+  │                          │                      
+  │  ItemMove (510)          │                      
+  │  FromSlot=A, ToSlot=B    │                      
+  │─────────────────────────►│                      
+  │                          │  ┌─ Validate slots   
+  │                          │  ├─ Check locked     
+  │                          │  ├─ Check stackable  
+  │                          │  └─ Execute move     
+  │                          │                      
+  │  ItemMoveResponse (536)  │                      
+  │  Success=true            │                      
+  │◄─────────────────────────│                      
+  │                          │                      
+  │  (Client updates UI)     │                      
+\`\`\`
+
+### Item-Use-Flow
+
+\`\`\`
+Client                    Server                    
+  │                          │                      
+  │  ItemUse (505)           │                      
+  │  SlotIndex, TargetId     │                      
+  │─────────────────────────►│                      
+  │                          │  ┌─ Validate usable  
+  │                          │  ├─ Check cooldown   
+  │                          │  ├─ Check target     
+  │                          │  ├─ Execute effect   
+  │                          │  └─ Consume item     
+  │                          │                      
+  │  ItemUseResult (506)     │                      
+  │◄─────────────────────────│                      
+  │                          │                      
+  │  [Effect Messages]       │                      
+  │  (HealEvent, BuffApply)  │                      
+  │◄─────────────────────────│                      
+\`\`\`
+
+### Enchant/Socket-Flow
+
+\`\`\`
+Client                    Server                    
+  │                          │                      
+  │  ItemEnchant (519)       │                      
+  │  ItemSlot, EnchantId     │                      
+  │─────────────────────────►│                      
+  │                          │  ┌─ Validate item    
+  │                          │  ├─ Check materials  
+  │                          │  ├─ Check gold       
+  │                          │  ├─ Roll success     
+  │                          │  └─ Apply enchant    
+  │                          │                      
+  │  ItemEnchantResult (520) │                      
+  │  Success/Fail, NewStats  │                      
+  │◄─────────────────────────│                      
+\`\`\`
 
 ---
 
-## InventorySync (500)
+## 🧱 DTOs / Enums / Interfaces
+
+### InventoryItemDto
+
+\`\`\`csharp
+[MessagePackObject]
+public class InventoryItemDto
+{
+    [Key(0)] public MessageType Type => MessageType.InventorySlotUpdate;
+    [Key(1)] public byte SlotIndex { get; set; }
+    [Key(2)] public sbyte BagId { get; set; }
+    [Key(3)] public uint ItemId { get; set; }
+    [Key(4)] public int Quantity { get; set; }
+    [Key(5)] public int Durability { get; set; }
+    [Key(6)] public bool IsLocked { get; set; }
+    [Key(7)] public bool IsSoulbound { get; set; }
+    [Key(8)] public List<uint> Enchantments { get; set; }
+    [Key(9)] public List<uint> Sockets { get; set; }
+    [Key(10)] public uint TransmogId { get; set; }
+}
+\`\`\`
+
+### BagInfoDto
+
+\`\`\`csharp
+[MessagePackObject]
+public class BagInfoDto
+{
+    [Key(0)] public byte BagSlot { get; set; }
+    [Key(1)] public uint BagItemId { get; set; }
+    [Key(2)] public byte Slots { get; set; }
+}
+\`\`\`
+
+### ItemSlotType Enum
+
+\`\`\`csharp
+public enum ItemSlotType : byte
+{
+    Backpack = 0,
+    Bag1 = 1,
+    Bag2 = 2,
+    Bag3 = 3,
+    Bag4 = 4,
+    Bank = 10,
+    GuildBank = 20
+}
+\`\`\`
+
+### ItemQuality Enum
+
+\`\`\`csharp
+public enum ItemQuality : byte
+{
+    Poor = 0,
+    Common = 1,
+    Uncommon = 2,
+    Rare = 3,
+    Epic = 4,
+    Legendary = 5,
+    Artifact = 6
+}
+\`\`\`
+
+---
+
+## 📩 Aktive Messages (0500-0543)
+
+---
+
+## InventoryUpdate (500)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (nur bei Login/Reconnect)  
@@ -61,1084 +256,980 @@ Das Inventory-System implementiert:
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Synchronisiert das komplette Inventory des Spielers nach Login oder Reconnect. Enthält alle Items in allen Bags mit vollständigen Daten (ItemID, Quantity, Slot, Properties).
-
-Diese Message wird nur einmal pro Session gesendet. Nachfolgende Änderungen werden via `ItemAdd` (501), `ItemRemove` (502), etc. kommuniziert.
+Synchronisiert das komplette Inventory des Spielers nach Login oder Reconnect.
 
 ### Im Scope ✅
 - Vollständige Inventory-Daten (alle Bags)
 - Item-Properties (Durability, Enchantments, Soulbound-Status)
-- Bag-Configuration (welche Bags sind equipped)
-- Locked-Items Status
+- Bag-Configuration
 
 ### Nicht im Scope ❌
-- Bank-Items → verwende `BankSync` (4000)
-- Equipment-Items → verwende `EquipmentSync` (3900)
-- Laufende Updates → verwende `ItemAdd/Remove` (501/502)
+- Bank-Items → verwende \`BankSync\` (4000)
+- Equipment-Items → verwende \`EquipmentSync\` (3900)
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| BackpackSlots | byte | Anzahl Backpack-Slots (16-24) | Ja |
-| EquippedBags | List<BagInfo> | Info über equipped Bags | Ja |
-| Items | List<InventoryItem> | Alle Items | Ja |
-| Gold | long | Gold-Amount (in Copper) | Ja |
-
-**BagInfo:**
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| BagSlot | byte | Bag-Slot (0-3, Backpack = -1) |
-| BagItemId | uint | Item-ID des Bag-Items |
-| Slots | byte | Anzahl Slots in diesem Bag |
-
-**InventoryItem:**
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| SlotIndex | byte | Slot-Index (0-99) |
-| BagId | byte | Bag-ID (-1=Backpack, 0-3=Bags) |
-| ItemId | uint | Item-ID |
-| Quantity | int | Stack-Größe |
-| Durability | int | Haltbarkeit (0-100) |
-| IsLocked | bool | Item gelockt? |
-| IsSoulbound | bool | Soulbound? |
-| Enchantments | List<uint> | Enchantment-IDs |
+| BackpackSlots | byte | Anzahl Backpack-Slots | Ja |
+| EquippedBags | List<BagInfoDto> | Equipped Bags | Ja |
+| Items | List<InventoryItemDto> | Alle Items | Ja |
+| Gold | long | Gold in Copper | Ja |
 
 ### Erwartete Response
-- Keine Response erforderlich (ist selbst Response)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemAdd` | 501 | Für neue Items nach Login |
-| `ItemRemove` | 502 | Für entfernte Items |
-| `BankSync` | 4000 | Für Bank-Items |
-| `EquipmentSync` | 3900 | Für equipped Items |
-
-### Flow-Diagramm
-```
-Client                    Server                    Database
-  │                          │                          │
-  │  LoginSuccess            │                          │
-  │◄─────────────────────────│                          │
-  │                          │  Load Inventory          │
-  │                          │─────────────────────────►│
-  │                          │                          │
-  │                          │  Inventory Data          │
-  │                          │◄─────────────────────────│
-  │  InventorySync (500)     │                          │
-  │◄─────────────────────────│                          │
-  │                          │                          │
-  │  (Client populates UI)   │                          │
-```
-
-### Beispiel Payload
-```csharp
-var inventorySync = new InventorySync
-{
-    Type = MessageType.InventorySync,
-    BackpackSlots = 16,
-    EquippedBags = new List<BagInfo>
-    {
-        new BagInfo { BagSlot = 0, BagItemId = 5001, Slots = 8 }, // Small Bag
-        new BagInfo { BagSlot = 1, BagItemId = 5002, Slots = 12 } // Medium Bag
-    },
-    Items = new List<InventoryItem>
-    {
-        new InventoryItem 
-        { 
-            SlotIndex = 0, 
-            BagId = -1, // Backpack
-            ItemId = 2001, // Health Potion
-            Quantity = 5,
-            Durability = 100,
-            IsLocked = false,
-            IsSoulbound = false
-        },
-        new InventoryItem
-        {
-            SlotIndex = 1,
-            BagId = -1,
-            ItemId = 1001, // Iron Sword
-            Quantity = 1,
-            Durability = 85,
-            IsLocked = true, // Locked!
-            IsSoulbound = true,
-            Enchantments = new List<uint> { 3001 } // +5 Fire Damage
-        }
-    },
-    Gold = 12345 // 1 Gold, 23 Silver, 45 Copper
-};
-```
-
-### Error Codes
-Keine - InventorySync kann nicht fehlschlagen (ist initiale Sync)
-
-### Notizen
-- **Loading-Time**: Kann 100-500ms dauern bei vielen Items
-- **Compression**: Message wird komprimiert bei >50 Items (Phase 3)
-- **Caching**: Client cached Inventory-State lokal
-- **Max Items**: Max 100 Items im Inventory (16 Backpack + 4x21 Bags)
-- **Gold-Format**: Stored als Copper (1 Gold = 10000 Copper)
+- Keine (ist initiale Sync)
 
 ---
 
-## ItemAdd (501)
+## InventorySlotUpdate (501)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** ⚡ Sehr häufig (Loot, Crafting, Trading)  
+**Frequenz:** ⚡ Sehr häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
 
 ### Beschreibung
-Item wurde dem Inventory hinzugefügt. Dies kann durch Loot, Crafting, Trading, Quest-Rewards, oder Item-Kauf geschehen. Server findet automatisch den besten Slot (existierender Stack oder erster freier Slot).
-
-### Im Scope ✅
-- Neue Items (via Loot, Crafting, Trading, etc.)
-- Auto-Stacking zu existierenden Stacks
-- Slot-Allocation durch Server
-- Item-Properties (Durability, Soulbound, etc.)
-
-### Nicht im Scope ❌
-- Item-Movement zwischen Slots → verwende `ItemMove` (503)
-- Item-Splitting → verwende `ItemSplit` (504)
-- Equipment → verwende `EquipItem` (3901)
+Aktualisiert einen einzelnen Inventory-Slot.
 
 ### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| SlotIndex | byte | Slot wo Item hinzugefügt wurde | Ja |
-| BagId | byte | Bag-ID (-1=Backpack, 0-3=Bags) | Ja |
-| ItemId | uint | Item-ID | Ja |
-| Quantity | int | Hinzugefügte Anzahl | Ja |
-| NewStackSize | int | Neue Stack-Größe im Slot | Ja |
-| Durability | int | Haltbarkeit (0-100) | Ja |
-| IsSoulbound | bool | Soulbound? | Ja |
-| Source | string | "loot", "craft", "trade", "quest", "vendor" | Ja |
-
-### Erwartete Response
-- Keine Response erforderlich (ist Notification)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemRemove` | 502 | Gegenteil (Item entfernen) |
-| `LootItem` | 3101 | Loot-Quelle |
-| `CraftItem` | 1601 | Crafting-Quelle |
-| `InventoryFullNotification` | 511 | Falls kein Platz |
-
-### Beispiel Payload
-```csharp
-// Neues Item (Loot)
-var itemAdd = new ItemAdd
-{
-    Type = MessageType.ItemAdd,
-    SlotIndex = 5,
-    BagId = -1, // Backpack
-    ItemId = 2001, // Health Potion
-    Quantity = 3, // 3 Potions gelooted
-    NewStackSize = 8, // War 5, jetzt 8
-    Durability = 100,
-    IsSoulbound = false,
-    Source = "loot"
-};
-
-// Soulbound Quest-Reward
-var questReward = new ItemAdd
-{
-    Type = MessageType.ItemAdd,
-    SlotIndex = 10,
-    BagId = 0, // Bag 1
-    ItemId = 1234, // Epic Sword
-    Quantity = 1,
-    NewStackSize = 1,
-    Durability = 100,
-    IsSoulbound = true, // Quest-Reward = Soulbound
-    Source = "quest"
-};
-```
-
-### Error Codes
-Keine - Falls kein Platz, wird `InventoryFullNotification` (511) gesendet
-
-### Notizen
-- **Auto-Stacking**: Server versucht immer erst zu stacken, dann neuen Slot
-- **Slot-Allocation**: Server wählt ersten freien Slot (Backpack → Bags)
-- **Animation**: Client zeigt Item-Add Animation (Items fliegen ins Inventory)
-- **Sound**: Client spielt Loot-Sound
-- **UI-Notification**: "Received: [Item] x3"
-- **Max-Stack**: Item-abhängig (z.B. Potions: 20, Reagents: 200)
+| SlotIndex | byte | Slot-Index | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| Item | InventoryItemDto | Item-Daten (null=leer) | Nein |
 
 ---
 
-## ItemRemove (502)
+## ItemPickup (502)
 
-**Richtung:** 📥 Server → Client  
-**Frequenz:** ⚡ Sehr häufig (Item-Use, Selling, Crafting)  
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
 
 ### Beschreibung
-Item wurde aus dem Inventory entfernt. Dies kann durch Item-Use (Potions), Verkauf, Crafting (Materials), Trading, oder Deletion geschehen.
+Client versucht Item aus Welt aufzuheben.
 
-### Im Scope ✅
-- Item-Consumption (Potion-Use, Crafting)
-- Item-Verkauf an Vendor
-- Item-Trading
-- Item-Deletion
-- Partial Stack-Removal
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| LootId | uint | Loot-Container ID | Ja |
+| ItemIndex | byte | Index im Container | Ja |
 
-### Nicht im Scope ❌
-- Equipment → verwende `UnequipItem` (3902)
-- Item-Drop (auf Boden) → verwende `ItemDrop` (3105)
+### Erwartete Response
+- \`InventorySlotUpdate\` (501) oder \`ItemPickupFailed\` (503)
 
-### Broadcast Payload
+---
+
+## ItemPickupFailed (503)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Gelegentlich  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server informiert dass ItemPickup fehlgeschlagen ist.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| LootId | uint | Loot-Container ID | Ja |
+| ErrorCode | string | Fehlercode | Ja |
+
+---
+
+## ItemDrop (504)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client droppt Item auf Boden.
+
+### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | SlotIndex | byte | Slot | Ja |
-| BagId | byte | Bag-ID | Ja |
-| Quantity | int | Entfernte Anzahl | Ja |
-| RemainingStack | int | Verbleibende Stack-Größe (0=Slot leer) | Ja |
-| Reason | string | "used", "sold", "crafted", "traded", "deleted" | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| Quantity | int | Anzahl (0=alle) | Ja |
 
 ### Erwartete Response
-- Keine Response erforderlich
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemAdd` | 501 | Gegenteil |
-| `ItemUse` | 505 | Use-Request |
-| `VendorSell` | 1312 | Verkauf |
-
-### Beispiel Payload
-```csharp
-// Potion verwendet
-var itemRemove = new ItemRemove
-{
-    Type = MessageType.ItemRemove,
-    SlotIndex = 5,
-    BagId = -1,
-    Quantity = 1, // 1 Potion verwendet
-    RemainingStack = 7, // 7 Potions übrig
-    Reason = "used"
-};
-
-// Stack komplett verkauft
-var soldStack = new ItemRemove
-{
-    Type = MessageType.ItemRemove,
-    SlotIndex = 10,
-    BagId = 0,
-    Quantity = 15,
-    RemainingStack = 0, // Slot jetzt leer
-    Reason = "sold"
-};
-```
-
-### Error Codes
-Keine - Server sendet nur bei erfolgreicher Removal
-
-### Notizen
-- **Slot-Cleanup**: Client leert Slot wenn RemainingStack = 0
-- **UI-Update**: Client aktualisiert Slot sofort
-- **No Undo**: Item-Removal ist permanent (außer Vendor-Buyback)
-
----
-
-## ItemMove (503)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig (Drag&Drop)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client möchte Item zwischen Slots verschieben (Drag&Drop). Server validiert ob Move erlaubt ist (Item nicht locked, Slots existieren) und führt Move durch.
-
-### Im Scope ✅
-- Drag&Drop zwischen Slots
-- Slot-Swap (zwei Items tauschen)
-- Auto-Stacking wenn Target-Slot gleichen Item-Type hat
-- Cross-Bag Movement
-
-### Nicht im Scope ❌
-- Stack-Splitting → verwende `ItemSplit` (504)
-- Equipment → verwende `EquipItem` (3901)
-- Item-Deletion → verwende `ItemDelete` (506)
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| FromSlot | byte | Source-Slot | Ja |
-| FromBagId | byte | Source-Bag-ID | Ja |
-| ToSlot | byte | Target-Slot | Ja |
-| ToBagId | byte | Target-Bag-ID | Ja |
-| AutoStack | bool | Auto-Merge wenn Target gleicher Type | Ja |
-
-### Erwartete Response
-- `ItemMoveResponse` (520)
-
-### Folge-Messages bei Erfolg
-- `ItemRemove` (502) + `ItemAdd` (501) für Position-Update
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemSplit` | 504 | Für Stack-Splitting |
-| `ItemAdd` | 501 | Server sendet bei erfolgreicher Move |
-| `ItemRemove` | 502 | Server sendet bei erfolgreicher Move |
-
-### Flow-Diagramm
-```
-Client                    Server
-  │                          │
-  │  (Drag Item from Slot 5  │
-  │   to Slot 10)            │
-  │                          │
-  │  ItemMove (503)          │
-  │  FromSlot=5, ToSlot=10   │
-  │─────────────────────────►│
-  │                          │  ┌─ Validate: Slot exists?
-  │                          │  ├─ Validate: Item locked?
-  │                          │  ├─ Validate: Can merge?
-  │                          │  └─ Execute Move
-  │                          │
-  │  ItemRemove (502)        │
-  │  Slot=5                  │
-  │◄─────────────────────────│
-  │                          │
-  │  ItemAdd (501)           │
-  │  Slot=10                 │
-  │◄─────────────────────────│
-```
-
-### Beispiel Payload
-```csharp
-// Einfacher Move
-var itemMove = new ItemMove
-{
-    Type = MessageType.ItemMove,
-    FromSlot = 5,
-    FromBagId = -1, // Backpack
-    ToSlot = 10,
-    ToBagId = 0, // Bag 1
-    AutoStack = true
-};
-
-// Swap (zwei Items tauschen)
-var itemSwap = new ItemMove
-{
-    Type = MessageType.ItemMove,
-    FromSlot = 3,
-    FromBagId = -1,
-    ToSlot = 8,
-    ToBagId = -1,
-    AutoStack = false // Kein Stack, nur Swap
-};
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `ITEM_LOCKED` | Item ist gelockt | Unlock Item erst |
-| `INVALID_SLOT` | Slot existiert nicht | Validen Slot wählen |
-| `CANNOT_STACK` | Items nicht stackbar | Anderen Slot wählen |
-| `BAG_NOT_EQUIPPED` | Bag nicht equipped | Bag equippen |
-
-### Notizen
-- **Client-Side Prediction**: Client kann Move sofort darstellen, muss aber auf Server-Confirm warten
-- **Rollback**: Bei Error rollback Client-Side Prediction
-- **Auto-Stack**: Falls ToSlot gleichen Item-Type hat und AutoStack=true → Stacks werden gemerged
-- **Performance**: Rate-Limited auf 10 Moves/Sekunde (Anti-Spam)
-
----
-
-## ItemSplit (504)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig (Stack-Management)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client möchte einen Stack in zwei Stacks aufteilen. Wird verwendet um z.B. 20 Potions in 2x10 zu splitten.
-
-### Im Scope ✅
-- Stack-Splitting
-- Partial Stack-Movement
-- Target-Slot kann leer oder gleicher Item-Type sein
-
-### Nicht im Scope ❌
-- Komplettes Item-Movement → verwende `ItemMove` (503)
-- Stack-Merging → automatisch via `ItemMove` mit AutoStack=true
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| FromSlot | byte | Source-Slot (mit Stack) | Ja |
-| FromBagId | byte | Source-Bag-ID | Ja |
-| ToSlot | byte | Target-Slot (leer oder gleicher Type) | Ja |
-| ToBagId | byte | Target-Bag-ID | Ja |
-| Quantity | int | Zu bewegende Anzahl | Ja |
-
-### Erwartete Response
-- `ItemSplitResponse` (521)
-
-### Folge-Messages bei Erfolg
-- `ItemRemove` (502) für Source-Stack
-- `ItemAdd` (501) für neuen Split-Stack
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemMove` | 503 | Für komplettes Item-Movement |
-| `ItemStack` | 507 | Für Auto-Stacking |
-
-### Beispiel Payload
-```csharp
-var itemSplit = new ItemSplit
-{
-    Type = MessageType.ItemSplit,
-    FromSlot = 5,
-    FromBagId = -1, // Backpack
-    ToSlot = 15,
-    ToBagId = 0, // Bag 1
-    Quantity = 10 // 10 von 20 Potions verschieben
-};
-// Result: FromSlot hat 10, ToSlot hat 10
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `INSUFFICIENT_QUANTITY` | Nicht genug Items im Stack | Kleinere Quantity |
-| `SLOT_OCCUPIED` | Target-Slot besetzt (anderer Type) | Anderen Slot wählen |
-| `ITEM_NOT_STACKABLE` | Item ist nicht stackbar | - |
-| `INVALID_QUANTITY` | Quantity < 1 oder > Stack-Größe | Valide Quantity |
-
-### Notizen
-- **UI**: Meist via Shift+Drag oder Rechtsklick-Menu
-- **Min Quantity**: 1
-- **Max Quantity**: Current Stack-Größe - 1
+- \`InventorySlotUpdate\` (501)
 
 ---
 
 ## ItemUse (505)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig (Combat, Healing)  
+**Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client möchte Item verwenden (Potion, Food, Scroll, Quest-Item). Server validiert ob Item usable ist, führt Effect aus und removed Item (falls Consumable).
-
-### Im Scope ✅
-- Consumable-Items (Potions, Food)
-- Usable-Items (Scrolls, Quest-Items)
-- Cooldown-Management
-- Target-Selection (für z.B. Buff-Potions auf andere Spieler)
-
-### Nicht im Scope ❌
-- Equipment → verwende `EquipItem` (3901)
-- Item-Deletion → verwende `ItemDelete` (506)
+Client verwendet Item (Potion, Scroll, Quest-Item).
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | SlotIndex | byte | Item-Slot | Ja |
-| BagId | byte | Bag-ID | Ja |
-| TargetId | int | Target-Entity (0=self) | Nein |
+| BagId | sbyte | Bag-ID | Ja |
+| TargetId | int | Target (0=self) | Nein |
 
 ### Erwartete Response
-- `ItemUseResponse` (522)
-
-### Folge-Messages bei Erfolg
-- `ItemRemove` (502) falls Item consumed
-- Effect-Message (z.B. `HealEvent` 304)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemRemove` | 502 | Item wird entfernt nach Use |
-| `HealEvent` | 304 | Bei Healing-Potion |
-| `BuffApplied` | 1500 | Bei Buff-Potion |
-| `CooldownStart` | 3200 | Cooldown startet |
-
-### Flow-Diagramm
-```
-Client                    Server
-  │                          │
-  │  (Player clicks Potion)  │
-  │                          │
-  │  ItemUse (505)           │
-  │  SlotIndex=5             │
-  │─────────────────────────►│
-  │                          │  ┌─ Validate: Item exists?
-  │                          │  ├─ Validate: On Cooldown?
-  │                          │  ├─ Validate: In Combat?
-  │                          │  ├─ Execute Effect
-  │                          │  └─ Remove Item
-  │                          │
-  │  HealEvent (304)         │
-  │◄─────────────────────────│
-  │                          │
-  │  ItemRemove (502)        │
-  │◄─────────────────────────│
-  │                          │
-  │  CooldownStart (3200)    │
-  │◄─────────────────────────│
-```
-
-### Beispiel Payload
-```csharp
-// Health Potion auf Self
-var usePotion = new ItemUse
-{
-    Type = MessageType.ItemUse,
-    SlotIndex = 5,
-    BagId = -1,
-    TargetId = 0 // Self
-};
-
-// Buff-Potion auf Party-Member
-var buffPotion = new ItemUse
-{
-    Type = MessageType.ItemUse,
-    SlotIndex = 8,
-    BagId = 0,
-    TargetId = 9876 // Party-Member
-};
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `ITEM_ON_COOLDOWN` | Item ist auf Cooldown | Warten |
-| `CANNOT_USE_IN_COMBAT` | Item kann nicht in Combat benutzt werden | Combat verlassen |
-| `INVALID_TARGET` | Target ungültig oder out of range | Anderen Target wählen |
-| `ITEM_NOT_USABLE` | Item ist nicht usable | - |
-| `INSUFFICIENT_LEVEL` | Level zu niedrig | Leveln |
-
-### Notizen
-- **Cooldowns**: Potions: 1min, Food: 30s (Out-of-Combat only)
-- **Combat-Restrictions**: Food kann nicht in Combat benutzt werden
-- **Shared Cooldowns**: Potions teilen Cooldown-Category
-- **Animation**: Client zeigt Use-Animation
+- \`ItemUseResult\` (506)
 
 ---
 
-## ItemDelete (506)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client löscht Item permanent. Verwendet für Greyitems oder ungewollte Items. Server validiert ob Item deletable ist (nicht locked, nicht soulbound-wichtig).
-
-### Im Scope ✅
-- Permanentes Löschen von Items
-- Bestätigung bei wertvollen Items (Server-seitig)
-- Lock-Check
-
-### Nicht im Scope ❌
-- Vendor-Verkauf → verwende `VendorSell` (1312)
-- Item-Drop → verwende `ItemDrop` (3105)
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SlotIndex | byte | Slot | Ja |
-| BagId | byte | Bag-ID | Ja |
-| Quantity | int | Zu löschende Anzahl (0=alle) | Ja |
-| Confirmation | bool | Bestätigung (für wichtige Items) | Ja |
-
-### Erwartete Response
-- `ItemDeleteResponse` (523)
-
-### Folge-Messages bei Erfolg
-- `ItemRemove` (502) für gelöschtes Item
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ItemRemove` | 502 | Item wird entfernt |
-| `ItemLock` | 509 | Item locken verhindert Deletion |
-
-### Beispiel Payload
-```csharp
-var itemDelete = new ItemDelete
-{
-    Type = MessageType.ItemDelete,
-    SlotIndex = 10,
-    BagId = 0,
-    Quantity = 0, // Alle
-    Confirmation = true
-};
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `ITEM_LOCKED` | Item ist gelockt | Unlock erst |
-| `CONFIRMATION_REQUIRED` | Bestätigung fehlt für wichtiges Item | Confirmation=true setzen |
-| `ITEM_NOT_FOUND` | Item existiert nicht | - |
-
-### Notizen
-- **Confirmation**: Für Items > Uncommon Quality oder Soulbound
-- **No Undo**: Deletion ist permanent
-- **Alternative**: Besser Items an Vendor verkaufen
-
----
-
-## ItemStack (507)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-**Phase 2 Feature** - Client fordert Auto-Stacking aller Items an. Server merget alle stackbaren Items.
-
-### Im Scope ✅
-- Auto-Merge aller Stacks vom gleichen Type
-- Inventory-Optimization
-
-### Nicht im Scope ❌
-- Item-Sorting → verwende `ItemSort` (508)
-
-### Request Payload
-Keine zusätzlichen Felder (nur MessageType)
-
-### Erwartete Response
-- `ItemStackResponse` (524)
-
-### Folge-Messages bei Erfolg
-- Mehrere `ItemRemove` (502) + `ItemAdd` (501) für Stack-Merge
-
-### Beispiel Payload
-```csharp
-var itemStack = new ItemStack
-{
-    Type = MessageType.ItemStack
-};
-```
-
-### Notizen
-- **Phase 2**: Nicht im Prototyp
-- **Performance**: Kann bis zu 2 Sekunden dauern bei vollem Inventory
-
----
-
-## ItemSort (508)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-**Phase 2 Feature** - Client fordert Auto-Sort des Inventory an. Server sortiert nach Typ, Qualität, oder Name.
-
-### Im Scope ✅
-- Sort nach Type, Quality, Name
-- Bag-spezifisch oder gesamtes Inventory
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SortMode | string | "type", "quality", "name" | Ja |
-| BagId | byte | Bag-ID (-1=alle) | Ja |
-
-### Erwartete Response
-- `ItemSortResponse` (525)
-
-### Folge-Messages bei Erfolg
-- Mehrere `ItemMove` Notifications für sortierte Items
-
-### Beispiel Payload
-```csharp
-var itemSort = new ItemSort
-{
-    Type = MessageType.ItemSort,
-    SortMode = "quality",
-    BagId = -1 // Alle Bags
-};
-```
-
-### Notizen
-- **Phase 2**: Nicht im Prototyp
-
----
-
-## ItemLock (509)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client locked/unlocked Item. Gelocked Items können nicht versehentlich gelöscht, verkauft oder getraded werden.
-
-### Im Scope ✅
-- Lock/Unlock von Items
-- Protection gegen versehentliche Deletion
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SlotIndex | byte | Slot | Ja |
-| BagId | byte | Bag-ID | Ja |
-| Locked | bool | true=lock, false=unlock | Ja |
-
-### Erwartete Response
-- `ItemLockResponse` (526)
-
-### Folge-Messages bei Erfolg
-- `ItemLockChanged` Event
-
-### Beispiel Payload
-```csharp
-var itemLock = new ItemLock
-{
-    Type = MessageType.ItemLock,
-    SlotIndex = 5,
-    BagId = -1,
-    Locked = true // Lock Item
-};
-```
-
-### Notizen
-- **UI**: Locked Items zeigen Lock-Icon
-- **Protection**: Verhindert Delete, Sell, Trade
-
----
-
-## BagExpand (510)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten (nur via Purchase)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client erweitert Backpack-Größe oder equipped größeren Bag. Backpack kann von 16 auf 24 Slots erweitert werden (via Gold-Purchase).
-
-### Im Scope ✅
-- Backpack-Expansion (16 → 20 → 24)
-- Bag-Equipment (8, 12, 16, 20 Slot Bags)
-- Cost-Validation
-
-### Nicht im Scope ❌
-- Bag-Crafting → verwende `CraftItem` (1601)
-- Bag-Purchase → verwende `VendorBuy` (1311)
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| TargetType | string | "backpack" oder "bag" | Ja |
-| BagSlot | byte | Bag-Slot (0-3, nur bei type=bag) | Nein |
-| NewSize | byte | Neue Größe (nur bei type=backpack) | Nein |
-
-### Erwartete Response
-- `BagExpandResponse` (527)
-
-### Folge-Messages bei Erfolg
-- `GoldUpdate` (3703) mit neuem Gold-Betrag
-
-### Beispiel Payload
-```csharp
-// Backpack erweitern
-var expandBackpack = new BagExpand
-{
-    Type = MessageType.BagExpand,
-    TargetType = "backpack",
-    NewSize = 20 // 16 → 20
-};
-
-// Bag equippen
-var equipBag = new BagExpand
-{
-    Type = MessageType.BagExpand,
-    TargetType = "bag",
-    BagSlot = 0,
-    NewSize = 12 // 12-Slot Bag
-};
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `INSUFFICIENT_GOLD` | Nicht genug Gold | Gold farmen |
-| `MAX_SIZE_REACHED` | Backpack bereits max Size | - |
-| `BAG_NOT_IN_INVENTORY` | Bag nicht im Inventory | Bag erst erwerben |
-
-### Notizen
-- **Costs**: 16→20: 10 Gold, 20→24: 100 Gold
-- **Max Size**: Backpack: 24, Bags: 20
-- **Phase 2**: Bag-System vollständig implementiert
-
----
-
-## InventoryFullNotification (511)
+## ItemUseResult (506)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig (bei Loot wenn voll)  
+**Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server informiert dass Inventory voll ist und Item nicht hinzugefügt werden konnte.
-
-### Im Scope ✅
-- Notification dass Inventory voll
-- Item-Info das nicht geadded wurde
-- Empfehlung: Platz machen
+Server antwortet auf ItemUse.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| ItemId | uint | Item das nicht geadded wurde | Ja |
-| Quantity | int | Nicht geaddete Quantity | Ja |
-| Reason | string | "inventory_full", "bag_full" | Ja |
-
-### Beispiel Payload
-```csharp
-var inventoryFull = new InventoryFullNotification
-{
-    Type = MessageType.InventoryFullNotification,
-    ItemId = 2001, // Health Potion
-    Quantity = 5,
-    Reason = "inventory_full"
-};
-```
-
-### Notizen
-- **UI**: Client zeigt Warning "Inventory Full!"
-- **Loot**: Item bleibt im Loot-Window oder auf Boden
-- **Mail**: Phase 2 - Items werden per Mail gesendet
+| Success | bool | Erfolgreich? | Ja |
+| ItemId | uint | Verwendetes Item | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemMoveResponse (520)
+## ItemDestroy (507)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client löscht Item permanent.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| Confirmation | bool | Bestätigung | Ja |
+
+### Erwartete Response
+- \`ItemDeleteResponse\` (539)
+
+---
+
+## ItemSplit (508)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client teilt Stack.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| FromSlot | byte | Source-Slot | Ja |
+| FromBagId | sbyte | Source-Bag | Ja |
+| ToSlot | byte | Target-Slot | Ja |
+| ToBagId | sbyte | Target-Bag | Ja |
+| Quantity | int | Menge | Ja |
+
+### Erwartete Response
+- \`ItemSplitResponse\` (537)
+
+---
+
+## ItemMerge (509)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client merged zwei Stacks.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| FromSlot | byte | Source-Slot | Ja |
+| FromBagId | sbyte | Source-Bag | Ja |
+| ToSlot | byte | Target-Slot | Ja |
+| ToBagId | sbyte | Target-Bag | Ja |
+
+### Erwartete Response
+- \`ItemStackResponse\` (540)
+
+---
+
+## ItemMove (510)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Sehr häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client verschiebt Item zwischen Slots.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| FromSlot | byte | Source-Slot | Ja |
+| FromBagId | sbyte | Source-Bag | Ja |
+| ToSlot | byte | Target-Slot | Ja |
+| ToBagId | sbyte | Target-Bag | Ja |
+
+### Erwartete Response
+- \`ItemMoveResponse\` (536)
+
+---
+
+## ItemSwap (511)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client tauscht zwei Items.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotA | byte | Erster Slot | Ja |
+| BagIdA | sbyte | Erste Bag | Ja |
+| SlotB | byte | Zweiter Slot | Ja |
+| BagIdB | sbyte | Zweite Bag | Ja |
+
+### Erwartete Response
+- \`ItemMoveResponse\` (536)
+
+---
+
+## ItemLock (512)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client lockt Item.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemLockResponse\` (542)
+
+---
+
+## ItemUnlock (513)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client entsperrt Item.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemLockResponse\` (542)
+
+---
+
+## ItemCooldownStart (514)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server informiert über Cooldown-Start.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemId | uint | Item-ID | Ja |
+| CooldownCategory | uint | Cooldown-Kategorie | Ja |
+| Duration | float | Dauer in Sekunden | Ja |
+| StartTime | long | Server-Timestamp | Ja |
+
+---
+
+## ItemCooldownEnd (515)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server informiert über Cooldown-Ende.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemId | uint | Item-ID | Ja |
+| CooldownCategory | uint | Cooldown-Kategorie | Ja |
+
+---
+
+## ItemDurabilityChange (516)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server informiert über Durability-Änderung.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| NewDurability | int | Neue Durability | Ja |
+
+---
+
+## ItemRepair (517)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client repariert einzelnes Item.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| VendorId | uint | Vendor-NPC ID | Ja |
+
+### Erwartete Response
+- \`ItemDurabilityChange\` (516)
+
+---
+
+## ItemRepairAll (518)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client repariert alle Items.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| VendorId | uint | Vendor-NPC ID | Ja |
+
+### Erwartete Response
+- Multiple \`ItemDurabilityChange\` (516)
+
+---
+
+## ItemEnchant (519)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client enchanted Item.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Item-Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| EnchantId | uint | Enchant-Definition | Ja |
+
+### Erwartete Response
+- \`ItemEnchantResult\` (520)
+
+---
+
+## ItemEnchantResult (520)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server antwortet auf Enchant.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| NewEnchantments | List<uint> | Aktuelle Enchants | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## ItemSocket (521)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client sockelt Gem.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemSlot | byte | Item-Slot | Ja |
+| ItemBagId | sbyte | Item Bag-ID | Ja |
+| SocketIndex | byte | Socket-Position | Ja |
+| GemSlot | byte | Gem-Slot | Ja |
+| GemBagId | sbyte | Gem Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemSocketResult\` (522)
+
+---
+
+## ItemSocketResult (522)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server antwortet auf Socket.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| NewSockets | List<uint> | Aktuelle Gems | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## ItemUpgrade (523)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client upgraded Item-Level.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemUpgradeResult\` (524)
+
+---
+
+## ItemUpgradeResult (524)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server antwortet auf Upgrade.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| NewItemLevel | int | Neues Level | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## ItemTransmog (525)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client ändert Item-Appearance.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| TransmogId | uint | Appearance-ID | Ja |
+
+### Erwartete Response
+- \`ItemTransmogResult\` (526)
+
+---
+
+## ItemTransmogResult (526)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server antwortet auf Transmog.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| NewTransmogId | uint | Neue Appearance | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## ItemSalvage (527)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client salvaged Item für Materials.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemSalvageResult\` (528)
+
+---
+
+## ItemSalvageResult (528)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server antwortet auf Salvage.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| Materials | List<(uint,int)> | Erhaltene Materials | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## ItemIdentify (529)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Gelegentlich  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client identifiziert unbekanntes Item.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+
+### Erwartete Response
+- \`ItemIdentifyResult\` (530)
+
+---
+
+## ItemIdentifyResult (530)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Gelegentlich  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server enthüllt Item-Properties.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Erfolgreich? | Ja |
+| RevealedItem | InventoryItemDto | Item-Details | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
+
+---
+
+## BagSort (531)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client sortiert Bag-Inhalt.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BagId | sbyte | Bag-ID (-1=alle) | Ja |
+| SortMode | string | "type", "quality", "name" | Ja |
+
+### Erwartete Response
+- \`ItemSortResponse\` (541)
+
+---
+
+## BagExpand (532)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Sehr selten  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client erweitert Bag-Größe.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| BagId | sbyte | Bag-ID | Ja |
+| NewSize | byte | Neue Slot-Anzahl | Ja |
+
+### Erwartete Response
+- \`BagExpandResponse\` (543)
+
+---
+
+## ItemTooltipRequest (533)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client fordert Tooltip-Daten an.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemId | uint | Item-Definition | Ja |
+| InstanceId | uint | Item-Instance | Nein |
+
+### Erwartete Response
+- \`ItemTooltipResponse\` (534)
+
+---
+
+## ItemTooltipResponse (534)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Server sendet Tooltip-Daten.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ItemId | uint | Item-ID | Ja |
+| Name | string | Item-Name | Ja |
+| Quality | ItemQuality | Qualität | Ja |
+| ItemLevel | int | Item-Level | Ja |
+| Description | string | Beschreibung | Ja |
+| Stats | Dictionary<string,int> | Stat-Boni | Ja |
+
+---
+
+## ItemLink (535)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Gelegentlich  
+**Authentifizierung:** 🔒 Ja  
+
+### Beschreibung
+Client sendet Item-Link im Chat.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| SlotIndex | byte | Slot | Ja |
+| BagId | sbyte | Bag-ID | Ja |
+| Channel | ChatChannelType | Chat-Kanal | Ja |
+
+### Erwartete Response
+- \`ChatBroadcast\` (401)
+
+---
+
+## ItemMoveResponse (536)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Sehr häufig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemMove Request. Bestätigt erfolgreiche Item-Bewegung oder gibt Fehler zurück.
+Server antwortet auf ItemMove/ItemSwap.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Move erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `SLOT_OCCUPIED` | Ziel-Slot bereits belegt |
-| `ITEM_LOCKED` | Item ist gelockt |
-| `INVALID_SLOT` | Ungültiger Slot |
+| Success | bool | Erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemSplitResponse (521)
+## ItemSplitResponse (537)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemSplit Request. Bestätigt erfolgreichen Stack-Split oder gibt Fehler zurück.
+Server antwortet auf ItemSplit.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Split erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `INVALID_AMOUNT` | Amount > Stack-Size oder < 1 |
-| `NOT_STACKABLE` | Item ist nicht stackable |
-| `SLOT_OCCUPIED` | Ziel-Slot belegt |
+| Success | bool | Erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemUseResponse (522)
+## ItemUseResponse (538)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemUse Request. Bestätigt erfolgreiche Item-Nutzung oder gibt Fehler zurück.
+Server antwortet auf ItemUse.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Use erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| ItemId | uint | Verwendetes Item | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `ON_COOLDOWN` | Item auf Cooldown |
-| `INSUFFICIENT_LEVEL` | Level zu niedrig |
-| `IN_COMBAT` | Nicht im Kampf nutzbar |
-| `WRONG_CLASS` | Falsche Klasse |
+| Success | bool | Erfolgreich? | Ja |
+| ItemId | uint | Item-ID | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemDeleteResponse (523)
+## ItemDeleteResponse (539)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemDelete Request. Bestätigt erfolgreiche Item-Löschung oder gibt Fehler zurück.
+Server antwortet auf ItemDestroy.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Delete erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `ITEM_LOCKED` | Item ist gelockt |
-| `ITEM_NOT_FOUND` | Item nicht gefunden |
+| Success | bool | Erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemStackResponse (524)
+## ItemStackResponse (540)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemStack Request. Bestätigt erfolgreiches Stack-Merge oder gibt Fehler zurück.
+Server antwortet auf ItemMerge.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Stack erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_STACKABLE` | Items nicht stackable |
-| `DIFFERENT_ITEMS` | Unterschiedliche Items |
+| Success | bool | Erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemSortResponse (525)
+## ItemSortResponse (541)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemSort Request. Bestätigt erfolgreiche Sortierung oder gibt Fehler zurück.
+Server antwortet auf BagSort.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Sort erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| Success | bool | Erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## ItemLockResponse (526)
+## ItemLockResponse (542)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf ItemLock Request. Bestätigt erfolgreiche Lock-Änderung oder gibt Fehler zurück.
+Server antwortet auf ItemLock/ItemUnlock.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Lock-Änderung erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| Success | bool | Erfolgreich? | Ja |
 | IsLocked | bool | Neuer Lock-Status | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `ITEM_NOT_FOUND` | Item nicht gefunden |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
 ---
 
-## BagExpandResponse (527)
+## BagExpandResponse (543)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Sehr selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Authentifizierung:** 🔒 Ja  
 
 ### Beschreibung
-Antwort auf BagExpand Request. Bestätigt erfolgreiche Bag-Erweiterung oder gibt Fehler zurück.
+Server antwortet auf BagExpand.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Expansion erfolgreich? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| BagSlot | int | Erweiterte Bag | Bei Erfolg |
-| NewSlotCount | int | Neue Slot-Anzahl | Bei Erfolg |
+| Success | bool | Erfolgreich? | Ja |
+| BagId | sbyte | Erweiterte Bag | Bei Erfolg |
+| NewSlotCount | byte | Neue Slot-Anzahl | Bei Erfolg |
 | GoldCost | int | Kosten in Gold | Bei Erfolg |
+| ErrorCode | string | Fehlercode | Bei Fehler |
 
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `INSUFFICIENT_GOLD` | Nicht genug Gold |
-| `MAX_SLOTS_REACHED` | Maximum bereits erreicht |
-| `INVALID_BAG` | Ungültiger Bag-Slot |
+---
+
+## 🗑️ Obsolete Messages
+
+Keine obsoleten Messages in dieser Kategorie.
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Inventory-Bereich)
+
+\`\`\`csharp
+// INVENTORY / ITEMS (0500-0599)
+InventoryUpdate = 500,
+InventorySlotUpdate = 501,
+ItemPickup = 502,
+ItemPickupFailed = 503,
+ItemDrop = 504,
+ItemUse = 505,
+ItemUseResult = 506,
+ItemDestroy = 507,
+ItemSplit = 508,
+ItemMerge = 509,
+ItemMove = 510,
+ItemSwap = 511,
+ItemLock = 512,
+ItemUnlock = 513,
+ItemCooldownStart = 514,
+ItemCooldownEnd = 515,
+ItemDurabilityChange = 516,
+ItemRepair = 517,
+ItemRepairAll = 518,
+ItemEnchant = 519,
+ItemEnchantResult = 520,
+ItemSocket = 521,
+ItemSocketResult = 522,
+ItemUpgrade = 523,
+ItemUpgradeResult = 524,
+ItemTransmog = 525,
+ItemTransmogResult = 526,
+ItemSalvage = 527,
+ItemSalvageResult = 528,
+ItemIdentify = 529,
+ItemIdentifyResult = 530,
+BagSort = 531,
+BagExpand = 532,
+ItemTooltipRequest = 533,
+ItemTooltipResponse = 534,
+ItemLink = 535,
+ItemMoveResponse = 536,
+ItemSplitResponse = 537,
+ItemUseResponse = 538,
+ItemDeleteResponse = 539,
+ItemStackResponse = 540,
+ItemSortResponse = 541,
+ItemLockResponse = 542,
+BagExpandResponse = 543,
+\`\`\`
+
+### Request/Response Paare
+
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| ItemPickup | 502 | InventorySlotUpdate/ItemPickupFailed | 501/503 |
+| ItemDrop | 504 | InventorySlotUpdate | 501 |
+| ItemUse | 505 | ItemUseResult | 506 |
+| ItemDestroy | 507 | ItemDeleteResponse | 539 |
+| ItemSplit | 508 | ItemSplitResponse | 537 |
+| ItemMerge | 509 | ItemStackResponse | 540 |
+| ItemMove | 510 | ItemMoveResponse | 536 |
+| ItemSwap | 511 | ItemMoveResponse | 536 |
+| ItemLock | 512 | ItemLockResponse | 542 |
+| ItemUnlock | 513 | ItemLockResponse | 542 |
+| ItemRepair | 517 | ItemDurabilityChange | 516 |
+| ItemRepairAll | 518 | ItemDurabilityChange | 516 |
+| ItemEnchant | 519 | ItemEnchantResult | 520 |
+| ItemSocket | 521 | ItemSocketResult | 522 |
+| ItemUpgrade | 523 | ItemUpgradeResult | 524 |
+| ItemTransmog | 525 | ItemTransmogResult | 526 |
+| ItemSalvage | 527 | ItemSalvageResult | 528 |
+| ItemIdentify | 529 | ItemIdentifyResult | 530 |
+| BagSort | 531 | ItemSortResponse | 541 |
+| BagExpand | 532 | BagExpandResponse | 543 |
+| ItemTooltipRequest | 533 | ItemTooltipResponse | 534 |
+| ItemLink | 535 | ChatBroadcast | 401 |
+
+### Datei-Struktur
+
+\`\`\`
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs          # 500-543 Inventory
+├── DTOs/
+│   └── Inventory/
+│       ├── InventoryUpdateDto.cs
+│       ├── InventoryItemDto.cs
+│       ├── BagInfoDto.cs
+│       └── ...
+└── Contracts/
+    └── IInventoryMessage.cs
+\`\`\`
 
 ---
 
 ## 🔗 Verwandte Kategorien
 
-- **Equipment (39)**: Equipped Items → `EquipItem` (3901), `UnequipItem` (3902)
-- **Bank (40)**: Bank-Storage → `BankSync` (4000), `BankDeposit` (4001)
-- **Loot (31)**: Item-Loot → `LootRequest` (3100), `LootItem` (3101)
-- **Trading (11)**: Item-Trading → `TradeOffer` (1100), `TradeAccept` (1102)
-- **Crafting (16)**: Crafting-Materials → `CraftItem` (1601)
+- **Equipment (39)**: Equipped Items
+- **Bank (40)**: Bank-Storage
+- **Loot (31)**: Item-Loot
+- **Trading (11)**: Item-Trading
+- **Crafting (16)**: Crafting-Materials
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.1.0  
-**Status**: ✅ Vollständig dokumentiert (20/20 Messages)
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0  
+**Status**: ✅ Vollständig dokumentiert (44 Messages)
 
 [← Zurück zur Übersicht](README.md)

@@ -1,9 +1,9 @@
-# 📜 Quest Messages (1000-1099)
+# 📜 Quest Messages (1000-1023)
 
 **Kategorie:** 10  
-**Range:** 1000-1099  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+**Range:** 1000-1023 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,47 +11,260 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [QuestAccept (1000)](#questaccept-1000)
-- [QuestAcceptResult (1001)](#questacceptresult-1001)
-- [QuestAbandon (1002)](#questabandon-1002)
-- [QuestProgress (1003)](#questprogress-1003)
-- [QuestComplete (1004)](#questcomplete-1004)
-- [QuestCompleteResult (1005)](#questcompleteresult-1005)
-- [QuestRewardChoose (1006)](#questrewardchoose-1006)
-- [QuestRewardReceive (1007)](#questrewardreceive-1007)
-- [QuestListRequest (1008)](#questlistrequest-1008)
-- [QuestListResponse (1009)](#questlistresponse-1009)
-- [QuestLogUpdate (1010)](#questlogupdate-1010)
-- [QuestShare (1011)](#questshare-1011)
-- [QuestShareResponse (1012)](#questshareresponse-1012)
-- [QuestTrack (1013)](#questtrack-1013)
-- [QuestUntrack (1014)](#questuntrack-1014)
-- [QuestObjectiveUpdate (1015)](#questobjectiveupdate-1015)
-- [QuestPoiRequest (1016)](#questpoirequest-1016)
-- [QuestPoiResponse (1017)](#questpoiresponse-1017)
-- [QuestGiverStatus (1018)](#questgiverstatus-1018)
-- [QuestGiverList (1019)](#questgiverlist-1019)
-- [DailyQuestReset (1020)](#dailyquestreset-1020)
-- [WeeklyQuestReset (1021)](#weeklyquestreset-1021)
-- [QuestChainUpdate (1022)](#questchainupdate-1022)
-- [QuestRepeatableReset (1023)](#questrepeatab lereset-1023)
+- [🔄 Quest Flow](#-quest-flow)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+- [📩 Aktive Messages (1000-1023)](#-aktive-messages-1000-1023)
+  - [QuestAccept (1000)](#questaccept-1000)
+  - [QuestAcceptResult (1001)](#questacceptresult-1001)
+  - [QuestAbandon (1002)](#questabandon-1002)
+  - [QuestProgress (1003)](#questprogress-1003)
+  - [QuestComplete (1004)](#questcomplete-1004)
+  - [QuestCompleteResult (1005)](#questcompleteresult-1005)
+  - [QuestRewardChoose (1006)](#questrewardchoose-1006)
+  - [QuestRewardReceive (1007)](#questrewardreceive-1007)
+  - [QuestListRequest (1008)](#questlistrequest-1008)
+  - [QuestListResponse (1009)](#questlistresponse-1009)
+  - [QuestLogUpdate (1010)](#questlogupdate-1010)
+  - [QuestShare (1011)](#questshare-1011)
+  - [QuestShareResponse (1012)](#questshareresponse-1012)
+  - [QuestTrack (1013)](#questtrack-1013)
+  - [QuestUntrack (1014)](#questuntrack-1014)
+  - [QuestObjectiveUpdate (1015)](#questobjectiveupdate-1015)
+  - [QuestPoiRequest (1016)](#questpoirequest-1016)
+  - [QuestPoiResponse (1017)](#questpoiresponse-1017)
+  - [QuestGiverStatus (1018)](#questgiverstatus-1018)
+  - [QuestGiverList (1019)](#questgiverlist-1019)
+  - [DailyQuestReset (1020)](#dailyquestreset-1020)
+  - [WeeklyQuestReset (1021)](#weeklyquestreset-1021)
+  - [QuestChainUpdate (1022)](#questchainupdate-1022)
+  - [QuestRepeatableReset (1023)](#questrepeatblereset-1023)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
 
 ---
 
-## 📋 Übersicht
+## 🔄 Quest Flow
 
-Diese Kategorie umfasst alle Messages für das **Quest-System** im 2DMMO.
+### Server-Authoritative Architecture
 
-Das Quest-System implementiert:
-- Quest-Annahme und Abbruch
-- Fortschritts-Tracking (Objectives)
-- Quest-Vervollständigung und Belohnungen
-- Quest-Sharing in Gruppen
-- Quest-Tracking und POI-Marker
-- Daily/Weekly Quest-Resets
-- Quest-Ketten und Abhängigkeiten
+Das Quest-System ist vollständig server-authoritativ. Der Server:
+- Validiert alle Quest-Aktionen (Accept, Abandon, Complete)
+- Tracked Progress serverseitig (Kills, Items, etc.)
+- Verwaltet Prerequisites und Quest-Chains
+- Kontrolliert Rewards und verhindert Exploits
 
-**Server Authority**: Alle Quest-Fortschritte werden server-seitig validiert. Client sendet Requests, Server prüft Prerequisites und broadcasted Updates.
+### Quest Accept + Progress Flow
+
+```
+Client                    Zone Server              Quest DB
+  │                            │                        │
+  │  QuestAccept (1000)        │                        │
+  │  {QuestId, QuestGiverId}   │                        │
+  │───────────────────────────►│                        │
+  │                            │  Check Prerequisites   │
+  │                            │───────────────────────►│
+  │                            │                        │
+  │                            │  Quest Data + OK       │
+  │                            │◄───────────────────────│
+  │                            │                        │
+  │  QuestAcceptResult (1001)  │                        │
+  │  {Success: true}           │                        │
+  │◄───────────────────────────│                        │
+  │                            │                        │
+  │  QuestLogUpdate (1010)     │                        │
+  │  {UpdateType: "added"}     │                        │
+  │◄───────────────────────────│                        │
+  │                            │                        │
+  │        ... Gameplay (Kills, Items) ...              │
+  │                            │                        │
+  │  QuestProgress (1003)      │                        │
+  │  {Objectives Updated}      │                        │
+  │◄───────────────────────────│                        │
+```
+
+### Quest Complete + Reward Flow
+
+```
+Client                    Zone Server              Quest DB
+  │                            │                        │
+  │  QuestComplete (1004)      │                        │
+  │  {QuestId, QuestGiverId}   │                        │
+  │───────────────────────────►│                        │
+  │                            │  Validate Completion   │
+  │                            │───────────────────────►│
+  │                            │                        │
+  │                            │  OK + Rewards          │
+  │                            │◄───────────────────────│
+  │                            │                        │
+  │  QuestCompleteResult       │                        │
+  │  (1005) {Success: true}    │                        │
+  │◄───────────────────────────│                        │
+  │                            │                        │
+  │  QuestRewardReceive (1007) │                        │
+  │  {XP, Gold, Items}         │                        │
+  │◄───────────────────────────│                        │
+  │                            │                        │
+  │  QuestLogUpdate (1010)     │                        │
+  │  {UpdateType: "removed"}   │                        │
+  │◄───────────────────────────│                        │
+```
+
+### Quest Sharing Flow
+
+```
+Client A                  Zone Server              Client B
+  │                            │                        │
+  │  QuestShare (1011)         │                        │
+  │  {QuestId}                 │                        │
+  │───────────────────────────►│                        │
+  │                            │  Check Party + Quest   │
+  │                            │  Check B Prerequisites │
+  │                            │                        │
+  │                            │  QuestShareResponse    │
+  │                            │  (1012)                │
+  │                            │───────────────────────►│
+  │                            │                        │
+  │                            │  QuestAccept (1000)    │
+  │                            │  {from Share}          │
+  │                            │◄───────────────────────│
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### QuestEntry DTO
+
+```csharp
+[MessagePackObject]
+public class QuestEntry
+{
+    [Key(0)] public uint QuestId { get; set; }
+    [Key(1)] public string Title { get; set; }
+    [Key(2)] public int Level { get; set; }
+    [Key(3)] public bool IsTracked { get; set; }
+    [Key(4)] public List<ObjectiveProgress> Objectives { get; set; }
+    [Key(5)] public long TimeLimit { get; set; } // 0 = no limit
+    [Key(6)] public QuestType Type { get; set; }
+}
+```
+
+### ObjectiveProgress DTO
+
+```csharp
+[MessagePackObject]
+public class ObjectiveProgress
+{
+    [Key(0)] public byte ObjectiveIndex { get; set; }
+    [Key(1)] public int Current { get; set; }
+    [Key(2)] public int Required { get; set; }
+    [Key(3)] public bool Completed { get; set; }
+    [Key(4)] public string Description { get; set; }
+}
+```
+
+### QuestPoi DTO
+
+```csharp
+[MessagePackObject]
+public class QuestPoi
+{
+    [Key(0)] public byte ObjectiveIndex { get; set; }
+    [Key(1)] public int ZoneId { get; set; }
+    [Key(2)] public float X { get; set; }
+    [Key(3)] public float Y { get; set; }
+    [Key(4)] public PoiType Type { get; set; }
+}
+```
+
+### ItemReward DTO
+
+```csharp
+[MessagePackObject]
+public class ItemReward
+{
+    [Key(0)] public uint ItemId { get; set; }
+    [Key(1)] public int Quantity { get; set; }
+}
+```
+
+### ReputationReward DTO
+
+```csharp
+[MessagePackObject]
+public class ReputationReward
+{
+    [Key(0)] public uint FactionId { get; set; }
+    [Key(1)] public int Amount { get; set; }
+}
+```
+
+### QuestSummary DTO
+
+```csharp
+[MessagePackObject]
+public class QuestSummary
+{
+    [Key(0)] public uint QuestId { get; set; }
+    [Key(1)] public string Title { get; set; }
+    [Key(2)] public int Level { get; set; }
+    [Key(3)] public bool IsDaily { get; set; }
+    [Key(4)] public bool IsRepeatable { get; set; }
+}
+```
+
+### QuestType Enum
+
+```csharp
+public enum QuestType : byte
+{
+    Normal = 0,      // Standard Quest
+    Daily = 1,       // Täglich wiederholbar
+    Weekly = 2,      // Wöchentlich wiederholbar
+    Repeatable = 3,  // Nach Cooldown wiederholbar
+    Story = 4,       // Main Story Quest
+    Side = 5,        // Side Quest
+    Dungeon = 6,     // Dungeon Quest
+    Raid = 7         // Raid Quest
+}
+```
+
+### PoiType Enum
+
+```csharp
+public enum PoiType : byte
+{
+    Objective = 0,   // Quest-Objective Location
+    TurnIn = 1,      // Quest Turn-in NPC
+    QuestGiver = 2,  // Quest Giver NPC
+    Area = 3         // Quest Area (Circle on Map)
+}
+```
+
+### QuestGiverStatusType Enum
+
+```csharp
+public enum QuestGiverStatusType : byte
+{
+    None = 0,        // Keine Quests (.)
+    Available = 1,   // Quest verfügbar (!)
+    Completable = 2, // Quest abschließbar (?)
+    InProgress = 3   // Quest aktiv (...)
+}
+```
+
+### Quest-Konstanten
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|--------------|
+| `MAX_ACTIVE_QUESTS` | 25 | Maximale aktive Quests |
+| `SHARE_TIMEOUT_SEC` | 120 | Quest-Share Prompt Timeout |
+| `QUEST_GIVER_RANGE` | 30.0f | Range für Quest-Giver Status Update |
+| `MAX_OBJECTIVES` | 8 | Max Objectives pro Quest |
+
+---
+
+## 📩 Aktive Messages (1000-1023)
 
 ---
 
@@ -1045,7 +1258,101 @@ Repeatable Quest kann erneut angenommen werden (nach Cooldown).
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## 🗑️ Obsolete Messages
+
+*Derzeit keine obsoleten Messages in dieser Kategorie.*
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Quest-Range)
+
+```csharp
+// QUEST (1000-1099) - Category 10
+QuestAccept = 1000,
+QuestAcceptResult = 1001,
+QuestAbandon = 1002,
+QuestProgress = 1003,
+QuestComplete = 1004,
+QuestCompleteResult = 1005,
+QuestRewardChoose = 1006,
+QuestRewardReceive = 1007,
+QuestListRequest = 1008,
+QuestListResponse = 1009,
+QuestLogUpdate = 1010,
+QuestShare = 1011,
+QuestShareResponse = 1012,
+QuestTrack = 1013,
+QuestUntrack = 1014,
+QuestObjectiveUpdate = 1015,
+QuestPoiRequest = 1016,
+QuestPoiResponse = 1017,
+QuestGiverStatus = 1018,
+QuestGiverList = 1019,
+DailyQuestReset = 1020,
+WeeklyQuestReset = 1021,
+QuestChainUpdate = 1022,
+QuestRepeatableReset = 1023,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID | Beschreibung |
+|---------|-----|----------|-----|--------------|
+| QuestAccept | 1000 | QuestAcceptResult | 1001 | Quest annehmen |
+| QuestAbandon | 1002 | QuestLogUpdate | 1010 | Quest aufgeben (Update als Response) |
+| QuestComplete | 1004 | QuestCompleteResult | 1005 | Quest abschließen |
+| QuestRewardChoose | 1006 | QuestRewardReceive | 1007 | Belohnung wählen |
+| QuestListRequest | 1008 | QuestListResponse | 1009 | Questlog anfordern |
+| QuestShare | 1011 | QuestShareResponse | 1012 | Quest teilen |
+| QuestTrack | 1013 | - | - | Tracking (rein client-seitig) |
+| QuestUntrack | 1014 | - | - | Untracking (rein client-seitig) |
+| QuestPoiRequest | 1016 | QuestPoiResponse | 1017 | POI-Marker anfordern |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs          # Quest = 1000-1023
+├── Messages/Quest/
+│   ├── QuestAccept.cs
+│   ├── QuestAcceptResult.cs
+│   ├── QuestAbandon.cs
+│   ├── QuestProgress.cs
+│   ├── QuestComplete.cs
+│   ├── QuestCompleteResult.cs
+│   ├── QuestRewardChoose.cs
+│   ├── QuestRewardReceive.cs
+│   ├── QuestListRequest.cs
+│   ├── QuestListResponse.cs
+│   ├── QuestLogUpdate.cs
+│   ├── QuestShare.cs
+│   ├── QuestShareResponse.cs
+│   ├── QuestTrack.cs
+│   ├── QuestUntrack.cs
+│   ├── QuestObjectiveUpdate.cs
+│   ├── QuestPoiRequest.cs
+│   ├── QuestPoiResponse.cs
+│   ├── QuestGiverStatus.cs
+│   ├── QuestGiverList.cs
+│   ├── DailyQuestReset.cs
+│   ├── WeeklyQuestReset.cs
+│   ├── QuestChainUpdate.cs
+│   └── QuestRepeatableReset.cs
+└── DTOs/Quest/
+    ├── QuestEntry.cs
+    ├── ObjectiveProgress.cs
+    ├── QuestPoi.cs
+    ├── ItemReward.cs
+    ├── ReputationReward.cs
+    └── QuestSummary.cs
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0
 
 [← Zurück zur Übersicht](README.md)

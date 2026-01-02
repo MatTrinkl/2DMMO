@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Letzte Aktualisierung:** 2025-12-24  
-**Phase:** Phase 2  
+
 **Status:** 🟡 Geplant
 
 [← Zurück zur Übersicht](README.md)
@@ -57,7 +57,7 @@ Player A Disconnects
 - **Disconnect (5)**: Siehe [00-connection.md](00-connection.md#disconnect-5)
 - **PlayerLeftZone (104)**: Siehe [01-zone.md](01-zone.md)
 - **FriendOffline (2108)**: Siehe [21-social.md](21-social.md)
-- **PartyMemberOffline** und **GuildMemberOffline**: Genaue IDs werden in Phase 2 definiert
+- **PartyMemberOffline** und **GuildMemberOffline**: Genaue IDs werden später definiert
 
 ---
 
@@ -105,7 +105,7 @@ public class PlayerLeftZone : IServerMessage
 
 ### PartyMemberOffline (7XX) - Party-Broadcast
 
-**Phase 2 Feature**
+**Feature**
 
 ```csharp
 [MessagePackObject]
@@ -127,7 +127,7 @@ public class PartyMemberOffline : IServerMessage
 
 ### GuildMemberOffline (8XX) - Guild-Broadcast
 
-**Phase 2 Feature**
+**Feature**
 
 ```csharp
 [MessagePackObject]
@@ -149,7 +149,7 @@ public class GuildMemberOffline : IServerMessage
 
 ### FriendOffline (2108) - Friend-Broadcast
 
-**Phase 2 Feature**
+**Feature**
 
 ```csharp
 [MessagePackObject]
@@ -337,8 +337,8 @@ Bei **normalen Disconnects**:
 - **[Connection Messages (00-connection.md)](00-connection.md)** - Disconnect (5) Details
 - **[Zone Messages (01-zone.md)](01-zone.md)** - PlayerLeftZone (104) Details
 - **[Social Messages (21-social.md)](21-social.md)** - FriendOffline (2108) Details
-- **[Party Messages (07-party.md)](07-party.md)** - PartyMemberOffline (Phase 2)
-- **[Guild Messages (08-guild.md)](08-guild.md)** - GuildMemberOffline (Phase 2)
+- **[Party Messages (07-party.md)](07-party.md)** - PartyMemberOffline (geplant)
+- **[Guild Messages (08-guild.md)](08-guild.md)** - GuildMemberOffline (geplant)
 - **[Admin Messages (23-admin.md)](23-admin.md)** - AdminKick, AdminBan
 
 ---
@@ -357,7 +357,7 @@ Die Broadcasts sollten in folgender Reihenfolge gesendet werden:
 
 - Social-Broadcasts können **parallel** gesendet werden (keine Abhängigkeit)
 - Bei großen Guilds (100+ Mitglieder): Batch-Processing erwägen
-- Redis Pub/Sub für cross-server broadcasts (Phase 2)
+- Redis Pub/Sub für cross-server broadcasts (geplant)
 
 ### Error-Handling
 

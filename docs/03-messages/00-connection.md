@@ -57,7 +57,7 @@ Initiiert den Login-Prozess. Der Client sendet Credentials (Username/Password od
 ### Nicht im Scope ❌
 - Registrierung → verwende externe Account-API
 - Passwort-Reset → verwende externe Account-API
-- OAuth/Social Login → verwende externe Account-API (Phase 3)
+- OAuth/Social Login → verwende externe Account-API (geplant)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -267,12 +267,11 @@ var logoutRequest = new LogoutRequest
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
-- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
-- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
-- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
-- **Phase 2:** Freunde sehen `FriendOffline` (2108)
+- Andere Spieler sehen `CharacterLeftZone` (105) Broadcast
+- Party-Mitglieder sehen `PartyMemberUpdate` (710) mit Online=false
+- Guild-Mitglieder sehen `GuildMemberUpdate` mit Online=false
+- Freunde sehen `FriendOffline` (2108)
 - SessionToken bleibt gültig für Reconnect
-- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
@@ -439,14 +438,13 @@ var banDisconnect = new ForceDisconnect
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
-- Andere Spieler sehen `PlayerLeftZone` (104) Broadcast
-- **Phase 2:** Party-Mitglieder sehen `PartyMemberOffline`
-- **Phase 2:** Guild-Mitglieder sehen `GuildMemberOffline`
-- **Phase 2:** Freunde sehen `FriendOffline` (2108)
+- Andere Spieler sehen `CharacterLeftZone` (105) Broadcast
+- Party-Mitglieder sehen `PartyMemberUpdate` (710) mit Online=false
+- Guild-Mitglieder sehen `GuildMemberUpdate` mit Online=false
+- Freunde sehen `FriendOffline` (2108)
 - Client sollte Reconnect-Delay respektieren
 - Bei `CanReconnect=false`: SessionToken wird invalidiert
 - Nach Disconnect: Client zeigt Message im UI
-- Siehe auch: [Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)
 
 ---
 
@@ -614,7 +612,7 @@ Interne Message zwischen Gateway Server und Zone Server zur Validierung von Sess
 
 ---
 
-## CharacterSelect (9)
+## CharacterSelectRequest (9)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Einmalig pro Session  
@@ -630,8 +628,8 @@ Client wählt einen Character aus der Character-Liste. Server lädt Character-Da
 - Spawn in letzte Zone oder Start-Zone
 
 ### Nicht im Scope ❌
-- Character erstellen → verwende `CharacterCreate` (10)
-- Character löschen → verwende `CharacterDelete` (11)
+- Character erstellen → verwende `CharacterCreateRequest` (10)
+- Character löschen → verwende `CharacterDeleteRequest` (11)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -651,13 +649,13 @@ Client wählt einen Character aus der Character-Liste. Server lädt Character-Da
 | `CharacterSelectResponse` | 21 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt verfügbare Characters |
 | `JoinZone` | 100 | Folgt nach erfolgreicher Auswahl |
-| `CharacterCreate` | 10 | Character erstellen |
+| `CharacterCreateRequest` | 10 | Character erstellen |
 
 ### Beispiel Payload
 ```csharp
-var selectRequest = new CharacterSelect
+var selectRequest = new CharacterSelectRequest
 {
-    Type = MessageType.CharacterSelect,
+    Type = MessageType.CharacterSelectRequest,
     CharacterId = 98765
 };
 ```
@@ -751,7 +749,7 @@ var errorResponse = new CharacterSelectResponse
 
 ---
 
-## CharacterCreate (10)
+## CharacterCreateRequest (10)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -769,7 +767,7 @@ Erstellt einen neuen Character für den Account. Server validiert Namen, Rasse, 
 
 ### Nicht im Scope ❌
 - Account-Registrierung → externe API
-- Premium-Features → Phase 3
+- Premium-Features → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -790,13 +788,13 @@ Erstellt einen neuen Character für den Account. Server validiert Namen, Rasse, 
 |---------|-----|-----------|
 | `CharacterCreateResponse` | 22 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt erstellten Character |
-| `CharacterDelete` | 11 | Character löschen |
+| `CharacterDeleteRequest` | 11 | Character löschen |
 
 ### Beispiel Payload
 ```csharp
-var createRequest = new CharacterCreate
+var createRequest = new CharacterCreateRequest
 {
-    Type = MessageType.CharacterCreate,
+    Type = MessageType.CharacterCreateRequest,
     Name = "Aragorn",
     Race = 1, // Human
     Class = 2, // Warrior
@@ -902,7 +900,7 @@ var errorResponse = new CharacterCreateResponse
 
 ---
 
-## CharacterDelete (11)
+## CharacterDeleteRequest (11)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -919,7 +917,7 @@ Löscht einen Character permanent. Sicherheits-Mechanismus: Character wird erst 
 
 ### Nicht im Scope ❌
 - Sofortiges Löschen (Security-Risiko)
-- Character-Transfer → Phase 3
+- Character-Transfer → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -935,9 +933,9 @@ Löscht einen Character permanent. Sicherheits-Mechanismus: Character wird erst 
 
 ### Beispiel Payload
 ```csharp
-var deleteRequest = new CharacterDelete
+var deleteRequest = new CharacterDeleteRequest
 {
-    Type = MessageType.CharacterDelete,
+    Type = MessageType.CharacterDeleteRequest,
     CharacterId = 98765,
     Confirmation = "DELETE"
 };
@@ -1147,7 +1145,7 @@ var listResponse = new CharacterListResponse
 
 ---
 
-## ServerSelect (14)
+## ServerSelectRequest (14)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -1362,12 +1360,32 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 3 Feature** - TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+
+### Im Scope ✅
+- TLS 1.3 Handshake initiieren
+- Key Exchange für verschlüsselte Kommunikation
+- Certificate Validation
+
+### Nicht im Scope ❌
+- Plaintext-Fallback → immer TLS oder Disconnect
+- Certificate Pinning → standard CA-Validation
+
+### Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ClientPublicKey | byte[] | Client's ECDH Public Key | Ja |
+| SupportedCipherSuites | ushort[] | Unterstützte Cipher Suites | Ja |
+| ClientRandom | byte[32] | 32-Byte Random für Key Derivation | Ja |
+
+### Erwartete Response
+- Server sendet eigene Handshake-Antwort mit Server Public Key
+- Danach: verschlüsselte Kommunikation
 
 ### Notizen
-- Im Prototyp: Nicht implementiert (TCP ohne TLS)
-- Phase 3: TLS 1.3 für alle Verbindungen
-- Server antwortet mit separater `EncryptionHandshakeResponse` Message (nicht bidirektional)
+- Handshake MUSS vor LoginRequest erfolgen
+- Timeout: 5 Sekunden für Handshake-Completion
+- Bei Fehler: Connection wird geschlossen
 
 ---
 
@@ -1379,19 +1397,36 @@ Detaillierte Account-Informationen.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Phase 3 Feature** - Aktiviert/Deaktiviert Message-Kompression.
+Aktiviert/Deaktiviert Message-Kompression für bandwidth-intensive Kommunikation.
 
 ### Im Scope ✅
 - Kompression aktivieren/deaktivieren
-- Kompression-Level wählen
+- Kompression-Level wählen (0-9)
+- LZ4 Fast Compression
+
+### Nicht im Scope ❌
+- Per-Message Kompression → global toggle
+- Asymmetrische Kompression → beide Richtungen gleich
+
+### Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Enabled | bool | Kompression aktiviert? | Ja |
+| Level | byte | Kompression-Level (0-9, 0=fastest) | Ja |
+| Algorithm | CompressionAlgorithm | LZ4 oder Zstd | Ja |
+
+### Erwartete Response
+- Server bestätigt mit gleicher Message (Echo-Pattern)
+- Ab nächster Message: Kompression aktiv/inaktiv
 
 ### Notizen
-- Im Prototyp: Nicht implementiert
-- Phase 3: LZ4 oder Zstd Kompression für Messages
+- Standard: Kompression deaktiviert
+- Empfohlen: Level 3 für Balance aus Speed und Ratio
+- Bei Zone-Loading: temporär Level 6 für bessere Ratio
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0
 
 [← Zurück zur Übersicht](README.md)

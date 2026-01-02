@@ -1,9 +1,9 @@
-# 🎯 Targeting Messages (1200-1299)
+# 🎯 Targeting Messages (1200-1225)
 
 **Kategorie:** 12  
-**Range:** 1200-1299  
-**Phase:** Phase 2  
-**Status:** 🟡 Phase 2
+**Range:** 1200-1225  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -37,6 +37,163 @@
 
 ---
 
+## 🔄 Targeting Flow
+
+### Server-Authority Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     TARGETING SYSTEM                                 │
+│                                                                     │
+│  Client-Side                                Server-Side              │
+│  ┌────────────────┐                        ┌────────────────┐       │
+│  │ Target-Select  │──TargetSelect(1200)───►│ Validate/Track │       │
+│  │ (Click/Tab/Key)│                        │ Target for     │       │
+│  │                │◄─TargetSelectResponse──│ Abilities      │       │
+│  └────────────────┘                        └────────────────┘       │
+│                                                                     │
+│  ┌────────────────┐                        ┌────────────────┐       │
+│  │ Target-Frame   │◄──TargetInfoResponse───│ Entity-Info    │       │
+│  │ UI Update      │   (Health, Name, etc)  │ Provider       │       │
+│  └────────────────┘                        └────────────────┘       │
+│                                                                     │
+│  ┌────────────────┐                        ┌────────────────┐       │
+│  │ ToT-Frame      │◄─TargetOfTargetUpdate──│ ToT-Tracker    │       │
+│  │ UI Update      │                        │                │       │
+│  └────────────────┘                        └────────────────┘       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Target Select + Info Flow
+
+```
+Client                        Zone Server                  Entity
+  │                               │                          │
+  │  TargetSelect (1200)          │                          │
+  │  { EntityId: 50001 }          │                          │
+  │──────────────────────────────►│                          │
+  │                               │  Validate Entity exists  │
+  │                               │─────────────────────────►│
+  │                               │                          │
+  │                               │  Entity Data             │
+  │                               │◄─────────────────────────│
+  │                               │                          │
+  │  TargetSelectResponse (1220)  │  Track Target for Player │
+  │  { Success: true }            │                          │
+  │◄──────────────────────────────│                          │
+  │                               │                          │
+  │  TargetUpdate (1202)          │                          │
+  │  { EntityId: 50001 }          │                          │
+  │◄──────────────────────────────│                          │
+  │                               │                          │
+  │  TargetInfoResponse (1204)    │                          │
+  │  { Name, Level, Health... }   │                          │
+  │◄──────────────────────────────│                          │
+```
+
+### Assist Flow (Group Coordination)
+
+```
+Player A (Tank)              Zone Server              Player B (DPS)
+  │                               │                          │
+  │  TargetSelect { Boss }        │                          │
+  │──────────────────────────────►│                          │
+  │                               │                          │
+  │◄── TargetUpdate ──────────────│                          │
+  │                               │                          │
+  │                               │  AssistTarget (1209)     │
+  │                               │  { AssistEntityId: A }   │
+  │                               │◄─────────────────────────│
+  │                               │                          │
+  │                               │  AssistTargetResponse    │
+  │                               │  { AssistTargetId: Boss }│
+  │                               │─────────────────────────►│
+  │                               │                          │
+  │                               │  TargetUpdate            │
+  │                               │  { EntityId: Boss }      │
+  │                               │─────────────────────────►│
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### TargetEntityDto
+
+```csharp
+/// <summary>
+/// Target entity information for Target-Frame UI
+/// </summary>
+[MessagePackObject]
+public class TargetEntityDto
+{
+    [Key(0)] public int EntityId { get; set; }
+    [Key(1)] public string Name { get; set; } = string.Empty;
+    [Key(2)] public int Level { get; set; }
+    [Key(3)] public EntityType EntityType { get; set; }
+    [Key(4)] public int Health { get; set; }
+    [Key(5)] public int MaxHealth { get; set; }
+    [Key(6)] public float HealthPercent { get; set; }
+    [Key(7)] public string Faction { get; set; } = string.Empty;
+    [Key(8)] public bool IsHostile { get; set; }
+    [Key(9)] public bool IsDead { get; set; }
+    [Key(10)] public string? Title { get; set; }
+    [Key(11)] public string? GuildName { get; set; }
+}
+```
+
+### MarkType (Raid Markers)
+
+```csharp
+/// <summary>
+/// Raid marker icons for target coordination
+/// </summary>
+public enum MarkType : byte
+{
+    None = 0,
+    Skull = 1,      // Kill first
+    Cross = 2,      // Kill second
+    Square = 3,     // CC / Ice Trap
+    Moon = 4,       // CC / Polymorph
+    Triangle = 5,   // CC / Sap
+    Diamond = 6,    // Tank position
+    Circle = 7,     // Healer position
+    Star = 8        // Special
+}
+```
+
+### TargetErrorCode
+
+```csharp
+/// <summary>
+/// Error codes for targeting operations
+/// </summary>
+public enum TargetErrorCode
+{
+    None = 0,
+    EntityNotFound = 1,
+    OutOfRange = 2,
+    NoTarget = 3,
+    NoTargetsInRange = 4,
+    NoEnemiesInRange = 5,
+    NoFriendsInRange = 6,
+    NotInParty = 7,
+    NotPartyLeader = 8
+}
+```
+
+### Targeting Constants
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|--------------|
+| `MAX_TARGET_RANGE` | 100f | Max. Targeting-Distanz (Units) |
+| `TAB_TARGET_ANGLE` | 90° | Winkel für Tab-Target-Suche |
+| `MOUSEOVER_RATE_LIMIT` | 20/s | Max. Mouseover-Updates |
+| `TARGET_INFO_CACHE_TTL` | 1s | Cache-Dauer für Target-Info |
+| `MARK_ICONS_COUNT` | 8 | Anzahl verfügbarer Marker |
+
+---
+
 ## 📋 Übersicht
 
 Diese Kategorie umfasst alle Messages für **Targeting** Funktionalität im 2DMMO.
@@ -50,16 +207,7 @@ Das Targeting-System implementiert:
 -   Raid-Marker und Target-Marking
 -   Assist-Functionality für Gruppen
 
-**Client Authority**: Target-Selection ist primär client-seitig. Server validiert Target für Actions und sendet Target-Info.
-
-**🔄 DTO-System:**  
-Targeting Messages wie `TargetChanged` (1200) werden in Phase 2 ein `TargetEntityDto` verwenden:
-
--   Minimale Target-Informationen für UI (Name, Level, Health, Buffs)
--   Keine sensiblen Server-Daten wie AccountId oder Gold
--   Optimiert für Target-Frame UI-Updates
-
-Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `TargetEntityDto` Struktur.
+**Server Authority**: Target-Selection ist client-initiiert, Server validiert und trackt Target für Abilities.
 
 ---
 
@@ -912,7 +1060,94 @@ Antwort auf NearestFriendTarget Request. Bestätigt erfolgreiche Friend-Target-S
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.1.0
+## 🗑️ Obsolete Messages
+
+Derzeit keine obsoleten Messages in dieser Kategorie.
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Reihenfolge aus Code)
+
+```csharp
+// TARGETING (1200-1225)
+TargetSelect = 1200,
+TargetClear = 1201,
+TargetUpdate = 1202,
+TargetInfoRequest = 1203,
+TargetInfoResponse = 1204,
+TargetOfTarget = 1205,
+TargetOfTargetUpdate = 1206,
+FocusTarget = 1207,
+FocusClear = 1208,
+AssistTarget = 1209,
+MarkTarget = 1210,
+MarkClear = 1211,
+MarkClearAll = 1212,
+MouseoverTarget = 1213,
+TabTarget = 1214,
+NearestEnemyTarget = 1215,
+NearestFriendTarget = 1216,
+TargetSelectResponse = 1220,
+AssistTargetResponse = 1221,
+MarkTargetResponse = 1222,
+TabTargetResponse = 1223,
+NearestEnemyTargetResponse = 1224,
+NearestFriendTargetResponse = 1225,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| `TargetSelect` | 1200 | `TargetSelectResponse` | 1220 |
+| `TargetClear` | 1201 | `TargetUpdate` | 1202 |
+| `TargetInfoRequest` | 1203 | `TargetInfoResponse` | 1204 |
+| `TargetOfTarget` | 1205 | `TargetOfTargetUpdate` | 1206 |
+| `AssistTarget` | 1209 | `AssistTargetResponse` | 1221 |
+| `MarkTarget` | 1210 | `MarkTargetResponse` | 1222 |
+| `TabTarget` | 1214 | `TabTargetResponse` | 1223 |
+| `NearestEnemyTarget` | 1215 | `NearestEnemyTargetResponse` | 1224 |
+| `NearestFriendTarget` | 1216 | `NearestFriendTargetResponse` | 1225 |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs           # Targeting: 1200-1225
+├── DTOs/
+│   └── TargetEntityDto.cs       # Target-Frame Daten
+└── Messages/
+    └── Targeting/
+        ├── TargetSelect.cs
+        ├── TargetClear.cs
+        ├── TargetUpdate.cs
+        ├── TargetInfoRequest.cs
+        ├── TargetInfoResponse.cs
+        ├── TargetOfTarget.cs
+        ├── TargetOfTargetUpdate.cs
+        ├── FocusTarget.cs
+        ├── FocusClear.cs
+        ├── AssistTarget.cs
+        ├── AssistTargetResponse.cs
+        ├── MarkTarget.cs
+        ├── MarkClear.cs
+        ├── MarkClearAll.cs
+        ├── MarkTargetResponse.cs
+        ├── MouseoverTarget.cs
+        ├── TabTarget.cs
+        ├── TabTargetResponse.cs
+        ├── NearestEnemyTarget.cs
+        ├── NearestEnemyTargetResponse.cs
+        ├── NearestFriendTarget.cs
+        └── NearestFriendTargetResponse.cs
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0
 
 [← Zurück zur Übersicht](README.md)

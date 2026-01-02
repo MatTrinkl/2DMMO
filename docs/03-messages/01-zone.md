@@ -29,10 +29,11 @@
     -   [ZoneListResponse (111)](#zonelistresponse-111)
     -   [GetZoneRequest (117)](#getzonerequest-117)
     -   [ZoneLoadedAck (118)](#zoneloadedack-118)
--   [Phase 2 Messages](#phase-2-messages)
+-   [Shard Messages](#shard-messages)
     -   [ShardTransfer (112)](#shardtransfer-112)
     -   [ShardListRequest (113)](#shardlistrequest-113)
     -   [ShardListResponse (114)](#shardlistresponse-114)
+-   [SubZone Messages](#subzone-messages)
     -   [SubZoneEnter (115)](#subzoneenter-115)
     -   [SubZoneLeave (116)](#subzoneleave-116)
 -   [Obsolete Messages](#obsolete-messages)
@@ -786,7 +787,7 @@ ZoneLoadedAck (119)         (Client ist ready)
 | `GetZoneRequest`  | 117  | Request der ZoneState auslöst           |
 | `ZoneLoadedAck`   | 119  | Client-Bestätigung nach ZoneState       |
 | `EntityBatch`     | 120  | Weitere Entities bei Chunking           |
-| `EntitySpawn`     | 1400 | Einzelne Entity spawnt später (Runtime) |
+| `EntitySpawn`     | 1400 | Einzelne Entity spawnt während Runtime |
 | `EntityDespawn`   | 1402 | Entity verlässt Zone (Runtime)          |
 | `WeatherUpdate`   | 2600 | Dynamische Wetter-Änderung              |
 | `TimeOfDayUpdate` | 2602 | Zeit-Synchronisation                    |
@@ -1757,7 +1758,7 @@ ZoneLoadedAck (119)
 
 ---
 
-## ZoneDiscovered (108)
+## ZoneDiscovered (109)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1834,7 +1835,7 @@ public void OnZoneDiscovered(ZoneDiscovered msg)
 
 ---
 
-## ZoneListRequest (109)
+## ZoneListRequest (110)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -1882,7 +1883,7 @@ var allZones = new ZoneListRequest
 
 ---
 
-## ZoneListResponse (110)
+## ZoneListResponse (111)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -2068,7 +2069,7 @@ public void HandleGetZoneRequest(ClientConnection conn, GetZoneRequest request)
 
 ---
 
-## ZoneLoadedAck (119)
+## ZoneLoadedAck (118)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten (einmal pro Zone-Load)  
@@ -2469,31 +2470,47 @@ private async Task ProcessZoneLoadAsync()
 
 ---
 
-# Phase 2 Messages
+# Shard Messages
 
-Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
+Messages für Shard-basiertes Load-Balancing bei überfüllten Zonen.
 
 ---
 
-## ShardTransfer (111)
+## ShardTransfer (112)
 
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Transfer zu anderem Shard (Zone-Instance) für Load-Balancing bei überfüllten Zonen.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
-### Geplante Funktionalität
+### Beschreibung
+
+Transfer zu anderem Shard (Zone-Instance) für Load-Balancing bei überfüllten Zonen.
+
+### Im Scope ✅
 
 -   Automatischer Transfer bei Zone-Überlastung
 -   Manueller Shard-Wechsel zu Freunden
 -   Seamless Transition ohne Re-Login
 
+### Nicht im Scope ❌
+
+-   Cross-Server-Transfer → separate Architektur erforderlich
+
 ---
 
-## ShardListRequest (112)
+## ShardListRequest (113)
 
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Liste aller verfügbaren Shards für aktuelle Zone anfragen.
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
-### Geplante Funktionalität
+### Beschreibung
+
+Client fordert Liste aller verfügbaren Shards für die aktuelle Zone an.
+
+### Im Scope ✅
 
 -   Shard-Auslastung anzeigen
 -   Freunde auf anderen Shards finden
@@ -2501,19 +2518,37 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## ShardListResponse (113)
+## ShardListResponse (114)
 
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Antwort mit Shard-Informationen (Population, Status, Freunde).
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Antwort mit Shard-Informationen (Population, Status, Freunde).
 
 ---
 
-## SubZoneEnter (114)
+# SubZone Messages
 
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Spieler betritt Sub-Zone (z.B. "Goldshire" innerhalb von "Elwynn Forest").
+Messages für Sub-Zone-Übergänge innerhalb einer Haupt-Zone.
 
-### Geplante Funktionalität
+---
+
+## SubZoneEnter (115)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+
+Spieler betritt Sub-Zone (z.B. "Goldshire" innerhalb von "Elwynn Forest").
+
+### Im Scope ✅
 
 -   UI zeigt Sub-Zone-Name
 -   Musik/Ambiente wechselt
@@ -2521,23 +2556,16 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## SubZoneLeave (115)
+## SubZoneLeave (116)
 
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Spieler verlässt Sub-Zone.
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
 
----
+### Beschreibung
 
-## ZonePhaseChange (116)
-
-**Status:** 🔮 Phase 2  
-**Beschreibung:** Zone ändert Phase basierend auf Quest-Fortschritt (Phasing-System).
-
-### Geplante Funktionalität
-
--   Unterschiedliche Zone-Zustände pro Spieler
--   Quest-Progress beeinflusst Zone-Aussehen
--   Spieler in unterschiedlichen Phasen sehen sich nicht
+Spieler verlässt Sub-Zone.
 
 ---
 
@@ -2557,23 +2585,23 @@ Die folgenden Messages wurden durch den neuen Zone Loading Flow ersetzt.
 
 ---
 
-## ZoneLoadingProgress (107) [OBSOLET]
+## ZoneLoadingProgress (108) [OBSOLET]
 
 > ⚠️ **OBSOLET** - Nicht mehr benötigt
 >
-> Der Client lädt Zone-Assets lokal und sendet `ZoneLoadedAck` (119) wenn fertig. Server muss keinen Loading-Progress mehr senden.
+> Der Client lädt Zone-Assets lokal und sendet `ZoneLoadedAck` (118) wenn fertig. Server muss keinen Loading-Progress mehr senden.
 
-**MessageType ID:** 107 - Kann für zukünftige Zwecke wiederverwendet werden.
+**MessageType ID:** 108 - Reserviert, kann für zukünftige Zwecke wiederverwendet werden.
 
 ---
 
-## GetZoneResponse (118) [OBSOLET]
+## GetZoneResponse [OBSOLET]
 
 > ⚠️ **OBSOLET** - Ersetzt durch direkte `ZoneState` Antwort
 >
 > Server antwortet auf `GetZoneRequest` (117) direkt mit `ZoneState` (102). Ein separater Response-Wrapper ist nicht mehr nötig.
 
-**MessageType ID:** 118 - Kann für zukünftige Zwecke wiederverwendet werden.
+**Hinweis:** Diese Message hatte keine zugewiesene ID im Enum und wurde nie implementiert.
 
 ---
 
@@ -2596,16 +2624,14 @@ ZoneTransferResponse = 106,
 ZoneDiscovered = 108,
 ZoneListRequest = 109,
 ZoneListResponse = 110,
-ShardTransfer = 111,            // Phase 2
-ShardListRequest = 112,         // Phase 2
-ShardListResponse = 113,        // Phase 2
-SubZoneEnter = 114,             // Phase 2
-SubZoneLeave = 115,             // Phase 2
-ZonePhaseChange = 116,          // Phase 2
-GetZoneRequest = 117,           // NEU - muss hinzugefügt werden!
-// GetZoneResponse = 118,       // OBSOLET - Reserved
-ZoneLoadedAck = 119,            // NEU - muss hinzugefügt werden!
-EntityBatch = 120,              // NEU - muss hinzugefügt werden!
+ShardTransfer = 111,
+ShardListRequest = 112,
+ShardListResponse = 113,
+SubZoneEnter = 114,
+SubZoneLeave = 115,
+GetZoneRequest = 117,
+ZoneLoadedAck = 118,
+EntityBatch = 120,
 ```
 
 ## Neue Enums
@@ -2853,7 +2879,7 @@ Mmo.Shared/
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-28  
-**Version:** 2.0.0
+**Letzte Aktualisierung:** 2026-01-02  
+**Version:** 2.1.0
 
 [← Zurück zur Übersicht](README.md)

@@ -2,7 +2,7 @@
 
 **Kategorie:** 44  
 **Range:** 4400-4499  
-**Phase:** Phase 3  
+
 **Status:** ✅ Dokumentiert
 
 [← Zurück zur Übersicht](README.md)
