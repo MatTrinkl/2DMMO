@@ -24,12 +24,12 @@
 
 **Phase 1: Alignment** - ✅ COMPLETE (All 51 categories aligned)
 
-**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 1)
+**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 2 Complete)
 
 | Range | Alignment | Detail Pass | Categories |
 |-------|-----------|-------------|------------|
 | Core (0-9) | ✅ | 🔵 Detail Done | 10 categories |
-| Extended (10-19) | ✅ | ⏳ Batch 2 | 10 categories |
+| Extended (10-19) | ✅ | 🔵 Detail Done | 10 categories |
 | Social (20-29) | ✅ | ⏳ Batch 3 | 10 categories |
 | Advanced (30-39) | ✅ | ⏳ Batch 4 | 10 categories |
 | Extended (40-49) | ✅ | ⏳ Batch 5 | 10 categories |
@@ -56,18 +56,18 @@
 
 ### Gameplay Features (1000-1999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 10 | Quest | 1000-1099 | 24 | ✅ | Verified - aligned with enum |
-| 11 | Trading | 1100-1199 | 14 | ✅ | Verified - aligned with enum |
-| 12 | Targeting | 1200-1299 | 23 | ✅ | Added response messages (1220-1225) |
-| 13 | NPC | 1300-1399 | 38 | ✅ | Fixed message IDs and names |
-| 14 | Entity | 1400-1499 | 27 | ✅ | Fixed IDs, aligned with Zone, deprecated duplicates |
-| 15 | Aura | 1500-1599 | 17 | ✅ | Verified - aligned with enum |
-| 16 | Crafting | 1600-1699 | 22 | ✅ | Completely rewritten to match enum |
-| 17 | Auction | 1700-1799 | 21 | ✅ | Completely rewritten to match enum |
-| 18 | Mail | 1800-1899 | 17 | ✅ | Completely rewritten to match enum |
-| 19 | Achievement | 1900-1999 | 15 | ✅ | Completely rewritten to match enum |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 10 | Quest | 1000-1099 | 24 | ✅ | 🔵 Done | Full template with ErrorCodes, Examples |
+| 11 | Trading | 1100-1199 | 14 | ✅ | 🔵 Done | Full template with Flow diagrams |
+| 12 | Targeting | 1200-1299 | 23 | ✅ | 🔵 Done | Full template with Response messages |
+| 13 | NPC | 1300-1399 | 38 | ✅ | 🔵 Done | Full template for all NPC types |
+| 14 | Entity | 1400-1499 | 27 | ✅ | 🔵 Done | Aligned with Zone, deprecated duplicates |
+| 15 | Aura | 1500-1599 | 17 | ✅ | 🔵 Done | Full template for Buff/Debuff system |
+| 16 | Crafting | 1600-1699 | 22 | ✅ | 🔵 Done | Full template for Crafting/Gathering |
+| 17 | Auction | 1700-1799 | 21 | ✅ | 🔵 Done | Full template for Auction House |
+| 18 | Mail | 1800-1899 | 17 | ✅ | 🔵 Done | Full template for Mail system |
+| 19 | Achievement | 1900-1999 | 15 | ✅ | 🔵 Done | Full template for Achievements/Titles |
 
 ### Social & PvP (2000-2999)
 
