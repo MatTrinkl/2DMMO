@@ -69,7 +69,7 @@ Das Guild-System implementiert:
 
 ---
 
-## GuildCreate (800)
+## GuildInvite (800)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten (einmalig)  
@@ -175,7 +175,7 @@ var guildCreate = new GuildCreate
 
 ---
 
-## GuildInvite (801)
+## GuildInviteResponse (801)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -240,7 +240,7 @@ var guildInvite = new GuildInvite
 
 ---
 
-## GuildInviteReceived (802)
+## GuildLeave (802)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -291,7 +291,7 @@ var inviteReceived = new GuildInviteReceived
 
 ---
 
-## GuildJoin (803)
+## GuildKick (803)
 
 **Richtung:** 📡 Broadcast (Server → All Guild Members)  
 **Frequenz:** Häufig  
@@ -342,7 +342,7 @@ var guildJoin = new GuildJoin
 
 ---
 
-## GuildLeave (804)
+## GuildUpdate (804)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -394,7 +394,7 @@ var guildLeave = new GuildLeave
 
 ---
 
-## GuildKick (805)
+## GuildDisband (805)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -450,7 +450,7 @@ var guildKick = new GuildKick
 
 ---
 
-## GuildDisband (806)
+## GuildPromote (806)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten  
@@ -501,7 +501,7 @@ var guildDisband = new GuildDisband
 
 ---
 
-## GuildPromote (810)
+## GuildRosterRequest (810)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -563,7 +563,7 @@ var promoteToOfficer = new GuildPromote
 
 ---
 
-## GuildDemote (811)
+## GuildRosterResponse (811)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -613,7 +613,7 @@ var guildDemote = new GuildDemote
 
 ---
 
-## GuildRankEdit (812)
+## GuildRankCreate (812)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten  
@@ -677,7 +677,7 @@ var rankEdit = new GuildRankEdit
 
 ---
 
-## GuildMOTD (813)
+## GuildRankDelete (813)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -727,7 +727,7 @@ var setMOTD = new GuildMOTD
 
 ---
 
-## GuildInfo (820)
+## GuildBankDeposit (820)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (Login, Guild-Join)  
@@ -783,7 +783,7 @@ var guildInfo = new GuildInfo
 
 ---
 
-## GuildRoster (821)
+## GuildBankWithdraw (821)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (Request)  
@@ -841,7 +841,7 @@ var roster = new GuildRoster
 
 ---
 
-## GuildMessage (822)
+## GuildBankLog (822)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -875,7 +875,7 @@ Guild-Chat-Message. Alternative zu `ChatGuild` (405). Server broadcastet an alle
 
 ---
 
-## GuildBankDeposit (830)
+## GuildEventDelete (830)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -941,7 +941,7 @@ var bankDeposit = new GuildBankDeposit
 
 ---
 
-## GuildBankWithdraw (831)
+## GuildEventSignup (831)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -997,7 +997,7 @@ var bankWithdraw = new GuildBankWithdraw
 
 ---
 
-## GuildBankLog (832)
+## GuildSearch (832)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (Request)  
@@ -1093,7 +1093,7 @@ Antwort auf GuildCreate Request. Bestätigt erfolgreiche Guild-Erstellung oder g
 
 ---
 
-## GuildInviteResponse (841)
+## GuildLeaveResponse (841)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -1123,7 +1123,7 @@ Antwort auf GuildInvite Request. Bestätigt erfolgreiche Einladungs-Versendung o
 
 ---
 
-## GuildLeaveResponse (842)
+## GuildKickResponse (842)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1147,7 +1147,7 @@ Antwort auf GuildLeave Request. Bestätigt erfolgreichen Guild-Austritt oder gib
 
 ---
 
-## GuildKickResponse (843)
+## GuildDisbandResponse (843)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1175,7 +1175,7 @@ Antwort auf GuildKick Request. Bestätigt erfolgreichen Kick oder gibt Fehler zu
 
 ---
 
-## GuildDisbandResponse (844)
+## GuildPromoteResponse (844)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Sehr selten  
@@ -1199,7 +1199,7 @@ Antwort auf GuildDisband Request. Bestätigt erfolgreiche Guild-Auflösung oder 
 
 ---
 
-## GuildPromoteResponse (845)
+## GuildDemoteResponse (845)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1228,7 +1228,7 @@ Antwort auf GuildPromote Request. Bestätigt erfolgreiche Beförderung oder gibt
 
 ---
 
-## GuildDemoteResponse (846)
+## GuildRankEditResponse (846)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1257,7 +1257,7 @@ Antwort auf GuildDemote Request. Bestätigt erfolgreiche Degradierung oder gibt 
 
 ---
 
-## GuildRankEditResponse (847)
+## GuildMOTDResponse (847)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1283,7 +1283,7 @@ Antwort auf GuildRankEdit Request. Bestätigt erfolgreiche Rank-Änderung oder g
 
 ---
 
-## GuildMOTDResponse (848)
+## GuildMessageResponse (848)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1308,7 +1308,7 @@ Antwort auf GuildMOTD Request. Bestätigt erfolgreiche MOTD-Änderung oder gibt 
 
 ---
 
-## GuildMessageResponse (849)
+## GuildBankDepositResponse (849)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -1333,7 +1333,7 @@ Antwort auf GuildMessage Request. Bestätigt erfolgreiche Message-Übermittlung 
 
 ---
 
-## GuildBankDepositResponse (850)
+## GuildBankWithdrawResponse (850)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  

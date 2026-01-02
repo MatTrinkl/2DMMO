@@ -332,6 +332,17 @@ public enum MessageType : ushort
     GuildAllianceInvite = 836,
     GuildAllianceResponse = 837,
     GuildAllianceLeave = 838,
+    GuildCreateResponse = 840,
+    GuildLeaveResponse = 841,
+    GuildKickResponse = 842,
+    GuildDisbandResponse = 843,
+    GuildPromoteResponse = 844,
+    GuildDemoteResponse = 845,
+    GuildRankEditResponse = 846,
+    GuildMOTDResponse = 847,
+    GuildMessageResponse = 848,
+    GuildBankDepositResponse = 849,
+    GuildBankWithdrawResponse = 850,
 
     // ═══════════════════════════════════════════════════════════════
     // PING / LATENCY / SYSTEM (0900-0999)

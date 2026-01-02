@@ -40,7 +40,7 @@
 | 05 | Inventory | 500-599 | 44 | ✅ | Fixed message names, added responses (536-543) |
 | 06 | Character | 600-699 | 30 | ✅ | Fixed names, added responses (650-655) |
 | 07 | Party | 700-799 | 33 | ✅ | Fixed names, added responses (740-746) |
-| 08 | Guild | 800-899 | 39 | ⏳ | |
+| 08 | Guild | 800-899 | 50 | ✅ | Fixed names, added responses (840-850) |
 | 09 | System | 900-999 | 26 | ⏳ | |
 
 ### Gameplay Features (1000-1999)
