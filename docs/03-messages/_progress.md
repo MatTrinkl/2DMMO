@@ -79,16 +79,16 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 30 | Settings | 3000-3099 | 12 | ⏳ | |
-| 31 | Loot | 3100-3199 | 17 | ⏳ | |
-| 32 | Cooldown | 3200-3299 | 20 | ⏳ | |
-| 33 | Inspection | 3300-3399 | 21 | ⏳ | |
-| 34 | Map | 3400-3499 | 24 | ⏳ | |
-| 35 | Voice | 3500-3599 | 14 | ⏳ | |
-| 36 | Reporting | 3600-3699 | 16 | ⏳ | |
-| 37 | Economy | 3700-3799 | 14 | ⏳ | |
-| 38 | Skill | 3800-3899 | 24 | ⏳ | |
-| 39 | Equipment | 3900-3999 | 24 | ⏳ | |
+| 30 | Settings | 3000-3099 | 17 | ✅ | Completely rewritten to match enum |
+| 31 | Loot | 3100-3199 | 21 | ✅ | Completely rewritten to match enum |
+| 32 | Cooldown | 3200-3299 | 18 | ✅ | Completely rewritten to match enum |
+| 33 | Inspection | 3300-3399 | 17 | ✅ | Completely rewritten to match enum |
+| 34 | Map | 3400-3499 | 20 | ✅ | Completely rewritten to match enum |
+| 35 | Voice | 3500-3599 | 15 | ✅ | Completely rewritten to match enum |
+| 36 | Reporting | 3600-3699 | 18 | ✅ | Completely rewritten to match enum |
+| 37 | Economy | 3700-3799 | 17 | ✅ | Completely rewritten to match enum |
+| 38 | Skill | 3800-3899 | 28 | ✅ | Completely rewritten to match enum |
+| 39 | Equipment | 3900-3999 | 28 | ✅ | Completely rewritten to match enum |
 
 ### Extended Features (4000-4999)
 

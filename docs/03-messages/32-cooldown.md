@@ -1,9 +1,7 @@
-# ⏱️ Cooldowns / Timers Messages (3200-3299)
+# ⏱️ Cooldown / Timer Messages (3200-3299)
 
 **Kategorie:** 32  
 **Range:** 3200-3299  
-
-
 
 [← Zurück zur Übersicht](README.md)
 
@@ -34,440 +32,138 @@
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **Cooldown-, Cast- und Channel-Systeme** im 2DMMO.
-
-Das Cooldown-System implementiert:
-- Ability-Cooldowns (individuelle pro Spell)
-- Global Cooldown (GCD) für alle Spells
-- Cast-Time Tracking
-- Channel-Spells (kontinuierliche Casts)
-- Charge-basierte Abilities
-- Cooldown-Reset Mechanics
-
-**Server Authority**: Alle Cooldown-Timings sind server-authoritative. Client zeigt Timers, Server validiert.
+Diese Kategorie umfasst alle Messages für **Cooldowns und Timer** im 2DMMO.
 
 ---
 
 ## CooldownStart (3200)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Startet Cooldown für Ability/Item. Server sendet nach Ability-Use.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CooldownId | uint | Ability/Item-ID | Ja |
-| Duration | int | Cooldown-Duration (ms) | Ja |
-| CooldownCategory | string | Category (z.B. "spell", "item", "trinket") | Ja |
-
-### Beispiel Payload
-```csharp
-var cooldownStart = new CooldownStart
-{
-    Type = MessageType.CooldownStart,
-    CooldownId = 1001,
-    Duration = 10000, // 10 Sekunden
-    CooldownCategory = "spell"
-};
-```
-
-### Notizen
-- **UI**: Client zeigt Cooldown-Spiral auf Icon
-- **Categories**: Spells, Items, Trinkets haben separate Cooldowns
-- **Shared**: Manche Spells sharen Cooldown-Category
+Cooldown beginnt für Ability.
 
 ---
 
 ## CooldownEnd (3201)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Cooldown ist abgelaufen. Ability ist wieder verwendbar.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CooldownId | uint | Ability/Item-ID | Ja |
-
-### Notizen
-- **Sound**: Client spielt optional "Ready" Sound
-- **Visual**: Cooldown-Spiral verschwindet
+Cooldown endet.
 
 ---
 
 ## CooldownUpdate (3202)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Cooldown-Duration ändert sich (z.B. durch Buff, Haste-Rating).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CooldownId | uint | Ability-ID | Ja |
-| NewDuration | int | Neue verbleibende Duration (ms) | Ja |
-
-### Notizen
-- **Haste**: Haste-Rating reduziert Cooldowns
-- **Buffs**: Cooldown-Reduction Buffs
+Cooldown-Status Update.
 
 ---
 
 ## CooldownReset (3203)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Cooldown wird resettet (sofort ready). Durch spezielle Abilities/Procs.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CooldownId | uint | Ability-ID | Ja |
-| ResetReason | string | "proc", "ability", "boss_phase" | Ja |
-
-### Notizen
-- **Procs**: Chance-basierte Resets
-- **Abilities**: Cooldown-Reset-Abilities
-- **Boss**: Boss-Phase-Transitions können Cooldowns resetten
+Cooldown wurde zurückgesetzt.
 
 ---
 
 ## CooldownSync (3204)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten (Login/Reconnect)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Sync aller aktiven Cooldowns nach Login/Reconnect.
-
-### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Cooldowns | List<CooldownInfo> | Alle aktiven Cooldowns | Ja |
-
-**CooldownInfo**:
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| CooldownId | uint | Ability-ID |
-| RemainingTime | int | Verbleibende Zeit (ms) |
-| Category | string | Cooldown-Category |
+Sync aller Cooldowns.
 
 ---
 
 ## GlobalCooldownStart (3210)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** ⚡ Sehr häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Startet Global Cooldown (GCD). Nach fast jeder Ability-Use.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Duration | int | GCD-Duration (ms, standard 1500ms) | Ja |
-
-### Notizen
-- **Standard**: 1.5 Sekunden
-- **Haste**: Reduziert durch Haste-Rating (min 1.0s)
-- **All Abilities**: Blockiert alle Abilities während GCD
-- **Exceptions**: Instant Off-GCD Abilities existieren
+Global Cooldown (GCD) beginnt.
 
 ---
 
 ## GlobalCooldownEnd (3211)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** ⚡ Sehr häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-GCD ist abgelaufen. Abilities sind wieder verwendbar.
-
-### Broadcast Payload
-Keine zusätzlichen Felder
+Global Cooldown endet.
 
 ---
 
 ## CastStart (3220)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Startet Spell-Cast mit Cast-Time. Spieler muss Channeln bis Complete.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Caster Entity-ID | Ja |
-| SpellId | uint | Spell-ID | Ja |
-| CastTime | int | Cast-Duration (ms) | Ja |
-| TargetId | int | Target-ID (0=self) | Nein |
-
-### Beispiel Payload
-```csharp
-var castStart = new CastStart
-{
-    Type = MessageType.CastStart,
-    CasterId = 50001,
-    SpellId = 2001,
-    CastTime = 3000, // 3 Sekunden
-    TargetId = 60001
-};
-```
-
-### Notizen
-- **UI**: Client zeigt Cast-Bar
-- **Movement**: Movement interruptet Cast (default)
-- **Damage**: Damage kann Cast interrupten (Pushback)
-- **Haste**: Haste reduziert Cast-Time
+Cast beginnt.
 
 ---
 
 ## CastUpdate (3221)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Cast-Progress-Update (z.B. bei Pushback durch Damage).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Caster-ID | Ja |
-| RemainingTime | int | Verbleibende Cast-Time (ms) | Ja |
+Cast-Progress Update.
 
 ---
 
 ## CastInterrupt (3222)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Cast wurde interruptet (Movement, Damage, Silence, Stun).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Caster-ID | Ja |
-| InterruptReason | string | "movement", "damage", "silence", "stun", "death" | Ja |
-| InterrupterId | int | Interrupter-ID (bei interrupt-Spell) | Nein |
-
-### Notizen
-- **Lockout**: Interrupt kann School-Lockout verursachen
-- **Cooldown**: Spell geht auf Cooldown auch bei Interrupt
-- **UI**: Cast-Bar verschwindet mit "interrupted" Text
+Cast wurde unterbrochen.
 
 ---
 
 ## CastComplete (3223)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Cast erfolgreich abgeschlossen. Spell wird executed.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Caster-ID | Ja |
-| SpellId | uint | Completed Spell | Ja |
-
-### Notizen
-- **Effect**: Spell-Effect wird applied (separate Message)
-- **GCD**: Löst Global Cooldown aus
+Cast abgeschlossen.
 
 ---
 
 ## CastFailed (3224)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Cast-Start fehlgeschlagen (kein Mana, kein Target, etc.).
-
-### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SpellId | uint | Fehlgeschlagener Spell | Ja |
-| FailReason | string | "no_mana", "no_target", "out_of_range", "not_ready" | Ja |
+Cast fehlgeschlagen.
 
 ---
 
 ## ChannelStart (3230)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Startet Channel-Spell (kontinuierlicher Cast mit Ticks).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Channeler-ID | Ja |
-| SpellId | uint | Channel-Spell-ID | Ja |
-| Duration | int | Total Duration (ms) | Ja |
-| TickInterval | int | Interval zwischen Ticks (ms) | Ja |
-| TargetId | int | Target-ID | Nein |
-
-### Notizen
-- **Examples**: Mind Flay, Drain Life, Blizzard
-- **Ticks**: Effect wird bei jedem Tick applied
-- **Movement**: Meist nicht möglich während Channel
+Channel beginnt.
 
 ---
 
 ## ChannelTick (3231)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Channel-Tick (periodischer Effect-Trigger).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Channeler-ID | Ja |
-| SpellId | uint | Channel-Spell | Ja |
-| TickNumber | int | Tick-Nummer (1-N) | Ja |
+Channel-Tick (periodisch).
 
 ---
 
 ## ChannelInterrupt (3232)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Channel wurde interruptet.
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Channeler-ID | Ja |
-| InterruptReason | string | Reason | Ja |
+Channel wurde unterbrochen.
 
 ---
 
 ## ChannelComplete (3233)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📡 Broadcast
 ### Beschreibung
-Channel erfolgreich completed (alle Ticks durch).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| CasterId | int | Channeler-ID | Ja |
-| SpellId | uint | Completed Channel | Ja |
+Channel abgeschlossen.
 
 ---
 
 ## ChargeUpdate (3240)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Update für Charge-basierte Abilities (Abilities mit mehreren Charges).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SpellId | uint | Spell-ID | Ja |
-| CurrentCharges | int | Aktuelle Charges | Ja |
-| MaxCharges | int | Max Charges | Ja |
-| NextChargeTime | long | Unix Timestamp (nächste Charge) | Ja |
-
-### Beispiel Payload
-```csharp
-var chargeUpdate = new ChargeUpdate
-{
-    Type = MessageType.ChargeUpdate,
-    SpellId = 3001,
-    CurrentCharges = 1,
-    MaxCharges = 3,
-    NextChargeTime = DateTimeOffset.UtcNow.AddSeconds(20).ToUnixTimeSeconds()
-};
-```
-
-### Notizen
-- **Examples**: Rogue Combo Points, Warlock Soul Shards
-- **Recharge**: Charges regenerieren über Zeit
-- **UI**: Client zeigt Charge-Count
+Charge-Status Update.
 
 ---
 
 ## ChargeRestore (3241)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Charge wurde restored (Time-basiert oder durch Ability).
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SpellId | uint | Spell-ID | Ja |
-| NewCharges | int | Neue Charge-Count | Ja |
+Charge wurde wiederhergestellt.
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0  
+**Status**: ✅ Aligned mit MessageType Enum (18 Messages)
 
 [← Zurück zur Übersicht](README.md)

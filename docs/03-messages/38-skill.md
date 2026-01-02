@@ -1,9 +1,7 @@
-# 🎯 Skills / Talents / Abilities Messages (3800-3899)
+# ⚡ Skill / Talent Messages (3800-3899)
 
 **Kategorie:** 38  
 **Range:** 3800-3899  
-
-
 
 [← Zurück zur Übersicht](README.md)
 
@@ -14,255 +12,238 @@
 - [SkillListRequest (3800)](#skilllistrequest-3800)
 - [SkillListResponse (3801)](#skilllistresponse-3801)
 - [SkillLearn (3802)](#skilllearn-3802)
+- [SkillLearnResult (3803)](#skilllearnresult-3803)
+- [SkillUnlearn (3804)](#skillunlearn-3804)
 - [SkillUpgrade (3805)](#skillupgrade-3805)
+- [SkillUpgradeResult (3806)](#skillupgraderesult-3806)
 - [TalentListRequest (3810)](#talentlistrequest-3810)
+- [TalentListResponse (3811)](#talentlistresponse-3811)
 - [TalentLearn (3812)](#talentlearn-3812)
+- [TalentLearnResult (3813)](#talentlearnresult-3813)
 - [TalentReset (3814)](#talentreset-3814)
+- [TalentResetResult (3815)](#talentresetresult-3815)
+- [TalentPreview (3816)](#talentpreview-3816)
+- [SpecializationList (3820)](#specializationlist-3820)
 - [SpecializationChange (3821)](#specializationchange-3821)
+- [SpecializationChangeResult (3822)](#specializationchangeresult-3822)
 - [AbilityBarUpdate (3830)](#abilitybarupdate-3830)
+- [AbilityBarSlotSet (3831)](#abilitybarslotset-3831)
+- [AbilityBarSlotClear (3832)](#abilitybarslotclear-3832)
+- [AbilityBarSwap (3833)](#abilitybarswap-3833)
+- [PassiveListRequest (3840)](#passivelistrequest-3840)
+- [PassiveListResponse (3841)](#passivelistresponse-3841)
+- [PassiveUpdate (3842)](#passiveupdate-3842)
 - [GlyphApply (3850)](#glyphapply-3850)
+- [GlyphRemove (3851)](#glyphremove-3851)
+- [GlyphListRequest (3852)](#glyphlistrequest-3852)
+- [GlyphListResponse (3853)](#glyphlistresponse-3853)
 
 ---
 
 ## 📋 Übersicht
 
-Diese Kategorie umfasst alle Messages für **Skill-, Talent- und Ability-Systeme** im 2DMMO.
-
-Das Skill-System implementiert:
-- Skill-Learning (aus Trainer, Levelup, Quests)
-- Skill-Upgrades (Rank 1 → Rank 2)
-- Talent-Trees (Specializationen)
-- Specialization-Swapping
-- Ability-Bar Management
-- Glyph-System (Ability-Modifiers)
-
-**Server Authority**: Alle Skill/Talent-Changes sind server-authoritative.
+Diese Kategorie umfasst alle Messages für **Skills, Talents und Abilities** im 2DMMO.
 
 ---
 
 ## SkillListRequest (3800)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Fordert Liste aller gelernten Skills an.
-
-### Request Payload
-Keine zusätzlichen Felder
-
-### Erwartete Response
-- **Immer:** `SkillListResponse` (3801)
+Client fordert Skill-Liste an.
 
 ---
 
 ## SkillListResponse (3801)
-
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Liste aller gelernten Skills mit Ranks.
-
-### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Skills | List<SkillInfo> | Gelernte Skills | Ja |
-
-**SkillInfo**:
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| SkillId | uint | Skill-ID |
-| Rank | int | Current Rank |
-| MaxRank | int | Max Rank |
+Server sendet Skill-Liste.
 
 ---
 
 ## SkillLearn (3802)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Lernt neuen Skill.
+Client lernt Skill.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SkillId | uint | Zu lernender Skill | Ja |
-| TrainerId | int | Trainer-NPC-ID | Nein |
+---
 
-### Erwartete Response
-- **Bei Erfolg:** `SkillLearnResult` (3803)
-- **Bei Fehler:** `SkillLearnResult` (3803) mit ErrorCode
+## SkillLearnResult (3803)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Skill-Lernen.
 
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `LEVEL_TOO_LOW` | Level zu niedrig | Leveln |
-| `INSUFFICIENT_GOLD` | Nicht genug Gold | Gold farmen |
-| `PREREQUISITE_NOT_MET` | Vorskill nicht gelernt | Vorskill lernen |
+---
+
+## SkillUnlearn (3804)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client verlernt Skill.
 
 ---
 
 ## SkillUpgrade (3805)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Upgraded Skill zu höherem Rank.
+Client upgraded Skill.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SkillId | uint | Skill zum upgraden | Ja |
+---
 
-### Notizen
-- **Cost**: Gold-Cost steigt mit Rank
-- **Auto**: Bei Levelup oft auto-upgrade verfügbar
+## SkillUpgradeResult (3806)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Skill-Upgrade.
 
 ---
 
 ## TalentListRequest (3810)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Fordert Talent-Tree an.
+Client fordert Talent-Liste an.
 
-### Request Payload
-Keine zusätzlichen Felder
+---
 
-### Erwartete Response
-- **Immer:** `TalentListResponse` (3811)
+## TalentListResponse (3811)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Talent-Liste.
 
 ---
 
 ## TalentLearn (3812)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Lernt Talent-Point.
+Client lernt Talent.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| TalentId | uint | Talent-ID | Ja |
+---
 
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `NO_TALENT_POINTS` | Keine Talent-Points | Leveln |
-| `PREREQUISITE_NOT_MET` | Vortalent fehlt | Vortalent lernen |
+## TalentLearnResult (3813)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Talent-Lernen.
 
 ---
 
 ## TalentReset (3814)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Resettet alle Talents (gegen Gold).
+Client resettet Talente.
 
-### Request Payload
-Keine zusätzlichen Felder
+---
 
-### Erwartete Response
-- **Bei Erfolg:** Alle Talent-Points werden returned
-- **Bei Fehler:** `TalentResetResult` (3815)
+## TalentResetResult (3815)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Talent-Reset.
 
-### Notizen
-- **Cost**: Steigt mit jedem Reset
-- **Cap**: Max Reset-Cost
+---
+
+## TalentPreview (3816)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client previewed Talent-Build.
+
+---
+
+## SpecializationList (3820)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Spezialisierungen.
 
 ---
 
 ## SpecializationChange (3821)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Wechselt Specialization (z.B. Tank → Healer).
+Client wechselt Spezialisierung.
 
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SpecId | uint | Spec-ID | Ja |
+---
 
-### Notizen
-- **Dual-Spec**: Meist 2-3 Specs parallel möglich
-- **Cost**: Erste Spec-Änderung kostenlos, danach Gold
+## SpecializationChangeResult (3822)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server bestätigt Spec-Wechsel.
 
 ---
 
 ## AbilityBarUpdate (3830)
-
-**Richtung:** 📡 Broadcast  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📥 Server → Client
 ### Beschreibung
-Ability-Bar hat sich geändert.
+Ability-Bar aktualisiert.
 
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Slots | List<AbilitySlot> | Alle Slots | Ja |
+---
 
-**AbilitySlot**:
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| SlotIndex | byte | Slot (1-12) |
-| SkillId | uint | Skill-ID (0=empty) |
+## AbilityBarSlotSet (3831)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client setzt Ability-Slot.
+
+---
+
+## AbilityBarSlotClear (3832)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client leert Ability-Slot.
+
+---
+
+## AbilityBarSwap (3833)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client tauscht Ability-Slots.
+
+---
+
+## PassiveListRequest (3840)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client fordert Passive-Liste an.
+
+---
+
+## PassiveListResponse (3841)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Passive-Liste.
+
+---
+
+## PassiveUpdate (3842)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Passive hat sich geändert.
 
 ---
 
 ## GlyphApply (3850)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
+**Richtung:** 📤 Client → Server
 ### Beschreibung
-Applied Glyph auf Skill (modifiziert Skill-Behavior).
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| GlyphId | uint | Glyph-ID | Ja |
-| SkillId | uint | Target-Skill | Ja |
-
-### Notizen
-- **Use-Case**: Skill-Modifiers (mehr Damage, weniger Cooldown, etc.)
-- **Limit**: Max 3 Glyphs pro Skill
+Client wendet Glyph an.
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## GlyphRemove (3851)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client entfernt Glyph.
+
+---
+
+## GlyphListRequest (3852)
+**Richtung:** 📤 Client → Server
+### Beschreibung
+Client fordert Glyph-Liste an.
+
+---
+
+## GlyphListResponse (3853)
+**Richtung:** 📥 Server → Client
+### Beschreibung
+Server sendet Glyph-Liste.
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0  
+**Status**: ✅ Aligned mit MessageType Enum (28 Messages)
 
 [← Zurück zur Übersicht](README.md)
