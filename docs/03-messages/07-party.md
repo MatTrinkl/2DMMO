@@ -1,9 +1,9 @@
-# 👥 Party Messages (700-799)
+# 👥 Party Messages (0700-0746)
 
-**Kategorie:** 07  
-**Range:** 700-799  
-
-
+**Kategorie:** 7  
+**Range:** 0700-0746 (AKTIV)  
+**Status:** 🟢 In Entwicklung  
+**Version:** 3.0.0
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,28 +11,173 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [PartyInvite (700)](#partyinvite-700)
-- [PartyInviteReceived (701)](#partyinvitereceived-701)
-- [PartyAccept (702)](#partyaccept-702)
-- [PartyDecline (703)](#partydecline-703)
-- [PartyJoin (704)](#partyjoin-704)
-- [PartyLeave (705)](#partyleave-705)
-- [PartyKick (706)](#partykick-706)
-- [PartyPromote (707)](#partyromote-707)
-- [PartyDisband (708)](#partydisband-708)
-- [PartyMemberUpdate (710)](#partymemberupdate-710)
-- [PartyMemberOffline (711)](#partymemberoffline-711)
-- [PartyLootMode (720)](#partylootmode-720)
-- [PartyReadyCheck (730)](#partyreadycheck-730)
-- [PartyReadyCheckResponse (731)](#partyreadycheckresponse-731)
-- [PartyInviteResponse (740)](#partyinviteresponse-740)
-- [PartyAcceptResponse (741)](#partyacceptresponse-741)
-- [PartyLeaveResponse (742)](#partyleaveresponse-742)
-- [PartyKickResponse (743)](#partykickresponse-743)
-- [PartyPromoteResponse (744)](#partypromoteresponse-744)
-- [PartyDisbandResponse (745)](#partydisbandresponse-745)
-- [PartyLootModeResponse (746)](#partylootmoderesponse-746)
-- [PartyReadyCheckStartResponse (747)](#partyreadycheckstartresponse-747)
+- [🔄 Party Flow](#-party-flow)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+- [📩 Aktive Messages (0700-0746)](#-aktive-messages-0700-0746)
+  - [PartyInvite (700)](#partyinvite-700)
+  - [PartyInviteResponse (701)](#partyinviteresponse-701)
+  - [PartyLeave (702)](#partyleave-702)
+  - [PartyKick (703)](#partykick-703)
+  - [PartyUpdate (704)](#partyupdate-704)
+  - [PartyDisband (705)](#partydisband-705)
+  - [PartyLeaderChange (706)](#partyleaderchange-706)
+  - [PartyLootChange (707)](#partylootchange-707)
+  - [PartyReadyCheck (708)](#partyreadycheck-708)
+  - [PartyReadyResponse (709)](#partyreadyresponse-709)
+  - [PartyMemberUpdate (710)](#partymemberupdate-710)
+  - [PartyPositionUpdate (711)](#partypositionupdate-711)
+  - [PartyHealthUpdate (712)](#partyhealthupdate-712)
+  - [PartyResourceUpdate (713)](#partyresourceupdate-713)
+  - [PartyBuffUpdate (714)](#partybuffupdate-714)
+  - [PartyTargetUpdate (715)](#partytargetupdate-715)
+  - [PartyRoleSet (716)](#partyroleset-716)
+  - [PartyRoleCheck (717)](#partyrolecheck-717)
+  - [PartyConvertToRaid (718)](#partyconverttoraid-718)
+  - [PartySync (719)](#partysync-719)
+  - [PartySummon (720)](#partysummon-720)
+  - [PartySummonResponse (721)](#partysummonresponse-721)
+  - [PartyMarkerSet (722)](#partymarkerset-722)
+  - [PartyMarkerClear (723)](#partymarkerclear-723)
+  - [PartyDifficultyVote (724)](#partydifficultyvote-724)
+  - [PartyDifficultySet (725)](#partydifficultyset-725)
+  - [PartyAcceptResponse (740)](#partyacceptresponse-740)
+  - [PartyLeaveResponse (741)](#partyleaveresponse-741)
+  - [PartyKickResponse (742)](#partykickresponse-742)
+  - [PartyPromoteResponse (743)](#partypromoteresponse-743)
+  - [PartyDisbandResponse (744)](#partydisbandresponse-744)
+  - [PartyLootModeResponse (745)](#partylootmoderesponse-745)
+  - [PartyReadyCheckStartResponse (746)](#partyreadycheckstartresponse-746)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
+
+---
+
+## 🔄 Party Flow
+
+### Server-Authoritative Architektur
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PARTY-ARCHITEKTUR                          │
+├─────────────────────────────────────────────────────────────────┤
+│  CLIENT A          SERVER              CLIENT B                │
+│     │                 │                     │                  │
+│     │  PartyInvite    │                     │                  │
+│     │  (700)          │                     │                  │
+│     │────────────────►│                     │                  │
+│     │                 │  ┌──────────────────┤                  │
+│     │                 │  │ Validate:        │                  │
+│     │                 │  │ - Target online? │                  │
+│     │                 │  │ - Not in party?  │                  │
+│     │                 │  │ - Not blocked?   │                  │
+│     │                 │  │ - Party not full?│                  │
+│     │                 │  └──────────────────┤                  │
+│     │                 │                     │                  │
+│     │ PartyInvite     │ PartyInviteResponse │                  │
+│     │ Response(701)   │ (701)               │                  │
+│     │◄────────────────│────────────────────►│                  │
+│     │                 │                     │                  │
+│     │                 │    PartyLeave(702)  │                  │
+│     │                 │◄────────────────────│ (Accept)         │
+│     │                 │                     │                  │
+│     │ PartyUpdate     │ PartyUpdate(704)    │                  │
+│     │ (704)           │                     │                  │
+│     │◄────────────────│────────────────────►│                  │
+│     │                 │                     │                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Ready-Check Flow
+
+```
+Leader                    Server              All Members
+  │                          │                     │
+  │  PartyReadyCheck (708)   │                     │
+  │─────────────────────────►│                     │
+  │                          │  PartyReadyCheck    │
+  │                          │  Broadcast          │
+  │                          │────────────────────►│
+  │                          │                     │
+  │                          │  PartyReadyResponse │
+  │                          │  (709) from each    │
+  │                          │◄────────────────────│
+  │                          │                     │
+  │  PartyReadyCheckStart    │                     │
+  │  Response (746)          │                     │
+  │◄─────────────────────────│                     │
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### PartyMemberDto
+
+```csharp
+[MessagePackObject]
+public class PartyMemberDto
+{
+    [Key(0)] public long CharacterId { get; set; }
+    [Key(1)] public string Name { get; set; }
+    [Key(2)] public byte Level { get; set; }
+    [Key(3)] public byte ClassId { get; set; }
+    [Key(4)] public int CurrentHp { get; set; }
+    [Key(5)] public int MaxHp { get; set; }
+    [Key(6)] public int CurrentMana { get; set; }
+    [Key(7)] public int MaxMana { get; set; }
+    [Key(8)] public float X { get; set; }
+    [Key(9)] public float Y { get; set; }
+    [Key(10)] public uint ZoneId { get; set; }
+    [Key(11)] public bool IsOnline { get; set; }
+    [Key(12)] public bool IsLeader { get; set; }
+    [Key(13)] public PartyRole Role { get; set; }
+}
+```
+
+### PartyRole Enum
+
+```csharp
+public enum PartyRole : byte
+{
+    None = 0,
+    Tank = 1,
+    Healer = 2,
+    DamageDealer = 3
+}
+```
+
+### LootMode Enum
+
+```csharp
+public enum LootMode : byte
+{
+    FreeForAll = 0,
+    RoundRobin = 1,
+    MasterLooter = 2,
+    GroupLoot = 3,
+    NeedBeforeGreed = 4
+}
+```
+
+### PartyMarkerType Enum
+
+```csharp
+public enum PartyMarkerType : byte
+{
+    Skull = 1,
+    Cross = 2,
+    Square = 3,
+    Moon = 4,
+    Triangle = 5,
+    Diamond = 6,
+    Circle = 7,
+    Star = 8
+}
+```
+
+---
+
+## 📩 Aktive Messages (0700-0746)
 
 ---
 
@@ -44,21 +189,18 @@ Das Party-System implementiert:
 - **Group-Formation**: Invites, Accept, Decline, Auto-Join
 - **Party-Management**: Leader-Promotion, Kick, Disband
 - **Member-Tracking**: HP/Mana, Position, Status (Online/Offline/Dead)
-- **Loot-System**: Group-Loot, Round-Robin, Master-Looter, Need-Before-Greed (geplant)
+- **Loot-System**: Group-Loot, Round-Robin, Master-Looter, Need-Before-Greed
 - **XP-Sharing**: XP-Bonus für Gruppe (10-20% je nach Größe)
 - **Ready-Check**: Für Dungeon/Boss-Pulls
 - **Party-Chat**: Dedizierter Chat-Channel → siehe `ChatParty` (404)
 
 **Server Authority**: Alle Party-Changes sind server-authoritative.
 
-**Party-Size**: Max 5 Spieler (Raid = 40 Spieler später)
+**Party-Size**: Max 5 Spieler (Raid = 40 Spieler)
 
 **XP-Range**: Max 100m zwischen Party-Members für XP-Share
 
 **Level-Range**: Max 10 Level-Differenz für XP-Share (flexible basierend auf höchstem Level)
-
-**🔄 DTO-System:**  
-In Phase 2 wird ein `PartyMemberDto` eingeführt für Party-Listen und Member-Updates. Dies ermöglicht minimale Spieler-Infos ohne sensible Daten. Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für Details.
 
 ---
 
@@ -70,7 +212,7 @@ In Phase 2 wird ein `PartyMemberDto` eingeführt für Party-Listen und Member-Up
 **Spezielle Rechte:** Keine (oder Party-Leader falls Party bereits existiert)
 
 ### Beschreibung
-Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party hat, wird automatisch eine neue Party erstellt mit ihm als Leader. Target erhält `PartyInviteReceived` (701).
+Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party hat, wird automatisch eine neue Party erstellt mit ihm als Leader.
 
 ### Im Scope ✅
 - Party-Einladung an Online-Spieler
@@ -79,9 +221,8 @@ Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party 
 - Cross-Zone Invites
 
 ### Nicht im Scope ❌
-- Raid-Invites → geplant (RaidInvite Message)
+- Raid-Invites → verwende `PartyConvertToRaid` (718)
 - Offline-Invites → nicht möglich
-- Guild-Mass-Invite → geplant
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -89,38 +230,14 @@ Client sendet Party-Einladung an anderen Spieler. Falls Client noch keine Party 
 | TargetName | string | Einzuladender Spieler-Name | Ja |
 
 ### Erwartete Response
-- `PartyInviteResponse` (740)
-
-### Folge-Messages bei Erfolg
-- `PartyInviteReceived` (701) an Target-Spieler
+- `PartyInviteResponse` (701)
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| `PartyInviteReceived` | 701 | Target erhält Invite |
-| `PartyAccept` | 702 | Target akzeptiert |
-| `PartyDecline` | 703 | Target lehnt ab |
-| `PartyJoin` | 704 | Nach Accept |
-
-### Flow-Diagramm
-```
-Inviter                   Server                    Target
-  │                          │                          │
-  │  PartyInvite (700)       │                          │
-  │  TargetName="Legolas"    │                          │
-  │─────────────────────────►│                          │
-  │                          │  ┌─ Validate: Target online?
-  │                          │  ├─ Validate: Not in Party?
-  │                          │  ├─ Validate: Not blocked?
-  │                          │  ├─ Create Party (if needed)
-  │                          │  └─ Add to Invite-Queue
-  │                          │                          │
-  │  PartyInviteSent (ack)   │  PartyInviteReceived (701)│
-  │◄─────────────────────────│─────────────────────────►│
-  │                          │                          │
-  │                          │                          │  (UI shows Invite)
-  │                          │                          │  (60s Timer)
-```
+| `PartyInviteResponse` | 701 | Response |
+| `PartyLeave` | 702 | Nach Accept |
+| `PartyUpdate` | 704 | Roster-Update |
 
 ### Beispiel Payload
 ```csharp
@@ -138,16 +255,13 @@ var partyInvite = new PartyInvite
 | `ALREADY_IN_PARTY` | Target ist bereits in Party | Target muss erst Party verlassen |
 | `PARTY_FULL` | Party ist voll (5/5) | Member kicken oder Raid konvertieren |
 | `PLAYER_BLOCKED_YOU` | Target hat Inviter blockiert | - |
-| `PLAYER_DECLINED_INVITES` | Target hat Invites deaktiviert | - |
 | `INVITE_ALREADY_PENDING` | Invite bereits gesendet | Auf Antwort warten |
 | `NOT_PARTY_LEADER` | Nur Leader darf inviten | - |
 
 ### Notizen
 - **Auto-Party-Creation**: Falls Inviter keine Party hat, wird eine erstellt
 - **Invite-Timeout**: 60 Sekunden für Accept/Decline
-- **Invite-Queue**: Max 5 gleichzeitige Invites pro Party
 - **Cross-Zone**: Invites funktionieren Zone-übergreifend
-- **UI-Notification**: "You invited Legolas to your party."
 
 ---
 
@@ -159,58 +273,39 @@ var partyInvite = new PartyInvite
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Server informiert Spieler über eingehende Party-Einladung. Client zeigt UI-Popup mit Accept/Decline-Buttons.
-
-### Im Scope ✅
-- Invite-Notification
-- Inviter-Info (Name, Level, Class)
-- Timeout-Information
-- Auto-Decline bei Timeout
-
-### Nicht im Scope ❌
-- Auto-Accept → muss manuell sein
-- Invite-Forwarding → nicht möglich
+Server bestätigt das Ergebnis eines PartyInvite Requests. Enthält Success-Status und bei Fehlern den ErrorCode. Bei Erfolg wird parallel dem Target ein Invite-Event gesendet.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| InviterId | long | Character-ID des Inviters | Ja |
-| InviterName | string | Inviter-Name | Ja |
-| InviterLevel | int | Inviter-Level | Ja |
-| InviterClass | byte | Inviter-Class | Ja |
-| TimeoutSeconds | int | Sekunden bis Auto-Decline (60) | Ja |
-| PartySize | int | Aktuelle Party-Größe (1-5) | Ja |
-
-### Erwartete Response
-- Client sendet `PartyAccept` (702) oder `PartyDecline` (703)
-- Bei Timeout: Auto-`PartyDecline`
+| Success | bool | Invite erfolgreich versendet? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| TargetName | string | Eingeladener Spieler | Bei Erfolg |
 
 ### Verwandte Messages
 | Message | ID | Beziehung |
 |---------|-----|-----------|
-| `PartyInvite` | 700 | Source von dieser Message |
-| `PartyAccept` | 702 | Invite annehmen |
-| `PartyDecline` | 703 | Invite ablehnen |
+| `PartyInvite` | 700 | Request |
+| `PartyUpdate` | 704 | Bei Accept |
 
 ### Beispiel Payload
 ```csharp
-var inviteReceived = new PartyInviteReceived
+var response = new PartyInviteResponse
 {
-    Type = MessageType.PartyInviteReceived,
-    InviterId = 98765,
-    InviterName = "Aragorn",
-    InviterLevel = 10,
-    InviterClass = 1, // Warrior
-    TimeoutSeconds = 60,
-    PartySize = 2 // 2/5 Members already
+    Type = MessageType.PartyInviteResponse,
+    Success = true,
+    TargetName = "Legolas"
 };
 ```
 
-### Notizen
-- **UI-Popup**: "Aragorn (Warrior, Level 10) has invited you to join their party. (2/5)"
-- **Sound**: Party-Invite Sound
-- **Timeout**: 60 Sekunden → dann Auto-Decline
-- **Multi-Invite**: Kann mehrere gleichzeitig haben (zeigt Liste)
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `PLAYER_NOT_FOUND` | Target nicht online |
+| `ALREADY_IN_PARTY` | Target ist bereits in Party |
+| `PARTY_FULL` | Party ist voll (5/5) |
+| `NOT_PARTY_LEADER` | Nur Leader darf inviten |
 
 ---
 
@@ -222,208 +317,17 @@ var inviteReceived = new PartyInviteReceived
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Client akzeptiert Party-Invite. Server validiert ob Invite noch gültig, Party nicht voll, und added Spieler zur Party.
-
-### Im Scope ✅
-- Invite-Accept
-- Auto-Join zur Party
-- Party-Member-Broadcast an alle Members
-
-### Nicht im Scope ❌
-- Accept für bereits volle Party → Error
-- Accept nach Timeout → Error
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| InviterId | long | Inviter Character-ID | Ja |
-
-### Erwartete Response
-- `PartyAcceptResponse` (741)
-
-### Folge-Messages bei Erfolg
-- `PartyJoin` (704) Broadcast an alle Party-Members (inkl. Self)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `PartyInviteReceived` | 701 | Invite das akzeptiert wird |
-| `PartyJoin` | 704 | Join-Notification |
-
-### Beispiel Payload
-```csharp
-var partyAccept = new PartyAccept
-{
-    Type = MessageType.PartyAccept,
-    InviterId = 98765
-};
-```
-
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `INVITE_EXPIRED` | Invite abgelaufen (>60s) | Neuen Invite anfordern |
-| `PARTY_FULL` | Party ist voll | - |
-| `ALREADY_IN_PARTY` | Spieler ist bereits in Party | Party verlassen erst |
-| `INVITE_NOT_FOUND` | Invite existiert nicht | - |
-
-### Notizen
-- **Auto-Join**: Sofortiger Join nach Accept
-- **XP-Sharing**: Ab jetzt XP-Share aktiv
-- **Party-Chat**: Auto-Join zu Party-Chat-Channel
-- **UI-Update**: Party-Frames werden angezeigt
-
----
-
-## PartyKick (703)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client lehnt Party-Invite ab. Server informiert Inviter.
-
-### Im Scope ✅
-- Invite-Decline
-- Inviter-Notification
-
-### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| InviterId | long | Inviter Character-ID | Ja |
-
-### Erwartete Response
-- Server sendet Notification an Inviter: "Legolas declined your party invitation."
-
-### Beispiel Payload
-```csharp
-var partyDecline = new PartyDecline
-{
-    Type = MessageType.PartyDecline,
-    InviterId = 98765
-};
-```
-
-### Notizen
-- **No Penalty**: Kein Penalty fürs Decline
-- **Inviter-Notification**: "Legolas declined your party invitation."
-- **Auto-Decline**: Bei Timeout wird automatisch declined
-
----
-
-## PartyUpdate (704)
-
-**Richtung:** 📡 Broadcast (Server → All Party Members)  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server broadcastet an alle Party-Members dass neuer Spieler joined. Enthält vollständige Member-Info.
-
-### Im Scope ✅
-- Join-Notification an alle Members
-- Neue Member-Info (Name, Level, Class, HP, Mana, Position)
-- Party-Roster-Update
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| PlayerId | long | Neues Member Character-ID | Ja |
-| PlayerName | string | Name | Ja |
-| PlayerLevel | int | Level | Ja |
-| PlayerClass | byte | Class | Ja |
-| CurrentHP | int | Aktuelle HP | Ja |
-| MaxHP | int | Max HP | Ja |
-| CurrentMana | int | Aktuelles Mana | Ja |
-| MaxMana | int | Max Mana | Ja |
-| ZoneId | uint | Zone-ID | Ja |
-| X | float | Position X | Ja |
-| Y | float | Position Y | Ja |
-| IsLeader | bool | Ist Party-Leader? | Ja |
-
-### Erwartete Response
-- Keine Response erforderlich
-
-### Beispiel Payload
-```csharp
-var partyJoin = new PartyJoin
-{
-    Type = MessageType.PartyJoin,
-    PlayerId = 54321,
-    PlayerName = "Legolas",
-    PlayerLevel = 9,
-    PlayerClass = 3, // Rogue
-    CurrentHP = 800,
-    MaxHP = 900,
-    CurrentMana = 350,
-    MaxMana = 400,
-    ZoneId = 1001,
-    X = 150.5f,
-    Y = 200.3f,
-    IsLeader = false
-};
-```
-
-### Notizen
-- **Broadcast**: An alle Party-Members (inkl. Joiner selbst)
-- **UI-Update**: Client added Party-Frame für neuen Member
-- **Chat-Notification**: "Legolas has joined the party."
-- **Party-Size**: Jetzt 3/5 Members
-
----
-
-## PartyDisband (705)
-
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Häufig  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Client verlässt Party freiwillig. Server broadcastet Leave-Event an verbleibende Members.
-
-### Im Scope ✅
-- Voluntary Leave
-- Broadcast an verbleibende Members
-- Leader-Reassignment (falls Leader leaved)
-- Auto-Disband (falls letzter Member)
+Client verlässt Party freiwillig. Server broadcastet Leave-Event an verbleibende Members. Falls Leader leaved, wird automatisch neuer Leader gewählt.
 
 ### Request Payload
 Keine zusätzlichen Felder (nur MessageType)
 
 ### Erwartete Response
-- `PartyLeaveResponse` (742)
+- `PartyLeaveResponse` (741)
 
 ### Folge-Messages bei Erfolg
-- `PartyLeaveNotification` Broadcast an verbleibende Members
-- `PartyPromote` (707) falls Leader leaved (neuer Leader wird gewählt)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `PartyKick` | 706 | Forced Leave |
-| `PartyDisband` | 708 | Party wird aufgelöst |
-
-### Flow-Diagramm
-```
-Leaving Player            Server              Remaining Members
-  │                          │                          │
-  │  PartyLeave (705)        │                          │
-  │─────────────────────────►│                          │
-  │                          │  Remove from Party       │
-  │                          │  Reassign Leader?        │
-  │                          │                          │
-  │  PartyLeaveSuccess       │  PartyLeaveNotification  │
-  │◄─────────────────────────│─────────────────────────►│
-  │                          │                          │
-  │                          │  (if Leader)             │
-  │                          │  PartyPromote (707)      │
-  │                          │  (New Leader)            │
-  │                          │─────────────────────────►│
-```
+- `PartyUpdate` (704) Broadcast an verbleibende Members
+- `PartyLeaderChange` (706) falls Leader leaved
 
 ### Beispiel Payload
 ```csharp
@@ -438,12 +342,10 @@ var partyLeave = new PartyLeave
 - **Auto-Disband**: Falls letzter Member leaved
 - **XP-Sharing**: Sofort deaktiviert
 - **Party-Chat**: Auto-Leave aus Chat-Channel
-- **UI-Update**: Party-Frames werden entfernt
-- **Chat-Notification**: "Legolas has left the party."
 
 ---
 
-## PartyLeaderChange (706)
+## PartyKick (703)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -451,41 +353,26 @@ var partyLeave = new PartyLeave
 **Spezielle Rechte:** 👑 Party-Leader
 
 ### Beschreibung
-Party-Leader kicked Member aus der Party. Server validiert Leader-Status und führt Kick durch.
-
-### Im Scope ✅
-- Forced Removal von Party-Member
-- Nur Leader darf kicken
-- Kick-Reason (optional)
-
-### Nicht im Scope ❌
-- Self-Kick → verwende `PartyLeave` (705)
-- Kick von Leader → Leader kann sich nur selbst via Leave entfernen
+Party-Leader kickt Member aus der Party. Server validiert Leader-Status und führt Kick durch.
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| PlayerId | long | Zu kickender Spieler | Ja |
+| TargetCharacterId | long | Zu kickender Spieler | Ja |
 | Reason | string | Optional Kick-Grund | Nein |
 
 ### Erwartete Response
-- `PartyKickResponse` (743)
+- `PartyKickResponse` (742)
 
 ### Folge-Messages bei Erfolg
-- `PartyKickNotification` an alle Members (inkl. Kicked Player)
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `PartyLeave` | 705 | Voluntary Leave |
-| `PartyPromote` | 707 | Leader-Change |
+- `PartyUpdate` (704) an alle Members
 
 ### Beispiel Payload
 ```csharp
 var partyKick = new PartyKick
 {
     Type = MessageType.PartyKick,
-    PlayerId = 54321,
+    TargetCharacterId = 54321,
     Reason = "AFK too long"
 };
 ```
@@ -497,64 +384,43 @@ var partyKick = new PartyKick
 | `PLAYER_NOT_IN_PARTY` | Spieler nicht in Party | - |
 | `CANNOT_KICK_SELF` | Leader kann sich nicht selbst kicken | Verwende PartyLeave |
 
-### Notizen
-- **Leader-Only**: Nur Leader darf kicken
-- **Notification**: "You have been removed from the party. Reason: AFK too long"
-- **Chat-Notification**: "Legolas has been removed from the party."
-- **No Cooldown**: Kein Cooldown fürs Kicken
-
 ---
 
-## PartyLootChange (707)
+## PartyUpdate (704)
 
-**Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** Häufig  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** 👑 Party-Leader
+**Spezielle Rechte:** Keine
 
 ### Beschreibung
-Party-Leader übergibt Leadership an anderen Member. Server validiert und führt Promotion durch.
+Server broadcastet Party-Roster-Update an alle Members. Wird bei Join, Leave, Kick oder Leadership-Change gesendet.
 
-### Im Scope ✅
-- Leadership-Transfer
-- Nur Leader darf promoten
-- Broadcast an alle Members
-
-### Request Payload
+### Broadcast Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| PlayerId | long | Neuer Leader | Ja |
-
-### Erwartete Response
-- `PartyPromoteResponse` (744)
-
-### Folge-Messages bei Erfolg
-- `PartyPromoteNotification` an alle Members
+| UpdateType | byte | 1=Join, 2=Leave, 3=Kick, 4=LeaderChange | Ja |
+| Members | PartyMemberDto[] | Aktuelle Member-Liste | Ja |
+| LeaderId | long | Character-ID des Leaders | Ja |
 
 ### Beispiel Payload
 ```csharp
-var partyPromote = new PartyPromote
+var partyUpdate = new PartyUpdate
 {
-    Type = MessageType.PartyPromote,
-    PlayerId = 54321 // Legolas wird Leader
+    Type = MessageType.PartyUpdate,
+    UpdateType = 1, // Join
+    Members = new[] { ... },
+    LeaderId = 98765
 };
 ```
 
-### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `NOT_PARTY_LEADER` | Nur Leader darf promoten | - |
-| `PLAYER_NOT_IN_PARTY` | Spieler nicht in Party | - |
-| `CANNOT_PROMOTE_SELF` | Bereits Leader | - |
-
 ### Notizen
-- **Leader-Powers**: Neuer Leader kann nun inviten, kicken, promoten, disband
-- **Chat-Notification**: "Legolas is now the party leader."
-- **UI-Update**: Crown-Icon wechselt zum neuen Leader
+- **Broadcast**: An alle Party-Members (inkl. Joiner selbst)
+- **UI-Update**: Client aktualisiert Party-Frames
 
 ---
 
-## PartyReadyCheck (708)
+## PartyDisband (705)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -562,21 +428,16 @@ var partyPromote = new PartyPromote
 **Spezielle Rechte:** 👑 Party-Leader
 
 ### Beschreibung
-Party-Leader löst Party komplett auf. Alle Members werden gekickt.
-
-### Im Scope ✅
-- Vollständige Party-Auflösung
-- Nur Leader darf disband
-- Broadcast an alle Members
+Party-Leader löst Party komplett auf. Alle Members werden aus der Party entfernt.
 
 ### Request Payload
-Keine zusätzlichen Felder
+Keine zusätzlichen Felder (nur MessageType)
 
 ### Erwartete Response
-- `PartyDisbandResponse` (745)
+- `PartyDisbandResponse` (744)
 
 ### Folge-Messages bei Erfolg
-- `PartyDisbandNotification` an alle Members
+- `PartyUpdate` (704) Broadcast an alle Members mit leerer Liste
 
 ### Beispiel Payload
 ```csharp
@@ -592,130 +453,9 @@ var partyDisband = new PartyDisband
 | `NOT_PARTY_LEADER` | Nur Leader darf disband | - |
 | `NOT_IN_PARTY` | Nicht in Party | - |
 
-### Notizen
-- **Leader-Only**: Nur Leader darf disband
-- **Chat-Notification**: "The party has been disbanded."
-- **Alternative**: Leader kann auch einfach Leave (dann auto-promote)
-
 ---
 
-## PartyMemberUpdate (710)
-
-**Richtung:** 📡 Broadcast (Server → All Party Members)  
-**Frequenz:** ⚡ Sehr häufig (Combat)  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server broadcastet Member-Stats-Update an alle Party-Members. Wird bei HP/Mana-Changes, Position-Changes, oder Status-Changes gesendet.
-
-### Im Scope ✅
-- HP/Mana Updates
-- Position Updates
-- Status Updates (Dead, Ghost, AFK)
-- Zone-Change
-
-### Nicht im Scope ❌
-- Full Member-Info → nur Deltas
-- Non-Party-Members → kein Broadcast
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| PlayerId | long | Member Character-ID | Ja |
-| CurrentHP | int | Aktuelle HP | Nein |
-| MaxHP | int | Max HP | Nein |
-| CurrentMana | int | Aktuelles Mana | Nein |
-| MaxMana | int | Max Mana | Nein |
-| X | float | Position X | Nein |
-| Y | float | Position Y | Nein |
-| ZoneId | uint | Zone-ID | Nein |
-| IsDead | bool | Ist tot? | Nein |
-| IsGhost | bool | Ist Ghost? | Nein |
-| IsAFK | bool | Ist AFK? | Nein |
-
-### Erwartete Response
-- Keine Response erforderlich
-
-### Beispiel Payload
-```csharp
-// HP-Update (Combat)
-var memberUpdate = new PartyMemberUpdate
-{
-    Type = MessageType.PartyMemberUpdate,
-    PlayerId = 54321,
-    CurrentHP = 650,
-    MaxHP = 900
-    // Andere Felder nicht gesendet (keine Changes)
-};
-
-// Position-Update
-var posUpdate = new PartyMemberUpdate
-{
-    Type = MessageType.PartyMemberUpdate,
-    PlayerId = 54321,
-    X = 155.2f,
-    Y = 205.8f
-};
-
-// Zone-Change
-var zoneChange = new PartyMemberUpdate
-{
-    Type = MessageType.PartyMemberUpdate,
-    PlayerId = 54321,
-    ZoneId = 1002 // New Zone
-};
-```
-
-### Notizen
-- **Update-Frequency**: Max 5/Sekunde per Member (gebatched)
-- **Delta-Only**: Nur geänderte Felder werden gesendet
-- **UI-Update**: Client aktualisiert Party-Frames
-- **Party-Frames**: Zeigen HP-Bars, Mana-Bars, Position auf Map
-
----
-
-## PartyMemberOffline (711)
-
-**Richtung:** 📡 Broadcast (Server → All Party Members)  
-**Frequenz:** Selten  
-**Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
-
-### Beschreibung
-Server broadcastet dass Party-Member offline gegangen ist (Disconnect, Logout). Member bleibt in Party für 5 Minuten (Reconnect-Window).
-
-### Im Scope ✅
-- Offline-Notification
-- Reconnect-Window (5 Minuten)
-- Auto-Kick nach Timeout
-
-### Broadcast Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| PlayerId | long | Offline Member | Ja |
-| ReconnectWindowSeconds | int | Sekunden bis Auto-Kick (300) | Ja |
-
-### Beispiel Payload
-```csharp
-var memberOffline = new PartyMemberOffline
-{
-    Type = MessageType.PartyMemberOffline,
-    PlayerId = 54321,
-    ReconnectWindowSeconds = 300 // 5 min
-};
-```
-
-### Notizen
-- **Reconnect-Window**: 5 Minuten bevor Auto-Kick
-- **XP-Sharing**: Deaktiviert während Offline
-- **UI-Update**: Member-Frame grayed out
-- **Chat-Notification**: "Legolas has gone offline."
-- **Reconnect**: Bei Reconnect → `PartyMemberOnline` Event
-
----
-
-## PartyLootMode (720)
+## PartyLeaderChange (706)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -723,54 +463,37 @@ var memberOffline = new PartyMemberOffline
 **Spezielle Rechte:** 👑 Party-Leader
 
 ### Beschreibung
-**Feature** - Party-Leader ändert Loot-Mode. Bestimmt wie Loot verteilt wird.
-
-### Im Scope ✅
-- Loot-Mode-Change
-- Modes: Group-Loot, Round-Robin, Master-Looter, Need-Before-Greed
-- Master-Looter-Assignment
+Party-Leader übergibt Leadership an anderen Member.
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| LootMode | string | "group", "round_robin", "master", "need_greed" | Ja |
-| MasterLooterId | long | Master-Looter (nur bei mode=master) | Nein |
+| NewLeaderId | long | Character-ID des neuen Leaders | Ja |
 
 ### Erwartete Response
-- `PartyLootModeResponse` (746)
+- `PartyPromoteResponse` (743)
 
 ### Folge-Messages bei Erfolg
-- `PartyLootModeChanged` Broadcast an alle Members
+- `PartyUpdate` (704) Broadcast an alle Members
 
 ### Beispiel Payload
 ```csharp
-var lootMode = new PartyLootMode
+var partyLeaderChange = new PartyLeaderChange
 {
-    Type = MessageType.PartyLootMode,
-    LootMode = "master",
-    MasterLooterId = 98765 // Leader ist Master-Looter
+    Type = MessageType.PartyLeaderChange,
+    NewLeaderId = 54321
 };
 ```
 
 ### Error Codes
 | Code | Bedeutung | Aktion |
 |------|-----------|--------|
-| `NOT_PARTY_LEADER` | Nur Leader darf ändern | - |
-| `INVALID_LOOT_MODE` | Ungültiger Mode | - |
-| `PLAYER_NOT_IN_PARTY` | Master-Looter nicht in Party | - |
-
-### Notizen
-- **Hinweis**: Nicht im Prototyp
-- **Default**: Group-Loot (alle können looten)
-- **Loot-Modes**:
-  - **Group-Loot**: Jeder kann looten
-  - **Round-Robin**: Abwechselnd
-  - **Master-Looter**: Nur Master-Looter verteilt
-  - **Need-Before-Greed**: Roll-System
+| `NOT_PARTY_LEADER` | Nur Leader darf promoten | - |
+| `PLAYER_NOT_IN_PARTY` | Spieler nicht in Party | - |
 
 ---
 
-## PartyReadyCheck (730)
+## PartyLootChange (707)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -778,12 +501,39 @@ var lootMode = new PartyLootMode
 **Spezielle Rechte:** 👑 Party-Leader
 
 ### Beschreibung
-Party-Leader startet Ready-Check. Alle Members müssen "Ready" klicken.
+Party-Leader ändert Loot-Einstellungen der Party.
 
-### Im Scope ✅
-- Ready-Check-Initiation
-- Broadcast an alle Members
-- Timeout (30s)
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| LootMode | byte | LootMode enum | Ja |
+| LootThreshold | byte | Item-Qualität ab der Regeln greifen | Nein |
+| MasterLooterId | long | Master-Looter (nur bei LootMode=2) | Nein |
+
+### Erwartete Response
+- `PartyLootModeResponse` (745)
+
+### Beispiel Payload
+```csharp
+var partyLootChange = new PartyLootChange
+{
+    Type = MessageType.PartyLootChange,
+    LootMode = 1, // RoundRobin
+    LootThreshold = 2 // Green+
+};
+```
+
+---
+
+## PartyReadyCheck (708)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader
+
+### Beschreibung
+Party-Leader startet Ready-Check. Alle Members erhalten Popup.
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -791,15 +541,7 @@ Party-Leader startet Ready-Check. Alle Members müssen "Ready" klicken.
 | Question | string | Optional Question (z.B. "Ready for boss?") | Nein |
 
 ### Erwartete Response
-- `PartyReadyCheckStartResponse` (747)
-
-### Folge-Messages bei Erfolg
-- `PartyReadyCheckStart` Broadcast an alle Members
-
-### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `PartyReadyCheckResponse` | 731 | Members antworten |
+- `PartyReadyCheckStartResponse` (746)
 
 ### Beispiel Payload
 ```csharp
@@ -810,15 +552,9 @@ var readyCheck = new PartyReadyCheck
 };
 ```
 
-### Notizen
-- **Leader-Only**: Nur Leader kann starten
-- **Timeout**: 30 Sekunden
-- **UI**: Popup mit Ready/Not Ready Buttons
-- **Result**: Nach Timeout oder alle geantwortet → Result-Broadcast
-
 ---
 
-## PartyReadyCheckResponse (731)
+## PartyReadyResponse (709)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -833,88 +569,336 @@ Party-Member antwortet auf Ready-Check.
 |------|-----|--------------|---------|
 | IsReady | bool | Ready? | Ja |
 
-### Erwartete Response
-- **Bei Erfolg:** `PartyReadyCheckUpdate` Broadcast (Fortschritt)
-
 ### Beispiel Payload
 ```csharp
-var readyResponse = new PartyReadyCheckResponse
+var readyResponse = new PartyReadyResponse
 {
-    Type = MessageType.PartyReadyCheckResponse,
+    Type = MessageType.PartyReadyResponse,
     IsReady = true
 };
 ```
 
-### Notizen
-- **Broadcast**: Fortschritt wird an alle gesendet (3/5 Ready)
-- **Result**: Alle Ready → "Party is ready!"
-- **Not Ready**: Zeigt wer nicht ready ist
-
 ---
 
-## PartyInviteResponse (701)
+## PartyMemberUpdate (710)
 
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** Nein  
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** ⚡ Sehr häufig (Combat)  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyInvite Request. Bestätigt erfolgreiche Einladungs-Versendung oder gibt Fehler zurück.
+Server broadcastet Member-Status-Update (Online/Offline/Dead).
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| IsOnline | bool | Online-Status | Ja |
+| IsDead | bool | Tot? | Ja |
+| IsAFK | bool | AFK? | Ja |
+
+---
+
+## PartyPositionUpdate (711)
+
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** ⚡ Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server broadcastet Member-Position für Mini-Map.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| X | float | Position X | Ja |
+| Y | float | Position Y | Ja |
+| ZoneId | uint | Zone-ID | Ja |
+
+---
+
+## PartyHealthUpdate (712)
+
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** ⚡ Sehr häufig (Combat)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server broadcastet Member-HP für Party-Frames.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| CurrentHp | int | Aktuelle HP | Ja |
+| MaxHp | int | Max HP | Ja |
+
+---
+
+## PartyResourceUpdate (713)
+
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** ⚡ Häufig (Combat)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server broadcastet Member-Mana/Resource für Party-Frames.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| CurrentResource | int | Aktueller Wert | Ja |
+| MaxResource | int | Max Wert | Ja |
+| ResourceType | byte | 0=Mana, 1=Energy, 2=Rage | Ja |
+
+---
+
+## PartyBuffUpdate (714)
+
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server broadcastet Member-Buffs/Debuffs für Party-Frames.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| BuffId | uint | Buff/Debuff ID | Ja |
+| RemainingDuration | float | Verbleibende Zeit (Sekunden) | Ja |
+| Stacks | byte | Anzahl Stacks | Ja |
+| IsDebuff | bool | Ist Debuff? | Ja |
+
+---
+
+## PartyTargetUpdate (715)
+
+**Richtung:** 📡 Broadcast (Server → All Party Members)  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server broadcastet Member-Target für Assist-Feature.
+
+### Broadcast Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| TargetId | long | Target Entity-ID (0=kein Target) | Ja |
+| TargetType | byte | 0=None, 1=Player, 2=NPC, 3=Object | Ja |
+
+---
+
+## PartyRoleSet (716)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader
+
+### Beschreibung
+Party-Leader setzt Rolle für Member (Tank/Healer/DPS).
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| CharacterId | long | Member Character-ID | Ja |
+| Role | byte | PartyRole enum | Ja |
+
+---
+
+## PartyRoleCheck (717)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader
+
+### Beschreibung
+Party-Leader startet Role-Check (alle wählen Rolle).
+
+### Request Payload
+Keine zusätzlichen Felder
+
+---
+
+## PartyConvertToRaid (718)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader
+
+### Beschreibung
+Party-Leader konvertiert Party zu Raid (max 40 Members).
+
+### Request Payload
+Keine zusätzlichen Felder
+
+---
+
+## PartySync (719)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server sendet vollständige Party-Daten bei Login/Reconnect.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Success | bool | Invite versendet? | Ja |
-| ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| TargetName | string | Eingeladener Spieler | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `PLAYER_NOT_FOUND` | Target nicht online |
-| `ALREADY_IN_PARTY` | Target ist bereits in Party |
-| `PARTY_FULL` | Party ist voll (5/5) |
-| `PLAYER_BLOCKED_YOU` | Target hat Inviter blockiert |
-| `PLAYER_DECLINED_INVITES` | Target hat Invites deaktiviert |
-| `INVITE_ALREADY_PENDING` | Invite bereits gesendet |
-| `NOT_PARTY_LEADER` | Nur Leader darf inviten |
+| Members | PartyMemberDto[] | Alle Members | Ja |
+| LeaderId | long | Leader Character-ID | Ja |
+| LootMode | byte | LootMode enum | Ja |
+| IsRaid | bool | Ist Raid? | Ja |
 
 ---
 
-## PartyAcceptResponse (741)
+## PartySummon (720)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Warlock oder Meeting Stone
+
+### Beschreibung
+Spieler startet Summon für Party-Member.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TargetCharacterId | long | Zu summonendes Member | Ja |
+
+### Erwartete Response
+- `PartySummonResponse` (721)
+
+---
+
+## PartySummonResponse (721)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Häufig  
-**Authentifizierung:** Nein  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyAccept Request. Bestätigt erfolgreichen Party-Beitritt oder gibt Fehler zurück.
+Server bestätigt Summon-Start oder Fehler.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Summon gestartet? | Ja |
+| ErrorCode | string | Fehlercode | Nein |
+| RequiredClicks | int | Benötigte Klicks (2 für Summon) | Bei Erfolg |
+
+---
+
+## PartyMarkerSet (722)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader oder Assist
+
+### Beschreibung
+Setzt Raid-Marker auf Target.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TargetId | long | Target Entity-ID | Ja |
+| MarkerType | byte | PartyMarkerType enum | Ja |
+
+---
+
+## PartyMarkerClear (723)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader oder Assist
+
+### Beschreibung
+Entfernt Raid-Marker von Target.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| TargetId | long | Target Entity-ID | Ja |
+
+---
+
+## PartyDifficultyVote (724)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Member stimmt für Dungeon-Schwierigkeit.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Difficulty | byte | 0=Normal, 1=Heroic, 2=Mythic | Ja |
+
+---
+
+## PartyDifficultySet (725)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** 👑 Party-Leader
+
+### Beschreibung
+Party-Leader setzt Dungeon-Schwierigkeit.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Difficulty | byte | 0=Normal, 1=Heroic, 2=Mythic | Ja |
+
+---
+
+## PartyAcceptResponse (740)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort wenn ein Target einen Invite annimmt. Wird an beide Parteien gesendet.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Join erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
 | PartySize | int | Aktuelle Party-Größe | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `INVITE_EXPIRED` | Invite ist abgelaufen (60s Timeout) |
-| `PARTY_FULL` | Party wurde voll während Accept |
-| `INVITE_CANCELLED` | Inviter hat Invite zurückgezogen |
 
 ---
 
-## PartyLeaveResponse (742)
+## PartyLeaveResponse (741)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
@@ -925,137 +909,176 @@ Antwort auf PartyLeave Request. Bestätigt erfolgreichen Party-Austritt.
 |------|-----|--------------|---------|
 | Success | bool | Leave erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
 
 ---
 
-## PartyKickResponse (743)
+## PartyKickResponse (742)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyKick Request. Bestätigt erfolgreichen Kick oder gibt Fehler zurück.
+Antwort auf PartyKick Request. Bestätigt erfolgreichen Kick.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Kick erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
 | KickedPlayerName | string | Name des gekickten Spielers | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_PARTY_LEADER` | Nur Leader darf kicken |
-| `PLAYER_NOT_IN_PARTY` | Target nicht in Party |
-| `CANNOT_KICK_SELF` | Leader kann sich nicht selbst kicken (use Leave) |
 
 ---
 
-## PartyPromoteResponse (744)
+## PartyPromoteResponse (743)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyPromote Request. Bestätigt erfolgreiche Leader-Übergabe oder gibt Fehler zurück.
+Antwort auf PartyLeaderChange Request.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Promote erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
 | NewLeaderName | string | Name des neuen Leaders | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_PARTY_LEADER` | Nur Leader darf promoten |
-| `PLAYER_NOT_IN_PARTY` | Target nicht in Party |
 
 ---
 
-## PartyDisbandResponse (745)
+## PartyDisbandResponse (744)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyDisband Request. Bestätigt erfolgreiche Party-Auflösung oder gibt Fehler zurück.
+Antwort auf PartyDisband Request.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Disband erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_PARTY_LEADER` | Nur Leader darf disband |
 
 ---
 
-## PartyLootModeResponse (746)
+## PartyLootModeResponse (745)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-**Feature** - Antwort auf PartyLootMode Request. Bestätigt erfolgreiche Loot-Mode-Änderung oder gibt Fehler zurück.
+Antwort auf PartyLootChange Request.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Änderung erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
-| LootMode | string | Neuer Loot-Mode | Bei Erfolg |
-
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_PARTY_LEADER` | Nur Leader darf ändern |
-| `INVALID_LOOT_MODE` | Ungültiger Mode |
-| `PLAYER_NOT_IN_PARTY` | Master-Looter nicht in Party |
+| LootMode | byte | Neuer LootMode | Bei Erfolg |
 
 ---
 
-## PartyReadyCheckStartResponse (747)
+## PartyReadyCheckStartResponse (746)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
-**Authentifizierung:** Nein  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Antwort auf PartyReadyCheck Request. Bestätigt erfolgreichen Ready-Check-Start oder gibt Fehler zurück.
+Antwort auf PartyReadyCheck Request.
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | Success | bool | Start erfolgreich? | Ja |
 | ErrorCode | string | Fehlercode falls Success=false | Nein |
-| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
 | ReadyCheckId | uint | ID des Ready-Checks | Bei Erfolg |
 
-### Error Codes
-| Code | Bedeutung |
-|------|-----------|
-| `NOT_PARTY_LEADER` | Nur Leader kann starten |
-| `READY_CHECK_ACTIVE` | Ein Ready-Check läuft bereits |
+---
+
+## 🗑️ Obsolete Messages
+
+*Derzeit keine obsoleten Messages in dieser Kategorie.*
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Party-Bereich)
+
+```csharp
+// GROUP / PARTY (0700-0799)
+PartyInvite = 700,
+PartyInviteResponse = 701,
+PartyLeave = 702,
+PartyKick = 703,
+PartyUpdate = 704,
+PartyDisband = 705,
+PartyLeaderChange = 706,
+PartyLootChange = 707,
+PartyReadyCheck = 708,
+PartyReadyResponse = 709,
+PartyMemberUpdate = 710,
+PartyPositionUpdate = 711,
+PartyHealthUpdate = 712,
+PartyResourceUpdate = 713,
+PartyBuffUpdate = 714,
+PartyTargetUpdate = 715,
+PartyRoleSet = 716,
+PartyRoleCheck = 717,
+PartyConvertToRaid = 718,
+PartySync = 719,
+PartySummon = 720,
+PartySummonResponse = 721,
+PartyMarkerSet = 722,
+PartyMarkerClear = 723,
+PartyDifficultyVote = 724,
+PartyDifficultySet = 725,
+PartyAcceptResponse = 740,
+PartyLeaveResponse = 741,
+PartyKickResponse = 742,
+PartyPromoteResponse = 743,
+PartyDisbandResponse = 744,
+PartyLootModeResponse = 745,
+PartyReadyCheckStartResponse = 746,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| PartyInvite | 700 | PartyInviteResponse | 701 |
+| PartyLeave | 702 | PartyLeaveResponse | 741 |
+| PartyKick | 703 | PartyKickResponse | 742 |
+| PartyDisband | 705 | PartyDisbandResponse | 744 |
+| PartyLeaderChange | 706 | PartyPromoteResponse | 743 |
+| PartyLootChange | 707 | PartyLootModeResponse | 745 |
+| PartyReadyCheck | 708 | PartyReadyCheckStartResponse | 746 |
+| PartySummon | 720 | PartySummonResponse | 721 |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs
+├── Contracts/
+│   └── IPartyMessage.cs
+└── Dtos/
+    ├── PartyInviteDto.cs
+    ├── PartyMemberDto.cs
+    └── PartyUpdateDto.cs
+```
 
 ---
 
@@ -1068,8 +1091,8 @@ Antwort auf PartyReadyCheck Request. Bestätigt erfolgreichen Ready-Check-Start 
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 2.1.0  
-**Status**: ✅ Vollständig dokumentiert (22/22 Messages)
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0  
+**Status**: ✅ Vollständig dokumentiert (33/33 Messages)
 
 [← Zurück zur Übersicht](README.md)
