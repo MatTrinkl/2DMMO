@@ -246,6 +246,12 @@ public enum MessageType : ushort
     GenderChange = 622,
     RestXpUpdate = 623,
     RestStateChange = 624,
+    AttributeIncreaseResponse = 650,
+    CharacterCustomizeResponse = 651,
+    TalentLearnResponse = 652,
+    TalentResetResponse = 653,
+    SpecializationChangeResponse = 654,
+    TitleChangeResponse = 655,
 
     // ═══════════════════════════════════════════════════════════════
     // GROUP / PARTY (0700-0799)
@@ -276,6 +282,13 @@ public enum MessageType : ushort
     PartyMarkerClear = 723,
     PartyDifficultyVote = 724,
     PartyDifficultySet = 725,
+    PartyAcceptResponse = 740,
+    PartyLeaveResponse = 741,
+    PartyKickResponse = 742,
+    PartyPromoteResponse = 743,
+    PartyDisbandResponse = 744,
+    PartyLootModeResponse = 745,
+    PartyReadyCheckStartResponse = 746,
 
     // ═══════════════════════════════════════════════════════════════
     // GUILD (0800-0899)

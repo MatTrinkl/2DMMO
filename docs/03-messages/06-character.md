@@ -62,7 +62,7 @@ Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `CharacterListIte
 
 ---
 
-## CharacterInfo (600)
+## LevelUp (600)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten (Login, Character-Select)  
@@ -199,7 +199,7 @@ var characterInfo = new CharacterInfo
 
 ---
 
-## StatsUpdate (601)
+## XpGain (601)
 
 **Richtung:** 📡 Broadcast (Server → Client + Nearby Players)  
 **Frequenz:** ⚡ Sehr häufig (Combat, Buffs, Regen)  
@@ -277,7 +277,7 @@ var nearbyUpdate = new StatsUpdate
 
 ---
 
-## LevelUp (602)
+## StatUpdate (602)
 
 **Richtung:** 📡 Broadcast (Server → Client + Nearby Players)  
 **Frequenz:** Selten (nur bei Level-Up)  
@@ -371,7 +371,7 @@ var levelUp = new LevelUp
 
 ---
 
-## ExperienceGain (603)
+## StatFullSync (603)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig (nach Kill, Quest-Complete, etc.)  
@@ -494,7 +494,7 @@ var resourceUpdate = new ResourceUpdate
 
 ---
 
-## AttributeIncrease (605)
+## ResourceRegen (605)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten (nur bei Stat-Point-Spending)  
@@ -586,7 +586,7 @@ var attributeIncrease = new AttributeIncrease
 
 ---
 
-## CharacterCustomize (610)
+## ReputationChange (610)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten (nur via Barber-Shop)  
@@ -657,7 +657,7 @@ var customize = new CharacterCustomize
 
 ---
 
-## TalentLearn (620)
+## ClassChange (620)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -720,7 +720,7 @@ var talentLearn = new TalentLearn
 
 ---
 
-## TalentReset (621)
+## NameChange (621)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten  
@@ -765,7 +765,7 @@ var talentReset = new TalentReset
 
 ---
 
-## SpecializationChange (622)
+## GenderChange (622)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Sehr selten  

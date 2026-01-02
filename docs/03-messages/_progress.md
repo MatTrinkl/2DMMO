@@ -38,8 +38,8 @@
 | 03 | Combat | 300-399 | 35 | ✅ | Added ThreatListResponse (333), ResurrectionResponse (334) |
 | 04 | Chat | 400-499 | 37 | ✅ | Added response messages (440-445) |
 | 05 | Inventory | 500-599 | 44 | ✅ | Fixed message names, added responses (536-543) |
-| 06 | Character | 600-699 | 24 | ⏳ | |
-| 07 | Party | 700-799 | 26 | ⏳ | |
+| 06 | Character | 600-699 | 30 | ✅ | Fixed names, added responses (650-655) |
+| 07 | Party | 700-799 | 33 | ✅ | Fixed names, added responses (740-746) |
 | 08 | Guild | 800-899 | 39 | ⏳ | |
 | 09 | System | 900-999 | 26 | ⏳ | |
 

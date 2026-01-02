@@ -151,7 +151,7 @@ var partyInvite = new PartyInvite
 
 ---
 
-## PartyInviteReceived (701)
+## PartyInviteResponse (701)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
@@ -214,7 +214,7 @@ var inviteReceived = new PartyInviteReceived
 
 ---
 
-## PartyAccept (702)
+## PartyLeave (702)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -275,7 +275,7 @@ var partyAccept = new PartyAccept
 
 ---
 
-## PartyDecline (703)
+## PartyKick (703)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -313,7 +313,7 @@ var partyDecline = new PartyDecline
 
 ---
 
-## PartyJoin (704)
+## PartyUpdate (704)
 
 **Richtung:** 📡 Broadcast (Server → All Party Members)  
 **Frequenz:** Häufig  
@@ -375,7 +375,7 @@ var partyJoin = new PartyJoin
 
 ---
 
-## PartyLeave (705)
+## PartyDisband (705)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Häufig  
@@ -443,7 +443,7 @@ var partyLeave = new PartyLeave
 
 ---
 
-## PartyKick (706)
+## PartyLeaderChange (706)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -505,7 +505,7 @@ var partyKick = new PartyKick
 
 ---
 
-## PartyPromote (707)
+## PartyLootChange (707)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -554,7 +554,7 @@ var partyPromote = new PartyPromote
 
 ---
 
-## PartyDisband (708)
+## PartyReadyCheck (708)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -852,7 +852,7 @@ var readyResponse = new PartyReadyCheckResponse
 
 ---
 
-## PartyInviteResponse (740)
+## PartyInviteResponse (701)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Häufig  
