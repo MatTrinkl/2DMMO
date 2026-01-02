@@ -10,11 +10,9 @@ namespace Mmo.Integration.Tests.Utilities;
 ///     Simple TCP client for integration testing.
 ///     This client connects to the MMO server and can send/receive messages.
 /// </summary>
-public class TestClient : IDisposable
+public class TestClient(string host, int port) : IDisposable
 {
-    private readonly string _host;
     private readonly object _lock = new();
-    private readonly int _port;
 
     private readonly List<INetworkMessage> _receivedMessages = new();
     private CancellationTokenSource? _cts;
@@ -22,15 +20,9 @@ public class TestClient : IDisposable
     private NetworkStream? _stream;
     private TcpClient? _tcpClient;
 
-    public TestClient(string host, int port)
-    {
-        _host = host;
-        _port = port;
-    }
-
     public bool IsConnected => _tcpClient?.Connected ?? false;
     public Guid AccountId { get; private set; }
-    public string Username { get; private set; }
+    public string Username { get; private set; } = null!;
     public string AccountName { get; private set; } = "";
     public bool IsPremium { get; private set; }
     public long Timestamp { get; private set; }
@@ -62,7 +54,7 @@ public class TestClient : IDisposable
         {
             _tcpClient = new TcpClient();
             using var connectCts = new CancellationTokenSource(timeout);
-            await _tcpClient.ConnectAsync(_host, _port, connectCts.Token);
+            await _tcpClient.ConnectAsync(host, port, connectCts.Token);
 
             _stream = _tcpClient.GetStream();
             _cts = new CancellationTokenSource();
