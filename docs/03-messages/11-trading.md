@@ -1,9 +1,9 @@
-# 🤝 Trading Messages (1100-1199)
+# 🤝 Trading Messages (1100-1113)
 
 **Kategorie:** 11  
-**Range:** 1100-1199  
-
-
+**Range:** 1100-1113  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,39 +11,227 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [TradeRequest (1100)](#traderequest-1100)
-- [TradeRequestResponse (1101)](#traderequestresponse-1101)
-- [TradeUpdate (1102)](#tradeupdate-1102)
-- [TradeSetItem (1103)](#tradesetitem-1103)
-- [TradeRemoveItem (1104)](#traderemoveitem-1104)
-- [TradeSetGold (1105)](#tradesetgold-1105)
-- [TradeConfirm (1106)](#tradeconfirm-1106)
-- [TradeUnconfirm (1107)](#tradeunconfirm-1107)
-- [TradeLock (1108)](#tradelock-1108)
-- [TradeCancel (1109)](#tradecancel-1109)
-- [TradeComplete (1110)](#tradecomplete-1110)
-- [TradeError (1111)](#tradeerror-1111)
-- [TradeBusy (1112)](#tradebusy-1112)
-- [TradeTargetBusy (1113)](#tradetargetbusy-1113)
+- [🔄 Trading Flow](#-trading-flow)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+- [📩 Aktive Messages](#-aktive-messages)
+  - [TradeRequest (1100)](#traderequest-1100)
+  - [TradeRequestResponse (1101)](#traderequestresponse-1101)
+  - [TradeUpdate (1102)](#tradeupdate-1102)
+  - [TradeSetItem (1103)](#tradesetitem-1103)
+  - [TradeRemoveItem (1104)](#traderemoveitem-1104)
+  - [TradeSetGold (1105)](#tradesetgold-1105)
+  - [TradeConfirm (1106)](#tradeconfirm-1106)
+  - [TradeUnconfirm (1107)](#tradeunconfirm-1107)
+  - [TradeLock (1108)](#tradelock-1108)
+  - [TradeCancel (1109)](#tradecancel-1109)
+  - [TradeComplete (1110)](#tradecomplete-1110)
+  - [TradeError (1111)](#tradeerror-1111)
+  - [TradeBusy (1112)](#tradebusy-1112)
+  - [TradeTargetBusy (1113)](#tradetargetbusy-1113)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
 
 ---
 
-## 📋 Übersicht
+## 🔄 Trading Flow
 
-Diese Kategorie umfasst alle Messages für **Player-to-Player Trading** im 2DMMO.
+### Server-Authoritative Trading
 
-Das Trading-System implementiert:
-- Sichere Item- und Gold-Übertragung zwischen Spielern
-- Two-Step Confirmation (Confirm → Lock)
-- Anti-Scam Protection (beide Spieler müssen Lock vor Complete)
-- Trade-Window UI-Sync
-- Trade-Cancel Mechanismen
-- Distance/Range Checks
-- Soulbound/BoP Item Restrictions
+Das Trading-System ist vollständig server-authoritative. Beide Spieler müssen einen zweistufigen Bestätigungsprozess durchlaufen:
+1. **Confirm**: Bestätigt den Trade-Inhalt
+2. **Lock**: Finalisiert den Trade
 
-**Server Authority**: Alle Trades werden server-seitig validiert. Beide Spieler müssen Confirm und Lock bestätigen bevor Trade executed wird.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRADING STATE MACHINE                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐    TradeRequest     ┌──────────┐                 │
+│  │  IDLE    │────────────────────►│ PENDING  │                 │
+│  └──────────┘                     └──────────┘                 │
+│       ▲                                │                       │
+│       │ Cancel                         │ Accept                │
+│       │                                ▼                       │
+│       │                          ┌──────────┐                  │
+│       │◄─────────────────────────│  ACTIVE  │◄────────┐       │
+│       │                          └──────────┘         │       │
+│       │                               │               │       │
+│       │                               │ Both Confirm  │       │
+│       │                               ▼               │       │
+│       │                          ┌──────────┐         │       │
+│       │◄─────────────────────────│CONFIRMED │─────────┘       │
+│       │                          └──────────┘  Modify         │
+│       │                               │                       │
+│       │                               │ Both Lock             │
+│       │                               ▼                       │
+│       │                          ┌──────────┐                  │
+│       └──────────────────────────│  LOCKED  │                  │
+│                                  └──────────┘                  │
+│                                       │                       │
+│                                       │ Auto-Execute          │
+│                                       ▼                       │
+│                                  ┌──────────┐                  │
+│                                  │ COMPLETE │                  │
+│                                  └──────────┘                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-**Trade Flow**: Request → Accept → Set Items/Gold → Confirm → Lock → Complete
+### Trade Request + Accept Flow
+
+```
+Player A              Server              Player B
+   │                      │                   │
+   │  TradeRequest(B)     │                   │
+   │─────────────────────►│                   │
+   │                      │  Validate:        │
+   │                      │  - Range ≤10m     │
+   │                      │  - Not busy       │
+   │                      │  - Not ignored    │
+   │                      │                   │
+   │                      │  TradeRequestResponse
+   │                      │──────────────────►│
+   │                      │                   │
+   │                      │  Accept/Decline   │
+   │                      │◄──────────────────│
+   │                      │                   │
+   │  TradeUpdate         │  TradeUpdate      │
+   │◄─────────────────────┼──────────────────►│
+   │  (Trade Window Open) │  (Trade Window Open)
+```
+
+### Confirm + Lock + Execute Flow
+
+```
+Player A              Server              Player B
+   │                      │                   │
+   │  TradeSetItem        │                   │
+   │─────────────────────►│                   │
+   │                      │  TradeUpdate      │
+   │◄─────────────────────┼──────────────────►│
+   │                      │                   │
+   │  TradeConfirm        │                   │
+   │─────────────────────►│                   │
+   │                      │  TradeUpdate      │
+   │◄─────────────────────┼──────────────────►│
+   │                      │                   │
+   │                      │  TradeConfirm     │
+   │                      │◄──────────────────│
+   │                      │  TradeUpdate      │
+   │◄─────────────────────┼──────────────────►│
+   │                      │  (Both Confirmed) │
+   │                      │                   │
+   │  TradeLock           │                   │
+   │─────────────────────►│                   │
+   │                      │  TradeUpdate      │
+   │◄─────────────────────┼──────────────────►│
+   │                      │                   │
+   │                      │  TradeLock        │
+   │                      │◄──────────────────│
+   │                      │                   │
+   │                      │  Execute Trade    │
+   │                      │  (Server-Side)    │
+   │                      │                   │
+   │  TradeComplete       │  TradeComplete    │
+   │◄─────────────────────┼──────────────────►│
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### TradeSlot (DTO)
+
+```csharp
+[MessagePackObject]
+public class TradeSlot
+{
+    [Key(0)]
+    public byte SlotIndex { get; set; }      // 0-7 (max 8 slots)
+    
+    [Key(1)]
+    public uint ItemId { get; set; }
+    
+    [Key(2)]
+    public int Quantity { get; set; }
+}
+```
+
+### TradeState (DTO)
+
+```csharp
+[MessagePackObject]
+public class TradeState
+{
+    [Key(0)]
+    public string TradeId { get; set; }      // UUID
+    
+    [Key(1)]
+    public List<TradeSlot> OwnSlots { get; set; }
+    
+    [Key(2)]
+    public List<TradeSlot> OtherSlots { get; set; }
+    
+    [Key(3)]
+    public int OwnGold { get; set; }         // In Copper
+    
+    [Key(4)]
+    public int OtherGold { get; set; }       // In Copper
+    
+    [Key(5)]
+    public bool OwnConfirmed { get; set; }
+    
+    [Key(6)]
+    public bool OtherConfirmed { get; set; }
+    
+    [Key(7)]
+    public bool OwnLocked { get; set; }
+    
+    [Key(8)]
+    public bool OtherLocked { get; set; }
+}
+```
+
+### TradeErrorCode (Enum)
+
+```csharp
+public enum TradeErrorCode : byte
+{
+    None = 0,
+    TargetTooFar = 1,          // >10m
+    TargetNotFound = 2,
+    AlreadyTrading = 3,
+    TargetTrading = 4,
+    TargetIgnoredYou = 5,
+    TargetBusy = 6,
+    ItemSoulbound = 10,
+    ItemNotFound = 11,
+    InvalidQuantity = 12,
+    SlotOccupied = 13,
+    TradeLocked = 14,
+    InsufficientGold = 20,
+    GoldAmountTooHigh = 21,
+    NotConfirmed = 30,
+    OtherNotConfirmed = 31,
+    InventoryFull = 40,
+    TradeTimeout = 50,
+    MovedTooFar = 51
+}
+```
+
+### Trading Constants
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|--------------|
+| MAX_TRADE_SLOTS | 8 | Max Items pro Spieler |
+| MAX_TRADE_GOLD | 9999999 | 999g 99s 99c in Copper |
+| TRADE_RANGE | 10.0f | Max. Distanz für Trade-Start (Meter) |
+| TRADE_CANCEL_RANGE | 15.0f | Auto-Cancel bei Distanz (Meter) |
+| REQUEST_TIMEOUT | 30 | Sekunden bis Request expires |
+| REQUEST_COOLDOWN | 1.0f | Spam-Prevention (Sekunden) |
+
+---
+
+## 📩 Aktive Messages
 
 ---
 
@@ -413,7 +601,7 @@ Keine zusätzlichen Felder
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
-**Authentifizierung:** �� Ja  
+**Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
@@ -543,15 +731,28 @@ Siehe einzelne Messages oben für spezifische Error Codes.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Requester ist bereits im Trade.
+Server informiert Client, dass der anfragende Spieler bereits in einem aktiven Trade ist.
+
+### Im Scope ✅
+- Notification über eigenen Busy-Status
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| Message | string | Info-Text | Ja |
+| Message | string | Lokalisierte Info-Text | Ja |
+
+### Beispiel Payload
+```csharp
+var busy = new TradeBusy
+{
+    Type = MessageType.TradeBusy,
+    Message = "You are already trading with another player."
+};
+```
 
 ### Notizen
 - **Prevention**: Client sollte Trade-Button disablen wenn bereits trading
+- **UI**: Client zeigt Info-Popup
 
 ---
 
@@ -563,15 +764,106 @@ Requester ist bereits im Trade.
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Target-Spieler ist bereits im Trade.
+Server informiert Client, dass das Trade-Target bereits im Trade mit einem anderen Spieler ist.
+
+### Im Scope ✅
+- Notification über beschäftigtes Target
+- Target-Name Information
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | TargetName | string | Name des Targets | Ja |
-| Message | string | Info-Text | Ja |
+| Message | string | Lokalisierte Info-Text | Ja |
+
+### Beispiel Payload
+```csharp
+var targetBusy = new TradeTargetBusy
+{
+    Type = MessageType.TradeTargetBusy,
+    TargetName = "Legolas",
+    Message = "Legolas is already trading with another player."
+};
+```
 
 ### Notizen
 - **Retry**: Spieler kann später erneut versuchen
+- **UI**: Client zeigt Info-Popup
 
 ---
+
+## 🗑️ Obsolete Messages
+
+*Derzeit keine obsoleten Messages in dieser Kategorie.*
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Trading Range)
+
+```csharp
+// TRADING (1100-1113)
+TradeRequest = 1100,
+TradeRequestResponse = 1101,
+TradeUpdate = 1102,
+TradeSetItem = 1103,
+TradeRemoveItem = 1104,
+TradeSetGold = 1105,
+TradeConfirm = 1106,
+TradeUnconfirm = 1107,
+TradeLock = 1108,
+TradeCancel = 1109,
+TradeComplete = 1110,
+TradeError = 1111,
+TradeBusy = 1112,
+TradeTargetBusy = 1113,
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| `TradeRequest` | 1100 | `TradeRequestResponse` | 1101 |
+| `TradeSetItem` | 1103 | `TradeUpdate` | 1102 |
+| `TradeRemoveItem` | 1104 | `TradeUpdate` | 1102 |
+| `TradeSetGold` | 1105 | `TradeUpdate` | 1102 |
+| `TradeConfirm` | 1106 | `TradeUpdate` | 1102 |
+| `TradeUnconfirm` | 1107 | `TradeUpdate` | 1102 |
+| `TradeLock` | 1108 | `TradeUpdate` / `TradeComplete` | 1102 / 1110 |
+| `TradeCancel` | 1109 | Trade closed (implicit) | - |
+
+### Dateistruktur
+
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs          # TradeRequest=1100 bis TradeTargetBusy=1113
+│
+├── DTOs/
+│   └── Trading/
+│       ├── TradeRequestDto.cs
+│       ├── TradeRequestResponseDto.cs
+│       ├── TradeUpdateDto.cs
+│       ├── TradeSetItemDto.cs
+│       ├── TradeRemoveItemDto.cs
+│       ├── TradeSetGoldDto.cs
+│       ├── TradeConfirmDto.cs
+│       ├── TradeUnconfirmDto.cs
+│       ├── TradeLockDto.cs
+│       ├── TradeCancelDto.cs
+│       ├── TradeCompleteDto.cs
+│       ├── TradeErrorDto.cs
+│       ├── TradeBusyDto.cs
+│       └── TradeTargetBusyDto.cs
+│
+└── Contracts/
+    └── ITradingMessage.cs      # Interface für alle Trading-Messages
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0
+
+[← Zurück zur Übersicht](README.md)
