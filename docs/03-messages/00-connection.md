@@ -614,7 +614,7 @@ Interne Message zwischen Gateway Server und Zone Server zur Validierung von Sess
 
 ---
 
-## CharacterSelect (9)
+## CharacterSelectRequest (9)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Einmalig pro Session  
@@ -630,8 +630,8 @@ Client wählt einen Character aus der Character-Liste. Server lädt Character-Da
 - Spawn in letzte Zone oder Start-Zone
 
 ### Nicht im Scope ❌
-- Character erstellen → verwende `CharacterCreate` (10)
-- Character löschen → verwende `CharacterDelete` (11)
+- Character erstellen → verwende `CharacterCreateRequest` (10)
+- Character löschen → verwende `CharacterDeleteRequest` (11)
 
 ### Request Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -651,13 +651,13 @@ Client wählt einen Character aus der Character-Liste. Server lädt Character-Da
 | `CharacterSelectResponse` | 21 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt verfügbare Characters |
 | `JoinZone` | 100 | Folgt nach erfolgreicher Auswahl |
-| `CharacterCreate` | 10 | Character erstellen |
+| `CharacterCreateRequest` | 10 | Character erstellen |
 
 ### Beispiel Payload
 ```csharp
-var selectRequest = new CharacterSelect
+var selectRequest = new CharacterSelectRequest
 {
-    Type = MessageType.CharacterSelect,
+    Type = MessageType.CharacterSelectRequest,
     CharacterId = 98765
 };
 ```
@@ -751,7 +751,7 @@ var errorResponse = new CharacterSelectResponse
 
 ---
 
-## CharacterCreate (10)
+## CharacterCreateRequest (10)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -790,13 +790,13 @@ Erstellt einen neuen Character für den Account. Server validiert Namen, Rasse, 
 |---------|-----|-----------|
 | `CharacterCreateResponse` | 22 | Response zu diesem Request |
 | `CharacterListResponse` | 13 | Zeigt erstellten Character |
-| `CharacterDelete` | 11 | Character löschen |
+| `CharacterDeleteRequest` | 11 | Character löschen |
 
 ### Beispiel Payload
 ```csharp
-var createRequest = new CharacterCreate
+var createRequest = new CharacterCreateRequest
 {
-    Type = MessageType.CharacterCreate,
+    Type = MessageType.CharacterCreateRequest,
     Name = "Aragorn",
     Race = 1, // Human
     Class = 2, // Warrior
@@ -902,7 +902,7 @@ var errorResponse = new CharacterCreateResponse
 
 ---
 
-## CharacterDelete (11)
+## CharacterDeleteRequest (11)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -935,9 +935,9 @@ Löscht einen Character permanent. Sicherheits-Mechanismus: Character wird erst 
 
 ### Beispiel Payload
 ```csharp
-var deleteRequest = new CharacterDelete
+var deleteRequest = new CharacterDeleteRequest
 {
-    Type = MessageType.CharacterDelete,
+    Type = MessageType.CharacterDeleteRequest,
     CharacterId = 98765,
     Confirmation = "DELETE"
 };
@@ -1147,7 +1147,7 @@ var listResponse = new CharacterListResponse
 
 ---
 
-## ServerSelect (14)
+## ServerSelectRequest (14)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  

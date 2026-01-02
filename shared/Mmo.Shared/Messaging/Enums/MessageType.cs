@@ -17,7 +17,10 @@ public enum MessageType : ushort
     ForceDisconnect = 5,
     ReconnectRequest = 6,
     ReconnectResponse = 7,
-    SessionValidate = 8, //Deprecated
+
+    [Obsolete("Deprecated: Use S2S_SessionValidate (5000) for server-to-server session validation")]
+    SessionValidate = 8, // DEPRECATED - Replaced by S2S_SessionValidate
+
     CharacterSelectRequest = 9,
     CharacterCreateRequest = 10,
     CharacterDeleteRequest = 11,
