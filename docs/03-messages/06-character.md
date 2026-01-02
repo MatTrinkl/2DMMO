@@ -1,9 +1,9 @@
-# 👤 Character Messages (600-699)
+# 👤 Character Messages (0600-0655)
 
-**Kategorie:** 06  
-**Range:** 600-699  
-
-
+**Kategorie:** 6  
+**Range:** 0600-0655 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
 
 [← Zurück zur Übersicht](README.md)
 
@@ -11,82 +11,273 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [CharacterInfo (600)](#characterinfo-600)
-- [StatsUpdate (601)](#statsupdate-601)
-- [LevelUp (602)](#levelup-602)
-- [ExperienceGain (603)](#experiencegain-603)
-- [ResourceUpdate (604)](#resourceupdate-604)
-- [AttributeIncrease (605)](#attributeincrease-605)
-- [CharacterCustomize (610)](#charactercustomize-610)
-- [TalentLearn (620)](#talentlearn-620)
-- [TalentReset (621)](#talentreset-621)
-- [SpecializationChange (622)](#specializationchange-622)
-- [TitleChange (630)](#titlechange-630)
-- [AppearanceUpdate (631)](#appearanceupdate-631)
-- [RestedXPUpdate (640)](#restedxpupdate-640)
-- [AttributeIncreaseResponse (650)](#attributeincreaseresponse-650)
-- [CharacterCustomizeResponse (651)](#charactercustomizeresponse-651)
-- [TalentLearnResponse (652)](#talentlearnresponse-652)
-- [TalentResetResponse (653)](#talentresetresponse-653)
-- [SpecializationChangeResponse (654)](#specializationchangeresponse-654)
-- [TitleChangeResponse (655)](#titlechangeresponse-655)
+- [🔄 Character Flow (Übersicht)](#-character-flow-übersicht)
+- [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+  - [CharacterProgressionDto](#characterprogressiondto)
+  - [CharacterStatsDto](#characterstatsdto)
+  - [ResourceDto](#resourcedto)
+  - [ReputationDto](#reputationdto)
+  - [AppearanceDto](#appearancedto)
+- [📩 Aktive Messages](#-aktive-messages)
+  - [LevelUp (600)](#levelup-600)
+  - [XpGain (601)](#xpgain-601)
+  - [StatUpdate (602)](#statupdate-602)
+  - [StatFullSync (603)](#statfullsync-603)
+  - [ResourceUpdate (604)](#resourceupdate-604)
+  - [ResourceRegen (605)](#resourceregen-605)
+  - [CharacterInfo (606)](#characterinfo-606)
+  - [CharacterInfoRequest (607)](#characterinforequest-607)
+  - [SkillPointGain (608)](#skillpointgain-608)
+  - [TalentPointGain (609)](#talentpointgain-609)
+  - [ReputationChange (610)](#reputationchange-610)
+  - [ReputationListRequest (611)](#reputationlistrequest-611)
+  - [ReputationListResponse (612)](#reputationlistresponse-612)
+  - [TitleUnlocked (613)](#titleunlocked-613)
+  - [TitleSelect (614)](#titleselect-614)
+  - [AppearanceChange (617)](#appearancechange-617)
+  - [AppearancePreview (618)](#appearancepreview-618)
+  - [RaceChange (619)](#racechange-619)
+  - [ClassChange (620)](#classchange-620)
+  - [NameChange (621)](#namechange-621)
+  - [GenderChange (622)](#genderchange-622)
+  - [RestXpUpdate (623)](#restxpupdate-623)
+  - [RestStateChange (624)](#reststatechange-624)
+  - [AttributeIncreaseResponse (650)](#attributeincreaseresponse-650)
+  - [CharacterCustomizeResponse (651)](#charactercustomizeresponse-651)
+  - [TalentLearnResponse (652)](#talentlearnresponse-652)
+  - [TalentResetResponse (653)](#talentresetresponse-653)
+  - [SpecializationChangeResponse (654)](#specializationchangeresponse-654)
+  - [TitleChangeResponse (655)](#titlechangeresponse-655)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
 
 ---
 
-## 📋 Übersicht
+## 🔄 Character Flow (Übersicht)
 
-Diese Kategorie umfasst alle Messages für **Character-Management, Progression, und Customization** im 2DMMO.
+Diese Kategorie umfasst alle Messages für **Character-Management, Progression, und Customization** im 2DMMO. Der Server ist **immer autoritativ** für alle Character-Daten.
 
-Das Character-System implementiert:
-- **Progression-System**: XP, Leveling (max Level 60), Stat-Points
-- **Attribute-System**: Strength, Dexterity, Intelligence, Stamina, Spirit
-- **Talent-System**: Talent-Trees mit Specializations (geplant)
-- **Title-System**: Achievement-basierte Titles (geplant)
-- **Appearance-System**: Character-Customization (Hairstyle, Color, etc.)
-- **Resource-System**: HP, Mana, Energy, Rage (class-abhängig)
-- **Rested-XP**: Bonus-XP für Offline-Zeit (geplant)
+### Architektur: Server-Authoritative Character System
 
-**Server Authority**: Alle Character-Changes sind server-authoritative.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  CharacterProgressionDto (Progression)                          │
+│  ├── Level, CurrentXp, XpToNextLevel                            │
+│  ├── UnspentStatPoints, UnspentTalentPoints                     │
+│  └── RestXp, RestBonusPercent                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  CharacterStatsDto (Attribute + Derived Stats)                  │
+│  ├── Strength, Dexterity, Intelligence, Stamina, Spirit         │
+│  ├── AttackPower, SpellPower, Armor, CritChance                 │
+│  └── DodgeChance, BlockChance, HastePercent                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ResourceDto (Health, Mana, Energy, Rage)                       │
+│  ├── Current, Max                                               │
+│  └── RegenPerSecond                                             │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-**Level-Cap**: Max Level 60 (Prototyp), 100 (geplant)
+### XP-Gain + Level-Up Flow
 
-**XP-Curve**: Exponential (Level 1→2: 100 XP, Level 59→60: 1.000.000 XP)
+```
+Client                         Server                    DB
+  │                              │                        │
+  │  (Monster Kill)              │                        │
+  │                              │                        │
+  │                              │  Calculate XP          │
+  │                              │  (Base * Bonuses)      │
+  │                              │                        │
+  │  XpGain (601)                │                        │
+  │◄─────────────────────────────│                        │
+  │  Amount: 150                 │                        │
+  │  Source: "Goblin"            │                        │
+  │                              │                        │
+  │                              │  Check LevelUp         │
+  │                              │  (CurrentXP >= Req)    │
+  │                              │                        │
+  │  LevelUp (600) [if reached]  │                        │
+  │◄─────────────────────────────│                        │
+  │  NewLevel: 11                │                        │
+  │  StatPoints: +5              │                        │
+  │                              │                        │
+  │                              │  Persist to DB         │
+  │                              │───────────────────────►│
+```
 
-**🔄 DTO-System:**  
-Character-Selection Messages wie `CharacterList` (601) werden später ein `CharacterListItemDto` verwenden:
-- Minimale Character-Infos für Selection-Screen (Name, Level, Race, Class, Location)
-- Keine sensiblen Daten wie AccountId, Gold, oder Experience
-- Optimiert für schnelle Character-Selection UI
+### Resource Update Flow (HP/Mana/Energy)
 
-Siehe [DTO_ARCHITECTURE.md](DTO_ARCHITECTURE.md) für geplante `CharacterListItemDto` Struktur.
+```
+Client                         Server
+  │                              │
+  │  (Damage/Heal/Regen Event)   │
+  │                              │
+  │  ResourceUpdate (604)        │
+  │◄─────────────────────────────│
+  │  Type: Health                │
+  │  Current: 850                │
+  │  Max: 1200                   │
+  │                              │
+  │  (UI: Update Health Bar)     │
+  │                              │
+```
+
+### Character Customization Flow
+
+```
+Client                         Server                    DB
+  │                              │                        │
+  │  AppearanceChange (617)      │                        │
+  │  HairStyle: 5                │                        │
+  │  HairColor: #FF0000          │                        │
+  │───────────────────────────────►                       │
+  │                              │  Validate Gold         │
+  │                              │  Validate Options      │
+  │                              │                        │
+  │  CharacterCustomizeResponse  │                        │
+  │  (651), Success=true         │                        │
+  │◄─────────────────────────────│                        │
+  │                              │  Persist              │
+  │                              │───────────────────────►│
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### CharacterProgressionDto
+
+```csharp
+[MessagePackObject]
+public class CharacterProgressionDto
+{
+    [Key(0)] public int Level { get; set; }
+    [Key(1)] public long CurrentXp { get; set; }
+    [Key(2)] public long XpToNextLevel { get; set; }
+    [Key(3)] public int UnspentStatPoints { get; set; }
+    [Key(4)] public int UnspentTalentPoints { get; set; }
+    [Key(5)] public long RestXp { get; set; }
+    [Key(6)] public float RestBonusPercent { get; set; } // 0.5 = +50%
+}
+```
+
+### CharacterStatsDto
+
+```csharp
+[MessagePackObject]
+public class CharacterStatsDto
+{
+    // Primary Attributes
+    [Key(0)] public int Strength { get; set; }
+    [Key(1)] public int Dexterity { get; set; }
+    [Key(2)] public int Intelligence { get; set; }
+    [Key(3)] public int Stamina { get; set; }
+    [Key(4)] public int Spirit { get; set; }
+    
+    // Derived Stats
+    [Key(5)] public int AttackPower { get; set; }
+    [Key(6)] public int SpellPower { get; set; }
+    [Key(7)] public int Armor { get; set; }
+    [Key(8)] public float CritChance { get; set; }      // 0.0-1.0
+    [Key(9)] public float DodgeChance { get; set; }     // 0.0-1.0
+    [Key(10)] public float BlockChance { get; set; }    // 0.0-1.0
+    [Key(11)] public float HastePercent { get; set; }   // 0.0-1.0
+}
+```
+
+### ResourceDto
+
+```csharp
+[MessagePackObject]
+public class ResourceDto
+{
+    [Key(0)] public ResourceType Type { get; set; }
+    [Key(1)] public int Current { get; set; }
+    [Key(2)] public int Max { get; set; }
+    [Key(3)] public float RegenPerSecond { get; set; }
+}
+
+public enum ResourceType : byte
+{
+    Health = 0,
+    Mana = 1,
+    Energy = 2,
+    Rage = 3,
+    Focus = 4
+}
+```
+
+### ReputationDto
+
+```csharp
+[MessagePackObject]
+public class ReputationDto
+{
+    [Key(0)] public int FactionId { get; set; }
+    [Key(1)] public string FactionName { get; set; }
+    [Key(2)] public int CurrentValue { get; set; }      // -42000 to +42000
+    [Key(3)] public ReputationStanding Standing { get; set; }
+    [Key(4)] public int ValueToNextStanding { get; set; }
+}
+
+public enum ReputationStanding : byte
+{
+    Hated = 0,       // -42000 to -6000
+    Hostile = 1,     // -6000 to -3000
+    Unfriendly = 2,  // -3000 to 0
+    Neutral = 3,     // 0 to 3000
+    Friendly = 4,    // 3000 to 9000
+    Honored = 5,     // 9000 to 21000
+    Revered = 6,     // 21000 to 42000
+    Exalted = 7      // 42000
+}
+```
+
+### AppearanceDto
+
+```csharp
+[MessagePackObject]
+public class AppearanceDto
+{
+    [Key(0)] public byte HairStyle { get; set; }
+    [Key(1)] public uint HairColor { get; set; }     // RGB
+    [Key(2)] public byte FaceType { get; set; }
+    [Key(3)] public uint SkinColor { get; set; }     // RGB
+    [Key(4)] public byte Gender { get; set; }        // 0=Male, 1=Female
+}
+```
+
+---
+
+## 📩 Aktive Messages
 
 ---
 
 ## LevelUp (600)
 
-**Richtung:** 📥 Server → Client  
-**Frequenz:** Selten (Login, Character-Select)  
+**Richtung:** 📡 Broadcast (Server → Client + Nearby)  
+**Frequenz:** Selten (nur bei Level-Aufstieg)  
 **Authentifizierung:** 🔒 Ja  
 **Spezielle Rechte:** Keine
 
 ### Beschreibung
-Vollständige Character-Informationen nach Login oder Character-Auswahl. Enthält alle Stats, Attributes, Titles, Appearance, und Progression-Daten.
-
-Diese Message wird beim Character-Select und nach Login gesendet. Nachfolgende Updates erfolgen via dedizierte Update-Messages (StatsUpdate, LevelUp, etc.).
+Character hat ein Level aufgestiegen. Server broadcastet Level-Up Event an alle Spieler in Sichtweite mit Visual-Effects und Sound. HP/Mana werden auf 100% restored.
 
 ### Im Scope ✅
-- Grundlegende Character-Daten (Name, Race, Class, Level)
-- Attribute (Strength, Dexterity, Intelligence, Stamina, Spirit)
-- Derived Stats (HP, Mana, Armor, Crit-Chance, etc.)
-- Current XP und Required XP
-- Available Stat-Points und Talent-Points
-- Equipped Title
-- Appearance-Daten
+- Level-Up Notification an Self und Nearby
+- Stat-Points Reward (5 pro Level)
+- Talent-Points Reward (1 ab Level 10)
+- HP/Mana Full-Restore
+- Visual-Effect an Character-Position
 
 ### Nicht im Scope ❌
-- Equipment → verwende `EquipmentSync` (3900)
-- Inventory → verwende `InventorySync` (500)
-- Talents → verwende `TalentTreeSync` (geplant)
+- XP-Gain selbst → verwende `XpGain` (601)
+- Stat-Distribution → verwende Skill-System
 
 ### Response Payload
 | Feld | Typ | Beschreibung | Pflicht |
