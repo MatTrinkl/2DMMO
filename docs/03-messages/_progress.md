@@ -64,16 +64,16 @@
 
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
-| 20 | Mount | 2000-2099 | 25 | ⏳ | |
-| 21 | Social | 2100-2199 | 13 | ⏳ | |
-| 22 | Emote | 2200-2299 | 23 | ⏳ | |
-| 23 | Admin | 2300-2399 | 37 | ⏳ | |
-| 24 | Instance | 2400-2499 | 33 | ⏳ | |
-| 25 | PvP | 2500-2599 | 32 | ⏳ | |
-| 26 | World | 2600-2699 | 22 | ⏳ | |
-| 27 | Matchmaking | 2700-2799 | 13 | ⏳ | |
-| 28 | Leaderboard | 2800-2899 | 14 | ⏳ | |
-| 29 | Tutorial | 2900-2999 | 13 | ⏳ | |
+| 20 | Mount | 2000-2099 | 27 | ✅ | Completely rewritten to match enum |
+| 21 | Social | 2100-2199 | 21 | ✅ | Added missing messages (2122-2132) |
+| 22 | Emote | 2200-2299 | 21 | ✅ | Completely rewritten to match enum |
+| 23 | Admin | 2300-2399 | 37 | ✅ | Completely rewritten to match enum |
+| 24 | Instance | 2400-2499 | 35 | ✅ | Completely rewritten to match enum |
+| 25 | PvP | 2500-2599 | 35 | ✅ | Completely rewritten to match enum |
+| 26 | World | 2600-2699 | 21 | ✅ | Completely rewritten to match enum |
+| 27 | Matchmaking | 2700-2799 | 17 | ✅ | Completely rewritten to match enum |
+| 28 | Leaderboard | 2800-2899 | 14 | ✅ | Completely rewritten to match enum |
+| 29 | Tutorial | 2900-2999 | 13 | ✅ | Added GuideProgress (2932) |
 
 ### Advanced Systems (3000-3999)
 

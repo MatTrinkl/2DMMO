@@ -24,6 +24,14 @@
 - [FriendNote (2110)](#friendnote-2110)
 - [BlockPlayer (2120)](#blockplayer-2120)
 - [BlockPlayerResult (2121)](#blockplayerresult-2121)
+- [UnblockPlayer (2122)](#unblockplayer-2122)
+- [BlockListRequest (2123)](#blocklistrequest-2123)
+- [BlockListResponse (2124)](#blocklistresponse-2124)
+- [IgnorePlayer (2125)](#ignoreplayer-2125)
+- [UnignorePlayer (2126)](#unignoreplayer-2126)
+- [WhoRequest (2130)](#whorequest-2130)
+- [WhoResponse (2131)](#whoresponse-2131)
+- [PlayerLocation (2132)](#playerlocation-2132)
 
 ---
 
@@ -519,7 +527,96 @@ Result des Block-Requests.
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## UnblockPlayer (2122)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Client entfernt Spieler von Block-Liste.
+
+---
+
+## BlockListRequest (2123)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Client fordert Block-Liste an.
+
+---
+
+## BlockListResponse (2124)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Server sendet Block-Liste.
+
+---
+
+## IgnorePlayer (2125)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Client ignoriert Spieler (nur Chat).
+
+---
+
+## UnignorePlayer (2126)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Client hebt Ignore auf.
+
+---
+
+## WhoRequest (2130)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Client sucht Spieler (Who-Befehl).
+
+---
+
+## WhoResponse (2131)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Server sendet Who-Ergebnisse.
+
+---
+
+## PlayerLocation (2132)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja
+
+### Beschreibung
+Server sendet Spieler-Location (für Friends).
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0  
+**Status**: ✅ Aligned mit MessageType Enum (21 Messages)
 
 [← Zurück zur Übersicht](README.md)

@@ -339,7 +339,20 @@ Keine zusätzlichen Felder
 
 ---
 
-**Letzte Aktualisierung**: 2025-12-25  
-**Version**: 1.0.0
+## GuideProgress (2932)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server sendet Guide-Progress Update.
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0  
+**Status**: ✅ Aligned mit MessageType Enum (13 Messages)
 
 [← Zurück zur Übersicht](README.md)
