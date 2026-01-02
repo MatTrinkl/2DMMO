@@ -24,14 +24,14 @@
 
 **Phase 1: Alignment** - ✅ COMPLETE (All 51 categories aligned)
 
-**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 2 Complete)
+**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 4 Complete)
 
 | Range | Alignment | Detail Pass | Categories |
 |-------|-----------|-------------|------------|
 | Core (0-9) | ✅ | 🔵 Detail Done | 10 categories |
 | Extended (10-19) | ✅ | 🔵 Detail Done | 10 categories |
-| Social (20-29) | ✅ | ⏳ Batch 3 | 10 categories |
-| Advanced (30-39) | ✅ | ⏳ Batch 4 | 10 categories |
+| Social (20-29) | ✅ | 🔵 Detail Done | 10 categories |
+| Advanced (30-39) | ✅ | 🔵 Detail Done | 10 categories |
 | Extended (40-49) | ✅ | ⏳ Batch 5 | 10 categories |
 | S2S (50) | ✅ | 📋 Geplant | 1 category |
 
@@ -71,33 +71,33 @@
 
 ### Social & PvP (2000-2999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 20 | Mount | 2000-2099 | 27 | ✅ | Completely rewritten to match enum |
-| 21 | Social | 2100-2199 | 21 | ✅ | Added missing messages (2122-2132) |
-| 22 | Emote | 2200-2299 | 21 | ✅ | Completely rewritten to match enum |
-| 23 | Admin | 2300-2399 | 37 | ✅ | Completely rewritten to match enum |
-| 24 | Instance | 2400-2499 | 35 | ✅ | Completely rewritten to match enum |
-| 25 | PvP | 2500-2599 | 35 | ✅ | Completely rewritten to match enum |
-| 26 | World | 2600-2699 | 21 | ✅ | Completely rewritten to match enum |
-| 27 | Matchmaking | 2700-2799 | 17 | ✅ | Completely rewritten to match enum |
-| 28 | Leaderboard | 2800-2899 | 14 | ✅ | Completely rewritten to match enum |
-| 29 | Tutorial | 2900-2999 | 13 | ✅ | Added GuideProgress (2932) |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 20 | Mount | 2000-2099 | 27 | ✅ | 🔵 Done | Full template for Mount/Pet/Companion system |
+| 21 | Social | 2100-2199 | 21 | ✅ | 🔵 Done | Full template for Friends/Block/Who system |
+| 22 | Emote | 2200-2299 | 21 | ✅ | 🔵 Done | Full template for Emotes/Cosmetics/Transmog |
+| 23 | Admin | 2300-2399 | 37 | ✅ | 🔵 Done | Full template for GM Tools |
+| 24 | Instance | 2400-2499 | 35 | ✅ | 🔵 Done | Full template for Dungeons/Raids/Finder |
+| 25 | PvP | 2500-2599 | 35 | ✅ | 🔵 Done | Full template for Arena/BG/World PvP |
+| 26 | World | 2600-2699 | 21 | ✅ | 🔵 Done | Full template for Weather/Events/Bosses |
+| 27 | Matchmaking | 2700-2799 | 17 | ✅ | 🔵 Done | Full template for Queues/Roles |
+| 28 | Leaderboard | 2800-2899 | 14 | ✅ | 🔵 Done | Full template for Rankings |
+| 29 | Tutorial | 2900-2999 | 13 | ✅ | 🔵 Done | Full template for Guide/Tutorial system |
 
 ### Advanced Systems (3000-3999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 30 | Settings | 3000-3099 | 17 | ✅ | Completely rewritten to match enum |
-| 31 | Loot | 3100-3199 | 21 | ✅ | Completely rewritten to match enum |
-| 32 | Cooldown | 3200-3299 | 18 | ✅ | Completely rewritten to match enum |
-| 33 | Inspection | 3300-3399 | 17 | ✅ | Completely rewritten to match enum |
-| 34 | Map | 3400-3499 | 20 | ✅ | Completely rewritten to match enum |
-| 35 | Voice | 3500-3599 | 15 | ✅ | Completely rewritten to match enum |
-| 36 | Reporting | 3600-3699 | 18 | ✅ | Completely rewritten to match enum |
-| 37 | Economy | 3700-3799 | 17 | ✅ | Completely rewritten to match enum |
-| 38 | Skill | 3800-3899 | 28 | ✅ | Completely rewritten to match enum |
-| 39 | Equipment | 3900-3999 | 28 | ✅ | Completely rewritten to match enum |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 30 | Settings | 3000-3099 | 17 | ✅ | 🔵 Done | Full template for User/Game settings |
+| 31 | Loot | 3100-3199 | 21 | ✅ | 🔵 Done | Full template for Loot/Roll/Distribution |
+| 32 | Cooldown | 3200-3299 | 18 | ✅ | 🔵 Done | Full template for Cooldown management |
+| 33 | Inspection | 3300-3399 | 17 | ✅ | 🔵 Done | Full template for Player inspection |
+| 34 | Map | 3400-3499 | 20 | ✅ | 🔵 Done | Full template for Map/Waypoint system |
+| 35 | Voice | 3500-3599 | 15 | ✅ | 🔵 Done | Full template for Voice chat |
+| 36 | Reporting | 3600-3699 | 18 | ✅ | 🔵 Done | Full template for Reporting/Moderation |
+| 37 | Economy | 3700-3799 | 17 | ✅ | 🔵 Done | Full template for Currency/Gold system |
+| 38 | Skill | 3800-3899 | 28 | ✅ | 🔵 Done | Full template for Skill/Talent system |
+| 39 | Equipment | 3900-3999 | 28 | ✅ | 🔵 Done | Full template for Equipment/Enchant system |
 
 ### Extended Features (4000-4999)
 
