@@ -1757,7 +1757,7 @@ ZoneLoadedAck (119)
 
 ---
 
-## ZoneDiscovered (108)
+## ZoneDiscovered (109)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -1834,7 +1834,7 @@ public void OnZoneDiscovered(ZoneDiscovered msg)
 
 ---
 
-## ZoneListRequest (109)
+## ZoneListRequest (110)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten  
@@ -1882,7 +1882,7 @@ var allZones = new ZoneListRequest
 
 ---
 
-## ZoneListResponse (110)
+## ZoneListResponse (111)
 
 **Richtung:** 📥 Server → Client  
 **Frequenz:** Selten  
@@ -2068,7 +2068,7 @@ public void HandleGetZoneRequest(ClientConnection conn, GetZoneRequest request)
 
 ---
 
-## ZoneLoadedAck (119)
+## ZoneLoadedAck (118)
 
 **Richtung:** 📤 Client → Server  
 **Frequenz:** Selten (einmal pro Zone-Load)  
@@ -2475,7 +2475,7 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## ShardTransfer (111)
+## ShardTransfer (112)
 
 **Status:** 🔮 Phase 2  
 **Beschreibung:** Transfer zu anderem Shard (Zone-Instance) für Load-Balancing bei überfüllten Zonen.
@@ -2488,7 +2488,7 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## ShardListRequest (112)
+## ShardListRequest (113)
 
 **Status:** 🔮 Phase 2  
 **Beschreibung:** Liste aller verfügbaren Shards für aktuelle Zone anfragen.
@@ -2501,14 +2501,14 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## ShardListResponse (113)
+## ShardListResponse (114)
 
 **Status:** 🔮 Phase 2  
 **Beschreibung:** Antwort mit Shard-Informationen (Population, Status, Freunde).
 
 ---
 
-## SubZoneEnter (114)
+## SubZoneEnter (115)
 
 **Status:** 🔮 Phase 2  
 **Beschreibung:** Spieler betritt Sub-Zone (z.B. "Goldshire" innerhalb von "Elwynn Forest").
@@ -2521,17 +2521,19 @@ Die folgenden Messages sind für Phase 2 geplant und noch nicht implementiert.
 
 ---
 
-## SubZoneLeave (115)
+## SubZoneLeave (116)
 
 **Status:** 🔮 Phase 2  
 **Beschreibung:** Spieler verlässt Sub-Zone.
 
 ---
 
-## ZonePhaseChange (116)
+## ZonePhaseChange [PLANNED]
 
-**Status:** 🔮 Phase 2  
+**Status:** 🔮 Phase 2 (No ID assigned yet)  
 **Beschreibung:** Zone ändert Phase basierend auf Quest-Fortschritt (Phasing-System).
+
+> **Hinweis:** Diese Message hat noch keine zugewiesene ID im `MessageType` Enum. Die ID wird in Phase 2 vergeben.
 
 ### Geplante Funktionalität
 
@@ -2557,23 +2559,23 @@ Die folgenden Messages wurden durch den neuen Zone Loading Flow ersetzt.
 
 ---
 
-## ZoneLoadingProgress (107) [OBSOLET]
+## ZoneLoadingProgress (108) [OBSOLET]
 
 > ⚠️ **OBSOLET** - Nicht mehr benötigt
 >
-> Der Client lädt Zone-Assets lokal und sendet `ZoneLoadedAck` (119) wenn fertig. Server muss keinen Loading-Progress mehr senden.
+> Der Client lädt Zone-Assets lokal und sendet `ZoneLoadedAck` (118) wenn fertig. Server muss keinen Loading-Progress mehr senden.
 
-**MessageType ID:** 107 - Kann für zukünftige Zwecke wiederverwendet werden.
+**MessageType ID:** 108 - Reserviert, kann für zukünftige Zwecke wiederverwendet werden.
 
 ---
 
-## GetZoneResponse (118) [OBSOLET]
+## GetZoneResponse [OBSOLET]
 
 > ⚠️ **OBSOLET** - Ersetzt durch direkte `ZoneState` Antwort
 >
 > Server antwortet auf `GetZoneRequest` (117) direkt mit `ZoneState` (102). Ein separater Response-Wrapper ist nicht mehr nötig.
 
-**MessageType ID:** 118 - Kann für zukünftige Zwecke wiederverwendet werden.
+**Hinweis:** Diese Message hatte keine zugewiesene ID im Enum und wurde nie implementiert.
 
 ---
 

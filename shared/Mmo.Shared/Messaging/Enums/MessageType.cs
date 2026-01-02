@@ -41,7 +41,9 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // ZONE EVENTS (0100-0199)
     // ═══════════════════════════════════════════════════════════════
-    JoinZone = 100,
+    [Obsolete("Deprecated: Use ZoneState.MyCharacter for character spawn data")]
+    JoinZone = 100, // DEPRECATED - Functionality moved to ZoneState (102)
+
     LeaveZone = 101,
     ZoneState = 102,
     ZoneDelta = 103,
@@ -49,7 +51,10 @@ public enum MessageType : ushort
     CharacterLeftZone = 105,
     ZoneTransferRequest = 106,
     ZoneTransferResponse = 107,
-    ZoneLoadingProgress = 108,
+
+    [Obsolete("Deprecated: Client loads assets locally and sends ZoneLoadedAck (118) when ready")]
+    ZoneLoadingProgress = 108, // DEPRECATED - No longer needed
+
     ZoneDiscovered = 109,
     ZoneListRequest = 110,
     ZoneListResponse = 111,

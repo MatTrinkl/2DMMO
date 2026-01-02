@@ -33,7 +33,7 @@
 | Cat | Name | Range | Enum Count | Doc Status | Notes |
 |-----|------|-------|------------|------------|-------|
 | 00 | Connection | 0-99 | 24 | ✅ | Fixed naming discrepancies, added [Obsolete] |
-| 01 | Zone | 100-199 | 19 | ⏳ | |
+| 01 | Zone | 100-199 | 19 | ✅ | Fixed ID mismatches, added [Obsolete] markers |
 | 02 | Movement | 200-299 | 20 | ⏳ | |
 | 03 | Combat | 300-399 | 33 | ⏳ | |
 | 04 | Chat | 400-499 | 31 | ⏳ | |
@@ -139,6 +139,23 @@ _(Updated after each category completion)_
 - ✅ Fixed code examples to use correct class/type names
 - ✅ Fixed cross-references in "Verwandte Messages" tables
 - ✅ Added `[Obsolete]` attribute to `SessionValidate` in enum
+
+### Category 01: Zone (2026-01-02)
+- ✅ Fixed ID mismatches in section headings:
+  - `ZoneDiscovered (108)` → `ZoneDiscovered (109)`
+  - `ZoneListRequest (109)` → `ZoneListRequest (110)`
+  - `ZoneListResponse (110)` → `ZoneListResponse (111)`
+  - `ShardTransfer (111)` → `ShardTransfer (112)`
+  - `ShardListRequest (112)` → `ShardListRequest (113)`
+  - `ShardListResponse (113)` → `ShardListResponse (114)`
+  - `SubZoneEnter (114)` → `SubZoneEnter (115)`
+  - `SubZoneLeave (115)` → `SubZoneLeave (116)`
+  - `ZoneLoadedAck (119)` → `ZoneLoadedAck (118)`
+- ✅ Added `[Obsolete]` attributes to enum:
+  - `JoinZone` (100) - replaced by ZoneState.MyCharacter
+  - `ZoneLoadingProgress` (108) - no longer needed
+- ✅ Fixed obsolete section IDs in docs
+- ✅ Updated `ZonePhaseChange` to note it has no ID yet (planned feature)
 
 ---
 
