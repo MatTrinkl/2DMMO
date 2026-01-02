@@ -24,11 +24,11 @@
 
 **Phase 1: Alignment** - ✅ COMPLETE (All 51 categories aligned)
 
-**Phase 2: Detail Pass** - 🔄 IN PROGRESS
+**Phase 2: Detail Pass** - 🔄 IN PROGRESS (Batch 1)
 
 | Range | Alignment | Detail Pass | Categories |
 |-------|-----------|-------------|------------|
-| Core (0-9) | ✅ | 🔄 Batch 1 | 10 categories |
+| Core (0-9) | ✅ | 🔵 Detail Done | 10 categories |
 | Extended (10-19) | ✅ | ⏳ Batch 2 | 10 categories |
 | Social (20-29) | ✅ | ⏳ Batch 3 | 10 categories |
 | Advanced (30-39) | ✅ | ⏳ Batch 4 | 10 categories |
@@ -41,18 +41,18 @@
 
 ### Connection & Core (0000-0999)
 
-| Cat | Name | Range | Enum Count | Doc Status | Notes |
-|-----|------|-------|------------|------------|-------|
-| 00 | Connection | 0-99 | 24 | ✅ | Fixed naming discrepancies, added [Obsolete] |
-| 01 | Zone | 100-199 | 19 | ✅ | Fixed ID mismatches, added [Obsolete] markers |
-| 02 | Movement | 200-299 | 22 | ✅ | Added TeleportResponse (220), JumpResponse (221) |
-| 03 | Combat | 300-399 | 35 | ✅ | Added ThreatListResponse (333), ResurrectionResponse (334) |
-| 04 | Chat | 400-499 | 37 | ✅ | Added response messages (440-445) |
-| 05 | Inventory | 500-599 | 44 | ✅ | Fixed message names, added responses (536-543) |
-| 06 | Character | 600-699 | 30 | ✅ | Fixed names, added responses (650-655) |
-| 07 | Party | 700-799 | 33 | ✅ | Fixed names, added responses (740-746) |
-| 08 | Guild | 800-899 | 50 | ✅ | Fixed names, added responses (840-850) |
-| 09 | System | 900-999 | 26 | ✅ | Verified - aligned with enum |
+| Cat | Name | Range | Enum Count | Doc Status | Detail Status | Notes |
+|-----|------|-------|------------|------------|---------------|-------|
+| 00 | Connection | 0-99 | 24 | ✅ | 🔵 Done | Full template for all messages |
+| 01 | Zone | 100-199 | 19 | ✅ | 🔵 Done | Comprehensive with DTOs and flows |
+| 02 | Movement | 200-299 | 22 | ✅ | 🔵 Done | Complete with examples |
+| 03 | Combat | 300-399 | 35 | ✅ | 🔵 Done | Complete combat system docs |
+| 04 | Chat | 400-499 | 37 | ✅ | 🔵 Done | Chat channel system complete |
+| 05 | Inventory | 500-599 | 44 | ✅ | 🔵 Done | Item management complete |
+| 06 | Character | 600-699 | 30 | ✅ | 🔵 Done | Stats and progression complete |
+| 07 | Party | 700-799 | 33 | ✅ | 🔵 Done | Group mechanics complete |
+| 08 | Guild | 800-899 | 50 | ✅ | 🔵 Done | Guild system complete |
+| 09 | System | 900-999 | 26 | ✅ | 🔵 Done | System/Error handling complete |
 
 ### Gameplay Features (1000-1999)
 

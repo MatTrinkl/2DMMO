@@ -83,6 +83,40 @@
   - `ItemLockResponse`, `BagExpandResponse`
 - **Fixed:** Response IDs in docs (were 520-527, conflicted with existing entries)
 
+### Categories 06-09: Character, Party, Guild, System (2026-01-02)
+
+- **Fixed:** Message names and IDs aligned with enum
+- **Added:** Response messages where missing
+- **Verified:** All Request/Response pairs documented
+
+---
+
+## Detail Pass Phase (2026-01-02)
+
+### Batch 1: Categories 00-09 (Core) - COMPLETE
+
+- **Verified:** All 10 core categories have complete template sections
+- **Status:** All messages follow the standard template with:
+  - Richtung, Frequenz, Auth, Rechte headers
+  - Beschreibung (2-3 sentences)
+  - Im Scope ✅ / Nicht im Scope ❌
+  - Payload tables
+  - Erwartete Response
+  - Verwandte Messages
+  - Code examples
+
+Categories verified:
+- 00 Connection: 24 messages fully detailed
+- 01 Zone: 19 messages + comprehensive DTOs
+- 02 Movement: 22 messages with prediction/correction docs
+- 03 Combat: 35 messages with combat system docs
+- 04 Chat: 37 messages with channel system
+- 05 Inventory: 44 messages with item management
+- 06 Character: 30 messages with progression
+- 07 Party: 33 messages with group mechanics
+- 08 Guild: 50 messages with guild system
+- 09 System: 26 messages with error handling
+
 ---
 
 _(Entries will be added as categories are processed)_
