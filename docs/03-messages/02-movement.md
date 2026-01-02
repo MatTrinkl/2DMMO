@@ -1,7 +1,7 @@
-# 🏃 Movement / Position Messages (0200-0299)
+# 🏃 Movement / Position Messages (0200-0221)
 
 **Kategorie:** 2  
-**Range:** 0200-0299  
+**Range:** 0200-0221 (AKTIV)  
 **Phase:** Prototyp  
 **Status:** 🟢 In Entwicklung
 
@@ -9,48 +9,354 @@
 
 ---
 
-## 📋 Übersicht
-
-Diese Kategorie umfasst alle Messages für **Bewegung und Positionierung** im 2DMMO.
-
-Das Movement-System basiert auf **Client-Side Prediction** mit **Server-Authority**:
-- Client sendet Input und predicted Position
-- Server validiert gegen Speed/Collision
-- Server broadcastet authoritative Position
-- Bei Desync: Server sendet Correction
-
-**Tick-Rate**: 25 Hz (40ms pro Tick)  
-**Position-Update-Rate**: Bis zu 20 Hz (optimiert für Bandwidth)  
-**Interpolation-Buffer**: ~100ms für smooth Movement anderer Spieler
-
----
-
 ## 📋 Inhaltsverzeichnis
 
-- [PositionUpdate (200)](#positionupdate-200)
-- [PositionBroadcast (201)](#positionbroadcast-201)
-- [MovementCorrection (202)](#movementcorrection-202)
-- [TeleportRequest (203)](#teleportrequest-203)
-- [TeleportExecute (204)](#teleportexecute-204)
-- [MovementSpeedUpdate (205)](#movementspeedupdate-205)
-- [JumpRequest (206)](#jumprequest-206)
-- [JumpBroadcast (207)](#jumpbroadcast-207)
-- [FallDamage (208)](#falldamage-208)
-- [StuckRequest (209)](#stuckrequest-209)
-- [StuckResponse (210)](#stuckresponse-210)
-- [PathfindingRequest (211)](#pathfindingrequest-211)
-- [PathfindingResponse (212)](#pathfindingresponse-212)
-- [ForcePosition (213)](#forceposition-213)
-- [MovementModeChange (214)](#movementmodechange-214)
-- [CollisionEvent (215)](#collisionevent-215)
-- [KnockbackEvent (216)](#knockbackevent-216)
-- [PullEvent (217)](#pullevent-217)
-- [RootEvent (218)](#rootevent-218)
-- [StunMovement (219)](#stunmovement-219)
-- [TeleportResponse (220)](#teleportresponse-220)
-- [JumpResponse (221)](#jumpresponse-221)
+- [Movement Flow (Übersicht)](#-movement-flow-übersicht)
+  - [Architektur: Client-Prediction + Server-Authority](#architektur-client-prediction--server-authority)
+  - [Position-Update Flow](#position-update-flow)
+  - [Teleport Flow](#teleport-flow)
+  - [Jump Flow](#jump-flow)
+  - [Stuck/Recovery Flow](#stuckrecovery-flow)
+  - [CC-Effects Flow (Root/Stun/Knockback)](#cc-effects-flow-rootstunknockback)
+- [DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
+  - [MovementMode](#movementmode)
+  - [MovementInputFlags](#movementinputflags)
+  - [CorrectionReason](#correctionreason)
+  - [TeleportType](#teleporttype)
+  - [PositionDto](#positiondto)
+  - [VelocityDto](#velocitydto)
+- [Aktive Messages (0200-0221)](#aktive-messages-0200-0221)
+  - [PositionUpdate (200)](#positionupdate-200)
+  - [PositionBroadcast (201)](#positionbroadcast-201)
+  - [MovementCorrection (202)](#movementcorrection-202)
+  - [TeleportRequest (203)](#teleportrequest-203)
+  - [TeleportExecute (204)](#teleportexecute-204)
+  - [MovementSpeedUpdate (205)](#movementspeedupdate-205)
+  - [JumpRequest (206)](#jumprequest-206)
+  - [JumpBroadcast (207)](#jumpbroadcast-207)
+  - [FallDamage (208)](#falldamage-208)
+  - [StuckRequest (209)](#stuckrequest-209)
+  - [StuckResponse (210)](#stuckresponse-210)
+  - [PathfindingRequest (211)](#pathfindingrequest-211)
+  - [PathfindingResponse (212)](#pathfindingresponse-212)
+  - [ForcePosition (213)](#forceposition-213)
+  - [MovementModeChange (214)](#movementmodechange-214)
+  - [CollisionEvent (215)](#collisionevent-215)
+  - [KnockbackEvent (216)](#knockbackevent-216)
+  - [PullEvent (217)](#pullevent-217)
+  - [RootEvent (218)](#rootevent-218)
+  - [StunMovement (219)](#stunmovement-219)
+  - [TeleportResponse (220)](#teleportresponse-220)
+  - [JumpResponse (221)](#jumpresponse-221)
+- [Obsolete Messages](#-obsolete-messages)
+- [Anhang](#-anhang)
+  - [MessageType Enum Updates](#messagetype-enum-updates)
+  - [Datei-Struktur](#datei-struktur)
 
 ---
+
+## 🔄 Movement Flow (Übersicht)
+
+Das Movement-System basiert auf **Client-Side Prediction** mit **Server-Authority**. Der Client sendet Inputs und predicts seine Position lokal, während der Server alle Positionen validiert und authoritative Updates broadcastet.
+
+### Architektur: Client-Prediction + Server-Authority
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  CLIENT (Prediction)                                            │
+│  ├── Lokale Input-Verarbeitung                                  │
+│  ├── Lokale Position-Prediction                                 │
+│  ├── Input-History für Reconciliation                           │
+│  └── Interpolation für andere Spieler (~100ms Buffer)           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ PositionUpdate (200)
+┌─────────────────────────────────────────────────────────────────┐
+│  SERVER (Authority)                                             │
+│  ├── Input-Validation (Speed, Collision, Bounds)                │
+│  ├── Position-Storage                                           │
+│  ├── Broadcast an Clients in Range (AoI)                        │
+│  └── Correction bei Desync (MovementCorrection 202)             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ PositionBroadcast (201)
+┌─────────────────────────────────────────────────────────────────┐
+│  OTHER CLIENTS                                                  │
+│  ├── Interpolation zum Ziel (~100ms)                            │
+│  ├── Extrapolation bei Packet-Loss                              │
+│  └── Dead-Reckoning mit Velocity                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Technische Parameter:**
+- **Tick-Rate**: 25 Hz (40ms pro Tick)
+- **Position-Update-Rate**: Bis zu 20 Hz (optimiert für Bandwidth)
+- **Interpolation-Buffer**: ~100ms für smooth Movement anderer Spieler
+- **Max Speed**: 7.0 m/s (Sprint), 5.0 m/s (Walk)
+- **Speed-Tolerance**: 1.1x (für Latency-Kompensation)
+- **AoI-Range**: ~50m (Area of Interest für Broadcasts)
+
+### Position-Update Flow
+
+```
+Client                         Server                    Other Clients
+  │                              │                              │
+  │  [Input: WASD + Mouse]       │                              │
+  │  [Predict local position]    │                              │
+  │                              │                              │
+  │  PositionUpdate (200)        │                              │
+  │  ├── SequenceNumber: 1234    │                              │
+  │  ├── X, Y, Z                 │                              │
+  │  ├── VelocityX, VelocityY    │                              │
+  │  └── InputFlags              │                              │
+  │─────────────────────────────►│                              │
+  │                              │  [Validate:]                 │
+  │                              │  ├── Speed ≤ MAX * TOLERANCE │
+  │                              │  ├── No collision            │
+  │                              │  └── Within bounds           │
+  │                              │                              │
+  │                              │  PositionBroadcast (201)     │
+  │                              │  ├── EntityId                │
+  │                              │  ├── X, Y, Z (validated)     │
+  │                              │  └── Timestamp               │
+  │                              │─────────────────────────────►│
+  │                              │                              │  [Interpolate]
+  │                              │                              │
+  │  [CASE: Desync detected]     │                              │
+  │  MovementCorrection (202)    │                              │
+  │  ├── SequenceNumber: 1234    │                              │
+  │  ├── Reason: "collision"     │                              │
+  │  └── X, Y, Z (corrected)     │                              │
+  │◄─────────────────────────────│                              │
+  │                              │                              │
+  │  [Snap to server pos]        │                              │
+  │  [Re-apply inputs > 1234]    │                              │
+```
+
+### Teleport Flow
+
+```
+Client                         Server
+  │                              │
+  │  TeleportRequest (203)       │
+  │  ├── TargetZoneId: 1002      │
+  │  ├── TargetX, TargetY        │
+  │  └── TeleportType: hearthstone│
+  │─────────────────────────────►│
+  │                              │
+  │                              │  [Validate:]
+  │                              │  ├── Cooldown check
+  │                              │  ├── Combat check
+  │                              │  └── Zone access
+  │                              │
+  │  TeleportResponse (220)      │
+  │  ├── Success: true           │
+  │  └── TargetZoneId, X, Y      │
+  │◄─────────────────────────────│
+  │                              │
+  │  [Show loading screen]       │
+  │                              │
+  │  TeleportExecute (204)       │
+  │  ├── ZoneId: 1002            │
+  │  └── X, Y, Z                 │
+  │◄─────────────────────────────│
+  │                              │
+  │  [Set position instantly]    │
+  │  [Hide loading screen]       │
+```
+
+### Jump Flow
+
+```
+Client                         Server                    Other Clients
+  │                              │                              │
+  │  [Space pressed]             │                              │
+  │  [Local jump prediction]     │                              │
+  │                              │                              │
+  │  JumpRequest (206)           │                              │
+  │  ├── SequenceNumber: 5678    │                              │
+  │  ├── X, Y, Z (at jump)       │                              │
+  │  └── VelocityX, VelocityY    │                              │
+  │─────────────────────────────►│                              │
+  │                              │                              │
+  │                              │  [Validate:]                 │
+  │                              │  ├── Not already jumping     │
+  │                              │  ├── Not rooted/stunned      │
+  │                              │  ├── Stamina available       │
+  │                              │  └── On ground               │
+  │                              │                              │
+  │  JumpResponse (221)          │                              │
+  │  ├── Success: true           │                              │
+  │  ├── SequenceNumber: 5678    │                              │
+  │  └── StaminaCost: 10         │                              │
+  │◄─────────────────────────────│                              │
+  │                              │                              │
+  │                              │  JumpBroadcast (207)         │
+  │                              │  ├── EntityId                │
+  │                              │  └── X, Y, Z, JumpPower      │
+  │                              │─────────────────────────────►│
+  │                              │                              │  [Play jump anim]
+```
+
+### Stuck/Recovery Flow
+
+```
+Client                         Server
+  │                              │
+  │  [Player stuck in wall]      │
+  │                              │
+  │  StuckRequest (209)          │
+  │  ├── Reason: "in_wall"       │
+  │  └── X, Y, Z (current)       │
+  │─────────────────────────────►│
+  │                              │
+  │                              │  [Find safe position:]
+  │                              │  ├── Last safe position
+  │                              │  └── Or zone spawn
+  │                              │
+  │  StuckResponse (210)         │
+  │  ├── Success: true           │
+  │  └── X, Y, Z (safe pos)      │
+  │◄─────────────────────────────│
+  │                              │
+  │  [Teleport to safe pos]      │
+  │  [5s invulnerability]        │
+```
+
+### CC-Effects Flow (Root/Stun/Knockback)
+
+```
+Server                         Client                    Other Clients
+  │                              │                              │
+  │  [Spell hits target]         │                              │
+  │                              │                              │
+  │  KnockbackEvent (216)        │                              │
+  │  ├── EntityId: 50001         │─────────────────────────────►│
+  │  ├── DirectionX, DirectionY  │                              │  [Apply knockback]
+  │  ├── Distance: 5.0           │                              │
+  │  └── Duration: 500ms         │                              │
+  │─────────────────────────────►│                              │
+  │                              │  [Control loss]              │
+  │                              │  [Animate knockback]         │
+  │                              │                              │
+  │  [After knockback ends]      │                              │
+  │                              │                              │
+  │  RootEvent (218)             │                              │
+  │  ├── EntityId: 50001         │─────────────────────────────►│
+  │  ├── Duration: 3000ms        │                              │  [Show root VFX]
+  │  └── AuraId: 5678            │                              │
+  │─────────────────────────────►│                              │
+  │                              │  [Speed = 0]                 │
+  │                              │  [Can still cast]            │
+```
+
+---
+
+## 🧱 DTOs / Enums / Interfaces
+
+### MovementMode
+
+```csharp
+/// <summary>
+/// Current movement mode affecting physics and allowed actions.
+/// </summary>
+public enum MovementMode : byte
+{
+    Walking = 0,    // Standard ground movement
+    Swimming = 1,   // In water (60% speed, no jump, no cast)
+    Flying = 2,     // Airborne with control (future feature)
+    Falling = 3,    // Uncontrolled fall with air-control
+    Mounted = 4     // On mount (uses mount speed)
+}
+```
+
+### MovementInputFlags
+
+```csharp
+/// <summary>
+/// Bit flags for movement input state, sent with PositionUpdate.
+/// </summary>
+[Flags]
+public enum MovementInputFlags : byte
+{
+    None = 0,
+    Forward = 1,      // W key
+    Backward = 2,     // S key
+    Left = 4,         // A key
+    Right = 8,        // D key
+    Jump = 16,        // Space key
+    Sprint = 32       // Shift key
+}
+```
+
+### CorrectionReason
+
+```csharp
+/// <summary>
+/// Reason for server-side position correction.
+/// </summary>
+public enum CorrectionReason : byte
+{
+    Collision = 0,      // Client position inside wall/object
+    SpeedTooHigh = 1,   // Velocity exceeds MAX_SPEED * TOLERANCE
+    OutOfBounds = 2,    // Position outside zone boundaries
+    Stuck = 3,          // Server detected stuck state
+    AntiCheat = 4       // General anti-cheat correction
+}
+```
+
+### TeleportType
+
+```csharp
+/// <summary>
+/// Type of teleport, affects cooldown and validation rules.
+/// </summary>
+public enum TeleportType : byte
+{
+    Hearthstone = 0,    // 30min CD, requires not in combat
+    Portal = 1,         // Mage portal, no CD, requires portal object
+    Spell = 2,          // Spell-based teleport, uses mana
+    FastTravel = 3,     // Discovered location fast travel
+    Admin = 4           // GM teleport, no restrictions
+}
+```
+
+### PositionDto
+
+```csharp
+/// <summary>
+/// Position data used in movement messages.
+/// </summary>
+[MessagePackObject]
+public class PositionDto
+{
+    [Key(0)] public float X { get; set; }
+    [Key(1)] public float Y { get; set; }
+    [Key(2)] public float Z { get; set; }     // Height
+    [Key(3)] public float Yaw { get; set; }   // Rotation 0-360
+}
+```
+
+### VelocityDto
+
+```csharp
+/// <summary>
+/// Velocity data for prediction and validation.
+/// </summary>
+[MessagePackObject]
+public class VelocityDto
+{
+    [Key(0)] public float X { get; set; }
+    [Key(1)] public float Y { get; set; }
+    [Key(2)] public float Z { get; set; }   // Fall speed
+}
+```
+
+---
+
+## Aktive Messages (0200-0221)
+
+> **Reihenfolge:** Exakt wie in `MessageType.cs` definiert.
 
 ## PositionUpdate (200)
 
@@ -1383,8 +1689,122 @@ var errorResponse = new JumpResponse
 
 ---
 
+## 🗑️ Obsolete Messages
 
-**Letzte Aktualisierung**: 2025-12-17  
-**Version**: 1.0.0
+> Aktuell keine obsoleten Messages in dieser Kategorie.
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum Updates
+
+```csharp
+// MOVEMENT / POSITION (0200-0299)
+// Reihenfolge exakt wie in MessageType.cs
+PositionUpdate = 200,
+PositionBroadcast = 201,
+MovementCorrection = 202,
+TeleportRequest = 203,
+TeleportExecute = 204,
+MovementSpeedUpdate = 205,
+JumpRequest = 206,
+JumpBroadcast = 207,
+FallDamage = 208,
+StuckRequest = 209,
+StuckResponse = 210,
+PathfindingRequest = 211,
+PathfindingResponse = 212,
+ForcePosition = 213,
+MovementModeChange = 214,
+CollisionEvent = 215,
+KnockbackEvent = 216,
+PullEvent = 217,
+RootEvent = 218,
+StunMovement = 219,
+TeleportResponse = 220,
+JumpResponse = 221
+```
+
+### Request/Response Paare
+
+| Request | ID | Response | ID | Bemerkung |
+|---------|----|---------|----|-----------|
+| `PositionUpdate` | 200 | `PositionBroadcast` / `MovementCorrection` | 201 / 202 | High-frequency, fire-and-forget mit Broadcast/Correction |
+| `TeleportRequest` | 203 | `TeleportResponse` | 220 | + `TeleportExecute` (204) bei Erfolg |
+| `JumpRequest` | 206 | `JumpResponse` | 221 | + `JumpBroadcast` (207) bei Erfolg |
+| `StuckRequest` | 209 | `StuckResponse` | 210 | Direct response |
+| `PathfindingRequest` | 211 | `PathfindingResponse` | 212 | Direct response |
+
+### Datei-Struktur
+
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs          # Movement: 200-221
+├── Messages/Movement/
+│   ├── PositionUpdate.cs
+│   ├── PositionBroadcast.cs
+│   ├── MovementCorrection.cs
+│   ├── TeleportRequest.cs
+│   ├── TeleportResponse.cs
+│   ├── TeleportExecute.cs
+│   ├── MovementSpeedUpdate.cs
+│   ├── JumpRequest.cs
+│   ├── JumpResponse.cs
+│   ├── JumpBroadcast.cs
+│   ├── FallDamage.cs
+│   ├── StuckRequest.cs
+│   ├── StuckResponse.cs
+│   ├── PathfindingRequest.cs
+│   ├── PathfindingResponse.cs
+│   ├── ForcePosition.cs
+│   ├── MovementModeChange.cs
+│   ├── CollisionEvent.cs
+│   ├── KnockbackEvent.cs
+│   ├── PullEvent.cs
+│   ├── RootEvent.cs
+│   └── StunMovement.cs
+└── DTOs/
+    ├── PositionDto.cs
+    └── VelocityDto.cs
+```
+
+### Validation Constants
+
+```csharp
+public static class MovementConstants
+{
+    // Speed limits
+    public const float WalkSpeed = 5.0f;      // m/s
+    public const float SprintSpeed = 7.0f;    // m/s
+    public const float SpeedTolerance = 1.1f; // 10% tolerance for latency
+    
+    // Jump parameters
+    public const float JumpHeight = 2.5f;     // meters
+    public const int JumpStaminaCost = 10;
+    public const int JumpCooldownMs = 500;
+    
+    // Fall damage
+    public const float SafeFallHeight = 4.0f; // meters
+    public const float DamagePerMeter = 50f;  // damage per meter above safe
+    public const float LethalHeight = 20.0f;  // instant death
+    
+    // Networking
+    public const int TickRateHz = 25;         // 40ms per tick
+    public const int MaxPositionUpdatesHz = 20;
+    public const int InterpolationBufferMs = 100;
+    public const float AoIRange = 50.0f;      // meters
+    
+    // Anti-cheat
+    public const int MaxSpeedViolations = 3;  // before kick
+    public const int MaxCorrectionsPerMin = 10;
+}
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 2.0.0
 
 [← Zurück zur Übersicht](README.md)
