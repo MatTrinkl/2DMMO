@@ -109,7 +109,7 @@ public class Placement
     public int Y { get; set; }
     public float RotationDeg { get; set; }
     public PlacementSurface Surface { get; set; }  // Floor/Wall/Ceiling
-    public PlacementState State { get; set; }      // Placed / PendingRemove
+    public PlacementState State { get; set; }      // Placed / PendingRemove (PendingRemove wird genutzt für gestoppte/rollbackende Removes bevor Save)
 }
 ```
 
@@ -541,6 +541,8 @@ var leaveAck = new HousingLeaveDto
 | ---- | --------- |
 | NOT_FOUND | Instanz unbekannt |
 | INVALID_REQUEST | Charakter nicht im Housing |
+| FORBIDDEN | Charakter wurde gebannt/kickt sich selbst |
+| LOCKED | Instanz aktuell im Transfer/Ladezustand |
 
 ### Verwandte Messages
 | Message | ID  | Beziehung |
@@ -975,7 +977,7 @@ Derzeit keine obsoleten Housing-Messages in 4500-4599.
 Keine neuen Enum-Einträge erforderlich; Housing nutzt bestehende MessageTypes 4500-4505.
 
 ```csharp
-// Auszug zur Referenz:
+// Auszug zur Referenz (bereits bestehende Enum-Einträge):
 HousingEnter = 4500,
 HousingLeave = 4501,
 HousingEdit = 4502,
