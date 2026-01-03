@@ -11,28 +11,32 @@
 
 ## 📋 Inhaltsverzeichnis
 
-- [📋 Überblick](#-überblick)
-- [🧠 Datenmodell](#-datenmodell)
-- [🗺️ Discovery & Subscription](#-discovery--subscription)
-- [✅ Join/Leave/Contribution Regeln](#-joinleavecontribution-regeln)
-- [📈 Progress Updates & Phases](#-progress-updates--phases)
-- [🏆 Rewards & Claiming](#-rewards--claiming)
-- [🔄 Sync, Deltas & Revisioning](#-sync-deltas--revisioning)
-- [🧱 DTOs / Interfaces](#-dtos--interfaces)
-- [🧩 Enums / ErrorCodes / Flags](#-enums--errorcodes--flags)
-- [⚙️ Regeln & Sicherheit](#-regeln--sicherheit)
-- [📩 Aktive Messages 4600–4699](#-aktive-messages-46004699)
-- [🗑️ Obsolete Messages](#-obsolete-messages)
-- [🧨 Edge Cases & Fehlerfälle](#-edge-cases--fehlerfälle)
-- [📎 Anhang](#-anhang)
+- [📋 Überblick](#ueberblick)
+- [🧠 Datenmodell](#datenmodell)
+- [🗺️ Discovery & Subscription](#discovery)
+- [✅ Join/Leave/Contribution Regeln](#joinleave)
+- [📈 Progress Updates & Phases](#progress)
+- [🏆 Rewards & Claiming](#rewards)
+- [🔄 Sync, Deltas & Revisioning](#sync)
+- [🧱 DTOs / Interfaces](#dtos)
+- [🧩 Enums / ErrorCodes / Flags](#enums)
+- [⚙️ Regeln & Sicherheit](#regeln)
+- [📩 Aktive Messages 4600–4699](#aktive)
+- [🗑️ Obsolete Messages](#obsolete)
+- [🧨 Edge Cases & Fehlerfälle](#edge-cases)
+- [📎 Anhang](#anhang)
 
 ---
+
+<a id="ueberblick"></a>
 
 ## 📋 Überblick
 
 Scope umfasst dynamische World Events, Seasonal Events und instanzierte Event-Instanzen. Client entdeckt Events AoI-basiert, abonniert interessierende EventInstances, joint validiert, liefert Contributions (Damage/Heal/Objective), erhält Progress/Phase-Updates, Rewards und Claim-Flow. Server ist immer authoritative: EventInstanceId, Phase, Objectives, Progress, Reward-Eligibility werden serverseitig geführt und versioniert.
 
 ---
+
+<a id="datenmodell"></a>
 
 ## 🧠 Datenmodell
 
@@ -55,6 +59,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 
 ---
 
+<a id="discovery"></a>
+
 ## 🗺️ Discovery & Subscription
 
 - Discovery erfolgt AoI-basiert: ZoneServer pusht `EventDiscoveryEvent` (4607) sobald Player in Reichweite (Zone/Shard).  
@@ -63,6 +69,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 - Heartbeat für Subscriptions: `EventSubscriptionHeartbeat` (4635) → `EventSubscriptionAck` (4636) (alle 20s). Fehlt Ack dreimal → Drop.
 
 ---
+
+<a id="joinleave"></a>
 
 ## ✅ Join/Leave/Contribution Regeln
 
@@ -74,6 +82,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 
 ---
 
+<a id="progress"></a>
+
 ## 📈 Progress Updates & Phases
 
 - High-frequency Deltas: `EventProgressDeltaEvent` (4620) mit ProgressRevision, ServerTimeMs, Delta für Objectives/Percent. Throttle serverseitig (min 250ms).  
@@ -84,6 +94,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 
 ---
 
+<a id="rewards"></a>
+
 ## 🏆 Rewards & Claiming
 
 - Reward Eligibility: Server prüft ContributionScore ≥ Threshold, aktive Teilnahme (kein AFK-Flag), PhaseCompleted=true.  
@@ -93,6 +105,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 
 ---
 
+<a id="sync"></a>
+
 ## 🔄 Sync, Deltas & Revisioning
 
 - Snapshots tragen `SnapshotRevision` (ProgressRevision) und `PhaseRevision`.  
@@ -101,6 +115,8 @@ EventInstances sind keyed per (EventId, EventInstanceId, ZoneId). Client speiche
 - Retry/Rate Limit: Client max 3 SyncRequests pro 10s, sonst `EventThrottleNotice` (4630).
 
 ---
+
+<a id="dtos"></a>
 
 ## 🧱 DTOs / Interfaces
 
@@ -131,6 +147,8 @@ public class EventParticipantDto
 ```
 
 ---
+
+<a id="enums"></a>
 
 ## 🧩 Enums / ErrorCodes / Flags
 
@@ -163,6 +181,8 @@ Flags für Client: `IsSubscribed`, `IsParticipant`, `HasPendingReward`, `NeedsRe
 
 ---
 
+<a id="regeln"></a>
+
 ## ⚙️ Regeln & Sicherheit
 
 - Authentifizierung zwingend für alle Requests (Join, Leave, Subscribe, Claim).  
@@ -174,12 +194,14 @@ Flags für Client: `IsSubscribed`, `IsParticipant`, `HasPendingReward`, `NeedsRe
 
 ---
 
+<a id="aktive"></a>
+
 ## 📩 Aktive Messages 4600–4699
 
 ### EventStart (4600)
 
 **Richtung:** 📥 Server → Client  
-**Frequenz:** Mittel (pro EventInstance)  
+**Frequenz:** Einmal pro EventInstance (Start-Broadcast)  
 **Authentifizierung:** Nein  
 **Spezielle Rechte:** 👑 Server
 
@@ -192,7 +214,7 @@ Server kündigt Start einer EventInstance an. Enthält minimale Meta-Daten für 
 - Phase 0 Initialisierung
 
 ### Nicht im Scope ❌
-- Vollständige Objectives (kommen im Snapshot)
+- Vollständige Objectives (werden im Snapshot bereitgestellt)
 
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -281,7 +303,7 @@ Signalisiert das Ende einer EventInstance, erfolgreich oder fehlgeschlagen. Stel
 - Reward-Hinweis
 
 ### Nicht im Scope ❌
-- Reward-Aushändigung (separate Messages)
+- Reward-Ausgabe (separate Messages)
 
 ### Payload
 | Feld | Typ | Beschreibung | Pflicht |
@@ -350,7 +372,7 @@ Server                        Client
 **Spezielle Rechte:** 👑 Server
 
 ### Beschreibung
-Legacy-Aggregat für Progress; bleibt als Aggregat vorhanden, wird jedoch durch Delta/Snapshot ersetzt. Enthält Gesamtsumme percent+phase-agnostisch.
+Legacy-Aggregat für Progress; bleibt als Aggregat vorhanden, wird jedoch durch Delta/Snapshot ersetzt. Enthält Gesamtsumme percent, phasenunabhängig.
 
 ### Im Scope ✅
 - Gesamtfortschritt Prozent
@@ -1509,11 +1531,15 @@ Antwortet auf GM-Befehle. Echo der Aktion und Ergebnis.
 
 ---
 
+<a id="obsolete"></a>
+
 ## 🗑️ Obsolete Messages
 
 Aktuell keine Messages in 4600-4699 als obsolet markiert. Frühere Legacy-Progress-Aggregate bleiben aktiv, werden aber mit Delta/Snapshot kombiniert.
 
 ---
+
+<a id="edge-cases"></a>
 
 ## 🧨 Edge Cases & Fehlerfälle
 
@@ -1527,6 +1553,8 @@ Aktuell keine Messages in 4600-4699 als obsolet markiert. Frühere Legacy-Progre
 - Contribution Exploit (Macro Spam) → Rate Limit pro Skill, Anti-Leech Flag → Eligibility=false.
 
 ---
+
+<a id="anhang"></a>
 
 ## 📎 Anhang
 
