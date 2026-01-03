@@ -352,8 +352,8 @@ public enum HousingErrorCode { NONE = 0, INVALID_REQUEST = 1, FORBIDDEN = 2, NOT
 ## ⚙️ Regeln & Sicherheit
 
 - **Anti-Dupe:** FurnitureInstanceId wird beim Place gelockt; Save hebt Lock nur bei Persisted=true. Server prüft Inventarbesitz.
-- **Anti-Grief:** Owner kann Rollback auf letzte persistierte Revision auslösen (out of scope message). Audit Log Hook pro Mutation.
-- **Rate Limits:** Place/Remove/Edit enforced per instance (z.B. 20/s) → RateLimitWarning (917).
+- **Anti-Grief:** Owner kann Rollback auf letzte persistierte Revision auslösen; dies erfolgt über bestehende Admin/GM-Tools (2300-2399) und nicht über eine 45xx Message. Audit Log Hook pro Mutation.
+- **Rate Limits:** Place/Remove/Edit enforced per instance (z.B. 20/s) → nutzt `RateLimitWarning (917)` aus der System-Kategorie zur UI-Signalisierung.
 - **Auth:** Alle Messages benötigen aktive Session (00) und Character-Bindung. `RequestingCharacterId` muss Session Character sein.
 - **Permission Checks:** Vor jeder Mutation: Role-Ermittlung, Ban-Liste, VisitorPolicy, Guild/Friend status.
 - **Concurrency:** Revision-Check + Lock; bei Konflikt keine Änderung, Client muss resync.
