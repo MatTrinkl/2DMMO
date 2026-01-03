@@ -3,7 +3,7 @@
 **Kategorie:** 45  
 **Range:** 4500-4599  
 **Phase:** Prototyp  
-**Status:** 🟢 In Entwicklung
+**Status:** 🟢 In Entwicklung (Spezifikation stabil, Implementierung in Arbeit)
 
 [← Zurück zur Übersicht](README.md)
 
@@ -352,7 +352,7 @@ public enum HousingErrorCode { NONE = 0, INVALID_REQUEST = 1, FORBIDDEN = 2, NOT
 ## ⚙️ Regeln & Sicherheit
 
 - **Anti-Dupe:** FurnitureInstanceId wird beim Place gelockt; Save hebt Lock nur bei Persisted=true. Server prüft Inventarbesitz.
-- **Anti-Grief:** Owner kann Rollback auf letzte persistierte Revision auslösen; dies erfolgt über bestehende Admin/GM-Tools (2300-2399) und nicht über eine 45xx Message. Audit Log Hook pro Mutation.
+- **Anti-Grief:** Owner kann Rollback auf letzte persistierte Revision auslösen; dies erfolgt über bestehende Admin/GM-Tools (2300-2399 Admin / GM Tools Kategorie) und nicht über eine 45xx Message. Audit Log Hook pro Mutation.
 - **Rate Limits:** Place/Remove/Edit enforced per instance (z.B. 20/s) → nutzt `RateLimitWarning (917)` aus der System-Kategorie zur UI-Signalisierung.
 - **Auth:** Alle Messages benötigen aktive Session (00) und Character-Bindung. `RequestingCharacterId` muss Session Character sein.
 - **Permission Checks:** Vor jeder Mutation: Role-Ermittlung, Ban-Liste, VisitorPolicy, Guild/Friend status.
@@ -966,7 +966,7 @@ Derzeit keine obsoleten Housing-Messages in 4500-4599.
 - **Rollback:** Bei Anti-Grief Rollback (Admin) werden Deltas als `HousingPlace/HousingRemove` Broadcast mit neuem Revision gesendet.
 - **Rate-Limit:** Überschreitung sendet `RateLimitWarning (917)`; Client backoff exponential.
 - **Bounds Update durch Upgrade:** Wenn Room Grid erweitert wird (externe Systeme), Client muss Snapshot neu laden; alte Placements out-of-bounds -> Server verschiebt oder markiert als PendingRemove.
-- **Rotation Snap:** Server rundet RotationDeg auf erlaubte Schritte; Client sollte UI aktualisieren.
+- **Rotation Snap:** Server rundet RotationDeg auf 0/90/180/270 (oder item-spezifische Snap-Stufen); Client sollte UI aktualisieren.
 
 ---
 
