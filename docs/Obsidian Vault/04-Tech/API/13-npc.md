@@ -1,0 +1,1422 @@
+# 🤖 NPC Messages (1300-1349)
+
+**Kategorie:** 13  
+**Range:** 1300-1349 (AKTIV)  
+**Phase:** Prototyp  
+**Status:** 🟢 In Entwicklung
+
+[← Zurück zur Übersicht](Message-Reference.md)
+
+---
+
+## 📋 Inhaltsverzeichnis
+
+- [🔄 NPC Flow](#-npc-flow)
+- [🧱 DTOs / Enums](#-dtos--enums)
+- [📩 Aktive Messages (1300-1349)](#-aktive-messages-1300-1349)
+  - [NpcInteract (1300)](#npcinteract-1300)
+  - [NpcInteractResult (1301)](#npcinteractresult-1301)
+  - [NpcDialogOpen (1302)](#npcdialogopen-1302)
+  - [NpcDialogChoice (1303)](#npcdialopchoice-1303)
+  - [NpcDialogClose (1304)](#npcdialogclose-1304)
+  - [NpcGossipRequest (1305)](#npcgossiprequest-1305)
+  - [NpcGossipResponse (1306)](#npcgossipresponse-1306)
+  - [VendorOpen (1310)](#vendoropen-1310)
+  - [VendorClose (1311)](#vendorclose-1311)
+  - [VendorListRequest (1312)](#vendorlistrequest-1312)
+  - [VendorListResponse (1313)](#vendorlistresponse-1313)
+  - [VendorBuy (1314)](#vendorbuy-1314)
+  - [VendorBuyResult (1315)](#vendorbuyresult-1315)
+  - [VendorSell (1316)](#vendorsell-1316)
+  - [VendorSellResult (1317)](#vendorsellresult-1317)
+  - [VendorBuyback (1318)](#vendorbuyback-1318)
+  - [VendorBuybackResult (1319)](#vendorbuybackresult-1319)
+  - [VendorRepair (1320)](#vendorrepair-1320)
+  - [VendorRepairAll (1321)](#vendorrepairall-1321)
+  - [VendorRepairResult (1322)](#vendorrepairresult-1322)
+  - [TrainerOpen (1330)](#traineropen-1330)
+  - [TrainerClose (1331)](#trainerclose-1331)
+  - [TrainerListRequest (1332)](#trainerlistrequest-1332)
+  - [TrainerListResponse (1333)](#trainerlistresponse-1333)
+  - [TrainerLearn (1334)](#trainerlearn-1334)
+  - [TrainerLearnResult (1335)](#trainerlearnresult-1335)
+  - [InnkeeperBind (1340)](#innkeeperbind-1340)
+  - [InnkeeperBindResult (1341)](#innkeeperbindresult-1341)
+  - [FlightmasterOpen (1342)](#flightmasteropen-1342)
+  - [FlightmasterList (1343)](#flightmasterlist-1343)
+  - [BankerOpen (1344)](#bankeropen-1344)
+  - [AuctioneerOpen (1345)](#auctioneeropen-1345)
+  - [MailboxOpen (1346)](#mailboxopen-1346)
+  - [StablemasterOpen (1347)](#stablemasteropen-1347)
+  - [BarberOpen (1348)](#barberopen-1348)
+  - [TransmogOpen (1349)](#transmogopen-1349)
+- [🗑️ Obsolete Messages](#️-obsolete-messages)
+- [📎 Anhang](#-anhang)
+
+---
+
+## 🔄 NPC Flow
+
+### Server-Authoritative Architektur
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     NPC INTERACTION SYSTEM                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐     Interact      ┌──────────────┐               │
+│  │  CLIENT  │ ─────────────────►│    SERVER    │               │
+│  └──────────┘                   └──────────────┘               │
+│       │                               │                         │
+│       │                               ▼                         │
+│       │                    ┌──────────────────────┐            │
+│       │                    │  Validation Layer    │            │
+│       │                    │  • Range Check (5m)  │            │
+│       │                    │  • Combat Check      │            │
+│       │                    │  • NPC Type Check    │            │
+│       │                    └──────────────────────┘            │
+│       │                               │                         │
+│       │                               ▼                         │
+│       │                    ┌──────────────────────┐            │
+│       │                    │    NPC Router        │            │
+│       │                    └──────────────────────┘            │
+│       │                        │   │   │   │                    │
+│       │           ┌────────────┘   │   │   └────────────┐      │
+│       │           ▼                ▼   ▼                ▼      │
+│       │     ┌─────────┐      ┌─────────┐          ┌─────────┐  │
+│       │     │  Dialog │      │ Vendor  │   ...    │ Trainer │  │
+│       │     │ Handler │      │ Handler │          │ Handler │  │
+│       │     └─────────┘      └─────────┘          └─────────┘  │
+│       │           │                │                    │      │
+│       ◄───────────┴────────────────┴────────────────────┘      │
+│   Opens UI                                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Dialog Flow
+```
+Client                           Server                        DB
+  │                                │                            │
+  │  NpcInteract (1300)           │                            │
+  │  {NpcId}                      │                            │
+  │───────────────────────────────►│                            │
+  │                                │ Validate Range + Type     │
+  │                                │───────────────────────────►│
+  │                                │ Load Dialog Tree          │
+  │                                │◄───────────────────────────│
+  │  NpcInteractResult (1301)     │                            │
+  │  {NpcId, NpcType, Success}    │                            │
+  │◄───────────────────────────────│                            │
+  │                                │                            │
+  │  NpcDialogOpen (1302)         │                            │
+  │  {DialogId, Text, Options[]}  │                            │
+  │◄───────────────────────────────│                            │
+  │                                │                            │
+  │  NpcDialogChoice (1303)       │                            │
+  │  {DialogId, OptionId}         │                            │
+  │───────────────────────────────►│                            │
+  │                                │ Process Choice            │
+  │                                │───────────────────────────►│
+  │                                │                            │
+  │  NpcDialogOpen (1302)         │                            │
+  │  {Next Dialog Node}           │                            │
+  │◄───────────────────────────────│                            │
+  │         ... OR ...            │                            │
+  │  VendorOpen (1310)            │                            │
+  │  {Opens Vendor UI}            │                            │
+  │◄───────────────────────────────│                            │
+```
+
+### Vendor Buy/Sell Flow
+```
+Client                           Server                   Economy
+  │                                │                         │
+  │  VendorBuy (1314)             │                         │
+  │  {NpcId, ItemId, Qty}         │                         │
+  │───────────────────────────────►│                         │
+  │                                │ Check Gold              │
+  │                                │ Check Stock             │
+  │                                │ Check Inventory Space   │
+  │                                │────────────────────────►│
+  │                                │ Deduct Gold             │
+  │                                │ Add Item                │
+  │                                │◄────────────────────────│
+  │  VendorBuyResult (1315)       │                         │
+  │  {Success, ItemId, Cost}      │                         │
+  │◄───────────────────────────────│                         │
+  │                                │                         │
+  │  ItemAdd (501)                │                         │
+  │  {Item in Inventory}          │                         │
+  │◄───────────────────────────────│                         │
+  │                                │                         │
+  │  GoldUpdate                   │                         │
+  │  {New Balance}                │                         │
+  │◄───────────────────────────────│                         │
+```
+
+---
+
+## 🧱 DTOs / Enums
+
+### NpcType Enum
+```csharp
+public enum NpcType : byte
+{
+    None = 0,
+    Vendor = 1,
+    Trainer = 2,
+    QuestGiver = 3,
+    Flightmaster = 4,
+    Innkeeper = 5,
+    Banker = 6,
+    Auctioneer = 7,
+    Mailbox = 8,
+    Stablemaster = 9,
+    Barber = 10,
+    Transmog = 11,
+    Guard = 12,
+    Repairer = 13
+}
+```
+
+### DialogOption DTO
+```csharp
+public class DialogOptionDto
+{
+    public uint OptionId { get; set; }
+    public string Text { get; set; }          // max 100 chars
+    public string Icon { get; set; }          // "vendor", "trainer", "quest", "gossip"
+    public uint? RequiredQuestId { get; set; }
+}
+```
+
+### VendorItem DTO
+```csharp
+public class VendorItemDto
+{
+    public uint ItemId { get; set; }
+    public int Price { get; set; }            // in Copper
+    public int Stock { get; set; }            // -1 = unlimited
+    public int MaxStack { get; set; }
+    public byte RequiredLevel { get; set; }
+    public uint? RequiredReputationFaction { get; set; }
+    public byte? RequiredReputationLevel { get; set; }
+}
+```
+
+### BuybackItem DTO
+```csharp
+public class BuybackItemDto
+{
+    public byte Slot { get; set; }
+    public uint ItemId { get; set; }
+    public int Quantity { get; set; }
+    public int Price { get; set; }            // 80% of sell price
+    public long ExpiresAt { get; set; }       // Unix timestamp
+}
+```
+
+### TrainerSkill DTO
+```csharp
+public class TrainerSkillDto
+{
+    public uint SkillId { get; set; }
+    public string Name { get; set; }
+    public int Cost { get; set; }             // in Copper
+    public byte RequiredLevel { get; set; }
+    public bool IsLearned { get; set; }
+    public bool CanLearn { get; set; }
+}
+```
+
+### NpcErrorCode Enum
+```csharp
+public enum NpcErrorCode : byte
+{
+    None = 0,
+    OutOfRange = 1,
+    NpcHostile = 2,
+    InCombat = 3,
+    NpcBusy = 4,
+    InvalidOption = 5,
+    QuestRequirementNotMet = 6,
+    InsufficientGold = 7,
+    ItemNotAvailable = 8,
+    OutOfStock = 9,
+    InventoryFull = 10,
+    InvalidQuantity = 11,
+    ItemNotSellable = 12,
+    ItemBound = 13,
+    BuybackExpired = 14,
+    InsufficientLevel = 15,
+    SkillAlreadyLearned = 16,
+    WrongClass = 17
+}
+```
+
+### Wichtige Konstanten
+| Konstante | Wert | Beschreibung |
+|-----------|------|--------------|
+| NPC_INTERACT_RANGE | 5.0f | Max Interaktions-Distanz in Units |
+| NPC_DIALOG_TIMEOUT | 300s | Dialog schließt nach Inaktivität |
+| BUYBACK_DURATION | 1800s | 30 Minuten Buyback-Frist |
+| BUYBACK_MAX_SLOTS | 12 | Max Items in Buyback |
+| SELL_PRICE_MULTIPLIER | 0.25f | Verkaufspreis = 25% des Kaufpreises |
+| BUYBACK_PRICE_MULTIPLIER | 0.80f | Buyback = 80% des Verkaufspreises |
+
+---
+
+## 📩 Aktive Messages (1300-1349)
+
+## NpcInteract (1300)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client interagiert mit NPC (Right-Click oder 'F'-Key). Server validiert Range und öffnet entsprechenden NPC-Service.
+
+### Im Scope ✅
+- Interact mit allen NPC-Types
+- Range-Check (5m)
+- Auto-Open entsprechendes UI (Dialog, Vendor, Trainer, etc.)
+
+### Nicht im Scope ❌
+- Entity-Interact allgemein → verwende `EntityInteract` (1410)
+- Combat-NPCs → keine Interaction während Combat
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC Entity-ID | Ja |
+
+### Erwartete Response
+- **Bei Dialog-NPC:** `NPCDialogOpen` (1301)
+- **Bei Vendor:** `VendorOpen` (1310)
+- **Bei Trainer:** `TrainerOpen` (1320)
+- **Bei Repair:** Repair-UI-Open
+- **Bei Flight-Master:** `FlightMasterOpen` (1340)
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Verwandte Messages
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `NPCDialogOpen` | 1301 | Für Dialog-NPCs |
+| `VendorOpen` | 1310 | Für Vendors |
+| `TrainerOpen` | 1320 | Für Trainer |
+
+### Beispiel Payload
+```csharp
+var npcInteract = new NPCInteract
+{
+    Type = MessageType.NPCInteract,
+    NPCId = 12345 // Vendor-NPC
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `OUT_OF_RANGE` | NPC zu weit weg (>5m) | Näher herangehen |
+| `NPC_HOSTILE` | NPC ist feindlich | Combat |
+| `IN_COMBAT` | Kann nicht interagieren während Combat | Combat beenden |
+| `NPC_BUSY` | NPC wird bereits von anderem Spieler genutzt | Warten |
+
+### Notizen
+- **Range**: Max 5m
+- **Facing**: Spieler dreht sich automatisch zum NPC
+- **UI**: Server öffnet entsprechendes UI
+- **Busy-State**: NPCs können von mehreren Spielern gleichzeitig genutzt werden (kein Queue-System)
+
+---
+
+## NpcInteractResult (1301)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Dialog-UI mit NPC-Text und Optionen. Client zeigt Dialog-Window.
+
+### Im Scope ✅
+- Dialog-Text (mit Variablen wie `{PlayerName}`)
+- Dialog-Optionen (Branching)
+- Quest-Marker-Integration
+- Goodbye-Option (schließt Dialog)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC-ID | Ja |
+| DialogText | string | Dialog-Text (max 500 Zeichen) | Ja |
+| Options | List<DialogOption> | Dialog-Optionen | Ja |
+
+**DialogOption:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| OptionId | uint | Option-ID (für Select) |
+| OptionText | string | Angezeigter Text |
+| Icon | string | Optional Icon ("vendor", "trainer", "quest", "gossip") |
+| RequiresQuest | uint | Quest-ID falls benötigt |
+
+### Erwartete Response
+- Client sendet `NPCDialogSelect` (1302) oder `NPCDialogClose` (1303)
+
+### Beispiel Payload
+```csharp
+var dialogOpen = new NPCDialogOpen
+{
+    Type = MessageType.NPCDialogOpen,
+    NPCId = 12345,
+    DialogText = "Greetings, {PlayerName}! Welcome to my shop. How can I help you today?",
+    Options = new List<DialogOption>
+    {
+        new DialogOption 
+        { 
+            OptionId = 1, 
+            OptionText = "I'd like to browse your goods.", 
+            Icon = "vendor" 
+        },
+        new DialogOption 
+        { 
+            OptionId = 2, 
+            OptionText = "Can you repair my equipment?", 
+            Icon = "repair" 
+        },
+        new DialogOption 
+        { 
+            OptionId = 3, 
+            OptionText = "Tell me about this area.", 
+            Icon = "gossip" 
+        },
+        new DialogOption 
+        { 
+            OptionId = 99, 
+            OptionText = "Goodbye.", 
+            Icon = "" 
+        }
+    }
+};
+```
+
+### Notizen
+- **Variables**: `{PlayerName}`, `{ClassName}`, `{Level}` werden ersetzt
+- **Quest-Integration**: Quest-Marker (!) wird neben Option angezeigt
+- **Branching**: OptionId bestimmt nächsten Dialog-Node
+- **Goodbye**: OptionId 99 schließt immer Dialog
+
+---
+
+## NpcDialogOpen (1302)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client wählt Dialog-Option. Server führt entsprechende Action aus (öffnet Vendor, gibt Quest, etc.).
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC-ID | Ja |
+| OptionId | uint | Gewählte Option | Ja |
+
+### Erwartete Response
+- **Bei Vendor-Option:** `VendorOpen` (1310)
+- **Bei Trainer-Option:** `TrainerOpen` (1320)
+- **Bei Gossip-Option:** `NPCDialogOpen` (1301) mit nächstem Dialog-Node
+- **Bei Goodbye:** Dialog schließt
+- **Bei Fehler:** `ErrorMessage` (910)
+
+### Beispiel Payload
+```csharp
+var dialogSelect = new NPCDialogSelect
+{
+    Type = MessageType.NPCDialogSelect,
+    NPCId = 12345,
+    OptionId = 1 // "Browse goods"
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `INVALID_OPTION` | Option-ID existiert nicht | - |
+| `QUEST_REQUIREMENT_NOT_MET` | Quest nicht completed | Quest erst machen |
+| `NPC_OUT_OF_RANGE` | NPC zu weit weg | Näher herangehen |
+
+### Notizen
+- **State-Tracking**: Server trackt Dialog-State pro Spieler
+- **Timeout**: Dialog schließt nach 5min Inaktivität
+
+---
+
+## NpcDialogChoice (1303)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client schließt Dialog (ESC-Key oder Close-Button).
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | NPC-ID | Ja |
+
+### Erwartete Response
+- Server bestätigt Close
+
+### Beispiel Payload
+```csharp
+var dialogClose = new NPCDialogClose
+{
+    Type = MessageType.NPCDialogClose,
+    NPCId = 12345
+};
+```
+
+### Notizen
+- **Auto-Close**: Wird automatisch bei Wegbewegung (>10m) gesendet
+
+---
+
+## VendorOpen (1310)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Vendor-UI mit verfügbaren Items. Client zeigt Vendor-Window.
+
+### Im Scope ✅
+- Item-Liste (mit Preisen)
+- Limited-Stock Items
+- Buyback-Tab
+- Repair-Tab (bei Repair-Vendors)
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-NPC-ID | Ja |
+| Items | List<VendorItem> | Verkaufte Items | Ja |
+| BuybackItems | List<BuybackItem> | Kürzlich verkaufte Items | Nein |
+| CanRepair | bool | Vendor kann reparieren? | Ja |
+
+**VendorItem:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| ItemId | uint | Item-ID |
+| Price | int | Preis in Copper |
+| Stock | int | Verfügbarer Stock (-1=unlimited) |
+| MaxStack | int | Max kaufbare Anzahl |
+
+**BuybackItem:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| ItemId | uint | Item-ID |
+| Quantity | int | Anzahl |
+| Price | int | Buyback-Preis (80% vom Verkaufspreis) |
+| ExpiresAt | long | Unix Timestamp wann abläuft |
+
+### Erwartete Response
+- Client sendet `VendorBuy` (1311), `VendorSell` (1312), oder `VendorClose` (1314)
+
+### Beispiel Payload
+```csharp
+var vendorOpen = new VendorOpen
+{
+    Type = MessageType.VendorOpen,
+    NPCId = 12345,
+    Items = new List<VendorItem>
+    {
+        new VendorItem 
+        { 
+            ItemId = 2001, // Health Potion
+            Price = 500, // 5 Silver
+            Stock = -1, // Unlimited
+            MaxStack = 20
+        },
+        new VendorItem 
+        { 
+            ItemId = 1001, // Iron Sword
+            Price = 10000, // 1 Gold
+            Stock = 3, // Limited
+            MaxStack = 1
+        }
+    },
+    BuybackItems = new List<BuybackItem>
+    {
+        new BuybackItem 
+        { 
+            ItemId = 1234, 
+            Quantity = 1, 
+            Price = 8000, // 80c
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds() 
+        }
+    },
+    CanRepair = true
+};
+```
+
+### Notizen
+- **Stock**: Limited-Stock Items refreshen nach Server-Restart
+- **Buyback**: Letzte 12 verkaufte Items, 30min Expiry
+- **Reputation**: Discounts basierend auf Reputation (Friendly: 5%, Honored: 10%, Revered: 15%, Exalted: 20%)
+
+---
+
+## VendorClose (1311)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client kauft Item vom Vendor. Server validiert Gold, Stock, Inventory-Space.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-ID | Ja |
+| ItemId | uint | Item-ID | Ja |
+| Quantity | int | Anzahl | Ja |
+
+### Erwartete Response
+- `VendorBuyResponse` (1340)
+
+### Folge-Messages bei Erfolg
+- `ItemAdd` (501) zu Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+
+### Beispiel Payload
+```csharp
+var vendorBuy = new VendorBuy
+{
+    Type = MessageType.VendorBuy,
+    NPCId = 12345,
+    ItemId = 2001, // Health Potion
+    Quantity = 10
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold | Gold farmen |
+| `ITEM_NOT_AVAILABLE` | Item nicht im Vendor-Inventory | - |
+| `OUT_OF_STOCK` | Stock aufgebraucht | Später wiederkommen |
+| `INVENTORY_FULL` | Inventory voll | Platz machen |
+| `INVALID_QUANTITY` | Quantity ungültig | Korrekte Anzahl |
+
+### Notizen
+- **Transaction**: Atomic (Gold abgezogen + Item added)
+- **Stack-Limit**: Kann max MaxStack auf einmal kaufen
+- **Auto-Stack**: Neue Items werden automatisch gestackt
+
+---
+
+## VendorListRequest (1312)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client verkauft Item an Vendor. Item wandert in Buyback-Tab.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| InventorySlot | byte | Zu verkaufendes Item-Slot | Ja |
+| BagId | byte | Bag-ID | Ja |
+| Quantity | int | Anzahl | Ja |
+
+### Erwartete Response
+- `VendorSellResponse` (1341)
+
+### Folge-Messages bei Erfolg
+- `ItemRemove` (502) aus Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+
+### Beispiel Payload
+```csharp
+var vendorSell = new VendorSell
+{
+    Type = MessageType.VendorSell,
+    InventorySlot = 5,
+    BagId = -1, // Backpack
+    Quantity = 10
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `ITEM_NOT_FOUND` | Item nicht im Inventory | - |
+| `ITEM_BOUND` | Soulbound-Item kann nicht verkauft werden | - |
+| `ITEM_NOT_SELLABLE` | Quest-Item o.ä. | - |
+
+### Notizen
+- **Sell-Price**: 25% vom Vendor-Kaufpreis (standard)
+- **Buyback**: Item erscheint in Buyback-Tab
+- **Buyback-Price**: 80% vom Verkaufspreis (= 20% vom Vendor-Kaufpreis)
+- **Buyback-Duration**: 30 Minuten
+
+---
+
+## VendorListResponse (1313)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client kauft versehentlich verkauftes Item zurück aus Buyback-Tab.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-ID | Ja |
+| BuybackIndex | byte | Index in Buyback-Tab (0-11) | Ja |
+
+### Erwartete Response
+- `VendorBuyResponse` (1340)
+
+### Folge-Messages bei Erfolg
+- `ItemAdd` (501) zu Player-Inventory
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+
+### Beispiel Payload
+```csharp
+var buyback = new VendorBuyback
+{
+    Type = MessageType.VendorBuyback,
+    NPCId = 12345,
+    BuybackIndex = 0 // Letztes verkauftes Item
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `BUYBACK_EXPIRED` | Item abgelaufen (>30min) | - |
+| `BUYBACK_NOT_FOUND` | Index ungültig | - |
+| `INSUFFICIENT_GOLD` | Nicht genug Gold | - |
+| `INVENTORY_FULL` | Inventory voll | Platz machen |
+
+### Notizen
+- **Buyback-Price**: 80% vom Original-Verkaufspreis
+- **Expiry**: 30 Minuten
+- **Max-Entries**: 12 Items in Buyback-Tab
+
+---
+
+## VendorBuy (1314)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Häufig  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client schließt Vendor-UI.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Vendor-ID | Ja |
+
+### Beispiel Payload
+```csharp
+var vendorClose = new VendorClose
+{
+    Type = MessageType.VendorClose,
+    NPCId = 12345
+};
+```
+
+### Notizen
+- **Auto-Close**: Bei >10m Entfernung
+
+---
+
+## TrainerOpen (1320)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Trainer-UI mit verfügbaren Skills/Spells. Client zeigt lernbare Fähigkeiten an.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Trainer-NPC-ID | Ja |
+| Skills | List<TrainerSkill> | Lernbare Skills | Ja |
+
+**TrainerSkill:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| SkillId | uint | Skill-ID |
+| SkillName | string | Skill-Name |
+| Cost | int | Lernkosten in Copper |
+| RequiredLevel | int | Benötigtes Level |
+| IsLearned | bool | Bereits gelernt? |
+
+### Beispiel Payload
+```csharp
+var trainerOpen = new TrainerOpen
+{
+    Type = MessageType.TrainerOpen,
+    NPCId = 12345,
+    Skills = new List<TrainerSkill>
+    {
+        new TrainerSkill 
+        { 
+            SkillId = 3001, 
+            SkillName = "Fireball", 
+            Cost = 10000, 
+            RequiredLevel = 10, 
+            IsLearned = false 
+        },
+        new TrainerSkill 
+        { 
+            SkillId = 3002, 
+            SkillName = "Frostbolt", 
+            Cost = 15000, 
+            RequiredLevel = 12, 
+            IsLearned = true 
+        }
+    }
+};
+```
+
+### Notizen
+- **Class-Specific**: Trainer sind klassen-spezifisch
+- **Cost**: Skill-Kosten steigen mit Skill-Level
+- **Prerequisites**: Manche Skills erfordern andere Skills als Voraussetzung
+
+---
+
+## TrainerLearn (1334)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client lernt Skill vom Trainer. Server validiert Gold, Level und Klasse.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Trainer-ID | Ja |
+| SkillId | uint | Skill-ID | Ja |
+
+### Erwartete Response
+- `TrainerLearnResponse` (1343)
+
+### Folge-Messages bei Erfolg
+- `SkillLearned` Event
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+
+### Beispiel Payload
+```csharp
+var trainerLearn = new TrainerLearn
+{
+    Type = MessageType.TrainerLearn,
+    NPCId = 12345,
+    SkillId = 3001
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold | - |
+| `INSUFFICIENT_LEVEL` | Level zu niedrig | Leveln |
+| `SKILL_ALREADY_LEARNED` | Bereits gelernt | - |
+| `WRONG_CLASS` | Skill für andere Klasse | - |
+
+### Notizen
+- **Transaction**: Atomic (Gold abgezogen + Skill gelernt)
+- **Spell Effect**: Bei erfolgreichem Lernen wird Learn-Animation abgespielt
+
+---
+
+## VendorRepair (1320)
+
+**Richtung:** 📤 Client → Server  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Client repariert alle equipped Items beim Repair-Vendor.
+
+### Request Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Repair-Vendor-ID | Ja |
+
+### Erwartete Response
+- `RepairAllResponse` (1344)
+
+### Folge-Messages bei Erfolg
+- `GoldUpdate` (3703) mit neuem Gold-Betrag
+- Durability-Updates für reparierte Items
+
+### Beispiel Payload
+```csharp
+var repairAll = new RepairAll
+{
+    Type = MessageType.RepairAll,
+    NPCId = 12345
+};
+```
+
+### Error Codes
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold | - |
+| `NO_ITEMS_TO_REPAIR` | Alle Items bei 100% Durability | - |
+
+### Notizen
+- **Cost**: Basiert auf Item-Quality und Durability-Loss
+- **Formula**: `RepairCost = ItemValue * (1 - Durability/100) * 0.1`
+
+---
+
+## FlightmasterOpen (1342)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Flight-Master-UI mit verfügbaren Flugzielen. Nur entdeckte Ziele sind wählbar.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NPCId | int | Flight-Master-ID | Ja |
+| Destinations | List<FlightDestination> | Verfügbare Ziele | Ja |
+
+**FlightDestination:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| DestinationId | uint | Ziel-ID |
+| Name | string | Ziel-Name |
+| Cost | int | Flugkosten |
+| FlightTime | int | Flugzeit in Sekunden |
+| IsDiscovered | bool | Bereits entdeckt? |
+
+### Beispiel Payload
+```csharp
+var flightMaster = new FlightMasterOpen
+{
+    Type = MessageType.FlightMasterOpen,
+    NPCId = 12345,
+    Destinations = new List<FlightDestination>
+    {
+        new FlightDestination 
+        { 
+            DestinationId = 1, 
+            Name = "Stormwind City", 
+            Cost = 5000, 
+            FlightTime = 120, 
+            IsDiscovered = true 
+        },
+        new FlightDestination 
+        { 
+            DestinationId = 2, 
+            Name = "Ironforge", 
+            Cost = 10000, 
+            FlightTime = 240, 
+            IsDiscovered = false 
+        }
+    }
+};
+```
+
+### Notizen
+- **Hinweis**: Nicht im Prototyp
+- **Discovery**: Muss Flight-Point erst entdecken (nahe kommen)
+
+---
+
+## VendorBuyResult (1315)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorBuy Request. Bestätigt erfolgreichen Kauf oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Kauf erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Gekauftes Item | Bei Erfolg |
+| Quantity | int | Gekaufte Anzahl | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `INVENTORY_FULL` | Inventory ist voll |
+| `ITEM_NOT_AVAILABLE` | Item nicht verfügbar |
+| `MAX_QUANTITY_EXCEEDED` | Zu viele auf einmal |
+
+---
+
+## VendorSellResult (1317)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Häufig  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorSell Request. Bestätigt erfolgreichen Verkauf oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Verkauf erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Verkauftes Item | Bei Erfolg |
+| Quantity | int | Verkaufte Anzahl | Bei Erfolg |
+| GoldReceived | int | Erhaltenes Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `ITEM_NOT_SELLABLE` | Item kann nicht verkauft werden |
+| `ITEM_NOT_FOUND` | Item nicht in Inventory |
+
+---
+
+## VendorBuybackResult (1319)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf VendorBuyback Request. Bestätigt erfolgreichen Buyback oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Buyback erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| ItemId | uint | Zurückgekauftes Item | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `ITEM_NOT_IN_BUYBACK` | Item nicht in Buyback-Liste |
+| `INVENTORY_FULL` | Inventory ist voll |
+
+---
+
+## TrainerLearnResult (1335)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf TrainerLearn Request. Bestätigt erfolgreiches Skill-Learning oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Learning erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| SkillId | uint | Gelernter Skill | Bei Erfolg |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `INSUFFICIENT_LEVEL` | Level zu niedrig |
+| `SKILL_ALREADY_KNOWN` | Skill bereits gelernt |
+| `WRONG_CLASS` | Falsche Klasse |
+
+---
+
+## VendorRepairResult (1322)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Antwort auf RepairAll Request. Bestätigt erfolgreiche Reparatur oder gibt Fehler zurück.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| Success | bool | Reparatur erfolgreich? | Ja |
+| ErrorCode | string | Fehlercode falls Success=false | Nein |
+| ErrorMessage | string | Menschenlesbare Fehlermeldung | Nein |
+| GoldCost | int | Kosten in Gold | Bei Erfolg |
+| ItemsRepaired | int | Anzahl reparierter Items | Bei Erfolg |
+
+### Error Codes
+| Code | Bedeutung |
+|------|-----------|
+| `INSUFFICIENT_GOLD` | Nicht genug Gold |
+| `NO_ITEMS_TO_REPAIR` | Keine beschädigten Items |
+
+---
+
+## BankerOpen (1344)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Bank-UI nach Interaktion mit Banker-NPC. Weiteres Handling erfolgt via Bank-Messages (4000-4099).
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Banker-NPC-ID | Ja |
+| BankSlots | int | Verfügbare Bank-Slots | Ja |
+
+### Erwartete Response
+- Client sendet Bank-spezifische Messages aus Category 40
+
+### Beispiel Payload
+```csharp
+var bankerOpen = new BankerOpen
+{
+    Type = MessageType.BankerOpen,
+    NpcId = 12345,
+    BankSlots = 28
+};
+```
+
+---
+
+## AuctioneerOpen (1345)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Auktionshaus-UI nach Interaktion mit Auctioneer-NPC. Weiteres Handling erfolgt via Auction-Messages (1700-1799).
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Auctioneer-NPC-ID | Ja |
+| AuctionHouseId | byte | Auktionshaus-Faction (0=Neutral, 1=Alliance, 2=Horde) | Ja |
+
+### Erwartete Response
+- Client sendet Auction-spezifische Messages aus Category 17
+
+### Beispiel Payload
+```csharp
+var auctioneerOpen = new AuctioneerOpen
+{
+    Type = MessageType.AuctioneerOpen,
+    NpcId = 12345,
+    AuctionHouseId = 0 // Neutral
+};
+```
+
+---
+
+## MailboxOpen (1346)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Mailbox-UI nach Interaktion mit Mailbox-NPC. Weiteres Handling erfolgt via Mail-Messages (1800-1899).
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Mailbox-NPC-ID | Ja |
+| UnreadCount | int | Anzahl ungelesener Mails | Ja |
+
+### Erwartete Response
+- Client sendet Mail-spezifische Messages aus Category 18
+
+### Beispiel Payload
+```csharp
+var mailboxOpen = new MailboxOpen
+{
+    Type = MessageType.MailboxOpen,
+    NpcId = 12345,
+    UnreadCount = 3
+};
+```
+
+---
+
+## StablemasterOpen (1347)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Stablemaster-UI für Pet/Mount-Management nach Interaktion mit Stablemaster-NPC.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Stablemaster-NPC-ID | Ja |
+| StabledPets | List&lt;StabledPetDto&gt; | Liste der eingestellten Pets | Ja |
+| MaxSlots | int | Maximale Stable-Slots | Ja |
+
+### Erwartete Response
+- Client sendet Pet-spezifische Messages
+
+### Beispiel Payload
+```csharp
+var stablemasterOpen = new StablemasterOpen
+{
+    Type = MessageType.StablemasterOpen,
+    NpcId = 12345,
+    StabledPets = new List<StabledPetDto>(),
+    MaxSlots = 5
+};
+```
+
+---
+
+## BarberOpen (1348)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Barber-UI für Character-Appearance-Änderungen nach Interaktion mit Barber-NPC.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Barber-NPC-ID | Ja |
+| Cost | int | Kosten für Änderungen (in Copper) | Ja |
+| CurrentAppearance | AppearanceDto | Aktuelle Appearance-Daten | Ja |
+
+### Erwartete Response
+- Client sendet Appearance-Change-Request
+
+### Beispiel Payload
+```csharp
+var barberOpen = new BarberOpen
+{
+    Type = MessageType.BarberOpen,
+    NpcId = 12345,
+    Cost = 10000, // 1 Gold
+    CurrentAppearance = new AppearanceDto { /* ... */ }
+};
+```
+
+---
+
+## TransmogOpen (1349)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+### Beschreibung
+Server öffnet Transmogrification-UI für Equipment-Appearance-Änderungen nach Interaktion mit Transmog-NPC.
+
+### Response Payload
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| NpcId | int | Transmog-NPC-ID | Ja |
+| BaseCost | int | Basis-Kosten pro Slot (in Copper) | Ja |
+| UnlockedAppearances | List&lt;uint&gt; | Freigeschaltete Appearance-IDs | Ja |
+
+### Erwartete Response
+- Client sendet Transmog-Request
+
+### Beispiel Payload
+```csharp
+var transmogOpen = new TransmogOpen
+{
+    Type = MessageType.TransmogOpen,
+    NpcId = 12345,
+    BaseCost = 50000, // 5 Gold
+    UnlockedAppearances = new List<uint> { 1001, 1002, 1003 }
+};
+```
+
+---
+
+## 🗑️ Obsolete Messages
+
+Derzeit keine obsoleten Messages in dieser Kategorie.
+
+---
+
+## 📎 Anhang
+
+### MessageType Enum (Kategorie 13)
+```csharp
+// NPC / DIALOG / VENDOR (1300-1399)
+NpcInteract = 1300,
+NpcInteractResult = 1301,
+NpcDialogOpen = 1302,
+NpcDialogChoice = 1303,
+NpcDialogClose = 1304,
+NpcGossipRequest = 1305,
+NpcGossipResponse = 1306,
+VendorOpen = 1310,
+VendorClose = 1311,
+VendorListRequest = 1312,
+VendorListResponse = 1313,
+VendorBuy = 1314,
+VendorBuyResult = 1315,
+VendorSell = 1316,
+VendorSellResult = 1317,
+VendorBuyback = 1318,
+VendorBuybackResult = 1319,
+VendorRepair = 1320,
+VendorRepairAll = 1321,
+VendorRepairResult = 1322,
+TrainerOpen = 1330,
+TrainerClose = 1331,
+TrainerListRequest = 1332,
+TrainerListResponse = 1333,
+TrainerLearn = 1334,
+TrainerLearnResult = 1335,
+InnkeeperBind = 1340,
+InnkeeperBindResult = 1341,
+FlightmasterOpen = 1342,
+FlightmasterList = 1343,
+BankerOpen = 1344,
+AuctioneerOpen = 1345,
+MailboxOpen = 1346,
+StablemasterOpen = 1347,
+BarberOpen = 1348,
+TransmogOpen = 1349,
+```
+
+### Request/Response Paare
+| Request | ID | Response | ID |
+|---------|-----|----------|-----|
+| NpcInteract | 1300 | NpcInteractResult | 1301 |
+| NpcDialogChoice | 1303 | NpcDialogOpen (next) | 1302 |
+| NpcGossipRequest | 1305 | NpcGossipResponse | 1306 |
+| VendorListRequest | 1312 | VendorListResponse | 1313 |
+| VendorBuy | 1314 | VendorBuyResult | 1315 |
+| VendorSell | 1316 | VendorSellResult | 1317 |
+| VendorBuyback | 1318 | VendorBuybackResult | 1319 |
+| VendorRepair | 1320 | VendorRepairResult | 1322 |
+| VendorRepairAll | 1321 | VendorRepairResult | 1322 |
+| TrainerListRequest | 1332 | TrainerListResponse | 1333 |
+| TrainerLearn | 1334 | TrainerLearnResult | 1335 |
+| InnkeeperBind | 1340 | InnkeeperBindResult | 1341 |
+
+### Datei-Struktur
+```
+shared/Mmo.Shared/Messaging/
+├── Enums/
+│   └── MessageType.cs          # Enthält NPC IDs (1300-1349)
+├── Messages/Npc/
+│   ├── NpcInteract.cs
+│   ├── NpcInteractResult.cs
+│   ├── NpcDialogOpen.cs
+│   ├── NpcDialogChoice.cs
+│   ├── NpcDialogClose.cs
+│   ├── NpcGossipRequest.cs
+│   ├── NpcGossipResponse.cs
+│   ├── VendorOpen.cs
+│   ├── VendorClose.cs
+│   ├── VendorListRequest.cs
+│   ├── VendorListResponse.cs
+│   ├── VendorBuy.cs
+│   ├── VendorBuyResult.cs
+│   ├── VendorSell.cs
+│   ├── VendorSellResult.cs
+│   ├── VendorBuyback.cs
+│   ├── VendorBuybackResult.cs
+│   ├── VendorRepair.cs
+│   ├── VendorRepairAll.cs
+│   ├── VendorRepairResult.cs
+│   ├── TrainerOpen.cs
+│   ├── TrainerClose.cs
+│   ├── TrainerListRequest.cs
+│   ├── TrainerListResponse.cs
+│   ├── TrainerLearn.cs
+│   ├── TrainerLearnResult.cs
+│   ├── InnkeeperBind.cs
+│   ├── InnkeeperBindResult.cs
+│   ├── FlightmasterOpen.cs
+│   ├── FlightmasterList.cs
+│   ├── BankerOpen.cs
+│   ├── AuctioneerOpen.cs
+│   ├── MailboxOpen.cs
+│   ├── StablemasterOpen.cs
+│   ├── BarberOpen.cs
+│   └── TransmogOpen.cs
+└── Dtos/Npc/
+    ├── DialogOptionDto.cs
+    ├── VendorItemDto.cs
+    ├── BuybackItemDto.cs
+    ├── TrainerSkillDto.cs
+    └── FlightDestinationDto.cs
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-02  
+**Version**: 3.0.0  
+**Status**: ✅ Vollständig dokumentiert (38/38 Messages)
+
+[← Zurück zur Übersicht](Message-Reference.md)
+
+Source: docs/03-messages/13-npc.md

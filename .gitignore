@@ -104,3 +104,10 @@ coverage-report/
 logs/
 test-results/
 integration-test-logs.txt
+
+# Obsidian vault UI state
+docs/Obsidian Vault/.obsidian/workspace.json
+docs/Obsidian Vault/.obsidian/workspaces.json
+docs/Obsidian Vault/.obsidian/workspace-mobile.json
+docs/Obsidian Vault/.obsidian/app.json
+docs/Obsidian Vault/.obsidian/cache/
