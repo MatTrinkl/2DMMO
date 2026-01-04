@@ -712,7 +712,7 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 | Typ | Frequenz | Scope | Batched? | Beispiele |
 |-----|----------|-------|----------|-----------|
 | **Immediate Events** | Bei Bedarf | Zone-weit | ❌ Nein | EntityAnimation, EntityAggro, EntityEmote |
-| **Chunk-Based Delta** | Jeden Tick (40ms) | Pro Client (9 Chunks) | ✅ Ja | ZoneDelta (Position, State, Spawn, Despawn) |
+| **Chunk-Based Delta** | Jeden Tick (50ms) | Pro Client (9 Chunks) | ✅ Ja | ZoneDelta (Position, State, Spawn, Despawn) |
 | **Periodic Full Sync** | Alle 20 Ticks (1s) | Pro Client (9 Chunks) | ✅ Ja | ZoneState (Desync-Prevention) |
 
 **Bandbreiten-Optimierungen:**

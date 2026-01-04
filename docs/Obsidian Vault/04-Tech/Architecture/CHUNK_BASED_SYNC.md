@@ -606,9 +606,9 @@ Bei 20 Hz: 41.4 KB * 20 = 828 KB/s ≈ 0.81 MB/s
 
 | Zone-Größe | Entities | OHNE Chunks | MIT Chunks | Reduktion |
 |------------|----------|-------------|------------|-----------|
-| 512x512 (16x16 Chunks) | 500 | 23 MB/s | 0.81 MB/s | **96%** |
-| 1024x1024 (32x32 Chunks) | 2000 | 92 MB/s | 0.81 MB/s | **99%** |
-| 2048x2048 (64x64 Chunks) | 8000 | 448 MB/s | 1 MB/s | **99.7%** |
+| 512x512 (16x16 Chunks) | 500 | 80 MB/s | 0.81 MB/s | **99%** |
+| 1024x1024 (32x32 Chunks) | 2000 | 320 MB/s | 0.81 MB/s | **99.7%** |
+| 2048x2048 (64x64 Chunks) | 8000 | 1280 MB/s | 0.81 MB/s | **99.9%** |
 
 **Wichtig:** Bandbreite mit Chunks bleibt konstant, da Spieler immer nur ~9 Chunks sehen!
 
@@ -621,7 +621,7 @@ Bei 20 Hz: 41.4 KB * 20 = 828 KB/s ≈ 0.81 MB/s
 | Message | Frequenz | Inhalt | Scope |
 |---------|----------|--------|-------|
 | **ZoneState** (102) | Alle 20 Ticks (1s) | Alle Entities | **NUR sichtbare Chunks** |
-| **ZoneDelta** (103) | Jeden Tick (40ms) | Nur Änderungen | **NUR sichtbare Chunks** |
+| **ZoneDelta** (103) | Jeden Tick (50ms) | Nur Änderungen | **NUR sichtbare Chunks** |
 
 **Änderung:** Beide Messages werden jetzt chunk-gefiltert!
 
