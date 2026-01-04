@@ -1,7 +1,7 @@
 # 🗺️ Chunk-Based Area of Interest (AOI) Delta Sync System
 
 **Version:** 1.0.0  
-**Letzte Aktualisierung:** 2025-12-28  
+**Letzte Aktualisierung:** 2026-01-04  
 **Teil von:** [Architektur-Dokumentation](Architecture-Overview.md)
 
 ---
@@ -32,7 +32,7 @@ Bandbreite pro Tick:
   - ZoneState-Größe: 500 * 80 = 40 KB
   - Spieler in Zone: 100
   - Bandbreite pro Tick: 40 KB * 100 = 4 MB
-  - Bei 25 Hz: 4 MB * 25 = 100 MB/s
+  - Bei 20 Hz: 4 MB * 20 = 80 MB/s
 ```
 
 ### Probleme
@@ -46,18 +46,18 @@ Bandbreite pro Tick:
 
 ### Periodischer Full Sync
 
-Eine Verbesserung war periodischer Full Sync (alle 25 Ticks = 1 Sekunde):
+Eine Verbesserung war periodischer Full Sync (alle 20 Ticks = 1 Sekunde):
 
 ```
 VERBESSERTE STRATEGIE (Periodic Full Sync):
 
-Tick 0-24:  Delta Updates (nur geänderte Entities)
-Tick 25:    ZoneState mit ALLEN Entities
-Tick 26-49: Delta Updates
-Tick 50:    ZoneState mit ALLEN Entities
+Tick 0-19:  Delta Updates (nur geänderte Entities)
+Tick 20:    ZoneState mit ALLEN Entities
+Tick 21-39: Delta Updates
+Tick 40:    ZoneState mit ALLEN Entities
 ...
 
-Bandbreite-Reduktion: ~96% (nur alle 1 Sekunde Full Sync)
+Bandbreite-Reduktion: ~96% (nur alle 1 Sekunde Full Sync bei 20 Hz)
 ABER: Immer noch ALLE Entities, nicht nur sichtbare!
 ```
 
@@ -553,9 +553,9 @@ Ticks 0-24 (Delta):
   - Update-Größe: 250 * 40 = 10 KB
   - Spieler: 100
   - Bandbreite: 10 KB * 100 = 1 MB/Tick
-  - Bei 25 Hz: 1 MB * 25 = 25 MB/s
+  - Bei 20 Hz: 1 MB * 20 = 20 MB/s
 
-Tick 25 (Full Sync):
+Tick 20 (Full Sync):
   - Entities: 500
   - Bytes pro Entity: ~80 bytes
   - ZoneState-Größe: 500 * 80 = 40 KB
@@ -563,8 +563,8 @@ Tick 25 (Full Sync):
   - Bandbreite: 40 KB * 100 = 4 MB
 
 Durchschnitt über 1 Sekunde:
-  (24 * 1 MB + 1 * 4 MB) / 25 = 28 MB / 25 = 1.12 MB/Tick
-  Bei 25 Hz: 1.12 MB * 25 = 28 MB/s
+(19 * 1 MB + 1 * 4 MB) / 20 = 23 MB / 20 = 1.15 MB/Tick
+Bei 20 Hz: 1.15 MB * 20 = 23 MB/s
 ```
 
 ### Berechnung: MIT Chunk-System
@@ -580,9 +580,9 @@ Delta-Updates (jeden Tick):
   - Update-Größe pro Spieler: 9 * 40 = 360 bytes
   - Spieler: 100
   - Bandbreite: 360 bytes * 100 = 36 KB/Tick
-  - Bei 25 Hz: 36 KB * 25 = 900 KB/s
+  - Bei 20 Hz: 36 KB * 20 = 720 KB/s
 
-Full Sync (alle 25 Ticks):
+Full Sync (alle 20 Ticks):
   - Sichtbare Entities: 18
   - Bytes pro Entity: ~80 bytes
   - ZoneState-Größe: 18 * 80 = 1.44 KB
@@ -590,24 +590,24 @@ Full Sync (alle 25 Ticks):
   - Bandbreite: 1.44 KB * 100 = 144 KB
 
 Durchschnitt über 1 Sekunde:
-  (24 * 36 KB + 1 * 144 KB) / 25 = 1008 KB / 25 = 40.32 KB/Tick
-  Bei 25 Hz: 40.32 KB * 25 = 1008 KB/s ≈ 1 MB/s
+(19 * 36 KB + 1 * 144 KB) / 20 = 828 KB / 20 = 41.4 KB/Tick
+Bei 20 Hz: 41.4 KB * 20 = 828 KB/s ≈ 0.81 MB/s
 ```
 
 ### Bandbreiten-Vergleich Tabelle
 
 | Strategie | Bandbreite/Tick | Bandbreite/Sekunde | Reduktion |
 |-----------|-----------------|-------------------|-----------|
-| **Full Broadcast (alt)** | 4 MB | 100 MB/s | 0% (Baseline) |
-| **Periodic Full Sync** | 1.12 MB | 28 MB/s | **72% Reduktion** |
-| **Chunk-Based Delta Sync** | 40 KB | 1 MB/s | **96% Reduktion** |
+| **Full Broadcast (alt)** | 4 MB | 80 MB/s | 0% (Baseline) |
+| **Periodic Full Sync** | 1.15 MB | 23 MB/s | **71% Reduktion** |
+| **Chunk-Based Delta Sync** | 41.4 KB | 0.81 MB/s | **96% Reduktion** |
 
 ### Skalierung bei wachsender Zone-Größe
 
 | Zone-Größe | Entities | OHNE Chunks | MIT Chunks | Reduktion |
 |------------|----------|-------------|------------|-----------|
-| 512x512 (16x16 Chunks) | 500 | 28 MB/s | 1 MB/s | **96%** |
-| 1024x1024 (32x32 Chunks) | 2000 | 112 MB/s | 1 MB/s | **99%** |
+| 512x512 (16x16 Chunks) | 500 | 23 MB/s | 0.81 MB/s | **96%** |
+| 1024x1024 (32x32 Chunks) | 2000 | 92 MB/s | 0.81 MB/s | **99%** |
 | 2048x2048 (64x64 Chunks) | 8000 | 448 MB/s | 1 MB/s | **99.7%** |
 
 **Wichtig:** Bandbreite mit Chunks bleibt konstant, da Spieler immer nur ~9 Chunks sehen!
@@ -620,7 +620,7 @@ Durchschnitt über 1 Sekunde:
 
 | Message | Frequenz | Inhalt | Scope |
 |---------|----------|--------|-------|
-| **ZoneState** (102) | Alle 25 Ticks (1s) | Alle Entities | **NUR sichtbare Chunks** |
+| **ZoneState** (102) | Alle 20 Ticks (1s) | Alle Entities | **NUR sichtbare Chunks** |
 | **ZoneDelta** (103) | Jeden Tick (40ms) | Nur Änderungen | **NUR sichtbare Chunks** |
 
 **Änderung:** Beide Messages werden jetzt chunk-gefiltert!
@@ -741,7 +741,7 @@ Für die Code-Implementierung (nicht Teil dieser PR):
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-28  
+**Letzte Aktualisierung:** 2026-01-04
 **Version:** 1.0.0
 
 [← Zurück zur Architektur-Übersicht](Architecture-Overview.md)

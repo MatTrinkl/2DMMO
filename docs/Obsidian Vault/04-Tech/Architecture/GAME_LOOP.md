@@ -14,12 +14,12 @@ Diese Dokumentation beschreibt das Game Loop Design für den 2DMMO Server, inklu
 
 ---
 
-## Server Game Loop (25 Hz)
+## Server Game Loop (20 Hz)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  SERVER GAME LOOP                        │
-│                   (40ms pro Tick)                    │
+│                   (50ms pro Tick)                    │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │                    TICK START                       │ │
@@ -80,8 +80,8 @@ Diese Dokumentation beschreibt das Game Loop Design für den 2DMMO Server, inklu
 ```csharp
 public class GameLoop
 {
-    private const int TICK_RATE = 25;  // Hz
-    private const double TICK_INTERVAL_MS = 1000.0 / TICK_RATE;  // 40ms
+    private const int TICK_RATE = 20;  // Hz
+    private const double TICK_INTERVAL_MS = 1000.0 / TICK_RATE;  // 50ms
     
     private readonly Stopwatch _tickTimer = new();
     private long _currentTick = 0;
@@ -98,12 +98,12 @@ public class GameLoop
             SimulateWorld();
             BroadcastUpdates();
             
-            if (_currentTick % 30 == 0)  // Jede Sekunde
+            if (_currentTick % 20 == 0)  // Jede Sekunde
             {
                 PersistToRedis();
             }
             
-            if (_currentTick % 300 == 0)  // Alle 10 Sekunden
+            if (_currentTick % 200 == 0)  // Alle 10 Sekunden
             {
                 PersistToDatabase();
             }
@@ -252,7 +252,7 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 }
 ```
 
-### 3. Full ZoneState (Alle Entities, alle 25 Ticks = 1 Sekunde)
+### 3. Full ZoneState (Alle Entities, alle 20 Ticks = 1 Sekunde)
 
 **Wann:** Periodisch als Fallback und für neu verbundene Clients.
 
@@ -269,8 +269,8 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
     // Delta Updates (siehe oben)
     // ...
     
-    // Full Sync alle 1 Sekunde (25 Ticks)
-    if (CurrentTick % 25 == 0)
+    // Full Sync alle 1 Sekunde (20 Ticks)
+    if (CurrentTick % 20 == 0)
     {
         var allEntities = _zoneManager.GetAllEntities();
         var fullState = new ZoneState(
@@ -296,7 +296,7 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 | Broadcast-Typ | Frequenz | Bandbreite | Use Case |
 |---------------|----------|------------|----------|
 | Event Broadcasts | Bei Bedarf | Niedrig | Wichtige Ereignisse |
-| Delta Updates | 25 Hz (40ms) | Mittel | Laufende Änderungen |
+| Delta Updates | 20 Hz (50ms) | Mittel | Laufende Änderungen |
 | Full ZoneState | 1 Hz (1s) | Hoch | Sync-Garantie |
 
 ---
@@ -383,7 +383,7 @@ Tick 1:  Keine Bewegung → Dirty = false
 Tick 2:  Player1 bewegt sich → Dirty = true
          → Delta Update mit Player1 wird gesendet
          
-Tick 25: Full ZoneState mit ALLEN Entities (unabhängig von Dirty)
+Tick 20: Full ZoneState mit ALLEN Entities (unabhängig von Dirty)
 ```
 
 ---
@@ -590,7 +590,7 @@ Die Broadcast Phase ist in Phase 2 mit dem Chunk-Based Delta Sync System optimie
    - Pro Client: Nur Chunks in Sichtweite (3x3 Grid = 9 Chunks)
    - `ZoneDelta` wird pro Client mit relevanten Änderungen erstellt
 
-3. **Periodic Full Sync** (alle 25 Ticks = 1 Sekunde)
+3. **Periodic Full Sync** (alle 20 Ticks = 1 Sekunde)
    - `ZoneState` mit allen Entities in sichtbaren Chunks
    - Desync-Prevention Fallback
 
@@ -670,8 +670,8 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
         _chunkDirtyTracker.ClearDirtyFlags();
     }
     
-    // 3️⃣ Periodic Full ZoneState (alle 25 Ticks = 1 Sekunde)
-    if (CurrentTick % 25 == 0)
+    // 3️⃣ Periodic Full ZoneState (alle 20 Ticks = 1 Sekunde)
+    if (CurrentTick % 20 == 0)
     {
         // Pro Client: Nur Entities in sichtbaren Chunks
         foreach (var (clientId, connection) in _connections)
@@ -713,7 +713,7 @@ protected virtual Task OutputPhaseAsync(CancellationToken cancellationToken)
 |-----|----------|-------|----------|-----------|
 | **Immediate Events** | Bei Bedarf | Zone-weit | ❌ Nein | EntityAnimation, EntityAggro, EntityEmote |
 | **Chunk-Based Delta** | Jeden Tick (40ms) | Pro Client (9 Chunks) | ✅ Ja | ZoneDelta (Position, State, Spawn, Despawn) |
-| **Periodic Full Sync** | Alle 25 Ticks (1s) | Pro Client (9 Chunks) | ✅ Ja | ZoneState (Desync-Prevention) |
+| **Periodic Full Sync** | Alle 20 Ticks (1s) | Pro Client (9 Chunks) | ✅ Ja | ZoneState (Desync-Prevention) |
 
 **Bandbreiten-Optimierungen:**
 
