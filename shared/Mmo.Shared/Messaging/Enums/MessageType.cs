@@ -369,6 +369,14 @@ public enum MessageType : ushort
     AntiCheatWarning = 924,
     AntiCheatKick = 925,
 
+    /// <summary>
+    /// Message bundle for batching multiple outgoing messages per tick per client.
+    /// Reduces TCP overhead by combining multiple messages into a single frame.
+    /// Used for high-frequency updates like entity positions, state changes, etc.
+    /// DO NOT bundle: ForceDisconnect (5), MovementCorrection (202), Pong (901).
+    /// </summary>
+    MessageBundle = 950,
+
     // ═══════════════════════════════════════════════════════════════
     // QUEST (1000-1099)
     // ═══════════════════════════════════════════════════════════════
