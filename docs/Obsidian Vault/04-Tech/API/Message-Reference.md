@@ -2,8 +2,8 @@
 
 **Version:** 2.1.0  
 **Last Updated:** 2026-01-01  
-**Part of:** [Documentation](../README.md) | [Architecture](../02-architecture/README.md)  
-**See also:** [Message Specification](../02-architecture/MESSAGES.md) | [Network Protocol](../02-architecture/NETWORK_PROTOCOL.md) | [Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md) | [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) | [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md)
+**Part of:** [Documentation](../../00-Home/Docs-Overview.md) | [Architecture](../Architecture/Architecture-Overview.md)  
+**See also:** [Message Specification](../Architecture/MESSAGES.md) | [Network Protocol](../Architecture/NETWORK_PROTOCOL.md) | [Client-Server Sync](../Architecture/CLIENT_SERVER_SYNC.md) | [Technical Design](../Architecture/TECHNICAL_DESIGN.md) | [Game Design Document](../../02-Game-Design/Systems/GAME_DESIGN_DOCUMENT.md)
 
 ---
 
@@ -103,7 +103,7 @@ This documentation provides a complete reference for **all MessageTypes** in the
 | **S2S Economy** | 5400-5499 | [50-server-to-server.md](50-server-to-server.md) | 7 |
 | **S2S Admin** | 5500-5599 | [50-server-to-server.md](50-server-to-server.md) | 12 |
 
-**See also:** [SERVER_TO_SERVER.md](../02-architecture/SERVER_TO_SERVER.md) for full S2S architecture documentation
+**See also:** [SERVER_TO_SERVER.md](../Architecture/SERVER_TO_SERVER.md) for full S2S architecture documentation
 
 ---
 
@@ -336,13 +336,13 @@ var message = new MessageName { ... };
 
 ## 🔗 Related Documentation
 
-- **[Message Specification](../02-architecture/MESSAGES.md)** - Technical details of the message system
-- **[Network Protocol](../02-architecture/NETWORK_PROTOCOL.md)** - Transport and framing
-- **[Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md)** - Message processing
-- **[Security](../02-architecture/SECURITY.md)** - Input validation for messages
-- **[Game Loop](../02-architecture/GAME_LOOP.md)** - When messages are processed
+- **[Message Specification](../Architecture/MESSAGES.md)** - Technical details of the message system
+- **[Network Protocol](../Architecture/NETWORK_PROTOCOL.md)** - Transport and framing
+- **[Client-Server Sync](../Architecture/CLIENT_SERVER_SYNC.md)** - Message processing
+- **[Security](../Architecture/SECURITY.md)** - Input validation for messages
+- **[Game Loop](../Architecture/GAME_LOOP.md)** - When messages are processed
 - **[Disconnect Broadcasts](DISCONNECT_BROADCASTS.md)** - Broadcast messages on player disconnects
-- **[Server-to-Server Communication](../02-architecture/SERVER_TO_SERVER.md)** - S2S architecture & load balancing
+- **[Server-to-Server Communication](../Architecture/SERVER_TO_SERVER.md)** - S2S architecture & load balancing
 
 ---
 
@@ -361,3 +361,5 @@ var message = new MessageName { ... };
 **Last Updated**: 2026-01-01  
 **Version**: 2.1.0  
 **Maintainer**: 2DMMO Team
+
+Source: docs/03-messages/README.md

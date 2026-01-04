@@ -104,3 +104,6 @@ coverage-report/
 logs/
 test-results/
 integration-test-logs.txt
+
+# Obsidian vault UI state
+docs/Obsidian Vault/.obsidian/

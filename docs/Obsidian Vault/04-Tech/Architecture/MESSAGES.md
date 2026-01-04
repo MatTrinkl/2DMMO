@@ -4,7 +4,7 @@
 
 **Version:** 2.0.0  
 **Letzte Aktualisierung:** 2025-12-16  
-**Teil von:** [Architektur-Dokumentation](README.md)  
+**Teil von:** [Architektur-Dokumentation](Architecture-Overview.md)  
 **Siehe auch:** [Issue #140 - MessageType Rework](https://github.com/MatTrinkl/2DMMO/issues/140)
 
 ---
@@ -1447,15 +1447,17 @@ public enum MessageType : ushort
 
 ## 🔗 Verwandte Dokumentation
 
-- **[📨 Message-Referenz](../03-messages/README.md)** - **Detaillierte Dokumentation für ALLE Messages**
+- **[📨 Message-Referenz](../API/Message-Reference.md)** - **Detaillierte Dokumentation für ALLE Messages**
 - [Handler/Service-Pattern](HANDLER_SERVICE_PATTERN.md) - Message Handling und O(1) Routing-Implementierung
 - [ID-System](ID_SYSTEM.md) - Entity Identity, PersistentId, RuntimeId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden
-- [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) - Thread-Modell, Collision & Prediction
-- [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md) - Feature- und Systemkontext für Messages
+- [Technical Design](TECHNICAL_DESIGN.md) - Thread-Modell, Collision & Prediction
+- [Game Design Document](../../02-Game-Design/Systems/GAME_DESIGN_DOCUMENT.md) - Feature- und Systemkontext für Messages
 - [Sicherheit](SECURITY.md) - Input Validation
 
 ---
 
-*Teil der [Architektur-Dokumentation](README.md)*
+*Teil der [Architektur-Dokumentation](Architecture-Overview.md)*
+
+Source: docs/02-architecture/MESSAGES.md

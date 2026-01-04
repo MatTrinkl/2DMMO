@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Letzte Aktualisierung:** 2026-01-04  
-**Teil von:** [Architektur-Dokumentation](README.md)
+**Teil von:** [Architektur-Dokumentation](Architecture-Overview.md)
 
 ---
 
@@ -736,12 +736,14 @@ Für die Code-Implementierung (nicht Teil dieser PR):
 
 - [Game Loop Design](GAME_LOOP.md) - Output/Broadcast Phase
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Interpolation mit Deltas
-- [Zone Messages](../03-messages/01-zone.md) - ZoneState & ZoneDelta
-- [Entity Messages](../03-messages/14-entity.md) - Deprecated Messages
+- [Zone Messages](../API/01-zone.md) - ZoneState & ZoneDelta
+- [Entity Messages](../API/14-entity.md) - Deprecated Messages
 
 ---
 
 **Letzte Aktualisierung:** 2026-01-04
 **Version:** 1.0.0
 
-[← Zurück zur Architektur-Übersicht](README.md)
+[← Zurück zur Architektur-Übersicht](Architecture-Overview.md)
+
+Source: docs/02-architecture/CHUNK_BASED_SYNC.md

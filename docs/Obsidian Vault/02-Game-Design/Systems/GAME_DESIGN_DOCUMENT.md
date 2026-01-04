@@ -6,7 +6,7 @@
 **Last Updated:** 2026-01-01  
 **Status:** In Development
 
-**Verwandte Dokumente:** [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) | [Message-Referenz](../03-messages/README.md) | [Message-Spezifikation](../02-architecture/MESSAGES.md)
+**Verwandte Dokumente:** [Technical Design](../../04-Tech/Architecture/TECHNICAL_DESIGN.md) | [Message-Referenz](../../04-Tech/API/Message-Reference.md) | [Message-Spezifikation](../../04-Tech/Architecture/MESSAGES.md)
 
 ---
 
@@ -58,7 +58,7 @@
 
 ## 2. Technical Architecture
 
-> **Note:** Detailed technical documentation see [ARCHITECTURE.md](./ARCHITECTURE.md)
+> **Note:** Detailed technical documentation see [ARCHITECTURE.md](../../04-Tech/Architecture/Architecture-Overview.md)
 
 ### 2.1 Tech Stack
 
@@ -388,7 +388,7 @@ Possible options:
 
 ### 7.1 Entity-Relationship Diagram (Simplified)
 
-> **Note:** This diagram shows persistent database IDs (UUID/Guid). For the complete ID system including runtime IDs (EntityId, ZoneId, ShardId) see [ID System Documentation](../02-architecture/ID_SYSTEM.md).
+> **Note:** This diagram shows persistent database IDs (UUID/Guid). For the complete ID system including runtime IDs (EntityId, ZoneId, ShardId) see [ID System Documentation](../../04-Tech/Architecture/ID_SYSTEM.md).
 
 ```
 ┌─────────────┐       ┌─────────────────┐       ┌─────────────┐
@@ -635,3 +635,5 @@ CREATE TABLE guild_members (
 ---
 
 *This document is a living document and will be continuously updated.*
+
+Source: docs/01-overview/GAME_DESIGN_DOCUMENT.md

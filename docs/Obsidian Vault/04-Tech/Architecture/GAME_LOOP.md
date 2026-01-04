@@ -4,7 +4,7 @@
 
 **Version:** 1.3.0  
 **Letzte Aktualisierung:** 2025-12-22  
-**Teil von:** [Architektur-Dokumentation](README.md)
+**Teil von:** [Architektur-Dokumentation](Architecture-Overview.md)
 
 ---
 
@@ -756,4 +756,6 @@ Siehe [Chunk-Based Sync](CHUNK_BASED_SYNC.md) für vollständige Dokumentation.
 
 ---
 
-*Teil der [Architektur-Dokumentation](README.md)*
+*Teil der [Architektur-Dokumentation](Architecture-Overview.md)*
+
+Source: docs/02-architecture/GAME_LOOP.md

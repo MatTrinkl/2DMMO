@@ -31,10 +31,10 @@
 Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2DMMO Projekt. Es dient als Referenz für die Entwicklung und wird kontinuierlich aktualisiert.
 
 **Verwandte Dokumente:**  
-- [Message-Referenz](../03-messages/README.md)  
-- [Message-Spezifikation](../02-architecture/MESSAGES.md)  
-- [Netzwerk-Protokoll](../02-architecture/NETWORK_PROTOCOL.md)  
-- [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md)
+- [Message-Referenz](../API/Message-Reference.md)  
+- [Message-Spezifikation](MESSAGES.md)  
+- [Netzwerk-Protokoll](NETWORK_PROTOCOL.md)  
+- [Game Design Document](../../02-Game-Design/Systems/GAME_DESIGN_DOCUMENT.md)
 
 ### Tech-Stack
 
@@ -53,7 +53,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 
 ## Server Game Loop
 
-> **📌 Siehe:** [Game Loop Design](../02-architecture/GAME_LOOP.md) für vollständige Details zum Server Game Loop, Tick Timing und Phasen.
+> **📌 Siehe:** [Game Loop Design](GAME_LOOP.md) für vollständige Details zum Server Game Loop, Tick Timing und Phasen.
 
 ### Kurz-Zusammenfassung
 
@@ -63,7 +63,7 @@ Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2
 | **Timing** | Fixed Timestep |
 | **Phasen** | Input → Validation → Simulation → Broadcast → Persistence |
 
-Die vollständige Dokumentation des Game Loop Designs, inklusive Code-Beispiele, Timing-Details und Best Practices, finden Sie in der [Game Loop Dokumentation](../02-architecture/GAME_LOOP.md).
+Die vollständige Dokumentation des Game Loop Designs, inklusive Code-Beispiele, Timing-Details und Best Practices, finden Sie in der [Game Loop Dokumentation](GAME_LOOP.md).
 
 ---
 
@@ -480,7 +480,7 @@ public class CollisionData
 
 ## Entity-System
 
-> **Hinweis:** Für die vollständige ID-System-Architektur siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md).
+> **Hinweis:** Für die vollständige ID-System-Architektur siehe [ID-System Dokumentation](ID_SYSTEM.md).
 
 ### Entity-Hierarchie
 
@@ -568,7 +568,7 @@ Zone-Definitionen beschreiben alle statischen Entities einer Zone (Türen, Porta
 
 ### Entity-ID Bereiche
 
-> **Hinweis:** Dieses Dokument beschreibt eine frühe Version des ID-Systems. Für die aktuelle, umfassende ID-System-Architektur siehe [ID-System Dokumentation](../02-architecture/ID_SYSTEM.md), die EntityIdentity, ZoneId, ShardId, GlobalKey und persistente vs. Runtime IDs behandelt.
+> **Hinweis:** Dieses Dokument beschreibt eine frühe Version des ID-Systems. Für die aktuelle, umfassende ID-System-Architektur siehe [ID-System Dokumentation](ID_SYSTEM.md), die EntityIdentity, ZoneId, ShardId, GlobalKey und persistente vs. Runtime IDs behandelt.
 
 | Bereich | Verwendung |
 |---------|------------|
@@ -1017,3 +1017,5 @@ Integration geplant:
 ---
 
 *Dieses Dokument wird kontinuierlich aktualisiert.*
+
+Source: docs/03-technical-details/TECHNICAL_DESIGN.md
