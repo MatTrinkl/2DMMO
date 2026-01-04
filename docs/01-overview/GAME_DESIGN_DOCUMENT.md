@@ -6,6 +6,8 @@
 **Last Updated:** 2026-01-01  
 **Status:** In Development
 
+**Verwandte Dokumente:** [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) | [Message-Referenz](../03-messages/README.md) | [Message-Spezifikation](../02-architecture/MESSAGES.md)
+
 ---
 
 ## 📋 Table of Contents

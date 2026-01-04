@@ -3,7 +3,7 @@
 **Version:** 2.1.0  
 **Last Updated:** 2026-01-01  
 **Part of:** [Documentation](../README.md) | [Architecture](../02-architecture/README.md)  
-**See also:** [Message Specification](../02-architecture/MESSAGES.md) | [Issue #140](https://github.com/MatTrinkl/2DMMO/issues/140)
+**See also:** [Message Specification](../02-architecture/MESSAGES.md) | [Network Protocol](../02-architecture/NETWORK_PROTOCOL.md) | [Client-Server Sync](../02-architecture/CLIENT_SERVER_SYNC.md) | [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) | [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md)
 
 ---
 

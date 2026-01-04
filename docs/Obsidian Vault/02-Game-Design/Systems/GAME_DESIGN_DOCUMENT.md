@@ -6,6 +6,8 @@
 **Last Updated:** 2026-01-01  
 **Status:** In Development
 
+**Verwandte Dokumente:** [Technical Design](../../04-Tech/Architecture/TECHNICAL_DESIGN.md) | [Message-Referenz](../../04-Tech/API/Message-Reference.md) | [Message-Spezifikation](../../04-Tech/Architecture/MESSAGES.md)
+
 ---
 
 ## 📋 Table of Contents

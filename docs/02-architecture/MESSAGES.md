@@ -1452,6 +1452,8 @@ public enum MessageType : ushort
 - [ID-System](ID_SYSTEM.md) - Entity Identity, PersistentId, RuntimeId
 - [Netzwerk-Protokoll](NETWORK_PROTOCOL.md) - Transport und Message Framing
 - [Client-Server Sync](CLIENT_SERVER_SYNC.md) - Wie Messages verarbeitet werden
+- [Technical Design](../03-technical-details/TECHNICAL_DESIGN.md) - Thread-Modell, Collision & Prediction
+- [Game Design Document](../01-overview/GAME_DESIGN_DOCUMENT.md) - Feature- und Systemkontext für Messages
 - [Sicherheit](SECURITY.md) - Input Validation
 
 ---

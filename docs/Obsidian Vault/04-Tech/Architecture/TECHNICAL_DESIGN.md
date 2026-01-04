@@ -30,6 +30,12 @@
 
 Dieses Dokument beschreibt die technischen Architektur-Entscheidungen für das 2DMMO Projekt. Es dient als Referenz für die Entwicklung und wird kontinuierlich aktualisiert.
 
+**Verwandte Dokumente:**  
+- [Message-Referenz](../API/Message-Reference.md)  
+- [Message-Spezifikation](MESSAGES.md)  
+- [Netzwerk-Protokoll](NETWORK_PROTOCOL.md)  
+- [Game Design Document](../../02-Game-Design/Systems/GAME_DESIGN_DOCUMENT.md)
+
 ### Tech-Stack
 
 | Komponente | Technologie | Links |

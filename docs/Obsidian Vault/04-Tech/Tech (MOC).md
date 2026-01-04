@@ -29,7 +29,6 @@
 - [25-pvp](API/25-pvp.md)
 - [26-world](API/26-world.md)
 - [27-matchmaking](API/27-matchmaking.md)
-- [28-leaderboard-full](API/28-leaderboard-full.md)
 - [28-leaderboard](API/28-leaderboard.md)
 - [29-tutorial](API/29-tutorial.md)
 - [30-settings](API/30-settings.md)
