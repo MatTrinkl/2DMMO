@@ -479,11 +479,11 @@ Wiederverbindung nach ungewolltem Disconnect. Client sendet SessionToken statt U
 - **Bei Fehler:** `ReconnectResponse` (7) mit ErrorCode
 
 ### Verwandte Messages
-| Message | ID | Beziehung |
-|---------|-----|-----------|
-| `ReconnectResponse` | 7 | Response zu diesem Request |
-| `LoginRequest` | 1 | Alternative für neuen Login |
-| `ZoneState` | 102 | Wird nach Reconnect gesendet |
+| Message             | ID  | Beziehung                    |
+| ------------------- | --- | ---------------------------- |
+| `ReconnectResponse` | 7   | Response zu diesem Request   |
+| `LoginRequest`      | 1   | Alternative für neuen Login  |
+| `ZoneState`         | 102 | Wird nach Reconnect gesendet |
 
 ### Beispiel Payload
 ```csharp
