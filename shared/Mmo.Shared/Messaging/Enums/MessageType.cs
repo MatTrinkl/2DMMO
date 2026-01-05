@@ -1,104 +1,850 @@
 namespace Mmo.Shared.Messaging.Enums;
 
 /// <summary>
-///     This enum represents the Type which message is currently send between client and server.
-///     Network message types organized in 100-blocks for O(1) routing.
-///     Category = MessageType / 100
+/// Network message types for the 2DMMO project, organized in 100-blocks for O(1) routing.
 /// </summary>
+/// <remarks>
+/// <para><b>Message Frame Format:</b></para>
+/// <code>
+/// ┌──────────────┬──────────────┬─────────────────────────────┐
+/// │   2 Bytes    │   4 Bytes    │         N Bytes             │
+/// │    Type      │   Length     │         Payload             │
+/// │  (ushort)    │  (uint32)    │    (MessagePack Data)       │
+/// └──────────────┴──────────────┴─────────────────────────────┘
+/// </code>
+/// <para><b>O(1) Routing:</b></para>
+/// <para>Messages are organized into 100-block categories for efficient routing:</para>
+/// <list type="bullet">
+/// <item><description>Category = MessageType / 100</description></item>
+/// <item><description>Each category contains up to 100 message types</description></item>
+/// <item><description>Enables O(1) message dispatching without hash lookups</description></item>
+/// </list>
+/// <para><b>Message Categories:</b></para>
+/// <list type="table">
+/// <listheader>
+/// <term>Range</term>
+/// <description>Category</description>
+/// </listheader>
+/// <item><term>0000-0099</term><description>Connection / Authentication</description></item>
+/// <item><term>0100-0199</term><description>Zone Events</description></item>
+/// <item><term>0200-0299</term><description>Movement / Position</description></item>
+/// <item><term>0300-0399</term><description>Combat</description></item>
+/// <item><term>0400-0499</term><description>Chat</description></item>
+/// <item><term>0500-0599</term><description>Inventory / Items</description></item>
+/// <item><term>0600-0699</term><description>Character / Stats / Progression</description></item>
+/// <item><term>0700-0799</term><description>Group / Party</description></item>
+/// <item><term>0800-0899</term><description>Guild</description></item>
+/// <item><term>0900-0999</term><description>Ping / Latency / System</description></item>
+/// <item><term>1000-1099</term><description>Quest</description></item>
+/// <item><term>1100-1199</term><description>Trading</description></item>
+/// <item><term>1200-1299</term><description>Targeting</description></item>
+/// <item><term>1300-1399</term><description>NPC / Dialog / Vendor</description></item>
+/// <item><term>1400-1499</term><description>Entity Spawning / Sync</description></item>
+/// <item><term>1500-1599</term><description>Buffs / Debuffs / Auras</description></item>
+/// <item><term>1600-1699</term><description>Crafting / Professions</description></item>
+/// <item><term>1700-1799</term><description>Auction House / Market</description></item>
+/// <item><term>1800-1899</term><description>Mail System</description></item>
+/// <item><term>1900-1999</term><description>Achievements / Titles</description></item>
+/// <item><term>2000-2099</term><description>Mounts / Pets / Companions</description></item>
+/// <item><term>2100-2199</term><description>Social (Friends, Block)</description></item>
+/// <item><term>2200-2299</term><description>Emotes / Animations / Cosmetics</description></item>
+/// <item><term>2300-2399</term><description>Admin / GM Tools</description></item>
+/// <item><term>2400-2499</term><description>Instancing / Dungeons / Raids</description></item>
+/// <item><term>2500-2599</term><description>PvP / Arena / Battleground</description></item>
+/// <item><term>2600-2699</term><description>World State (Weather, Time, Events)</description></item>
+/// <item><term>2700-2799</term><description>Matchmaking / Queue</description></item>
+/// <item><term>2800-2899</term><description>Leaderboard / Rankings</description></item>
+/// <item><term>2900-2999</term><description>Tutorial / Guide System</description></item>
+/// <item><term>3000-3099</term><description>Settings / Preferences Sync</description></item>
+/// <item><term>3100-3199</term><description>Loot / Rewards</description></item>
+/// <item><term>3200-3299</term><description>Cooldowns / Timers</description></item>
+/// <item><term>3300-3399</term><description>Inspection / Character Info</description></item>
+/// <item><term>3400-3499</term><description>Map / Minimap / Waypoints</description></item>
+/// <item><term>3500-3599</term><description>Voice Chat / Audio</description></item>
+/// <item><term>3600-3699</term><description>Reporting / Moderation</description></item>
+/// <item><term>3700-3799</term><description>Economy / Currency</description></item>
+/// <item><term>3800-3899</term><description>Skills / Talents / Abilities</description></item>
+/// <item><term>3900-3999</term><description>Equipment / Gear</description></item>
+/// <item><term>4000-4099</term><description>Bank / Storage</description></item>
+/// <item><term>4100-4199</term><description>Death / Respawn / Ghost</description></item>
+/// <item><term>4200-4299</term><description>Transportation</description></item>
+/// <item><term>4300-4399</term><description>Notifications / Alerts</description></item>
+/// <item><term>4400-4499</term><description>Cutscenes / Cinematics</description></item>
+/// <item><term>4500-4599</term><description>Housing / Player Buildings</description></item>
+/// <item><term>4600-4699</term><description>Events / Seasonal Content</description></item>
+/// <item><term>4900-4999</term><description>Debug / Development</description></item>
+/// <item><term>5000-5099</term><description>Server-to-Server (Internal)</description></item>
+/// </list>
+/// <para><b>Message Direction:</b></para>
+/// <para>All messages follow strict directional separation for security:</para>
+/// <list type="bullet">
+/// <item><description>Client→Server: Requests, input, commands (IClientMessage)</description></item>
+/// <item><description>Server→Client: Responses, state updates, broadcasts (IServerMessage)</description></item>
+/// <item><description>NO bidirectional messages - each has exactly one direction</description></item>
+/// </list>
+/// </remarks>
 public enum MessageType : ushort
 {
     // ═══════════════════════════════════════════════════════════════
     // CONNECTION / AUTHENTICATION (0000-0099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>
+    /// Initiates the login process with username/password or session token.
+    /// Direction: Client→Server. First message after TCP connection establishment.
+    /// </summary>
+    /// <remarks>
+    /// Payload includes: Username, Password (hashed), ClientVersion, HardwareId.
+    /// Response: LoginResponse (2) with success status or error code.
+    /// Connection timeout: 10 seconds. Rate limited after 3 failed attempts (60s cooldown).
+    /// </remarks>
     LoginRequest = 1,
+    
+    /// <summary>
+    /// Response to LoginRequest containing success/failure status and session token.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Includes SessionToken, AccountId, and basic account info.
+    /// On failure: Includes ErrorCode (INVALID_CREDENTIALS, ACCOUNT_BANNED, VERSION_MISMATCH, etc.).
+    /// </remarks>
     LoginResponse = 2,
+    
+    /// <summary>
+    /// Client requests graceful logout and session termination.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Server will save character state, broadcast PlayerLeftZone, and close connection.
+    /// No response message - connection closes after processing.
+    /// </remarks>
     LogoutRequest = 3,
+    
+    /// <summary>
+    /// Keepalive message sent periodically to maintain connection.
+    /// Direction: Client→Server. Interval: Every 5 seconds.
+    /// </summary>
+    /// <remarks>
+    /// Server expects heartbeat within 15 seconds, otherwise connection times out.
+    /// Server may respond with Pong (901) for latency measurement.
+    /// </remarks>
     Heartbeat = 4,
+    
+    /// <summary>
+    /// Server forcibly disconnects the client with a reason.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Reasons include: Kicked by admin, banned, duplicate login, anti-cheat violation.
+    /// Connection is terminated immediately after sending this message.
+    /// CanReconnect flag indicates if reconnection is allowed.
+    /// </remarks>
     ForceDisconnect = 5,
+    
+    /// <summary>
+    /// Client attempts to reconnect using a previously issued session token.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Used after unexpected disconnect to restore session state.
+    /// Reconnect window: 30 seconds. Max 10 retry attempts with exponential backoff.
+    /// Response: ReconnectResponse (7) with success status.
+    /// </remarks>
     ReconnectRequest = 6,
+    
+    /// <summary>
+    /// Server response to reconnect attempt.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Restores session, resumes at last known position.
+    /// On failure: ErrorCode indicates reason (TOKEN_EXPIRED, SESSION_NOT_FOUND, etc.).
+    /// </remarks>
     ReconnectResponse = 7,
 
+    /// <summary>
+    /// DEPRECATED: Session validation is now done internally.
+    /// </summary>
+    /// <remarks>
+    /// This message type should no longer be used. Session validation happens
+    /// automatically during connection establishment and is not exposed as a separate message.
+    /// </remarks>
     [Obsolete("Deprecated: Session validation is now done internally. Remove usage of this message type.")]
-    SessionValidate = 8, // DEPRECATED - Internal session validation
+    SessionValidate = 8,
 
+    /// <summary>
+    /// Client requests to select a character from the character list.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: CharacterId to select.
+    /// Response: CharacterSelectResponse (21) with success/failure and spawn data.
+    /// Server loads character data and prepares zone entry.
+    /// </remarks>
     CharacterSelectRequest = 9,
+    
+    /// <summary>
+    /// Client requests to create a new character.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: CharacterName, Race, Class, Gender, Appearance data.
+    /// Response: CharacterCreateResponse (22) with new CharacterId or error.
+    /// Subject to name validation, profanity filter, and character slot limits.
+    /// </remarks>
     CharacterCreateRequest = 10,
+    
+    /// <summary>
+    /// Client requests to permanently delete a character.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: CharacterId to delete.
+    /// Response: CharacterDeleteResponse (23) with confirmation or error.
+    /// May require additional confirmation or delay for recovery period.
+    /// </remarks>
     CharacterDeleteRequest = 11,
+    
+    /// <summary>
+    /// Client requests the list of characters on this account.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Sent after successful login to display character selection screen.
+    /// Response: CharacterListResponse (13) with array of character summaries.
+    /// </remarks>
     CharacterListRequest = 12,
+    
+    /// <summary>
+    /// Server sends the list of characters for this account.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: CharacterId, Name, Level, Class, Race, LastPlayed for each character.
+    /// Client displays this data in character selection UI.
+    /// </remarks>
     CharacterListResponse = 13,
+    
+    /// <summary>
+    /// Client requests to select a specific game server/realm.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: ServerId/RealmId to connect to.
+    /// Response: ServerSelectResponse (24) with connection info or queue position.
+    /// </remarks>
     ServerSelectRequest = 14,
+    
+    /// <summary>
+    /// Client requests the list of available realms/servers.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Sent after login to display server selection screen.
+    /// Response: RealmListResponse (16) with server status, population, and type.
+    /// </remarks>
     RealmListRequest = 15,
+    
+    /// <summary>
+    /// Server sends the list of available realms/servers.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: RealmId, Name, Type (PvE/PvP), Status (Online/Offline), Population level.
+    /// Updated periodically to reflect current server status.
+    /// </remarks>
     RealmListResponse = 16,
+    
+    /// <summary>
+    /// Client requests detailed account data and settings.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Response: AccountDataResponse (18) with account-wide settings and metadata.
+    /// Includes: Account tier, subscription status, unlocks, etc.
+    /// </remarks>
     AccountDataRequest = 17,
+    
+    /// <summary>
+    /// Server sends detailed account data and settings.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains account-wide information: Premium status, creation date, play time, unlocks.
+    /// Used to configure client features and UI based on account entitlements.
+    /// </remarks>
     AccountDataResponse = 18,
+    
+    /// <summary>
+    /// Initiates encrypted connection handshake between client and server.
+    /// Direction: Bidirectional (Handshake protocol).
+    /// </summary>
+    /// <remarks>
+    /// Establishes encryption keys for secure communication.
+    /// Used during initial connection setup before authentication.
+    /// Implementation uses standard TLS/SSL protocols.
+    /// </remarks>
     EncryptionHandshake = 19,
+    
+    /// <summary>
+    /// Client or server requests to enable/disable message compression.
+    /// Direction: Bidirectional.
+    /// </summary>
+    /// <remarks>
+    /// Toggles compression for network traffic to reduce bandwidth.
+    /// Typically enabled after login for improved performance.
+    /// Uses standard compression algorithms (e.g., gzip, lz4).
+    /// </remarks>
     CompressionToggle = 20,
+    
+    /// <summary>
+    /// Server response to CharacterSelectRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Includes character data and initial spawn position/zone.
+    /// On failure: ErrorCode (CHARACTER_NOT_FOUND, CHARACTER_IN_USE, etc.).
+    /// Triggers zone loading and character spawn on client side.
+    /// </remarks>
     CharacterSelectResponse = 21,
+    
+    /// <summary>
+    /// Server response to CharacterCreateRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Includes newly created CharacterId.
+    /// On failure: ErrorCode (NAME_TAKEN, INVALID_NAME, SLOT_LIMIT_REACHED, etc.).
+    /// </remarks>
     CharacterCreateResponse = 22,
+    
+    /// <summary>
+    /// Server response to CharacterDeleteRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Confirmation that character was deleted.
+    /// On failure: ErrorCode (CHARACTER_NOT_FOUND, DELETE_NOT_ALLOWED, etc.).
+    /// Character may enter grace period before permanent deletion.
+    /// </remarks>
     CharacterDeleteResponse = 23,
+    
+    /// <summary>
+    /// Server response to ServerSelectRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Connection information for selected server.
+    /// On queue: Position in queue and estimated wait time.
+    /// On failure: ErrorCode (SERVER_FULL, SERVER_OFFLINE, etc.).
+    /// </remarks>
     ServerSelectResponse = 24,
 
     // ═══════════════════════════════════════════════════════════════
     // ZONE EVENTS (0100-0199)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>
+    /// DEPRECATED: Character spawn data is now included in ZoneState (102).
+    /// </summary>
+    /// <remarks>
+    /// This message type should no longer be used. Character spawn and zone entry
+    /// functionality has been consolidated into ZoneState (102) for better atomicity.
+    /// </remarks>
     [Obsolete("Deprecated: Character spawn data is now included in ZoneState (102). Remove usage and use ZoneState instead.")]
-    JoinZone = 100, // DEPRECATED - Functionality moved to ZoneState (102)
+    JoinZone = 100,
 
+    /// <summary>
+    /// Client notifies server of intent to leave current zone.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Server will save zone state, unsubscribe from zone updates, and confirm exit.
+    /// Broadcast: CharacterLeftZone (105) sent to other players in the zone.
+    /// </remarks>
     LeaveZone = 101,
+    
+    /// <summary>
+    /// Server sends complete zone state to client upon zone entry.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: All entities, terrain data, active events, weather, time of day.
+    /// This is the authoritative initial state. Delta updates follow via ZoneDelta (103).
+    /// Triggers client zone loading and entity spawning.
+    /// </remarks>
     ZoneState = 102,
+    
+    /// <summary>
+    /// Server sends incremental zone state changes.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Delta updates for: Entity spawns/despawns, position changes, state changes.
+    /// Sent at regular intervals (per tick) to keep clients synchronized.
+    /// Uses dirty tracking to minimize bandwidth.
+    /// </remarks>
     ZoneDelta = 103,
+    
+    /// <summary>
+    /// Broadcast notification that a character joined the current zone.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Sent to all players in the zone when a new player enters.
+    /// Contains: CharacterId, Name, Position, Appearance data.
+    /// Clients spawn the new player entity in their game world.
+    /// </remarks>
     CharacterJoinedZone = 104,
+    
+    /// <summary>
+    /// Broadcast notification that a character left the current zone.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Sent to all players in the zone when a player exits.
+    /// Contains: CharacterId of departing player.
+    /// Clients despawn the player entity from their game world.
+    /// </remarks>
     CharacterLeftZone = 105,
+    
+    /// <summary>
+    /// Client requests to transfer to a different zone.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: TargetZoneId, optional EntryPoint/Portal.
+    /// Response: ZoneTransferResponse (107) with approval or denial.
+    /// Server validates requirements (level, access, etc.) before approval.
+    /// </remarks>
     ZoneTransferRequest = 106,
+    
+    /// <summary>
+    /// Server response to zone transfer request.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Includes new ZoneId and spawn coordinates.
+    /// On failure: ErrorCode (ZONE_LOCKED, LEVEL_REQUIREMENT, etc.).
+    /// Successful transfer triggers LeaveZone + ZoneState sequence.
+    /// </remarks>
     ZoneTransferResponse = 107,
 
+    /// <summary>
+    /// DEPRECATED: Clients now load assets locally and send ZoneLoadedAck (118) when ready.
+    /// </summary>
+    /// <remarks>
+    /// Previously used for client to report zone loading progress percentage.
+    /// No longer needed as asset loading is client-side responsibility.
+    /// </remarks>
     [Obsolete("Deprecated: Remove usage - clients load assets locally and send ZoneLoadedAck (118) when ready.")]
-    ZoneLoadingProgress = 108, // DEPRECATED - No longer needed
+    ZoneLoadingProgress = 108,
 
+    /// <summary>
+    /// Server notifies client that a new zone has been discovered/unlocked.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Sent when player enters a zone for the first time.
+    /// Contains: ZoneId, Name, Description, rewards for discovery.
+    /// May trigger achievement or exploration XP gain.
+    /// </remarks>
     ZoneDiscovered = 109,
+    
+    /// <summary>
+    /// Client requests list of accessible zones.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Used for map UI and fast travel systems.
+    /// Response: ZoneListResponse (111) with available zones and requirements.
+    /// </remarks>
     ZoneListRequest = 110,
+    
+    /// <summary>
+    /// Server sends list of zones accessible to the character.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: ZoneId, Name, Level range, Access status (Locked/Unlocked).
+    /// Used to populate map and travel UI.
+    /// </remarks>
     ZoneListResponse = 111,
+    
+    /// <summary>
+    /// Server initiates transfer to a different shard/instance of current zone.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Used for load balancing or cross-server party/raid grouping.
+    /// Transparent to player - maintains position and state.
+    /// Connection may briefly reconnect to different zone server.
+    /// </remarks>
     ShardTransfer = 112,
+    
+    /// <summary>
+    /// Client requests list of available shards for current zone.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Used when player wants to change shard manually (e.g., to join friends).
+    /// Response: ShardListResponse (113) with shard population and IDs.
+    /// </remarks>
     ShardListRequest = 113,
+    
+    /// <summary>
+    /// Server sends list of available shards/instances for current zone.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: ShardId, Population, Friends in shard, Recommended status.
+    /// Allows player to choose less crowded shard or join friends.
+    /// </remarks>
     ShardListResponse = 114,
+    
+    /// <summary>
+    /// Client enters a sub-zone/area within the current zone.
+    /// Direction: Client→Server or Server→Client (Notification).
+    /// </summary>
+    /// <remarks>
+    /// Sub-zones are areas within a zone with different properties (music, lighting, etc.).
+    /// May trigger area discovery, events, or UI updates.
+    /// </remarks>
     SubZoneEnter = 115,
+    
+    /// <summary>
+    /// Client leaves a sub-zone/area within the current zone.
+    /// Direction: Client→Server or Server→Client (Notification).
+    /// </summary>
+    /// <remarks>
+    /// Exits sub-zone, reverting to parent zone properties.
+    /// May end area-specific effects or events.
+    /// </remarks>
     SubZoneLeave = 116,
+    
+    /// <summary>
+    /// Client requests detailed information about a specific zone.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: ZoneId to query.
+    /// Returns: Zone metadata (description, level range, type, recommended group size).
+    /// Used for UI tooltips and zone information panels.
+    /// </remarks>
     GetZoneRequest = 117,
+    
+    /// <summary>
+    /// Client acknowledges that zone assets are loaded and ready.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Sent after client finishes loading zone assets (models, textures, etc.).
+    /// Server waits for this before sending ZoneState (102) or allowing gameplay.
+    /// Prevents rendering issues and ensures smooth zone transition.
+    /// </remarks>
     ZoneLoadedAck = 118,
 
     // ═══════════════════════════════════════════════════════════════
     // MOVEMENT / POSITION (0200-0299)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>
+    /// Client sends position and movement input to server.
+    /// Direction: Client→Server. Frequency: High (every tick with input changes).
+    /// </summary>
+    /// <remarks>
+    /// Contains: Position (X,Y), Velocity, Input state, Sequence number, Timestamp.
+    /// Server validates and authorizes movement, broadcasts to nearby players.
+    /// Used for client-side prediction with server reconciliation.
+    /// </remarks>
     PositionUpdate = 200,
+    
+    /// <summary>
+    /// Server broadcasts authoritative position of an entity to nearby clients.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Contains: EntityId, Position (X,Y), Velocity, Timestamp.
+    /// Sent for other players and NPCs. Clients interpolate between updates.
+    /// Broadcast range limited to Area of Interest (AOI).
+    /// </remarks>
     PositionBroadcast = 201,
+    
+    /// <summary>
+    /// Server corrects client's predicted position (client-side prediction mismatch).
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: Authoritative position, Sequence number of corrected input.
+    /// Client snaps or smoothly corrects to server position.
+    /// Triggers re-simulation of pending inputs after correction.
+    /// Critical for anti-cheat - DO NOT bundle in MessageBundle (950).
+    /// </remarks>
     MovementCorrection = 202,
+    
+    /// <summary>
+    /// Client requests to teleport to a specific location.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: Target position or waypoint/portal ID.
+    /// Response: TeleportResponse (220) with approval or denial.
+    /// Server validates: Distance, cooldown, zone boundaries, access rights.
+    /// </remarks>
     TeleportRequest = 203,
+    
+    /// <summary>
+    /// Server executes teleport, moving entity to new position.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: New position, optional zone/shard change.
+    /// Client immediately updates position, triggers teleport visual effect.
+    /// Broadcast to nearby players as entity despawn/respawn.
+    /// </remarks>
     TeleportExecute = 204,
+    
+    /// <summary>
+    /// Server notifies client of movement speed change.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Speed changes from: Buffs/debuffs, items, mounts, terrain effects.
+    /// Contains: New speed multiplier, Duration (if temporary), Reason/Source.
+    /// Client applies to movement calculations immediately.
+    /// </remarks>
     MovementSpeedUpdate = 205,
+    
+    /// <summary>
+    /// Client requests to perform a jump action.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: Current position, jump direction/force.
+    /// Response: JumpResponse (221) with approval or denial.
+    /// Server validates: Not already jumping, not rooted, stamina/resource cost.
+    /// </remarks>
     JumpRequest = 206,
+    
+    /// <summary>
+    /// Server broadcasts jump action to nearby clients.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Contains: EntityId, Jump start position, Velocity vector.
+    /// Nearby clients play jump animation and apply physics.
+    /// </remarks>
     JumpBroadcast = 207,
+    
+    /// <summary>
+    /// Server notifies client of fall damage taken.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Calculated from fall height and player stats.
+    /// Contains: Damage amount, Fall height.
+    /// May trigger death if damage exceeds current health.
+    /// </remarks>
     FallDamage = 208,
+    
+    /// <summary>
+    /// Client reports being stuck and requests unstuck assistance.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Used when player is trapped in terrain/geometry.
+    /// Response: StuckResponse (210) with teleport to safe location.
+    /// Rate limited to prevent abuse (e.g., 1 per 5 minutes).
+    /// </remarks>
     StuckRequest = 209,
+    
+    /// <summary>
+    /// Server response to stuck request, teleporting player to safety.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Teleports to: Last known safe position, zone entry point, or bind point.
+    /// Contains: New position, Cooldown until next stuck request allowed.
+    /// </remarks>
     StuckResponse = 210,
+    
+    /// <summary>
+    /// Client requests pathfinding route to target destination.
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: Target position or entity.
+    /// Response: PathfindingResponse (212) with waypoint path.
+    /// Used for auto-pathing features and NPC navigation display.
+    /// </remarks>
     PathfindingRequest = 211,
+    
+    /// <summary>
+    /// Server sends calculated pathfinding route.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: Array of waypoint positions forming path to destination.
+    /// Accounts for terrain, obstacles, and navigation mesh.
+    /// Client renders path and/or auto-moves along it.
+    /// </remarks>
     PathfindingResponse = 212,
+    
+    /// <summary>
+    /// Server forces entity to a specific position (admin/scripted).
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Used for: GM commands, cutscenes, scripted events, anti-cheat corrections.
+    /// Contains: Target position, Forced (no client-side smoothing).
+    /// Overrides client prediction - immediate snap to position.
+    /// </remarks>
     ForcePosition = 213,
+    
+    /// <summary>
+    /// Server notifies client of movement mode change.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Movement modes: Walking, Running, Swimming, Flying, Mounted.
+    /// Contains: New mode, Speed multipliers for new mode.
+    /// Triggers animation and physics changes on client.
+    /// </remarks>
     MovementModeChange = 214,
+    
+    /// <summary>
+    /// Server notifies client of collision with terrain/object.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Used for server-authoritative collision feedback.
+    /// Contains: Collision point, Normal vector, Object type.
+    /// May trigger sound/visual effects on client.
+    /// </remarks>
     CollisionEvent = 215,
+    
+    /// <summary>
+    /// Server applies knockback force to entity.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// From: Combat abilities, explosions, physics events.
+    /// Contains: Force vector, Duration, Source entity.
+    /// Client applies physics simulation, overrides normal movement temporarily.
+    /// </remarks>
     KnockbackEvent = 216,
+    
+    /// <summary>
+    /// Server applies pull force, drawing entity toward a point.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// From: Abilities like "Death Grip", vortex effects, hooks.
+    /// Contains: Target position, Pull speed/force, Duration.
+    /// Client applies physics simulation toward target.
+    /// </remarks>
     PullEvent = 217,
+    
+    /// <summary>
+    /// Server roots entity, preventing movement.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// From: Crowd control abilities (roots, snares, traps).
+    /// Contains: Duration, Can cast/attack while rooted.
+    /// Client prevents movement input, shows rooted visual effect.
+    /// </remarks>
     RootEvent = 218,
+    
+    /// <summary>
+    /// Server stuns entity, preventing movement and actions.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// From: Stun abilities, hard crowd control effects.
+    /// Contains: Duration.
+    /// Client prevents all input, shows stunned visual effect.
+    /// More restrictive than RootEvent - no actions allowed.
+    /// </remarks>
     StunMovement = 219,
+    
+    /// <summary>
+    /// Server response to TeleportRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Confirms teleport will execute via TeleportExecute (204).
+    /// On failure: ErrorCode (COOLDOWN_ACTIVE, INVALID_DESTINATION, etc.).
+    /// </remarks>
     TeleportResponse = 220,
+    
+    /// <summary>
+    /// Server response to JumpRequest.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// On success: Jump is authorized, client can play local prediction.
+    /// On failure: ErrorCode (ALREADY_JUMPING, ROOTED, INSUFFICIENT_STAMINA).
+    /// </remarks>
     JumpResponse = 221,
 
     // ═══════════════════════════════════════════════════════════════
     // COMBAT (0300-0399)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>
+    /// Client requests to perform a combat action (ability/skill).
+    /// Direction: Client→Server.
+    /// </summary>
+    /// <remarks>
+    /// Payload: ActionId, Target entity, Position (for ground-targeted abilities).
+    /// Server validates: Range, line of sight, cooldown, resources, target validity.
+    /// Response: ActionResult (301) with success/failure and effects.
+    /// </remarks>
     ActionRequest = 300,
+    
+    /// <summary>
+    /// Server sends result of combat action execution.
+    /// Direction: Server→Client.
+    /// </summary>
+    /// <remarks>
+    /// Contains: Success/failure, Damage/healing amounts, Hit/miss/crit status.
+    /// Broadcast to affected players and spectators.
+    /// Triggers combat log entries, damage numbers, animations.
+    /// </remarks>
     ActionResult = 301,
+    
+    /// <summary>
+    /// Server notifies clients of damage dealt to an entity.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Contains: Source, Target, Damage amount, Damage type, Critical hit.
+    /// Broadcast to nearby players for combat feedback.
+    /// Triggers damage numbers, hit effects, health bar updates.
+    /// </remarks>
     DamageEvent = 302,
+    
+    /// <summary>
+    /// Server notifies clients that an entity has died.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Contains: EntityId, Killer entity, Death reason.
+    /// Triggers: Death animation, loot spawn, respawn timer.
+    /// Broadcast to entire zone for players, nearby for NPCs.
+    /// </remarks>
     DeathEvent = 303,
+    
+    /// <summary>
+    /// Server notifies clients of healing received by an entity.
+    /// Direction: Server→Client (Broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Contains: Source, Target, Healing amount, Overheal, Critical heal.
+    /// Broadcast to nearby players for healing feedback.
+    /// Triggers healing numbers, heal effects, health bar updates.
+    /// </remarks>
     HealEvent = 304,
     MissEvent = 305,
     DodgeEvent = 306,
