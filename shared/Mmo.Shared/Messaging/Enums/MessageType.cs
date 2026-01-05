@@ -3303,504 +3303,1722 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // TUTORIAL / GUIDE SYSTEM (2900-2999)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Begin tutorial sequence. Direction: Server→Client.</summary>
+    /// <remarks>Triggers new player tutorial. Step-by-step guidance system.</remarks>
     TutorialStart = 2900,
+    
+    /// <summary>Tutorial step progression. Direction: Server→Client.</summary>
+    /// <remarks>Next tutorial task. Contains: Objective text, UI highlights, completion criteria.</remarks>
     TutorialStep = 2901,
+    
+    /// <summary>Tutorial finished. Direction: Server→Client.</summary>
+    /// <remarks>All steps completed. Unlock rewards and normal gameplay.</remarks>
     TutorialComplete = 2902,
+    
+    /// <summary>Request to skip tutorial. Direction: Client→Server.</summary>
+    /// <remarks>Veteran player bypass. Response: TutorialSkipResponse (2904).</remarks>
     TutorialSkipRequest = 2903,
+    
+    /// <summary>Tutorial skip result. Direction: Server→Client.</summary>
+    /// <remarks>Confirmed skip. Jump to normal gameplay.</remarks>
     TutorialSkipResponse = 2904,
+    
+    /// <summary>Reset tutorial progress. Direction: Client→Server.</summary>
+    /// <remarks>Start tutorial from beginning. Response: TutorialResetResponse (2906).</remarks>
     TutorialResetRequest = 2905,
+    
+    /// <summary>Tutorial reset confirmation. Direction: Server→Client.</summary>
     TutorialResetResponse = 2906,
+    
+    /// <summary>Acknowledge tutorial step completion. Direction: Client→Server.</summary>
+    /// <remarks>Player completed current step. Triggers next step.</remarks>
     TutorialStepAck = 2907,
+    
+    /// <summary>Request tutorial state sync. Direction: Client→Server.</summary>
+    /// <remarks>Get current progress. Response: TutorialStateSyncResponse (2909).</remarks>
     TutorialStateSyncRequest = 2908,
+    
+    /// <summary>Tutorial state data. Direction: Server→Client.</summary>
+    /// <remarks>Current step, completed steps, available tutorials.</remarks>
     TutorialStateSyncResponse = 2909,
+    
+    /// <summary>Display contextual hint. Direction: Server→Client.</summary>
+    /// <remarks>Pop-up tip for feature or mechanic. Triggered by player actions.</remarks>
     HintShow = 2910,
+    
+    /// <summary>Request to dismiss hint. Direction: Client→Server.</summary>
+    /// <remarks>Close hint popup. Response: HintDismissResponse (2912).</remarks>
     HintDismissRequest = 2911,
+    
+    /// <summary>Hint dismissed confirmation. Direction: Server→Client.</summary>
     HintDismissResponse = 2912,
+    
+    /// <summary>Request to disable hint type. Direction: Client→Server.</summary>
+    /// <remarks>Turn off specific hints permanently. Response: HintDisableResponse (2914).</remarks>
     HintDisableRequest = 2913,
+    
+    /// <summary>Hint disabled confirmation. Direction: Server→Client.</summary>
     HintDisableResponse = 2914,
+    
+    /// <summary>Daily tip message. Direction: Server→Client.</summary>
+    /// <remarks>Helpful tip on login. Educational content rotation.</remarks>
     TipOfTheDay = 2920,
+    
+    /// <summary>Highlight new feature. Direction: Server→Client.</summary>
+    /// <remarks>After patch/update. Draws attention to new content.</remarks>
     NewFeatureHighlight = 2921,
+    
+    /// <summary>Request to open guide. Direction: Client→Server.</summary>
+    /// <remarks>In-game help documentation. Response: GuideOpenResponse (2931).</remarks>
     GuideOpenRequest = 2930,
+    
+    /// <summary>Guide content data. Direction: Server→Client.</summary>
+    /// <remarks>Help text, images, links for specific topic.</remarks>
     GuideOpenResponse = 2931,
+    
+    /// <summary>Close guide window. Direction: Client→Server.</summary>
     GuideCloseRequest = 2932,
+    
+    /// <summary>Guide reading progress. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Track which guides player has viewed.</remarks>
     GuideProgress = 2933,
 
     // ═══════════════════════════════════════════════════════════════
     // SETTINGS / PREFERENCES SYNC (3000-3099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Load saved settings. Direction: Client→Server.</summary>
+    /// <remarks>Request account settings. Response: SettingsLoadResult (3001).</remarks>
     SettingsLoad = 3000,
+    
+    /// <summary>Settings data. Direction: Server→Client.</summary>
+    /// <remarks>All saved preferences: Graphics, audio, gameplay options.</remarks>
     SettingsLoadResult = 3001,
+    
+    /// <summary>Save current settings. Direction: Client→Server.</summary>
+    /// <remarks>Persist preferences to server. Response: SettingsSaveResult (3003).</remarks>
     SettingsSave = 3002,
+    
+    /// <summary>Settings save confirmation. Direction: Server→Client.</summary>
     SettingsSaveResult = 3003,
+    
+    /// <summary>Reset settings to defaults. Direction: Client→Server.</summary>
+    /// <remarks>Restore default configuration. Response: SettingsResetResult (3005).</remarks>
     SettingsReset = 3004,
+    
+    /// <summary>Settings reset confirmation. Direction: Server→Client.</summary>
     SettingsResetResult = 3005,
+    
+    /// <summary>Load keybindings. Direction: Client→Server.</summary>
+    /// <remarks>Request saved key mappings. Response: KeybindingsLoadResult (3011).</remarks>
     KeybindingsLoad = 3010,
+    
+    /// <summary>Keybindings data. Direction: Server→Client.</summary>
+    /// <remarks>All key-to-action mappings.</remarks>
     KeybindingsLoadResult = 3011,
+    
+    /// <summary>Save keybindings. Direction: Client→Server.</summary>
+    /// <remarks>Persist key mappings. Response: KeybindingsSaveResult (3013).</remarks>
     KeybindingsSave = 3012,
+    
+    /// <summary>Keybindings save confirmation. Direction: Server→Client.</summary>
     KeybindingsSaveResult = 3013,
+    
+    /// <summary>Reset keybindings to defaults. Direction: Client→Server.</summary>
+    /// <remarks>Restore default key mappings. Response: KeybindingsResetResult (3015).</remarks>
     KeybindingsReset = 3014,
+    
+    /// <summary>Keybindings reset confirmation. Direction: Server→Client.</summary>
     KeybindingsResetResult = 3015,
+    
+    /// <summary>Load UI layout. Direction: Client→Server.</summary>
+    /// <remarks>Request saved UI positions. Response: UiLayoutLoadResult (3021).</remarks>
     UiLayoutLoad = 3020,
+    
+    /// <summary>UI layout data. Direction: Server→Client.</summary>
+    /// <remarks>Saved window positions, sizes, visibility states.</remarks>
     UiLayoutLoadResult = 3021,
+    
+    /// <summary>Save UI layout. Direction: Client→Server.</summary>
+    /// <remarks>Persist UI configuration. Response: UiLayoutSaveResult (3023).</remarks>
     UiLayoutSave = 3022,
+    
+    /// <summary>UI layout save confirmation. Direction: Server→Client.</summary>
     UiLayoutSaveResult = 3023,
+    
+    /// <summary>Reset UI layout. Direction: Client→Server.</summary>
+    /// <remarks>Restore default UI positions. Response: UiLayoutResetResult (3025).</remarks>
     UiLayoutReset = 3024,
+    
+    /// <summary>UI layout reset confirmation. Direction: Server→Client.</summary>
     UiLayoutResetResult = 3025,
+    
+    /// <summary>Create new macro. Direction: Client→Server.</summary>
+    /// <remarks>Define command sequence. Response: MacroCreateResult (3031).</remarks>
     MacroCreate = 3030,
+    
+    /// <summary>Macro creation result. Direction: Server→Client.</summary>
+    /// <remarks>Macro ID assigned or error: Limit reached, invalid syntax.</remarks>
     MacroCreateResult = 3031,
+    
+    /// <summary>Edit existing macro. Direction: Client→Server.</summary>
+    /// <remarks>Modify macro commands. Response: MacroEditResult (3033).</remarks>
     MacroEdit = 3032,
+    
+    /// <summary>Macro edit confirmation. Direction: Server→Client.</summary>
     MacroEditResult = 3033,
+    
+    /// <summary>Delete macro. Direction: Client→Server.</summary>
+    /// <remarks>Remove macro. Response: MacroDeleteResult (3035).</remarks>
     MacroDelete = 3034,
+    
+    /// <summary>Macro deletion confirmation. Direction: Server→Client.</summary>
     MacroDeleteResult = 3035,
+    
+    /// <summary>Sync all macros. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Full macro list with contents. Cross-device synchronization.</remarks>
     MacroSync = 3036,
+    
+    /// <summary>Load addon saved variables. Direction: Client→Server.</summary>
+    /// <remarks>Addon-specific data. Response: AddonDataLoadResult (3041).</remarks>
     AddonDataLoad = 3040,
+    
+    /// <summary>Addon data. Direction: Server→Client.</summary>
+    /// <remarks>Saved variables for client addons/mods.</remarks>
     AddonDataLoadResult = 3041,
+    
+    /// <summary>Save addon data. Direction: Client→Server.</summary>
+    /// <remarks>Persist addon variables. Response: AddonDataSaveResult (3043).</remarks>
     AddonDataSave = 3042,
+    
+    /// <summary>Addon data save confirmation. Direction: Server→Client.</summary>
     AddonDataSaveResult = 3043,
 
     // ═══════════════════════════════════════════════════════════════
     // LOOT / REWARDS (3100-3199)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Open loot window. Direction: Server→Client.</summary>
+    /// <remarks>Display lootable contents: Corpse, chest, resource node.</remarks>
     LootWindowOpen = 3100,
+    
+    /// <summary>Close loot window. Direction: Client→Server.</summary>
+    /// <remarks>Exit looting interface. Response: LootWindowCloseResponse (3106).</remarks>
     LootWindowClose = 3101,
+    
+    /// <summary>Loot single item. Direction: Client→Server.</summary>
+    /// <remarks>Take specific item. Response: LootItemResult (3103).</remarks>
     LootItem = 3102,
+    
+    /// <summary>Loot item result. Direction: Server→Client.</summary>
+    /// <remarks>Item added or error: Inventory full, need before greed, not your loot.</remarks>
     LootItemResult = 3103,
+    
+    /// <summary>Loot gold/currency. Direction: Client→Server.</summary>
+    /// <remarks>Take money from loot. Response: LootGoldResult (3107).</remarks>
     LootGold = 3104,
+    
+    /// <summary>Loot all items. Direction: Client→Server.</summary>
+    /// <remarks>Quick-loot everything. Response: LootAllResult (3108).</remarks>
     LootAll = 3105,
+    
+    /// <summary>Loot window closed confirmation. Direction: Server→Client.</summary>
     LootWindowCloseResponse = 3106,
+    
+    /// <summary>Gold looted confirmation. Direction: Server→Client.</summary>
+    /// <remarks>Currency added to player.</remarks>
     LootGoldResult = 3107,
+    
+    /// <summary>Loot all result. Direction: Server→Client.</summary>
+    /// <remarks>All items taken or partial: Some items didn't fit.</remarks>
     LootAllResult = 3108,
+    
+    /// <summary>Start loot roll. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Item eligible for need/greed/pass. Timer starts for group decision.</remarks>
     LootRollStart = 3110,
+    
+    /// <summary>Roll need on item. Direction: Client→Server.</summary>
+    /// <remarks>High priority roll. Class/spec appropriate only.</remarks>
     LootRollNeed = 3111,
+    
+    /// <summary>Roll greed on item. Direction: Client→Server.</summary>
+    /// <remarks>Low priority roll. Anyone can greed.</remarks>
     LootRollGreed = 3112,
+    
+    /// <summary>Pass on item. Direction: Client→Server.</summary>
+    /// <remarks>Decline loot. No roll.</remarks>
     LootRollPass = 3113,
+    
+    /// <summary>Loot roll outcome. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>All rolls complete. Winner determined or item disenchanted.</remarks>
     LootRollResult = 3114,
+    
+    /// <summary>Loot roll winner announcement. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Player won item. Item awarded to winner.</remarks>
     LootRollWinner = 3115,
+    
+    /// <summary>Loot roll vote response. Direction: Server→Client.</summary>
+    /// <remarks>Confirms player's roll choice recorded.</remarks>
     LootRollVoteResponse = 3116,
+    
+    /// <summary>Master looter assigns item. Direction: Client→Server.</summary>
+    /// <remarks>Master loot mode. Leader manually assigns. Response: LootMasterAssignResult (3123).</remarks>
     LootMasterAssign = 3120,
+    
+    /// <summary>Change loot rules. Direction: Client→Server.</summary>
+    /// <remarks>Switch loot mode: Personal, group, master. Response: LootRulesChangeResult (3124).</remarks>
     LootRulesChange = 3121,
+    
+    /// <summary>Change loot quality threshold. Direction: Client→Server.</summary>
+    /// <remarks>Set minimum quality for rolls: Uncommon, rare, epic. Response: LootThresholdChangeResult (3125).</remarks>
     LootThresholdChange = 3122,
+    
+    /// <summary>Master loot assignment result. Direction: Server→Client.</summary>
     LootMasterAssignResult = 3123,
+    
+    /// <summary>Loot rules change result. Direction: Server→Client.</summary>
     LootRulesChangeResult = 3124,
+    
+    /// <summary>Loot threshold change result. Direction: Server→Client.</summary>
     LootThresholdChangeResult = 3125,
+    
+    /// <summary>Personal loot awarded. Direction: Server→Client.</summary>
+    /// <remarks>Individual loot drop. No group roll needed.</remarks>
     PersonalLoot = 3130,
+    
+    /// <summary>Bonus roll opportunity. Direction: Server→Client.</summary>
+    /// <remarks>Extra loot chance offered. Costs bonus roll token.</remarks>
     BonusRollPrompt = 3131,
+    
+    /// <summary>Use bonus roll. Direction: Client→Server.</summary>
+    /// <remarks>Spend token for extra loot chance. Response: BonusRollResult (3133).</remarks>
     BonusRollUse = 3132,
+    
+    /// <summary>Bonus roll outcome. Direction: Server→Client.</summary>
+    /// <remarks>Extra item awarded or gold consolation prize.</remarks>
     BonusRollResult = 3133,
+    
+    /// <summary>Reward choice prompt. Direction: Server→Client.</summary>
+    /// <remarks>Select from multiple reward options: Quest, event, achievement.</remarks>
     RewardChoicePrompt = 3140,
+    
+    /// <summary>Select reward option. Direction: Client→Server.</summary>
+    /// <remarks>Choose specific reward. Response: RewardChoiceResult (3142).</remarks>
     RewardChoiceSelect = 3141,
+    
+    /// <summary>Reward choice result. Direction: Server→Client.</summary>
+    /// <remarks>Selected reward granted.</remarks>
     RewardChoiceResult = 3142,
 
     // ═══════════════════════════════════════════════════════════════
     // COOLDOWNS / TIMERS (3200-3299)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Ability cooldown started. Direction: Server→Client.</summary>
+    /// <remarks>Ability on cooldown. Contains: Duration, Ability ID.</remarks>
     CooldownStart = 3200,
+    
+    /// <summary>Ability cooldown finished. Direction: Server→Client.</summary>
+    /// <remarks>Ability ready for use.</remarks>
     CooldownEnd = 3201,
+    
+    /// <summary>Cooldown time update. Direction: Server→Client.</summary>
+    /// <remarks>Remaining cooldown time. For dynamic cooldown reduction.</remarks>
     CooldownUpdate = 3202,
+    
+    /// <summary>Reset ability cooldown. Direction: Server→Client.</summary>
+    /// <remarks>Cooldown cleared early. From: Death, arena start, GM command, special proc.</remarks>
     CooldownReset = 3203,
+    
+    /// <summary>Full cooldown state sync. Direction: Server→Client.</summary>
+    /// <remarks>All active cooldowns. Sent on zone in or reconnect.</remarks>
     CooldownSync = 3204,
+    
+    /// <summary>Global cooldown started. Direction: Server→Client.</summary>
+    /// <remarks>Short universal cooldown after most abilities. Typically 1-1.5 seconds.</remarks>
     GlobalCooldownStart = 3210,
+    
+    /// <summary>Global cooldown finished. Direction: Server→Client.</summary>
+    /// <remarks>Can cast abilities again.</remarks>
     GlobalCooldownEnd = 3211,
+    
+    /// <summary>Spell cast started. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Casting animation begins. Cast bar displayed. Contains: Spell, Cast time.</remarks>
     CastStart = 3220,
+    
+    /// <summary>Cast progress update. Direction: Server→Client.</summary>
+    /// <remarks>Cast time elapsed. For cast bar animation.</remarks>
     CastUpdate = 3221,
+    
+    /// <summary>Cast interrupted. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Casting stopped: Damage taken, silence, movement, player cancelled.</remarks>
     CastInterrupt = 3222,
+    
+    /// <summary>Cast completed successfully. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Spell fires. Effect executes.</remarks>
     CastComplete = 3223,
+    
+    /// <summary>Cast failed. Direction: Server→Client.</summary>
+    /// <remarks>Cannot cast: Out of range, not enough mana, target invalid, silenced.</remarks>
     CastFailed = 3224,
+    
+    /// <summary>Channel started. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Channeled spell begins. Tick-based effect. Contains: Duration, Tick interval.</remarks>
     ChannelStart = 3230,
+    
+    /// <summary>Channel tick. Direction: Server→Client.</summary>
+    /// <remarks>Periodic effect triggers. Damage/healing pulse.</remarks>
     ChannelTick = 3231,
+    
+    /// <summary>Channel interrupted. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Channeling stopped early. Remaining ticks cancelled.</remarks>
     ChannelInterrupt = 3232,
+    
+    /// <summary>Channel completed. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Full channel duration elapsed. All ticks executed.</remarks>
     ChannelComplete = 3233,
+    
+    /// <summary>Ability charges update. Direction: Server→Client.</summary>
+    /// <remarks>Charge-based abilities. Contains: Current charges, Max charges, Recharge time.</remarks>
     ChargeUpdate = 3240,
+    
+    /// <summary>Ability charge restored. Direction: Server→Client.</summary>
+    /// <remarks>One charge recharged. Can use ability again.</remarks>
     ChargeRestore = 3241,
 
     // ═══════════════════════════════════════════════════════════════
     // INSPECTION / CHARACTER INFO (3300-3399)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request to inspect player. Direction: Client→Server.</summary>
+    /// <remarks>View another player's gear/stats. Response: InspectResponse (3301).</remarks>
     InspectRequest = 3300,
+    
+    /// <summary>Inspection data. Direction: Server→Client.</summary>
+    /// <remarks>Basic character info: Level, class, guild, titles.</remarks>
     InspectResponse = 3301,
+    
+    /// <summary>Inspect equipment details. Direction: Server→Client.</summary>
+    /// <remarks>All equipped items with stats and enchants.</remarks>
     InspectEquipment = 3302,
+    
+    /// <summary>Inspect talent build. Direction: Server→Client.</summary>
+    /// <remarks>Talent selections and specialization.</remarks>
     InspectTalents = 3303,
+    
+    /// <summary>Inspect achievement progress. Direction: Server→Client.</summary>
+    /// <remarks>Achievement points and notable completions.</remarks>
     InspectAchievements = 3304,
+    
+    /// <summary>Inspect PvP stats. Direction: Server→Client.</summary>
+    /// <remarks>Honor rank, rating, kills, arena record.</remarks>
     InspectPvp = 3305,
+    
+    /// <summary>Inspect guild info. Direction: Server→Client.</summary>
+    /// <remarks>Guild name, rank, tabard.</remarks>
     InspectGuild = 3306,
+    
+    /// <summary>Request armory profile. Direction: Client→Server.</summary>
+    /// <remarks>Comprehensive character data. Response: ArmoryResponse (3311).</remarks>
     ArmoryRequest = 3310,
+    
+    /// <summary>Armory profile data. Direction: Server→Client.</summary>
+    /// <remarks>Complete character sheet for external display.</remarks>
     ArmoryResponse = 3311,
+    
+    /// <summary>Calculate gear score. Direction: Client→Server.</summary>
+    /// <remarks>Item level average. Response: GearScoreCalculateResponse (3321).</remarks>
     GearScoreCalculate = 3320,
+    
+    /// <summary>Gear score calculation result. Direction: Server→Client.</summary>
+    /// <remarks>Numeric gear score value.</remarks>
     GearScoreCalculateResponse = 3321,
+    
+    /// <summary>Gear score changed. Direction: Server→Client.</summary>
+    /// <remarks>Updated after equipment change.</remarks>
     GearScoreUpdate = 3322,
+    
+    /// <summary>Average item level updated. Direction: Server→Client.</summary>
+    /// <remarks>Recalculated after gear change.</remarks>
     ItemLevelUpdate = 3323,
+    
+    /// <summary>Request player statistics. Direction: Client→Server.</summary>
+    /// <remarks>Lifetime stats. Response: StatisticsResponse (3331).</remarks>
     StatisticsRequest = 3330,
+    
+    /// <summary>Statistics data. Direction: Server→Client.</summary>
+    /// <remarks>Kills, deaths, damage dealt, quests completed, etc.</remarks>
     StatisticsResponse = 3331,
+    
+    /// <summary>Statistic incremented. Direction: Server→Client.</summary>
+    /// <remarks>Real-time stat tracking update.</remarks>
     StatisticsUpdate = 3332,
+    
+    /// <summary>Request played time. Direction: Client→Server.</summary>
+    /// <remarks>Total time played. Response: PlayedTimeResponse (3341).</remarks>
     PlayedTimeRequest = 3340,
+    
+    /// <summary>Played time data. Direction: Server→Client.</summary>
+    /// <remarks>Total time and time at current level.</remarks>
     PlayedTimeResponse = 3341,
 
     // ═══════════════════════════════════════════════════════════════
     // MAP / MINIMAP / WAYPOINTS (3400-3499)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Explore new map area. Direction: Client→Server.</summary>
+    /// <remarks>Entered undiscovered zone. Response: MapExploreResponse (3403).</remarks>
     MapExplore = 3400,
+    
+    /// <summary>Map exploration update. Direction: Server→Client.</summary>
+    /// <remarks>Area added to discovered regions.</remarks>
     MapExploreUpdate = 3401,
+    
+    /// <summary>Fog of war revealed. Direction: Server→Client.</summary>
+    /// <remarks>New map area visible. Exploration reward may trigger.</remarks>
     MapFogReveal = 3402,
+    
+    /// <summary>Map exploration confirmation. Direction: Server→Client.</summary>
+    /// <remarks>Discovery recorded. XP/achievement may be awarded.</remarks>
     MapExploreResponse = 3403,
+    
+    /// <summary>Set waypoint on map. Direction: Client→Server.</summary>
+    /// <remarks>Player marker. Response: WaypointSetResponse (3411).</remarks>
     WaypointSet = 3410,
+    
+    /// <summary>Waypoint set confirmation. Direction: Server→Client.</summary>
     WaypointSetResponse = 3411,
+    
+    /// <summary>Clear waypoint. Direction: Client→Server.</summary>
+    /// <remarks>Remove marker. Response: WaypointClearResponse (3413).</remarks>
     WaypointClear = 3412,
+    
+    /// <summary>Waypoint cleared confirmation. Direction: Server→Client.</summary>
     WaypointClearResponse = 3413,
+    
+    /// <summary>Share waypoint with party. Direction: Client→Server.</summary>
+    /// <remarks>Send marker to group. Response: WaypointShareResponse (3415).</remarks>
     WaypointShare = 3414,
+    
+    /// <summary>Waypoint share result. Direction: Server→Client.</summary>
     WaypointShareResponse = 3415,
+    
+    /// <summary>Accept shared waypoint. Direction: Client→Server.</summary>
+    /// <remarks>Add party member's marker. Response: WaypointAcceptResponse (3417).</remarks>
     WaypointAccept = 3416,
+    
+    /// <summary>Waypoint accepted confirmation. Direction: Server→Client.</summary>
     WaypointAcceptResponse = 3417,
+    
+    /// <summary>Waypoint position changed. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Party member moved their marker.</remarks>
     WaypointUpdatedEvent = 3418,
+    
+    /// <summary>Ping location on map. Direction: Client→Server.</summary>
+    /// <remarks>Alert party to position. Response: PingMapResponse (3421).</remarks>
     PingMap = 3420,
+    
+    /// <summary>Map ping confirmation. Direction: Server→Client.</summary>
     PingMapResponse = 3421,
+    
+    /// <summary>Map ping broadcast. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Party sees ping animation on map.</remarks>
     PingMapEvent = 3422,
+    
+    /// <summary>Flight path discovered. Direction: Server→Client.</summary>
+    /// <remarks>New flight point unlocked.</remarks>
     FlightpathDiscover = 3430,
+    
+    /// <summary>Request flight path list. Direction: Client→Server.</summary>
+    /// <remarks>Available destinations. Response: FlightpathListResponse (3432).</remarks>
     FlightpathListRequest = 3431,
+    
+    /// <summary>Flight path list data. Direction: Server→Client.</summary>
+    /// <remarks>Known flight points with connections.</remarks>
     FlightpathListResponse = 3432,
+    
+    /// <summary>Request flight. Direction: Client→Server.</summary>
+    /// <remarks>Take flight path. Response: FlightpathRequestResponse (3434).</remarks>
     FlightpathRequest = 3433,
+    
+    /// <summary>Flight request result. Direction: Server→Client.</summary>
+    /// <remarks>Approved or error: Insufficient gold, already in flight.</remarks>
     FlightpathRequestResponse = 3434,
+    
+    /// <summary>Flight started. Direction: Server→Client.</summary>
+    /// <remarks>Flight path animation begins.</remarks>
     FlightpathStart = 3435,
+    
+    /// <summary>Add custom map marker. Direction: Client→Server.</summary>
+    /// <remarks>Personal note marker. Response: MapMarkerAddResponse (3441).</remarks>
     MapMarkerAdd = 3440,
+    
+    /// <summary>Map marker added confirmation. Direction: Server→Client.</summary>
     MapMarkerAddResponse = 3441,
+    
+    /// <summary>Remove map marker. Direction: Client→Server.</summary>
+    /// <remarks>Delete personal marker. Response: MapMarkerRemoveResponse (3443).</remarks>
     MapMarkerRemove = 3442,
+    
+    /// <summary>Map marker removed confirmation. Direction: Server→Client.</summary>
     MapMarkerRemoveResponse = 3443,
+    
+    /// <summary>Update map marker. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Change marker icon or note.</remarks>
     MapMarkerUpdate = 3444,
+    
+    /// <summary>Map marker sync event. Direction: Server→Client.</summary>
+    /// <remarks>All personal markers synced.</remarks>
     MapMarkerSyncEvent = 3445,
+    
+    /// <summary>Request world map data. Direction: Client→Server.</summary>
+    /// <remarks>Zone map details. Response: WorldMapResponse (3451).</remarks>
     WorldMapRequest = 3450,
+    
+    /// <summary>World map data. Direction: Server→Client.</summary>
+    /// <remarks>Map texture, POIs, boundaries.</remarks>
     WorldMapResponse = 3451,
+    
+    /// <summary>Minimap update. Direction: Server→Client.</summary>
+    /// <remarks>Player position, nearby entities, quest objectives.</remarks>
     MinimapUpdate = 3452,
+    
+    /// <summary>Area discovered notification. Direction: Server→Client.</summary>
+    /// <remarks>Zone name display. First visit to area.</remarks>
     AreaDiscovered = 3453,
+    
+    /// <summary>Map discovery delta. Direction: Server→Client.</summary>
+    /// <remarks>Incremental exploration progress.</remarks>
     MapDiscoveryDeltaEvent = 3454,
+    
+    /// <summary>Request map state sync. Direction: Client→Server.</summary>
+    /// <remarks>Full exploration data. Response: MapStateSyncResponse (3456).</remarks>
     MapStateSyncRequest = 3455,
+    
+    /// <summary>Map state sync data. Direction: Server→Client.</summary>
+    /// <remarks>All discovered areas and markers.</remarks>
     MapStateSyncResponse = 3456,
 
     // ═══════════════════════════════════════════════════════════════
     // VOICE CHAT / AUDIO (3500-3599)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Join voice channel. Direction: Client→Server.</summary>
+    /// <remarks>Party/guild/raid voice. Response: VoiceJoinResult (3501).</remarks>
     VoiceJoinChannel = 3500,
+    
+    /// <summary>Voice join result. Direction: Server→Client.</summary>
+    /// <remarks>Connected or error: Channel full, not permitted.</remarks>
     VoiceJoinResult = 3501,
+    
+    /// <summary>Leave voice channel. Direction: Client→Server.</summary>
+    /// <remarks>Disconnect from voice.</remarks>
     VoiceLeaveChannel = 3502,
+    
+    /// <summary>Voice channel list. Direction: Server→Client.</summary>
+    /// <remarks>Available voice channels and members.</remarks>
     VoiceChannelList = 3503,
+    
+    /// <summary>Mute microphone. Direction: Client→Server.</summary>
+    /// <remarks>Stop transmitting voice.</remarks>
     VoiceMute = 3510,
+    
+    /// <summary>Unmute microphone. Direction: Client→Server.</summary>
+    /// <remarks>Resume transmitting voice.</remarks>
     VoiceUnmute = 3511,
+    
+    /// <summary>Deafen audio output. Direction: Client→Server.</summary>
+    /// <remarks>Stop receiving all voice.</remarks>
     VoiceDeafen = 3512,
+    
+    /// <summary>Undeafen audio. Direction: Client→Server.</summary>
+    /// <remarks>Resume receiving voice.</remarks>
     VoiceUndeafen = 3513,
+    
+    /// <summary>Player speaking indicator. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Visual feedback for who is talking.</remarks>
     VoiceSpeaking = 3514,
+    
+    /// <summary>Adjust voice volume. Direction: Client→Server.</summary>
+    /// <remarks>Set channel or user volume level.</remarks>
     VoiceVolume = 3515,
+    
+    /// <summary>Voice audio data. Direction: Bidirectional.</summary>
+    /// <remarks>Compressed voice packets. Real-time streaming.</remarks>
     VoiceData = 3520,
+    
+    /// <summary>Trigger audio effect. Direction: Server→Client.</summary>
+    /// <remarks>Play sound: Ability, UI, ambient. 3D positioned audio.</remarks>
     AudioTrigger = 3530,
+    
+    /// <summary>Stop audio playback. Direction: Server→Client.</summary>
+    /// <remarks>Cancel looping sound or music.</remarks>
     AudioStop = 3531,
+    
+    /// <summary>Change background music. Direction: Server→Client.</summary>
+    /// <remarks>Zone music track. Combat vs exploration themes.</remarks>
     MusicChange = 3532,
+    
+    /// <summary>Change ambient sounds. Direction: Server→Client.</summary>
+    /// <remarks>Environmental audio: Birds, wind, water, crowds.</remarks>
     AmbienceChange = 3533,
 
     // ═══════════════════════════════════════════════════════════════
     // REPORTING / MODERATION (3600-3699)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Report player for misconduct. Direction: Client→Server.</summary>
+    /// <remarks>Report: Harassment, cheating, naming. Response: ReportPlayerResult (3601).</remarks>
     ReportPlayer = 3600,
+    
+    /// <summary>Player report result. Direction: Server→Client.</summary>
+    /// <remarks>Report submitted. Ticket ID for tracking.</remarks>
     ReportPlayerResult = 3601,
+    
+    /// <summary>Report chat message. Direction: Client→Server.</summary>
+    /// <remarks>Flag offensive chat. Response: ReportChatResult (3603).</remarks>
     ReportChat = 3602,
+    
+    /// <summary>Chat report result. Direction: Server→Client.</summary>
     ReportChatResult = 3603,
+    
+    /// <summary>Report bug. Direction: Client→Server.</summary>
+    /// <remarks>Submit bug with description and repro steps. Response: ReportBugResult (3605).</remarks>
     ReportBug = 3604,
+    
+    /// <summary>Bug report result. Direction: Server→Client.</summary>
+    /// <remarks>Bug logged. Tracking number provided.</remarks>
     ReportBugResult = 3605,
+    
+    /// <summary>Submit suggestion. Direction: Client→Server.</summary>
+    /// <remarks>Feature request or feedback. Response: ReportSuggestionResult (3607).</remarks>
     ReportSuggestion = 3606,
+    
+    /// <summary>Suggestion result. Direction: Server→Client.</summary>
     ReportSuggestionResult = 3607,
+    
+    /// <summary>Report exploit/hack. Direction: Client→Server.</summary>
+    /// <remarks>Security issue report. Response: ReportExploitResult (3609).</remarks>
     ReportExploit = 3608,
+    
+    /// <summary>Exploit report result. Direction: Server→Client.</summary>
     ReportExploitResult = 3609,
+    
+    /// <summary>Submit ban appeal. Direction: Client→Server.</summary>
+    /// <remarks>Appeal moderation action. Response: AppealResult (3611).</remarks>
     AppealRequest = 3610,
+    
+    /// <summary>Appeal result. Direction: Server→Client.</summary>
+    /// <remarks>Appeal recorded for review.</remarks>
     AppealResult = 3611,
+    
+    /// <summary>Request report status. Direction: Client→Server.</summary>
+    /// <remarks>Check ticket progress. Response: ReportStatusResponse (3613).</remarks>
     ReportStatusRequest = 3612,
+    
+    /// <summary>Report status data. Direction: Server→Client.</summary>
+    /// <remarks>Ticket state: Open, investigating, resolved.</remarks>
     ReportStatusResponse = 3613,
+    
+    /// <summary>Add evidence to report. Direction: Client→Server.</summary>
+    /// <remarks>Attach screenshot or additional info. Response: ReportEvidenceAddResult (3615).</remarks>
     ReportEvidenceAdd = 3614,
+    
+    /// <summary>Evidence added confirmation. Direction: Server→Client.</summary>
     ReportEvidenceAddResult = 3615,
+    
+    /// <summary>Moderation action taken. Direction: Server→Client.</summary>
+    /// <remarks>Notify reporter of action taken.</remarks>
     ModerationAction = 3620,
+    
+    /// <summary>Moderation warning received. Direction: Server→Client.</summary>
+    /// <remarks>Official warning for ToS violation.</remarks>
     ModerationWarning = 3621,
+    
+    /// <summary>Moderation mute applied. Direction: Server→Client.</summary>
+    /// <remarks>Temporary chat ban. Duration specified.</remarks>
     ModerationMute = 3622,
+    
+    /// <summary>Moderation ban applied. Direction: Server→Client.</summary>
+    /// <remarks>Account suspension. Reason and duration provided.</remarks>
     ModerationBan = 3623,
+    
+    /// <summary>Feedback prompt shown. Direction: Server→Client.</summary>
+    /// <remarks>Request player feedback after activity.</remarks>
     FeedbackPrompt = 3630,
+    
+    /// <summary>Submit feedback. Direction: Client→Server.</summary>
+    /// <remarks>Response to prompt. Response: FeedbackSubmitResult (3632).</remarks>
     FeedbackSubmit = 3631,
+    
+    /// <summary>Feedback submitted confirmation. Direction: Server→Client.</summary>
     FeedbackSubmitResult = 3632,
+    
+    /// <summary>Show survey. Direction: Server→Client.</summary>
+    /// <remarks>Multi-question survey for player input.</remarks>
     SurveyShow = 3633,
+    
+    /// <summary>Submit survey responses. Direction: Client→Server.</summary>
+    /// <remarks>Completed survey. Response: SurveySubmitResult (3635).</remarks>
     SurveySubmit = 3634,
+    
+    /// <summary>Survey submitted confirmation. Direction: Server→Client.</summary>
     SurveySubmitResult = 3635,
+    
+    /// <summary>Rating prompt. Direction: Server→Client.</summary>
+    /// <remarks>Star rating request for experience.</remarks>
     RatingPrompt = 3636,
+    
+    /// <summary>Submit rating. Direction: Client→Server.</summary>
+    /// <remarks>Numeric or star rating. Response: RatingSubmitResult (3638).</remarks>
     RatingSubmit = 3637,
+    
+    /// <summary>Rating submitted confirmation. Direction: Server→Client.</summary>
     RatingSubmitResult = 3638,
+    
+    /// <summary>Report received notification. Direction: Server→Client.</summary>
+    /// <remarks>Inform moderators of new report.</remarks>
     ReportReceivedEvent = 3640,
 
     // ═══════════════════════════════════════════════════════════════
     // ECONOMY / CURRENCY (3700-3799)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Currency amount changed. Direction: Server→Client.</summary>
+    /// <remarks>Honor, tokens, badges updated.</remarks>
     CurrencyUpdate = 3700,
+    
+    /// <summary>Request currency list. Direction: Client→Server.</summary>
+    /// <remarks>All currencies. Response: CurrencyListResponse (3702).</remarks>
     CurrencyListRequest = 3701,
+    
+    /// <summary>Currency list data. Direction: Server→Client.</summary>
+    /// <remarks>All currency types with amounts and caps.</remarks>
     CurrencyListResponse = 3702,
+    
+    /// <summary>Gold amount changed. Direction: Server→Client.</summary>
+    /// <remarks>Primary currency update.</remarks>
     GoldUpdate = 3703,
+    
+    /// <summary>Gold transaction record. Direction: Server→Client.</summary>
+    /// <remarks>Audit trail: Source, amount, reason.</remarks>
     GoldTransaction = 3704,
+    
+    /// <summary>Exchange currency. Direction: Client→Server.</summary>
+    /// <remarks>Convert currency type. Response: CurrencyExchangeResult (3711).</remarks>
     CurrencyExchange = 3710,
+    
+    /// <summary>Currency exchange result. Direction: Server→Client.</summary>
+    /// <remarks>Conversion completed with exchange rate applied.</remarks>
     CurrencyExchangeResult = 3711,
+    
+    /// <summary>Currency cap reached. Direction: Server→Client.</summary>
+    /// <remarks>Maximum currency limit. Cannot earn more until spent.</remarks>
     CurrencyCap = 3712,
+    
+    /// <summary>Purchase game token. Direction: Client→Server.</summary>
+    /// <remarks>Buy with real money. Response: TokenPurchaseResult (3721).</remarks>
     TokenPurchase = 3720,
+    
+    /// <summary>Token purchase result. Direction: Server→Client.</summary>
+    /// <remarks>Token added to account.</remarks>
     TokenPurchaseResult = 3721,
+    
+    /// <summary>Redeem game token. Direction: Client→Server.</summary>
+    /// <remarks>Convert to game time or gold. Response: TokenRedeemResult (3723).</remarks>
     TokenRedeem = 3722,
+    
+    /// <summary>Token redeem result. Direction: Server→Client.</summary>
+    /// <remarks>Token consumed, benefit applied.</remarks>
     TokenRedeemResult = 3723,
+    
+    /// <summary>Premium currency updated. Direction: Server→Client.</summary>
+    /// <remarks>Cash shop currency from purchases.</remarks>
     PremiumCurrencyUpdate = 3724,
+    
+    /// <summary>Place bounty. Direction: Client→Server.</summary>
+    /// <remarks>Put price on player's head.</remarks>
     BountyPlace = 3730,
+    
+    /// <summary>Bounty list. Direction: Server→Client.</summary>
+    /// <remarks>Active bounties with rewards.</remarks>
     BountyList = 3731,
+    
+    /// <summary>Claim bounty reward. Direction: Client→Server.</summary>
+    /// <remarks>Collect for completing bounty. Response: BountyClaimResult (3733).</remarks>
     BountyClaim = 3732,
+    
+    /// <summary>Bounty claim result. Direction: Server→Client.</summary>
+    /// <remarks>Reward granted.</remarks>
     BountyClaimResult = 3733,
 
     // ═══════════════════════════════════════════════════════════════
     // SKILLS / TALENTS / ABILITIES (3800-3899)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request skill list. Direction: Client→Server.</summary>
+    /// <remarks>Known abilities. Response: SkillListResponse (3801).</remarks>
     SkillListRequest = 3800,
+    
+    /// <summary>Skill list data. Direction: Server→Client.</summary>
+    /// <remarks>All skills with ranks and cooldowns.</remarks>
     SkillListResponse = 3801,
+    
+    /// <summary>Learn new skill. Direction: Client→Server.</summary>
+    /// <remarks>Train ability. Response: SkillLearnResult (3803).</remarks>
     SkillLearn = 3802,
+    
+    /// <summary>Skill learn result. Direction: Server→Client.</summary>
+    /// <remarks>Skill added or error: Insufficient resources, level too low.</remarks>
     SkillLearnResult = 3803,
+    
+    /// <summary>Unlearn skill. Direction: Client→Server.</summary>
+    /// <remarks>Remove from skill book. Refund points.</remarks>
     SkillUnlearn = 3804,
+    
+    /// <summary>Upgrade skill rank. Direction: Client→Server.</summary>
+    /// <remarks>Improve ability level. Response: SkillUpgradeResult (3806).</remarks>
     SkillUpgrade = 3805,
+    
+    /// <summary>Skill upgrade result. Direction: Server→Client.</summary>
+    /// <remarks>Skill rank increased.</remarks>
     SkillUpgradeResult = 3806,
+    
+    /// <summary>Request talent tree. Direction: Client→Server.</summary>
+    /// <remarks>Talent options. Response: TalentListResponse (3811).</remarks>
     TalentListRequest = 3810,
+    
+    /// <summary>Talent tree data. Direction: Server→Client.</summary>
+    /// <remarks>Available talents with prerequisites.</remarks>
     TalentListResponse = 3811,
+    
+    /// <summary>Learn talent. Direction: Client→Server.</summary>
+    /// <remarks>Spend talent point. Response: TalentLearnResult (3813).</remarks>
     TalentLearn = 3812,
+    
+    /// <summary>Talent learn result. Direction: Server→Client.</summary>
+    /// <remarks>Talent acquired or error.</remarks>
     TalentLearnResult = 3813,
+    
+    /// <summary>Reset talents. Direction: Client→Server.</summary>
+    /// <remarks>Unlearn all, refund points. Costs gold. Response: TalentResetResult (3815).</remarks>
     TalentReset = 3814,
+    
+    /// <summary>Talent reset result. Direction: Server→Client.</summary>
     TalentResetResult = 3815,
+    
+    /// <summary>Preview talent changes. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Test build before committing points.</remarks>
     TalentPreview = 3816,
+    
+    /// <summary>List available specializations. Direction: Server→Client.</summary>
+    /// <remarks>Class specs with descriptions.</remarks>
     SpecializationList = 3820,
+    
+    /// <summary>Change active specialization. Direction: Client→Server.</summary>
+    /// <remarks>Switch spec. Resets abilities. Response: SpecializationChangeResult (3822).</remarks>
     SpecializationChange = 3821,
+    
+    /// <summary>Specialization change result. Direction: Server→Client.</summary>
     SpecializationChangeResult = 3822,
+    
+    /// <summary>Ability bar configuration. Direction: Server→Client.</summary>
+    /// <remarks>All hotbar slots with assigned abilities.</remarks>
     AbilityBarUpdate = 3830,
+    
+    /// <summary>Assign ability to hotbar. Direction: Client→Server.</summary>
+    /// <remarks>Set slot binding.</remarks>
     AbilityBarSlotSet = 3831,
+    
+    /// <summary>Clear hotbar slot. Direction: Client→Server.</summary>
+    /// <remarks>Remove ability from slot.</remarks>
     AbilityBarSlotClear = 3832,
+    
+    /// <summary>Swap two hotbar slots. Direction: Client→Server.</summary>
+    /// <remarks>Exchange slot positions.</remarks>
     AbilityBarSwap = 3833,
+    
+    /// <summary>Request passive abilities. Direction: Client→Server.</summary>
+    /// <remarks>Always-active skills. Response: PassiveListResponse (3841).</remarks>
     PassiveListRequest = 3840,
+    
+    /// <summary>Passive abilities list. Direction: Server→Client.</summary>
     PassiveListResponse = 3841,
+    
+    /// <summary>Passive effect changed. Direction: Server→Client.</summary>
+    /// <remarks>Passive gained or lost from gear/talents.</remarks>
     PassiveUpdate = 3842,
+    
+    /// <summary>Apply glyph to ability. Direction: Client→Server.</summary>
+    /// <remarks>Modify skill behavior. Permanent until removed.</remarks>
     GlyphApply = 3850,
+    
+    /// <summary>Remove glyph. Direction: Client→Server.</summary>
+    /// <remarks>Restore default ability behavior.</remarks>
     GlyphRemove = 3851,
+    
+    /// <summary>Request glyph list. Direction: Client→Server.</summary>
+    /// <remarks>Available glyphs. Response: GlyphListResponse (3853).</remarks>
     GlyphListRequest = 3852,
+    
+    /// <summary>Glyph list data. Direction: Server→Client.</summary>
     GlyphListResponse = 3853,
 
     // ═══════════════════════════════════════════════════════════════
     // EQUIPMENT / GEAR (3900-3999)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Equip item to slot. Direction: Client→Server.</summary>
+    /// <remarks>Wear gear. Response: EquipItemResult (3901).</remarks>
     EquipItem = 3900,
+    
+    /// <summary>Equip result. Direction: Server→Client.</summary>
+    /// <remarks>Item equipped or error: Wrong class, level too low, slot occupied.</remarks>
     EquipItemResult = 3901,
+    
+    /// <summary>Unequip item. Direction: Client→Server.</summary>
+    /// <remarks>Remove from equipment slot. Response: UnequipItemResult (3903).</remarks>
     UnequipItem = 3902,
+    
+    /// <summary>Unequip result. Direction: Server→Client.</summary>
+    /// <remarks>Item moved to inventory or error: Inventory full.</remarks>
     UnequipItemResult = 3903,
+    
+    /// <summary>Full equipment sync. Direction: Server→Client.</summary>
+    /// <remarks>All equipped items on zone in.</remarks>
     EquipmentSync = 3904,
+    
+    /// <summary>Single equipment slot update. Direction: Server→Client.</summary>
+    /// <remarks>Item changed in specific slot.</remarks>
     EquipmentSlotUpdate = 3905,
+    
+    /// <summary>Durability value changed. Direction: Server→Client.</summary>
+    /// <remarks>Item damaged from use/death.</remarks>
     DurabilityUpdate = 3910,
+    
+    /// <summary>Low durability warning. Direction: Server→Client.</summary>
+    /// <remarks>Item near broken. Repair soon.</remarks>
     DurabilityWarning = 3911,
+    
+    /// <summary>Item broke from zero durability. Direction: Server→Client.</summary>
+    /// <remarks>Item unusable until repaired.</remarks>
     ItemBroken = 3912,
+    
+    /// <summary>Socket gem in item. Direction: Client→Server.</summary>
+    /// <remarks>Add gem to socket. Response: GemSocketResult (3921).</remarks>
     GemSocket = 3920,
+    
+    /// <summary>Gem socket result. Direction: Server→Client.</summary>
+    /// <remarks>Gem inserted successfully.</remarks>
     GemSocketResult = 3921,
+    
+    /// <summary>Remove socketed gem. Direction: Client→Server.</summary>
+    /// <remarks>Extract gem. May destroy gem.</remarks>
     GemRemove = 3922,
+    
+    /// <summary>Apply enchant to item. Direction: Client→Server.</summary>
+    /// <remarks>Add permanent stat bonus. Response: EnchantApplyResult (3931).</remarks>
     EnchantApply = 3930,
+    
+    /// <summary>Enchant apply result. Direction: Server→Client.</summary>
+    /// <remarks>Enchant successfully applied.</remarks>
     EnchantApplyResult = 3931,
+    
+    /// <summary>Remove enchant. Direction: Client→Server.</summary>
+    /// <remarks>Strip enchant from item.</remarks>
     EnchantRemove = 3932,
+    
+    /// <summary>Open reforge interface. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Stat reallocation service.</remarks>
     ReforgeOpen = 3940,
+    
+    /// <summary>Preview reforge changes. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Test stat changes before confirming.</remarks>
     ReforgePreview = 3941,
+    
+    /// <summary>Confirm reforge. Direction: Client→Server.</summary>
+    /// <remarks>Apply stat changes. Response: ReforgeResult (3943).</remarks>
     ReforgeConfirm = 3942,
+    
+    /// <summary>Reforge result. Direction: Server→Client.</summary>
+    /// <remarks>Item stats reforged.</remarks>
     ReforgeResult = 3943,
+    
+    /// <summary>Set bonus status. Direction: Server→Client.</summary>
+    /// <remarks>Number of set pieces equipped.</remarks>
     SetBonusUpdate = 3950,
+    
+    /// <summary>Set bonus activated. Direction: Server→Client.</summary>
+    /// <remarks>Threshold reached. Bonus effect active.</remarks>
     SetBonusActivate = 3951,
+    
+    /// <summary>Set bonus deactivated. Direction: Server→Client.</summary>
+    /// <remarks>Piece unequipped. Lost bonus.</remarks>
     SetBonusDeactivate = 3952,
+    
+    /// <summary>Swap weapon sets. Direction: Client→Server.</summary>
+    /// <remarks>Toggle between two weapon configurations. Response: WeaponSwapResult (3961).</remarks>
     WeaponSwapRequest = 3960,
+    
+    /// <summary>Weapon swap result. Direction: Server→Client.</summary>
+    /// <remarks>Weapons switched. Abilities may change.</remarks>
     WeaponSwapResult = 3961,
+    
+    /// <summary>Save equipment outfit. Direction: Client→Server.</summary>
+    /// <remarks>Store current equipment set.</remarks>
     OutfitSave = 3970,
+    
+    /// <summary>Load saved outfit. Direction: Client→Server.</summary>
+    /// <remarks>Equip saved gear set.</remarks>
     OutfitLoad = 3971,
+    
+    /// <summary>Delete saved outfit. Direction: Client→Server.</summary>
     OutfitDelete = 3972,
+    
+    /// <summary>List saved outfits. Direction: Server→Client.</summary>
     OutfitList = 3973,
 
     // ═══════════════════════════════════════════════════════════════
     // BANK / STORAGE (4000-4099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Open personal bank. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access bank storage.</remarks>
     BankOpen = 4000,
+    
+    /// <summary>Close bank. Direction: Client→Server.</summary>
     BankClose = 4001,
+    
+    /// <summary>Deposit item to bank. Direction: Client→Server.</summary>
+    /// <remarks>Move item from inventory. Response: BankDepositResult (4003).</remarks>
     BankDeposit = 4002,
+    
+    /// <summary>Bank deposit result. Direction: Server→Client.</summary>
+    /// <remarks>Item stored or error: Bank full.</remarks>
     BankDepositResult = 4003,
+    
+    /// <summary>Withdraw item from bank. Direction: Client→Server.</summary>
+    /// <remarks>Move to inventory. Response: BankWithdrawResult (4005).</remarks>
     BankWithdraw = 4004,
+    
+    /// <summary>Bank withdrawal result. Direction: Server→Client.</summary>
+    /// <remarks>Item retrieved or error: Inventory full.</remarks>
     BankWithdrawResult = 4005,
+    
+    /// <summary>Purchase bank slot expansion. Direction: Client→Server.</summary>
+    /// <remarks>Unlock more storage. Response: BankSlotPurchaseResult (4007).</remarks>
     BankSlotPurchase = 4006,
+    
+    /// <summary>Bank slot purchase result. Direction: Server→Client.</summary>
+    /// <remarks>Slots added. Costs gold (scaling).</remarks>
     BankSlotPurchaseResult = 4007,
+    
+    /// <summary>Purchase bank tab. Direction: Client→Server.</summary>
+    /// <remarks>Add new bank page.</remarks>
     BankTabPurchase = 4008,
+    
+    /// <summary>Full bank synchronization. Direction: Server→Client.</summary>
+    /// <remarks>All bank contents on access.</remarks>
     BankSync = 4009,
+    
+    /// <summary>Open guild bank. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access shared guild storage.</remarks>
     GuildBankOpenMsg = 4020,
+    
+    /// <summary>Close guild bank. Direction: Client→Server.</summary>
     GuildBankCloseMsg = 4021,
+    
+    /// <summary>Deposit to guild bank. Direction: Client→Server.</summary>
+    /// <remarks>Contribute items. Logged for audit.</remarks>
     GuildBankDepositMsg = 4022,
+    
+    /// <summary>Withdraw from guild bank. Direction: Client→Server.</summary>
+    /// <remarks>Take items. Permission and daily limit checked.</remarks>
     GuildBankWithdrawMsg = 4023,
+    
+    /// <summary>Guild bank transaction log. Direction: Server→Client.</summary>
+    /// <remarks>Deposit/withdrawal history.</remarks>
     GuildBankLogMsg = 4024,
+    
+    /// <summary>Guild bank tab information. Direction: Server→Client.</summary>
+    /// <remarks>Tab contents and permissions.</remarks>
     GuildBankTabInfo = 4025,
+    
+    /// <summary>Guild bank full sync. Direction: Server→Client.</summary>
     GuildBankSyncMsg = 4026,
+    
+    /// <summary>Open void storage. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Long-term storage. Strips enchants/gems.</remarks>
     VoidStorageOpen = 4040,
+    
+    /// <summary>Close void storage. Direction: Client→Server.</summary>
     VoidStorageClose = 4041,
+    
+    /// <summary>Deposit to void storage. Direction: Client→Server.</summary>
+    /// <remarks>Permanent storage. Cannot retrieve enchants.</remarks>
     VoidStorageDeposit = 4042,
+    
+    /// <summary>Withdraw from void storage. Direction: Client→Server.</summary>
     VoidStorageWithdraw = 4043,
+    
+    /// <summary>Void storage sync. Direction: Server→Client.</summary>
     VoidStorageSync = 4044,
+    
+    /// <summary>Open reagent bank. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Crafting materials storage.</remarks>
     ReagentBankOpen = 4050,
+    
+    /// <summary>Deposit reagents. Direction: Client→Server.</summary>
+    /// <remarks>Auto-deposit crafting materials.</remarks>
     ReagentBankDeposit = 4051,
+    
+    /// <summary>Reagent bank sync. Direction: Server→Client.</summary>
     ReagentBankSync = 4052,
 
     // ═══════════════════════════════════════════════════════════════
     // DEATH / RESPAWN / GHOST (4100-4199)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Player died. Direction: Server→Client.</summary>
+    /// <remarks>Health reached zero. Triggers death screen.</remarks>
     DeathNotification = 4100,
+    
+    /// <summary>Death recap details. Direction: Server→Client.</summary>
+    /// <remarks>Last damage sources. Who/what killed you.</remarks>
     DeathRecap = 4101,
+    
+    /// <summary>Ghost mode started. Direction: Server→Client.</summary>
+    /// <remarks>Spirit form after death. Cannot interact with living world.</remarks>
     GhostModeStart = 4110,
+    
+    /// <summary>Ghost mode ended. Direction: Server→Client.</summary>
+    /// <remarks>Resurrected. Return to normal.</remarks>
     GhostModeEnd = 4111,
+    
+    /// <summary>Ghost position update. Direction: Server→Client.</summary>
+    /// <remarks>Spirit movement. Different from alive movement.</remarks>
     GhostPosition = 4112,
+    
+    /// <summary>Corpse location marker. Direction: Server→Client.</summary>
+    /// <remarks>Where body is. For corpse run.</remarks>
     CorpseLocation = 4113,
+    
+    /// <summary>Revive at corpse. Direction: Client→Server.</summary>
+    /// <remarks>Resurrect at body location.</remarks>
     CorpseRevive = 4114,
+    
+    /// <summary>Request respawn. Direction: Client→Server.</summary>
+    /// <remarks>Choose respawn option. Response: RespawnAtGraveyard/Checkpoint.</remarks>
     RespawnRequest = 4120,
+    
+    /// <summary>Respawn at graveyard. Direction: Server→Client.</summary>
+    /// <remarks>Nearest safe respawn point.</remarks>
     RespawnAtGraveyard = 4121,
+    
+    /// <summary>Respawn at checkpoint. Direction: Server→Client.</summary>
+    /// <remarks>Instance/raid checkpoint.</remarks>
     RespawnAtCheckpoint = 4122,
+    
+    /// <summary>Respawn timer. Direction: Server→Client.</summary>
+    /// <remarks>Countdown to forced respawn. PvP/battleground mechanic.</remarks>
     RespawnTimer = 4123,
+    
+    /// <summary>Respawn completed. Direction: Server→Client.</summary>
+    /// <remarks>Back to life. May have resurrection sickness.</remarks>
     RespawnComplete = 4124,
+    
+    /// <summary>Resurrection offer from player. Direction: Server→Client.</summary>
+    /// <remarks>Another player casting resurrect on you.</remarks>
     ResurrectOffer = 4130,
+    
+    /// <summary>Accept resurrection. Direction: Client→Server.</summary>
+    /// <remarks>Accept player resurrect.</remarks>
     ResurrectAccept = 4131,
+    
+    /// <summary>Decline resurrection. Direction: Client→Server.</summary>
+    /// <remarks>Refuse resurrect offer.</remarks>
     ResurrectDecline = 4132,
+    
+    /// <summary>Resurrection completed. Direction: Server→Client.</summary>
+    /// <remarks>Brought back to life by player.</remarks>
     ResurrectComplete = 4133,
+    
+    /// <summary>Soulstone self-resurrect. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Use pre-cast resurrection item.</remarks>
     SoulstoneResurrect = 4134,
+    
+    /// <summary>Battle resurrection used. Direction: Server→Client.</summary>
+    /// <remarks>Combat resurrect in raid. Limited uses.</remarks>
     BattleResurrect = 4135,
+    
+    /// <summary>Release spirit to graveyard. Direction: Client→Server.</summary>
+    /// <remarks>Give up. Become ghost.</remarks>
     ReleaseSpirit = 4140,
+    
+    /// <summary>Retrieve corpse. Direction: Client→Server.</summary>
+    /// <remarks>Resurrect at body location.</remarks>
     RetrieveCorpse = 4141,
+    
+    /// <summary>Spirit healer instant resurrect. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Resurrect at graveyard. Applies resurrection sickness.</remarks>
     SpiritHealerRevive = 4142,
+    
+    /// <summary>Resurrection sickness applied. Direction: Server→Client.</summary>
+    /// <remarks>Debuff from spirit healer. Reduced stats, cannot use until expires.</remarks>
     ResurrectionSickness = 4143,
 
     // ═══════════════════════════════════════════════════════════════
     // TRANSPORTATION (4200-4299)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Flight path started. Direction: Server→Client.</summary>
+    /// <remarks>Automated flight begins. Player AFK.</remarks>
     FlightStart = 4200,
+    
+    /// <summary>Flight path ended. Direction: Server→Client.</summary>
+    /// <remarks>Arrived at destination.</remarks>
     FlightEnd = 4201,
+    
+    /// <summary>Cancel flight early. Direction: Client→Server.</summary>
+    /// <remarks>Dismount mid-flight.</remarks>
     FlightCancel = 4202,
+    
+    /// <summary>Flight path progress. Direction: Server→Client.</summary>
+    /// <remarks>Current position along route.</remarks>
     FlightPathUpdate = 4203,
+    
+    /// <summary>Use portal. Direction: Client→Server.</summary>
+    /// <remarks>Teleport through portal. Instant travel.</remarks>
     PortalUse = 4210,
+    
+    /// <summary>Create portal. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Mage spell. Creates portal for group.</remarks>
     PortalCreate = 4211,
+    
+    /// <summary>Portal expired. Direction: Server→Client.</summary>
+    /// <remarks>Portal despawned. Time limit reached.</remarks>
     PortalExpire = 4212,
+    
+    /// <summary>Use hearthstone. Direction: Client→Server.</summary>
+    /// <remarks>Teleport to inn. 30 minute cooldown.</remarks>
     HearthstoneUse = 4220,
+    
+    /// <summary>Set hearthstone location. Direction: Client→Server.</summary>
+    /// <remarks>Bind at innkeeper.</remarks>
     HearthstoneSet = 4221,
+    
+    /// <summary>Hearthstone cooldown status. Direction: Server→Client.</summary>
     HearthstoneCooldown = 4222,
+    
+    /// <summary>Summon player request. Direction: Server→Client.</summary>
+    /// <remarks>Warlock/meeting stone summon offer.</remarks>
     SummonRequest = 4230,
+    
+    /// <summary>Accept summon. Direction: Client→Server.</summary>
+    /// <remarks>Agree to teleport.</remarks>
     SummonAccept = 4231,
+    
+    /// <summary>Decline summon. Direction: Client→Server.</summary>
+    /// <remarks>Refuse teleport.</remarks>
     SummonDecline = 4232,
+    
+    /// <summary>Summon completed. Direction: Server→Client.</summary>
+    /// <remarks>Player teleported to summoner.</remarks>
     SummonComplete = 4233,
+    
+    /// <summary>Summon failed. Direction: Server→Client.</summary>
+    /// <remarks>Cannot summon: In combat, instance, wrong zone.</remarks>
     SummonFailed = 4234,
+    
+    /// <summary>Queue for meeting stone. Direction: Client→Server.</summary>
+    /// <remarks>Instance group finder. Response: MeetingStoneResult (4236).</remarks>
     MeetingStoneQueue = 4235,
+    
+    /// <summary>Meeting stone result. Direction: Server→Client.</summary>
+    /// <remarks>Group formed or still waiting.</remarks>
     MeetingStoneResult = 4236,
+    
+    /// <summary>Mount vehicle. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Enter controllable vehicle: Siege weapon, turret.</remarks>
     VehicleMount = 4240,
+    
+    /// <summary>Dismount from vehicle. Direction: Client→Server.</summary>
+    /// <remarks>Exit vehicle control.</remarks>
     VehicleDismount = 4241,
+    
+    /// <summary>Vehicle control input. Direction: Client→Server.</summary>
+    /// <remarks>Steering, throttle for vehicle movement.</remarks>
     VehicleControl = 4242,
+    
+    /// <summary>Use vehicle ability. Direction: Client→Server.</summary>
+    /// <remarks>Fire weapon, use vehicle skill.</remarks>
     VehicleAbility = 4243,
+    
+    /// <summary>Boat arriving notification. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Ship arriving at dock. Scheduled transport.</remarks>
     BoatArrival = 4250,
+    
+    /// <summary>Boat departing notification. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Ship leaving dock. Board or wait for next.</remarks>
     BoatDeparture = 4251,
+    
+    /// <summary>Zeppelin arriving. Direction: Server→Client (Broadcast).</summary>
     ZeppelinArrival = 4252,
+    
+    /// <summary>Zeppelin departing. Direction: Server→Client (Broadcast).</summary>
     ZeppelinDeparture = 4253,
+    
+    /// <summary>Tram/subway arriving. Direction: Server→Client (Broadcast).</summary>
     TramArrival = 4254,
+    
+    /// <summary>Tram departing. Direction: Server→Client (Broadcast).</summary>
     TramDeparture = 4255,
+    
+    /// <summary>Request taxi/cab. Direction: Client→Server.</summary>
+    /// <remarks>Quick travel service. Response: TaxiConfirm (4261).</remarks>
     TaxiRequest = 4260,
+    
+    /// <summary>Taxi confirmed. Direction: Server→Client.</summary>
+    /// <remarks>Taxi en route or error.</remarks>
     TaxiConfirm = 4261,
 
     // ═══════════════════════════════════════════════════════════════
     // NOTIFICATIONS / ALERTS (4300-4399)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Display notification. Direction: Server→Client.</summary>
+    /// <remarks>General purpose alert message.</remarks>
     NotificationShow = 4300,
+    
+    /// <summary>Dismiss notification. Direction: Client→Server.</summary>
+    /// <remarks>Close notification manually.</remarks>
     NotificationDismiss = 4301,
+    
+    /// <summary>Notification queue. Direction: Server→Client.</summary>
+    /// <remarks>Multiple notifications to display in sequence.</remarks>
     NotificationQueue = 4302,
+    
+    /// <summary>Alert popup shown. Direction: Server→Client.</summary>
+    /// <remarks>Important message requiring acknowledgment.</remarks>
     AlertPopup = 4310,
+    
+    /// <summary>Confirm alert. Direction: Client→Server.</summary>
+    /// <remarks>Acknowledge alert message.</remarks>
     AlertConfirm = 4311,
+    
+    /// <summary>Dismiss alert. Direction: Client→Server.</summary>
+    /// <remarks>Close alert popup.</remarks>
     AlertDismiss = 4312,
+    
+    /// <summary>Toast notification. Direction: Server→Client.</summary>
+    /// <remarks>Brief on-screen message. Auto-dismisses.</remarks>
     ToastMessage = 4320,
+    
+    /// <summary>Achievement toast. Direction: Server→Client.</summary>
+    /// <remarks>Achievement unlock celebration toast.</remarks>
     ToastAchievement = 4321,
+    
+    /// <summary>Level up toast. Direction: Server→Client.</summary>
+    /// <remarks>Level up celebration notification.</remarks>
     ToastLevelUp = 4322,
+    
+    /// <summary>Loot toast. Direction: Server→Client.</summary>
+    /// <remarks>Rare/epic item obtained notification.</remarks>
     ToastLoot = 4323,
+    
+    /// <summary>Boss warning alert. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Boss encounter mechanic warning. Raid alert.</remarks>
     BossWarning = 4330,
+    
+    /// <summary>Boss ability cast. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Major boss ability about to execute. Raid-wide notification.</remarks>
     BossAbility = 4331,
+    
+    /// <summary>Boss phase transition. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Encounter phase changed. New mechanics active.</remarks>
     BossPhase = 4332,
+    
+    /// <summary>Countdown started. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Timed event countdown: Pull timer, event start.</remarks>
     CountdownStart = 4340,
+    
+    /// <summary>Countdown timer update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Remaining seconds displayed.</remarks>
     CountdownUpdate = 4341,
+    
+    /// <summary>Countdown cancelled. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Timer stopped before completion.</remarks>
     CountdownCancel = 4342,
+    
+    /// <summary>Screen effect applied. Direction: Server→Client.</summary>
+    /// <remarks>Visual effect: Damage vignette, slow-motion, blur.</remarks>
     ScreenEffect = 4350,
+    
+    /// <summary>Screen shake effect. Direction: Server→Client.</summary>
+    /// <remarks>Camera shake from explosions, impacts.</remarks>
     ScreenShake = 4351,
+    
+    /// <summary>Screen flash effect. Direction: Server→Client.</summary>
+    /// <remarks>Bright flash: Lightning, ability effect.</remarks>
     ScreenFlash = 4352,
+    
+    /// <summary>Screen fade effect. Direction: Server→Client.</summary>
+    /// <remarks>Fade to black or fade in. Cinematic transition.</remarks>
     ScreenFade = 4353,
 
     // ═══════════════════════════════════════════════════════════════
     // CUTSCENES / CINEMATICS (4400-4499)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Start cutscene playback. Direction: Server→Client.</summary>
+    /// <remarks>Begin cinematic sequence. Player loses control.</remarks>
     CutsceneStart = 4400,
+    
+    /// <summary>End cutscene. Direction: Server→Client.</summary>
+    /// <remarks>Cinematic finished. Restore player control.</remarks>
     CutsceneEnd = 4401,
+    
+    /// <summary>Skip cutscene request. Direction: Client→Server.</summary>
+    /// <remarks>Player wants to skip. May require all party members agree.</remarks>
     CutsceneSkip = 4402,
+    
+    /// <summary>Pause cutscene. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Temporarily halt playback.</remarks>
     CutscenePause = 4403,
+    
+    /// <summary>Resume cutscene. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Continue playback from pause.</remarks>
     CutsceneResume = 4404,
+    
+    /// <summary>Cutscene progress update. Direction: Server→Client.</summary>
+    /// <remarks>Current timestamp for synchronization across players.</remarks>
     CutsceneProgress = 4405,
 
     // ═══════════════════════════════════════════════════════════════
     // HOUSING / PLAYER BUILDINGS (4500-4599)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Enter player housing instance. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Load personal housing zone.</remarks>
     HousingEnter = 4500,
+    
+    /// <summary>Exit housing instance. Direction: Client→Server.</summary>
+    /// <remarks>Return to normal world.</remarks>
     HousingLeave = 4501,
+    
+    /// <summary>Toggle housing edit mode. Direction: Client→Server.</summary>
+    /// <remarks>Enable furniture placement mode.</remarks>
     HousingEdit = 4502,
+    
+    /// <summary>Place housing object. Direction: Client→Server.</summary>
+    /// <remarks>Position furniture/decoration. Validate placement rules.</remarks>
     HousingPlace = 4503,
+    
+    /// <summary>Remove housing object. Direction: Client→Server.</summary>
+    /// <remarks>Delete placed furniture. Returns to inventory.</remarks>
     HousingRemove = 4504,
+    
+    /// <summary>Save housing layout. Direction: Client→Server.</summary>
+    /// <remarks>Persist furniture positions.</remarks>
     HousingSave = 4505,
 
     // ═══════════════════════════════════════════════════════════════
     // EVENTS / SEASONAL CONTENT (4600-4699)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>World event started. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Server-wide event begins. Holiday, invasion, world boss.</remarks>
     EventStart = 4600,
+    
+    /// <summary>World event ended. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Event concluded. Rewards distributed.</remarks>
     EventEnd = 4601,
+    
+    /// <summary>Event progress update. Direction: Server→Client.</summary>
+    /// <remarks>Participation or global event progress.</remarks>
     EventProgress = 4602,
+    
+    /// <summary>Seasonal event started. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Holiday event: Christmas, Halloween, etc.</remarks>
     SeasonalStart = 4603,
+    
+    /// <summary>Seasonal event ended. Direction: Server→Client (Broadcast).</summary>
     SeasonalEnd = 4604,
+    
+    /// <summary>Request active events list. Direction: Client→Server.</summary>
+    /// <remarks>Get all running events. Response: EventListResponse (4606).</remarks>
     EventListRequest = 4605,
+    
+    /// <summary>Active events list. Direction: Server→Client.</summary>
+    /// <remarks>All ongoing events with progress and time remaining.</remarks>
     EventListResponse = 4606,
+    
+    /// <summary>Event discovered notification. Direction: Server→Client.</summary>
+    /// <remarks>Player entered event area or trigger.</remarks>
     EventDiscoveryEvent = 4607,
+    
+    /// <summary>Subscribe to event updates. Direction: Client→Server.</summary>
+    /// <remarks>Opt-in to event notifications. Response: EventSubscribeResponse (4609).</remarks>
     EventSubscribeRequest = 4608,
+    
+    /// <summary>Event subscription result. Direction: Server→Client.</summary>
     EventSubscribeResponse = 4609,
+    
+    /// <summary>Subscribed to event notification. Direction: Server→Client.</summary>
     EventSubscribedEvent = 4610,
+    
+    /// <summary>Unsubscribe from event. Direction: Client→Server.</summary>
+    /// <remarks>Stop receiving updates. Response: EventUnsubscribeResponse (4612).</remarks>
     EventUnsubscribeRequest = 4611,
+    
+    /// <summary>Event unsubscribe result. Direction: Server→Client.</summary>
     EventUnsubscribeResponse = 4612,
+    
+    /// <summary>Subscription dropped notification. Direction: Server→Client.</summary>
+    /// <remarks>Server cancelled subscription (event ended, player left zone).</remarks>
     EventSubscriptionDroppedEvent = 4613,
+    
+    /// <summary>Join event participation. Direction: Client→Server.</summary>
+    /// <remarks>Actively participate in event. Response: EventJoinResponse (4615).</remarks>
     EventJoinRequest = 4614,
+    
+    /// <summary>Event join result. Direction: Server→Client.</summary>
     EventJoinResponse = 4615,
+    
+    /// <summary>Leave event. Direction: Client→Server.</summary>
+    /// <remarks>Stop participating. Response: EventLeaveResponse (4617).</remarks>
     EventLeaveRequest = 4616,
+    
+    /// <summary>Event leave result. Direction: Server→Client.</summary>
     EventLeaveResponse = 4617,
+    
+    /// <summary>Event participant update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Player joined/left event.</remarks>
     EventParticipantUpdateEvent = 4618,
+    
+    /// <summary>Event phase changed. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Event transitioned to new stage.</remarks>
     EventPhaseChangedEvent = 4619,
+    
+    /// <summary>Event progress delta. Direction: Server→Client.</summary>
+    /// <remarks>Incremental progress update.</remarks>
     EventProgressDeltaEvent = 4620,
+    
+    /// <summary>Event progress snapshot. Direction: Server→Client.</summary>
+    /// <remarks>Complete current progress state.</remarks>
     EventProgressSnapshot = 4621,
+    
+    /// <summary>Event objective update. Direction: Server→Client.</summary>
+    /// <remarks>Specific objective completed or updated.</remarks>
     EventObjectiveUpdateEvent = 4622,
+    
+    /// <summary>Request event state sync. Direction: Client→Server.</summary>
+    /// <remarks>Get full event state. Response: EventStateSyncResponse (4624).</remarks>
     EventStateSyncRequest = 4623,
+    
+    /// <summary>Event state sync data. Direction: Server→Client.</summary>
     EventStateSyncResponse = 4624,
+    
+    /// <summary>Event reward available. Direction: Server→Client.</summary>
+    /// <remarks>Earned reward ready to claim.</remarks>
     EventRewardAvailableEvent = 4625,
+    
+    /// <summary>Claim event reward. Direction: Client→Server.</summary>
+    /// <remarks>Request reward. Response: EventRewardClaimResponse (4627).</remarks>
     EventRewardClaimRequest = 4626,
+    
+    /// <summary>Event reward claim result. Direction: Server→Client.</summary>
     EventRewardClaimResponse = 4627,
+    
+    /// <summary>Event reward delivered. Direction: Server→Client.</summary>
+    /// <remarks>Reward added to inventory.</remarks>
     EventRewardDeliveredEvent = 4628,
+    
+    /// <summary>Event contribution updated. Direction: Server→Client.</summary>
+    /// <remarks>Personal contribution score/ranking.</remarks>
     EventContributionUpdateEvent = 4629,
+    
+    /// <summary>Event throttle notice. Direction: Server→Client.</summary>
+    /// <remarks>Too many updates, slowing down messages.</remarks>
     EventThrottleNotice = 4630,
+    
+    /// <summary>Event revision mismatch. Direction: Server→Client.</summary>
+    /// <remarks>Client state out of sync. Full refresh needed.</remarks>
     EventRevisionMismatch = 4631,
+    
+    /// <summary>Rejoin event request. Direction: Client→Server.</summary>
+    /// <remarks>Reconnect after disconnect. Response: EventRejoinResponse (4633).</remarks>
     EventRejoinRequest = 4632,
+    
+    /// <summary>Event rejoin result. Direction: Server→Client.</summary>
     EventRejoinResponse = 4633,
+    
+    /// <summary>Event instance disbanded. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Event instance closed. Players removed.</remarks>
     EventInstanceDisbandEvent = 4634,
+    
+    /// <summary>Event subscription heartbeat. Direction: Client→Server.</summary>
+    /// <remarks>Keep-alive for event subscription.</remarks>
     EventSubscriptionHeartbeat = 4635,
+    
+    /// <summary>Subscription heartbeat acknowledgment. Direction: Server→Client.</summary>
     EventSubscriptionAck = 4636,
+    
+    /// <summary>Request event season info. Direction: Client→Server.</summary>
+    /// <remarks>Seasonal event details. Response: EventSeasonInfoResponse (4638).</remarks>
     EventSeasonInfoRequest = 4637,
+    
+    /// <summary>Event season info data. Direction: Server→Client.</summary>
     EventSeasonInfoResponse = 4638,
+    
+    /// <summary>Event milestone unlocked. Direction: Server→Client.</summary>
+    /// <remarks>Server-wide goal reached.</remarks>
     EventMilestoneUnlockedEvent = 4639,
+    
+    /// <summary>Request event phase preview. Direction: Client→Server.</summary>
+    /// <remarks>View upcoming phase. Response: EventPhasePreviewResponse (4641).</remarks>
     EventPhasePreviewRequest = 4640,
+    
+    /// <summary>Event phase preview data. Direction: Server→Client.</summary>
     EventPhasePreviewResponse = 4641,
+    
+    /// <summary>Request participation summary. Direction: Client→Server.</summary>
+    /// <remarks>Personal event stats. Response: EventParticipationSummaryResponse (4643).</remarks>
     EventParticipationSummaryRequest = 4642,
+    
+    /// <summary>Participation summary data. Direction: Server→Client.</summary>
     EventParticipationSummaryResponse = 4643,
+    
+    /// <summary>Event admin command. Direction: Client→Server.</summary>
+    /// <remarks>GM control of event. Response: EventAdminCommandResponse (4645).</remarks>
     EventAdminCommand = 4644,
+    
+    /// <summary>Event admin command result. Direction: Server→Client.</summary>
     EventAdminCommandResponse = 4645,
 
     // ═══════════════════════════════════════════════════════════════
     // DEBUG / DEVELOPMENT (4900-4999)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Execute debug command. Direction: Client→Server.</summary>
+    /// <remarks>Development-only command. Response: DebugResponse (4901).</remarks>
     DebugCommand = 4900,
+    
+    /// <summary>Debug command result. Direction: Server→Client.</summary>
+    /// <remarks>Command output or error.</remarks>
     DebugResponse = 4901,
+    
+    /// <summary>Debug log message. Direction: Server→Client.</summary>
+    /// <remarks>Server log streamed to client for debugging.</remarks>
     DebugLog = 4902,
+    
+    /// <summary>Debug teleport. Direction: Client→Server.</summary>
+    /// <remarks>Development teleport without restrictions.</remarks>
     DebugTeleport = 4903,
+    
+    /// <summary>Debug spawn entity. Direction: Client→Server.</summary>
+    /// <remarks>Spawn NPC/object for testing.</remarks>
     DebugSpawn = 4904,
 
     // ═══════════════════════════════════════════════════════════════
