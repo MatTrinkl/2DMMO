@@ -3262,42 +3262,324 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // MATCHMAKING / QUEUE (2700-2799)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Client joins matchmaking queue for dungeons, raids, arenas, or battlegrounds. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: QueueType (Dungeon/Raid/Arena/BG), ActivityId (specific or random), SelectedRoles (Tank/Healer/DPS).
+    /// Server validates eligibility (item level, level, deserter status, content unlocked) and adds to queue pool.
+    /// Response: QueueJoinResult (2701). Supports up to 3 simultaneous queues. Server-authoritative MMR-based matching.
+    /// Related: QueueLeave (2702), QueuePop (2705).
+    /// </remarks>
     QueueJoin = 2700,
+    
+    /// <summary>Queue join result from server. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success flag, ErrorCode (AlreadyInQueue, GearTooLow, DeserterDebuff, etc.), QueueInfo (QueueId, EstimatedWait).
+    /// Success: Client is in queue and will receive periodic QueueEstimate (2704) and QueueUpdate (2703) messages.
+    /// Failure: ErrorMessage explains why join failed (e.g., "Item level 200 required, you have 180").
+    /// Response to: QueueJoin (2700).
+    /// </remarks>
     QueueJoinResult = 2701,
+    
+    /// <summary>Client leaves matchmaking queue. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: QueueType to leave. No deserter penalty if leaving before match found.
+    /// If leaving during accept phase: Triggers QueueDeserter (2710) with 30-minute penalty.
+    /// Server removes from queue pool and sends QueueUpdate (2703) confirmation.
+    /// Related: QueueJoin (2700), QueueTimeout (2708).
+    /// </remarks>
     QueueLeave = 2702,
+    
+    /// <summary>Queue status update pushed by server. Direction: Server→Client (Periodic).</summary>
+    /// <remarks>
+    /// Contains: QueueStatusDto with TanksInQueue, HealersInQueue, DamageInQueue, AverageWaitSec, ShortageBonus (Call-to-Arms).
+    /// Sent periodically while in queue and on queue state changes (join/leave confirmation).
+    /// Frequency: Every 30 seconds or on significant changes. Helps client display queue health.
+    /// Related: QueueEstimate (2704), RoleShortage (2722).
+    /// </remarks>
     QueueUpdate = 2703,
+    
+    /// <summary>Server sends updated wait time estimate. Direction: Server→Client (Periodic).</summary>
+    /// <remarks>
+    /// Contains: EstimatedWaitSec (remaining time), QueuePosition (0 if unknown).
+    /// Sent every QUEUE_UPDATE_INTERVAL_SEC (30s) while in queue. Calculation based on recent match frequency and role demand.
+    /// Client displays countdown timer. Estimate can increase/decrease based on queue activity.
+    /// Related: QueueUpdate (2703), QueueJoin (2700).
+    /// </remarks>
     QueueEstimate = 2704,
+    
+    /// <summary>Match found notification with accept deadline. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: MatchFoundDto with MatchId, ActivityName, AssignedRole, AcceptDeadlineSec (30s), AcceptedCount/RequiredCount.
+    /// Client must respond with QueueAccept (2706) or QueueDecline (2707) within 30 seconds.
+    /// Timeout without response triggers QueueTimeout (2708) and deserter penalty.
+    /// UI shows accept/decline dialog with timer. Player can continue playing during accept window.
+    /// Related: QueueAccept (2706), QueueDecline (2707), QueueTimeout (2708).
+    /// </remarks>
     QueuePop = 2705,
+    
+    /// <summary>Player accepts queue pop. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: MatchId from QueuePop (2705). Must be sent within QUEUE_ACCEPT_WINDOW_SEC (30s).
+    /// When all players accept: Server spawns instance and teleports players.
+    /// If any player declines or times out: QueueTimeout (2708) sent to acceptors, who are re-queued automatically.
+    /// Validation: MatchId must be valid, accept window still open, player was in match.
+    /// Response: Instance teleport or QueueTimeout (2708).
+    /// </remarks>
     QueueAccept = 2706,
+    
+    /// <summary>Player declines queue pop. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: MatchId. Triggers QueueDeserter (2710) with DESERTER_DURATION_SEC (1800s = 30 min) penalty.
+    /// Other players in match are returned to queue with priority. Declining player cannot queue until debuff expires.
+    /// Use case: Player changed mind, got interrupted, or doesn't want this specific group composition.
+    /// Consequence: 30-minute queue lockout. Response: QueueDeserter (2710).
+    /// Related: QueuePop (2705), QueueDeserter (2710).
+    /// </remarks>
     QueueDecline = 2707,
+    
+    /// <summary>Match acceptance window expired without full acceptance. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: MatchId, ReQueued flag (auto re-queue acceptors), Reason string (e.g., "1 player did not accept").
+    /// Sent when QUEUE_ACCEPT_WINDOW_SEC (30s) expires before all players accepted.
+    /// Players who accepted are automatically re-queued with priority. Non-acceptor gets deserter penalty.
+    /// Client shows notification explaining timeout and re-queue status.
+    /// Related: QueuePop (2705), QueueAccept (2706), QueueDeserter (2710).
+    /// </remarks>
     QueueTimeout = 2708,
+    
+    /// <summary>Player forcibly removed from queue by server. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: QueueType, Reason string, ErrorCode (e.g., ServerMaintenance, PlayerOffline, GroupLeaderLeft, EligibilityChanged).
+    /// Not triggered by player action. Reasons: Server maintenance, disconnect, group leader left, gear sold below requirement.
+    /// No deserter penalty. Client shows notification with reason. Player can re-queue if eligible.
+    /// Related: QueueLeave (2702), ForceDisconnect (5).
+    /// </remarks>
     QueueKick = 2709,
+    
+    /// <summary>Deserter debuff applied to player. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: DurationSec (remaining time), ExpiresAt (UTC timestamp), Reason (Declined match, AFK, Left instance early).
+    /// Prevents queuing for DESERTER_DURATION_SEC (1800s = 30 min). Applies for: QueueDecline (2707), timeout without accept, leaving instance prematurely.
+    /// Client shows debuff icon with countdown. Attempting to queue with active debuff returns AlreadyInQueue error.
+    /// Triggers: QueueDecline (2707), QueueTimeout without accept, instance leave before completion.
+    /// </remarks>
     QueueDeserter = 2710,
+    
+    /// <summary>Player selects or changes queue roles. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: RequestId, Roles flags (Tank/Healer/Damage combinations). Player can select multiple roles if class supports them.
+    /// Server validates class can play selected roles. Response: RoleConfirm (2721) with success/failure and available roles.
+    /// Selecting multiple roles increases queue speed (more match opportunities) but assigns one role per match.
+    /// Validation: At least one role selected, class can play selected roles.
+    /// Response: RoleConfirm (2721). Related: RoleShortage (2722).
+    /// </remarks>
     RoleSelect = 2720,
+    
+    /// <summary>Role selection confirmation from server. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: RequestId, Success flag, ActiveRoles (confirmed), AvailableRoles (class capabilities), ErrorCode.
+    /// Success: Roles saved for future queue joins. Failure: Invalid role for class (e.g., Mage cannot tank).
+    /// AvailableRoles shows which roles player's class can perform. Client uses to enable/disable role checkboxes.
+    /// Response to: RoleSelect (2720). Related: QueueJoin (2700).
+    /// </remarks>
     RoleConfirm = 2721,
+    
+    /// <summary>Call-to-Arms active for shortage role. Direction: Server→Client (Push).</summary>
+    /// <remarks>
+    /// Contains: QueueType, ShortageRole (Tank/Healer usually), BonusActive flag, BonusGold (500), BonusItems (item IDs).
+    /// Sent when role shortage triggers Call-to-Arms bonus. Players queuing as shortage role receive extra rewards.
+    /// Client shows Call-to-Arms icon on role selection UI. Encourages players to queue underrepresented roles.
+    /// Typical bonus: ROLE_SHORTAGE_BONUS_GOLD (500 gold) + random gear/mounts.
+    /// Related: RoleSelect (2720), QueueUpdate (2703).
+    /// </remarks>
     RoleShortage = 2722,
+    
+    /// <summary>Join skirmish queue (casual PvP). Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: RequestId, Solo flag (solo queue or group). Response: SkirmishUpdate (2732).
+    /// Skirmish: Casual PvP with no item level requirement, no role system, faster matching, reduced rewards.
+    /// No deserter penalty for leaving skirmish queue. Designed for quick, low-stakes PvP practice.
+    /// Matching: Much faster than rated content, less strict MMR, allows larger skill gaps.
+    /// Related: SkirmishLeave (2731), SkirmishUpdate (2732).
+    /// </remarks>
     SkirmishJoin = 2730,
+    
+    /// <summary>Leave skirmish queue. Direction: Client→Server.</summary>
+    /// <remarks>
+    /// Contains: No payload (implicit current skirmish queue). No deserter penalty.
+    /// Response: SkirmishUpdate (2732) with InQueue = false. Fire-and-forget style confirmation.
+    /// No penalty structure for skirmish to encourage casual participation.
+    /// Related: SkirmishJoin (2730), SkirmishUpdate (2732).
+    /// </remarks>
     SkirmishLeave = 2731,
+    
+    /// <summary>Skirmish queue status update. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: RequestId (0 for push updates), Success, InQueue flag, EstimatedWaitSec, PlayersWaiting, ErrorCode.
+    /// Sent as response to SkirmishJoin (2730) and SkirmishLeave (2731), plus periodic push updates.
+    /// EstimatedWaitSec typically very short (10-60 seconds) due to relaxed matching rules.
+    /// PlayersWaiting shows current queue size to indicate activity level.
+    /// Related: SkirmishJoin (2730), SkirmishLeave (2731).
+    /// </remarks>
     SkirmishUpdate = 2732,
 
     // ═══════════════════════════════════════════════════════════════
     // LEADERBOARD / RANKINGS (2800-2899)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request leaderboard data (level, gold, kills, achievements, etc.). Direction: Client→Server. Frequency: Medium.</summary>
+    /// <remarks>
+    /// Contains: LeaderboardQueryDto with BoardType, QueryMode (Top/AroundMe/ByGuild/ByFaction/ByClass), Cursor (opaque token for pagination), PageSize (1-100, default 25).
+    /// Supports cursor-based pagination (not offset) for consistency. Optional filters: FactionFilter, ClassFilter, GuildId, TargetCharacterId (for AroundMe).
+    /// Server returns cached data with TTL. Response includes MyEntry (own rank) even if not in visible range.
+    /// Rate limit: 10 requests/min (6s cooldown). Not for PvP/Mythic+/Raid rankings (use specialized requests).
+    /// Response: LeaderboardResponse (2801). Related: PvpRatingRequest (2810), MythicRankingRequest (2820).
+    /// </remarks>
     LeaderboardRequest = 2800,
+    
+    /// <summary>Leaderboard data response with entries and pagination. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success, ErrorCode, LeaderboardResultDto (BoardType, Entries[], Pagination with NextCursor/PrevCursor/TotalCount, MyEntry, ServerGeneratedAt, CacheTtlMs).
+    /// Entries: Rank, CharacterId, DisplayName (snapshot), Score, ClassId, FactionId, GuildId/Name, UpdatedAt. Sorted by Score DESC, then UpdatedAt ASC (tie-breaker), then CharacterId.
+    /// MyEntry included even if player not in returned page. Cache TTL varies: Level (5min), PvP (1min), Achievement (15min).
+    /// ErrorCodes: InvalidBoardType, InvalidPageSize, InvalidCursor (expired after 5min), TooManyRequests.
+    /// Response to: LeaderboardRequest (2800). Related: LeaderboardUpdate (2802).
+    /// </remarks>
     LeaderboardResponse = 2801,
+    
+    /// <summary>Push leaderboard changes to subscribed clients. Direction: Server→Client (Push). Frequency: Throttled.</summary>
+    /// <remarks>
+    /// Contains: BoardType, UpdatedEntries[] (rank changes in visible range), RemovedRanks[] (dropped from board), MyNewRank, Timestamp.
+    /// Sent only to clients with active leaderboard UI (subscription via LeaderboardRequest). Updates batched (max 5s buffer) and throttled (max 1 update/10s per client).
+    /// Client merges UpdatedEntries into local cache and animates changes. Subscription expires after 5 min of UI inactivity.
+    /// Triggered by: Level up, PvP match end, achievement unlock, dungeon clear. Saves bandwidth vs full re-queries.
+    /// Related: LeaderboardRequest (2800), LeaderboardResponse (2801).
+    /// </remarks>
     LeaderboardUpdate = 2802,
+    
+    /// <summary>Personal rank change notification with milestone detection. Direction: Server→Client (Push).</summary>
+    /// <remarks>
+    /// Contains: BoardType, OldRank (null if new entry), NewRank, Score, IsMilestone flag, MilestoneType (Top1000/500/100/50/10/3/1), Timestamp.
+    /// Automatically sent on significant rank changes. Milestones trigger special UI (toast notification, animation, sound).
+    /// Sent for all leaderboards player is ranked in, not just visible ones. Helps player track progress without actively checking boards.
+    /// Use case: Player levels up and breaks into Top 100 → toast shows "You are now rank #99 on the Level leaderboard!"
+    /// Related: LeaderboardRequest (2800), LeaderboardUpdate (2802).
+    /// </remarks>
     RankingPersonal = 2803,
+    
+    /// <summary>Guild ranking change notification to all members. Direction: Server→Client (Broadcast to guild).</summary>
+    /// <remarks>
+    /// Contains: GuildId, GuildName, BoardType (GuildLevel, GuildAchievements), OldRank, NewRank, Score, Timestamp.
+    /// Sent to all online guild members when guild rank changes significantly. Celebrates guild achievements collectively.
+    /// Use case: Guild clears raid boss → entire guild gets notification "Your guild is now rank #5 in Raid Progress!"
+    /// Encourages guild pride and competitive spirit. Related: RankingPersonal (2803), LeaderboardRequest (2800).
+    /// </remarks>
     RankingGuild = 2804,
+    
+    /// <summary>Request PvP rating leaderboard (Arena 2v2/3v3, RBG). Direction: Client→Server. Frequency: Medium.</summary>
+    /// <remarks>
+    /// Contains: Bracket (Arena2v2/Arena3v3/RatedBattleground), SeasonId (null = current season), QueryMode, Cursor, PageSize (1-100, default 25).
+    /// Season-specific queries allow historical rankings. Current season data has 1-minute cache TTL (fastest refresh).
+    /// Validation: SeasonId must exist. ErrorCodes: SeasonNotFound, NotInSeason (no active season).
+    /// Rate limit: 20 requests/min (3s cooldown). Higher limit than general leaderboards due to PvP player demand.
+    /// Response: PvpRatingResponse (2811). Related: PvpSeasonInfo (2812), LeaderboardRequest (2800).
+    /// </remarks>
     PvpRatingRequest = 2810,
+    
+    /// <summary>PvP rating leaderboard response with season info. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success, ErrorCode, Bracket, Season (SeasonId, SeasonName, StartTime, EndTime, IsActive), PvpLeaderboardEntry[] (Rank, CharacterId, DisplayName, Rating, Wins, Losses, ClassId, SpecId, FactionId), Pagination, MyEntry, ServerGeneratedAt, CacheTtlMs (60000ms = 1min).
+    /// PvP entries include win/loss record and spec for competitive analysis. Sorted by Rating DESC with deterministic tie-breaker.
+    /// Fast cache refresh (1min TTL) ensures competitive accuracy. MyEntry shows personal rating even if not on visible page.
+    /// Response to: PvpRatingRequest (2810). Related: PvpSeasonEnd (2813), PvpSeasonReward (2814).
+    /// </remarks>
     PvpRatingResponse = 2811,
+    
+    /// <summary>Current and upcoming PvP season information. Direction: Server→Client (Push). Sent on login and season changes.</summary>
+    /// <remarks>
+    /// Contains: CurrentSeason (SeasonId, SeasonName, StartTime, EndTime, IsActive), NextSeason (if announced), MyRatings (Dictionary of Bracket→Rating for player's current ratings).
+    /// Sent automatically on login and when season transitions occur. Client uses to display season timer and personal ratings in UI.
+    /// MyRatings empty if player hasn't participated this season. Helps player track multiple bracket ratings at once.
+    /// Related: PvpRatingRequest (2810), PvpSeasonEnd (2813), PvpSeasonReward (2814).
+    /// </remarks>
     PvpSeasonInfo = 2812,
+    
+    /// <summary>PvP season ended notification broadcast to all players. Direction: Server→Client (Broadcast). Frequency: Once per season.</summary>
+    /// <remarks>
+    /// Contains: EndedSeason (season details), NextSeason (if scheduled), FinalRank (player's ending rank), RewardsEarned flag.
+    /// Broadcast to all players when season officially ends. Locks season leaderboards and triggers reward distribution.
+    /// Players who qualified for rewards (FinalRank high enough) receive PvpSeasonReward (2814) shortly after.
+    /// Client shows season end splash screen with final rank and next season countdown.
+    /// Related: PvpSeasonInfo (2812), PvpSeasonReward (2814).
+    /// </remarks>
     PvpSeasonEnd = 2813,
+    
+    /// <summary>Season-end PvP rewards delivery. Direction: Server→Client. Frequency: Once per season (if qualified).</summary>
+    /// <remarks>
+    /// Contains: SeasonId, Bracket, FinalRank, FinalRating, Rewards[] (ItemId, Quantity), TitleUnlocked (e.g., "Gladiator"), MountUnlocked (item ID).
+    /// Sent to players who qualified for rewards based on FinalRank thresholds. Rewards scale with rank: Top 1 gets prestigious mount/title, Top 100 gets gear.
+    /// Rewards automatically added to inventory/collection. Client shows reward notification UI with season accomplishments.
+    /// Triggered by: PvpSeasonEnd (2813). Related: PvpRatingRequest (2810), AchievementUnlock.
+    /// </remarks>
     PvpSeasonReward = 2814,
+    
+    /// <summary>Request Mythic+ dungeon ranking leaderboard. Direction: Client→Server. Frequency: Medium.</summary>
+    /// <remarks>
+    /// Contains: DungeonId (null = overall score), AffixWeek (null = current week), QueryMode, Cursor, PageSize.
+    /// Mythic+ Score rankings based on key level completions across all dungeons. DungeonId filter for specific dungeon best times.
+    /// AffixWeek allows comparing performance across different weekly affix rotations (difficulty varies).
+    /// Rate limit: 10 requests/min (6s cooldown). Cache TTL: 5 minutes.
+    /// Response: MythicRankingResponse (2821). Related: LeaderboardRequest (2800).
+    /// </remarks>
     MythicRankingRequest = 2820,
+    
+    /// <summary>Mythic+ ranking leaderboard response. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success, ErrorCode, MythicLeaderboardEntry[] (Rank, CharacterId, DisplayName, MythicPlusScore, HighestKeyLevel, DungeonsCompleted, ClassId, SpecId), Pagination, MyEntry, ServerGeneratedAt, CacheTtlMs (300000ms = 5min).
+    /// MythicPlusScore: Aggregate score from all dungeon completions (higher key = higher score). HighestKeyLevel: Best single key completed.
+    /// DungeonsCompleted: Total unique dungeons with Mythic+ completions. Sorted by MythicPlusScore DESC.
+    /// Competitive metric for high-end PvE players. Response to: MythicRankingRequest (2820).
+    /// </remarks>
     MythicRankingResponse = 2821,
+    
+    /// <summary>Request raid progression ranking (guild-based). Direction: Client→Server. Frequency: Low.</summary>
+    /// <remarks>
+    /// Contains: RaidId (null = current tier), Difficulty (Normal/Heroic/Mythic), QueryMode, Cursor, PageSize.
+    /// Guild-based rankings showing raid progression (bosses defeated). Used for world-first race tracking.
+    /// Separate leaderboards per difficulty. Mythic difficulty most prestigious and competitive.
+    /// Rate limit: 5 requests/min (12s cooldown - lower frequency due to less frequent updates).
+    /// Response: RaidProgressRankingResponse (2823). Related: LeaderboardRequest (2800).
+    /// </remarks>
     RaidProgressRankingRequest = 2822,
+    
+    /// <summary>Raid progression ranking response. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success, ErrorCode, RaidProgressEntry[] (Rank, GuildId, GuildName, FactionId, BossesDefeated, TotalBosses, FirstKillTime, LastKillTime), Pagination, MyGuildEntry, ServerGeneratedAt, CacheTtlMs (1800000ms = 30min).
+    /// Guild-level rankings, not individual. FirstKillTime used for tie-breaker (earlier = better). LastKillTime shows recent progress.
+    /// MyGuildEntry included if player's guild is progressing in this raid. BossesDefeated/TotalBosses shows progress fraction.
+    /// Cache TTL longer (30min) since raid progress changes less frequently than PvP ratings.
+    /// Response to: RaidProgressRankingRequest (2822).
+    /// </remarks>
     RaidProgressRankingResponse = 2823,
+    
+    /// <summary>Request achievement points ranking leaderboard. Direction: Client→Server. Frequency: Low.</summary>
+    /// <remarks>
+    /// Contains: CategoryId (null = all achievements), QueryMode, Cursor, PageSize.
+    /// Ranks players by total achievement points earned. Optional CategoryId filters to specific achievement category (PvP achievements, dungeon achievements, etc.).
+    /// Completionist metric showing breadth of content engagement. Less volatile than level/gear rankings.
+    /// Rate limit: 10 requests/min (6s cooldown). Cache TTL: 15 minutes.
+    /// Response: AchievementRankingResponse (2825). Related: LeaderboardRequest (2800), AchievementUnlock.
+    /// </remarks>
     AchievementRankingRequest = 2824,
+    
+    /// <summary>Achievement ranking leaderboard response. Direction: Server→Client.</summary>
+    /// <remarks>
+    /// Contains: Success, ErrorCode, AchievementLeaderboardEntry[] (Rank, CharacterId, DisplayName, AchievementPoints (total score), AchievementsCompleted (count), ClassId, FactionId), Pagination, MyEntry, ServerGeneratedAt, CacheTtlMs (900000ms = 15min).
+    /// AchievementPoints: Cumulative points from all achievements. AchievementsCompleted: Number of unique achievements unlocked.
+    /// Sorted by AchievementPoints DESC. Shows dedication and completionist progress across all game content.
+    /// Cache TTL 15min (slower changing than PvP/Mythic+). Response to: AchievementRankingRequest (2824).
+    /// </remarks>
     AchievementRankingResponse = 2825,
 
     // ═══════════════════════════════════════════════════════════════
