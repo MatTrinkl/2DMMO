@@ -2078,306 +2078,1083 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // NPC / DIALOG / VENDOR (1300-1399)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Interact with NPC. Direction: Client→Server.</summary>
+    /// <remarks>Right-click NPC. Response: NpcInteractResult (1301) with interaction type (dialog/vendor/quest).</remarks>
     NpcInteract = 1300,
+    
+    /// <summary>NPC interaction result. Direction: Server→Client.</summary>
+    /// <remarks>Opens: Dialog window, vendor, quest giver, or shows error (too far, busy).</remarks>
     NpcInteractResult = 1301,
+    
+    /// <summary>NPC dialog window opened. Direction: Server→Client.</summary>
+    /// <remarks>Dialog text and choice options. Story/lore interaction.</remarks>
     NpcDialogOpen = 1302,
+    
+    /// <summary>Select dialog option. Direction: Client→Server.</summary>
+    /// <remarks>Choose conversation branch. May lead to quest, vendor, or new dialog.</remarks>
     NpcDialogChoice = 1303,
+    
+    /// <summary>Close NPC dialog. Direction: Client→Server.</summary>
+    /// <remarks>End conversation.</remarks>
     NpcDialogClose = 1304,
+    
+    /// <summary>Request NPC gossip menu. Direction: Client→Server.</summary>
+    /// <remarks>Get available interaction options. Response: NpcGossipResponse (1306).</remarks>
     NpcGossipRequest = 1305,
+    
+    /// <summary>NPC gossip menu options. Direction: Server→Client.</summary>
+    /// <remarks>List of available actions: Talk, Buy, Sell, Train, etc.</remarks>
     NpcGossipResponse = 1306,
+    
+    /// <summary>Open vendor window. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access NPC shop. Triggers VendorListRequest automatically.</remarks>
     VendorOpen = 1310,
+    
+    /// <summary>Close vendor window. Direction: Client→Server.</summary>
+    /// <remarks>Exit shop interface.</remarks>
     VendorClose = 1311,
+    
+    /// <summary>Request vendor inventory. Direction: Client→Server.</summary>
+    /// <remarks>Get items for sale. Response: VendorListResponse (1313).</remarks>
     VendorListRequest = 1312,
+    
+    /// <summary>Vendor inventory list. Direction: Server→Client.</summary>
+    /// <remarks>Items with prices, stock limits, required reputation.</remarks>
     VendorListResponse = 1313,
+    
+    /// <summary>Buy item from vendor. Direction: Client→Server.</summary>
+    /// <remarks>Purchase item. Response: VendorBuyResult (1315) with success or error.</remarks>
     VendorBuy = 1314,
+    
+    /// <summary>Vendor buy result. Direction: Server→Client.</summary>
+    /// <remarks>Success adds item. Failure: Insufficient gold, inventory full, out of stock.</remarks>
     VendorBuyResult = 1315,
+    
+    /// <summary>Sell item to vendor. Direction: Client→Server.</summary>
+    /// <remarks>Sell inventory item. Response: VendorSellResult (1317) with gold earned.</remarks>
     VendorSell = 1316,
+    
+    /// <summary>Vendor sell result. Direction: Server→Client.</summary>
+    /// <remarks>Gold added. Item removed. Some items cannot be sold.</remarks>
     VendorSellResult = 1317,
+    
+    /// <summary>Buyback recently sold item. Direction: Client→Server.</summary>
+    /// <remarks>Repurchase from vendor buyback tab. Response: VendorBuybackResult (1319).</remarks>
     VendorBuyback = 1318,
+    
+    /// <summary>Vendor buyback result. Direction: Server→Client.</summary>
+    /// <remarks>Item restored for original sell price.</remarks>
     VendorBuybackResult = 1319,
+    
+    /// <summary>Repair single item. Direction: Client→Server.</summary>
+    /// <remarks>Pay vendor to restore durability. Response: VendorRepairResult (1322).</remarks>
     VendorRepair = 1320,
+    
+    /// <summary>Repair all equipped items. Direction: Client→Server.</summary>
+    /// <remarks>Convenience repair. Total cost calculated. Response: VendorRepairResult (1322).</remarks>
     VendorRepairAll = 1321,
+    
+    /// <summary>Vendor repair result. Direction: Server→Client.</summary>
+    /// <remarks>Durability restored. Gold deducted. Or error: Insufficient gold.</remarks>
     VendorRepairResult = 1322,
+    
+    /// <summary>Open trainer window. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Skill/spell trainer access.</remarks>
     TrainerOpen = 1330,
+    
+    /// <summary>Close trainer window. Direction: Client→Server.</summary>
     TrainerClose = 1331,
+    
+    /// <summary>Request trainer skills. Direction: Client→Server.</summary>
+    /// <remarks>Available skills/spells. Response: TrainerListResponse (1333).</remarks>
     TrainerListRequest = 1332,
+    
+    /// <summary>Trainer skill list. Direction: Server→Client.</summary>
+    /// <remarks>Skills with: Cost, level requirement, already known status.</remarks>
     TrainerListResponse = 1333,
+    
+    /// <summary>Learn skill from trainer. Direction: Client→Server.</summary>
+    /// <remarks>Pay gold to learn. Response: TrainerLearnResult (1335).</remarks>
     TrainerLearn = 1334,
+    
+    /// <summary>Trainer learn result. Direction: Server→Client.</summary>
+    /// <remarks>Skill learned or error: Insufficient gold, level too low, already known.</remarks>
     TrainerLearnResult = 1335,
+    
+    /// <summary>Bind to inn/home location. Direction: Client→Server.</summary>
+    /// <remarks>Set hearthstone return point. Response: InnkeeperBindResult (1341).</remarks>
     InnkeeperBind = 1340,
+    
+    /// <summary>Inn bind result. Direction: Server→Client.</summary>
+    /// <remarks>Home location updated.</remarks>
     InnkeeperBindResult = 1341,
+    
+    /// <summary>Open flight master. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Fast travel interface.</remarks>
     FlightmasterOpen = 1342,
+    
+    /// <summary>Flight path list. Direction: Server→Client.</summary>
+    /// <remarks>Available destinations, costs, travel times, discovered status.</remarks>
     FlightmasterList = 1343,
+    
+    /// <summary>Open banker. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access personal bank storage.</remarks>
     BankerOpen = 1344,
+    
+    /// <summary>Open auctioneer. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access auction house.</remarks>
     AuctioneerOpen = 1345,
+    
+    /// <summary>Open mailbox. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access mail system.</remarks>
     MailboxOpen = 1346,
+    
+    /// <summary>Open stablemaster. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Manage pet/mount storage.</remarks>
     StablemasterOpen = 1347,
+    
+    /// <summary>Open barber. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Character appearance modification.</remarks>
     BarberOpen = 1348,
+    
+    /// <summary>Open transmogrifier. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Item appearance modification interface.</remarks>
     TransmogOpen = 1349,
 
     // ═══════════════════════════════════════════════════════════════
     // ENTITY SPAWNING / SYNC (1400-1499)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Spawn single entity. Direction: Server→Client.</summary>
+    /// <remarks>New NPC/player visible. Contains: ID, position, type, appearance.</remarks>
     EntitySpawn = 1400,
+    
+    /// <summary>Batch spawn multiple entities. Direction: Server→Client.</summary>
+    /// <remarks>Efficient zone loading. Array of entities. Used on zone entry.</remarks>
     EntitySpawnBatch = 1401,
+    
+    /// <summary>Despawn single entity. Direction: Server→Client.</summary>
+    /// <remarks>Entity left zone or died. Client removes from world.</remarks>
     EntityDespawn = 1402,
+    
+    /// <summary>Batch despawn multiple entities. Direction: Server→Client.</summary>
+    /// <remarks>Efficient cleanup. Array of entity IDs.</remarks>
     EntityDespawnBatch = 1403,
+    
+    /// <summary>Entity state update. Direction: Server→Client.</summary>
+    /// <remarks>Position, health, or other property changed. Incremental update.</remarks>
     EntityUpdate = 1404,
+    
+    /// <summary>Batch entity updates. Direction: Server→Client.</summary>
+    /// <remarks>Multiple entity states. Bandwidth optimization for crowded areas.</remarks>
     EntityUpdateBatch = 1405,
+    
+    /// <summary>Request entity list. Direction: Client→Server.</summary>
+    /// <remarks>Get all entities in area. Response: EntityListResponse (1407).</remarks>
     EntityListRequest = 1406,
+    
+    /// <summary>Entity list data. Direction: Server→Client.</summary>
+    /// <remarks>Complete list of nearby entities. For UI purposes.</remarks>
     EntityListResponse = 1407,
+    
+    /// <summary>Entity path update. Direction: Server→Client.</summary>
+    /// <remarks>NPC movement path. For smooth client-side movement prediction.</remarks>
     EntityPathUpdate = 1408,
+    
+    /// <summary>Entity state changed. Direction: Server→Client.</summary>
+    /// <remarks>Combat state, sitting, swimming, flying. Animation state changes.</remarks>
     EntityStateChange = 1409,
+    
+    /// <summary>Entity animation trigger. Direction: Server→Client.</summary>
+    /// <remarks>Play animation: Attack, cast, emote. Single entity.</remarks>
     EntityAnimation = 1410,
+    
+    /// <summary>Batch entity animations. Direction: Server→Client.</summary>
+    /// <remarks>Multiple animations. Combat scenarios.</remarks>
     EntityAnimationBatch = 1411,
+    
+    /// <summary>Entity nameplate data. Direction: Server→Client.</summary>
+    /// <remarks>Name, guild, title, level for UI nameplate.</remarks>
     EntityNameplate = 1412,
+    
+    /// <summary>Nameplate updated. Direction: Server→Client.</summary>
+    /// <remarks>Health bar, buffs, name changes reflected in nameplate.</remarks>
     EntityNameplateUpdate = 1413,
+    
+    /// <summary>Entity faction change. Direction: Server→Client.</summary>
+    /// <remarks>Hostility updated. Affects targeting and combat availability.</remarks>
     EntityFaction = 1414,
+    
+    /// <summary>Entity scale change. Direction: Server→Client.</summary>
+    /// <remarks>Size modification from buffs/abilities. Visual update.</remarks>
     EntityScale = 1415,
+    
+    /// <summary>Entity mount state. Direction: Server→Client.</summary>
+    /// <remarks>Mounted or dismounted. Mount model displayed.</remarks>
     EntityMountUpdate = 1416,
+    
+    /// <summary>Entity equipment changed. Direction: Server→Client.</summary>
+    /// <remarks>Visible gear updated. For character appearance.</remarks>
     EntityEquipmentUpdate = 1417,
+    
+    /// <summary>Entity aura/buff visuals. Direction: Server→Client.</summary>
+    /// <remarks>Buff effects displayed on entity. Particle effects.</remarks>
     EntityAuraUpdate = 1418,
+    
+    /// <summary>Entity performed emote. Direction: Server→Client.</summary>
+    /// <remarks>Gesture/animation from emote command.</remarks>
     EntityEmote = 1419,
+    
+    /// <summary>Entity local chat. Direction: Server→Client.</summary>
+    /// <remarks>Speech bubble text. Nearby only.</remarks>
     EntitySay = 1420,
+    
+    /// <summary>Entity yell. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Loud speech. Wider radius.</remarks>
     EntityYell = 1421,
+    
+    /// <summary>Lootable corpse/chest spawned. Direction: Server→Client.</summary>
+    /// <remarks>Interactable loot object. Contains loot table.</remarks>
     LootableSpawn = 1430,
+    
+    /// <summary>Lootable removed. Direction: Server→Client.</summary>
+    /// <remarks>Looted or despawned.</remarks>
     LootableDespawn = 1431,
+    
+    /// <summary>Resource node spawned. Direction: Server→Client.</summary>
+    /// <remarks>Mining/herb/skinning node. Profession resource.</remarks>
     ResourceNodeSpawn = 1432,
+    
+    /// <summary>Resource node removed. Direction: Server→Client.</summary>
+    /// <remarks>Harvested or respawn timer.</remarks>
     ResourceNodeDespawn = 1433,
+    
+    /// <summary>Resource node state. Direction: Server→Client.</summary>
+    /// <remarks>Available, being harvested, depleted.</remarks>
     ResourceNodeState = 1434,
 
     // ═══════════════════════════════════════════════════════════════
     // BUFFS / DEBUFFS / AURAS (1500-1599)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Buff applied to entity. Direction: Server→Client.</summary>
+    /// <remarks>Beneficial effect. Contains: Buff ID, duration, stacks, caster.</remarks>
     BuffApplied = 1500,
+    
+    /// <summary>Buff removed from entity. Direction: Server→Client.</summary>
+    /// <remarks>Expired, dispelled, or cancelled. Updates UI buff bar.</remarks>
     BuffRemoved = 1501,
+    
+    /// <summary>Buff refreshed/reapplied. Direction: Server→Client.</summary>
+    /// <remarks>Duration reset. Stacks may increase.</remarks>
     BuffRefreshed = 1502,
+    
+    /// <summary>Buff stack count changed. Direction: Server→Client.</summary>
+    /// <remarks>Stackable buff increased or decreased. Updates tooltip.</remarks>
     BuffStackUpdate = 1503,
+    
+    /// <summary>Debuff applied to entity. Direction: Server→Client.</summary>
+    /// <remarks>Harmful effect. Contains: Debuff ID, duration, type (poison/disease/curse).</remarks>
     DebuffApplied = 1504,
+    
+    /// <summary>Debuff removed from entity. Direction: Server→Client.</summary>
+    /// <remarks>Expired, cleansed, or resisted.</remarks>
     DebuffRemoved = 1505,
+    
+    /// <summary>Full aura list sync. Direction: Server→Client.</summary>
+    /// <remarks>Complete list of active buffs/debuffs. On zone in or significant change.</remarks>
     AuraListSync = 1506,
+    
+    /// <summary>Aura data updated. Direction: Server→Client.</summary>
+    /// <remarks>Duration changed, effect modified. Incremental update.</remarks>
     AuraUpdate = 1507,
+    
+    /// <summary>Request dispel/cleanse. Direction: Client→Server.</summary>
+    /// <remarks>Remove debuff from target. Response: DispelResult (1509).</remarks>
     DispelRequest = 1508,
+    
+    /// <summary>Dispel result. Direction: Server→Client.</summary>
+    /// <remarks>Success removes debuff. Failure: Immune, wrong type, out of range.</remarks>
     DispelResult = 1509,
+    
+    /// <summary>Steal buff from enemy. Direction: Client→Server.</summary>
+    /// <remarks>Spellsteal mechanic. Response: StealResult (1511).</remarks>
     StealRequest = 1510,
+    
+    /// <summary>Buff steal result. Direction: Server→Client.</summary>
+    /// <remarks>Buff transferred to caster or steal resisted.</remarks>
     StealResult = 1511,
+    
+    /// <summary>Purge buffs from enemy. Direction: Client→Server.</summary>
+    /// <remarks>Remove beneficial effects. Response: PurgeResult (1513).</remarks>
     PurgeRequest = 1512,
+    
+    /// <summary>Purge result. Direction: Server→Client.</summary>
+    /// <remarks>Buffs removed or purge failed.</remarks>
     PurgeResult = 1513,
+    
+    /// <summary>Target immune to aura. Direction: Server→Client.</summary>
+    /// <remarks>Immunity prevented application. Boss mechanics, racial traits.</remarks>
     AuraImmune = 1514,
+    
+    /// <summary>Aura resisted. Direction: Server→Client.</summary>
+    /// <remarks>Target resisted effect. Partial or full resistance.</remarks>
     AuraResist = 1515,
+    
+    /// <summary>Buff category update. Direction: Server→Client.</summary>
+    /// <remarks>Group of related buffs changed. Batch update.</remarks>
     BuffCategoryUpdate = 1516,
 
     // ═══════════════════════════════════════════════════════════════
     // CRAFTING / PROFESSIONS (1600-1699)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Open crafting interface. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access profession crafting window.</remarks>
     CraftingOpen = 1600,
+    
+    /// <summary>Close crafting interface. Direction: Client→Server.</summary>
     CraftingClose = 1601,
+    
+    /// <summary>Request recipe list. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Known recipes for profession. Filtered by category.</remarks>
     CraftingRecipeList = 1602,
+    
+    /// <summary>Start crafting item. Direction: Client→Server.</summary>
+    /// <remarks>Begin craft. Validates materials. Progress updates via CraftingProgress (1604).</remarks>
     CraftingStart = 1603,
+    
+    /// <summary>Crafting progress update. Direction: Server→Client.</summary>
+    /// <remarks>Percentage complete. For progress bar. May have multiple steps.</remarks>
     CraftingProgress = 1604,
+    
+    /// <summary>Crafting completed. Direction: Server→Client.</summary>
+    /// <remarks>Item created. Materials consumed. May proc quality bonus.</remarks>
     CraftingComplete = 1605,
+    
+    /// <summary>Crafting failed. Direction: Server→Client.</summary>
+    /// <remarks>Interrupted, insufficient materials, or critical failure. Materials may be lost.</remarks>
     CraftingFailed = 1606,
+    
+    /// <summary>Cancel crafting. Direction: Client→Server.</summary>
+    /// <remarks>Abort in-progress craft. Materials returned.</remarks>
     CraftingCancel = 1607,
+    
+    /// <summary>Crafting queue status. Direction: Server→Client.</summary>
+    /// <remarks>Queued crafts. For batch production.</remarks>
     CraftingQueue = 1608,
+    
+    /// <summary>Add to craft queue. Direction: Client→Server.</summary>
+    /// <remarks>Queue multiple items. Auto-craft sequentially.</remarks>
     CraftingQueueAdd = 1609,
+    
+    /// <summary>Remove from craft queue. Direction: Client→Server.</summary>
+    /// <remarks>Cancel queued item.</remarks>
     CraftingQueueRemove = 1610,
+    
+    /// <summary>Learn new recipe. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>From trainer, quest reward, or world drop.</remarks>
     RecipeLearn = 1611,
+    
+    /// <summary>Forget/unlearn recipe. Direction: Client→Server.</summary>
+    /// <remarks>Remove recipe knowledge. Rare use case.</remarks>
     RecipeUnlearn = 1612,
+    
+    /// <summary>Discover new recipe. Direction: Server→Client.</summary>
+    /// <remarks>Random discovery from crafting. Research or experimentation.</remarks>
     RecipeDiscovery = 1613,
+    
+    /// <summary>Profession info. Direction: Server→Client.</summary>
+    /// <remarks>Current skill level, max level, experience to next level.</remarks>
     ProfessionInfo = 1620,
+    
+    /// <summary>Profession leveled up. Direction: Server→Client.</summary>
+    /// <remarks>Skill tier increased. New recipes unlocked.</remarks>
     ProfessionLevelUp = 1621,
+    
+    /// <summary>Profession skill gain. Direction: Server→Client.</summary>
+    /// <remarks>Skill points from crafting. Progress toward next level.</remarks>
     ProfessionSkillUp = 1622,
+    
+    /// <summary>Start gathering resource. Direction: Client→Server.</summary>
+    /// <remarks>Mine/herb/skin. Begin gather cast.</remarks>
     GatheringStart = 1630,
+    
+    /// <summary>Gathering progress. Direction: Server→Client.</summary>
+    /// <remarks>Cast bar progress. Interruptible.</remarks>
     GatheringProgress = 1631,
+    
+    /// <summary>Gathering completed. Direction: Server→Client.</summary>
+    /// <remarks>Resources added to inventory. Node may despawn.</remarks>
     GatheringComplete = 1632,
+    
+    /// <summary>Gathering failed. Direction: Server→Client.</summary>
+    /// <remarks>Interrupted, too low skill, or node depleted.</remarks>
     GatheringFailed = 1633,
+    
+    /// <summary>Gathering interrupted. Direction: Server→Client.</summary>
+    /// <remarks>Damage taken, movement, or player cancelled.</remarks>
     GatheringInterrupt = 1634,
 
     // ═══════════════════════════════════════════════════════════════
     // AUCTION HOUSE / MARKET (1700-1799)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Open auction house. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access player market interface.</remarks>
     AuctionOpen = 1700,
+    
+    /// <summary>Close auction house. Direction: Client→Server.</summary>
     AuctionClose = 1701,
+    
+    /// <summary>Search auction listings. Direction: Client→Server.</summary>
+    /// <remarks>Filter by: Item name, category, level, quality. Response: AuctionSearchResults (1703).</remarks>
     AuctionSearch = 1702,
+    
+    /// <summary>Auction search results. Direction: Server→Client.</summary>
+    /// <remarks>Matching listings with: Item, seller, price, time remaining.</remarks>
     AuctionSearchResults = 1703,
+    
+    /// <summary>Create new auction. Direction: Client→Server.</summary>
+    /// <remarks>List item for sale. Set: Buyout, starting bid, duration. Response: AuctionCreateResult (1705).</remarks>
     AuctionCreate = 1704,
+    
+    /// <summary>Auction creation result. Direction: Server→Client.</summary>
+    /// <remarks>Success or error: Deposit required, auction house full, item cannot be sold.</remarks>
     AuctionCreateResult = 1705,
+    
+    /// <summary>Bid on auction. Direction: Client→Server.</summary>
+    /// <remarks>Place bid. Must exceed current bid. Response: AuctionBidResult (1707).</remarks>
     AuctionBid = 1706,
+    
+    /// <summary>Bid result. Direction: Server→Client.</summary>
+    /// <remarks>Bid accepted or error: Outbid, insufficient gold, auction ended.</remarks>
     AuctionBidResult = 1707,
+    
+    /// <summary>Buyout auction. Direction: Client→Server.</summary>
+    /// <remarks>Instant purchase. Response: AuctionBuyoutResult (1709).</remarks>
     AuctionBuyout = 1708,
+    
+    /// <summary>Buyout result. Direction: Server→Client.</summary>
+    /// <remarks>Item purchased or error: Insufficient gold, already sold.</remarks>
     AuctionBuyoutResult = 1709,
+    
+    /// <summary>Cancel own auction. Direction: Client→Server.</summary>
+    /// <remarks>Remove listing early. Response: AuctionCancelResult (1711). May forfeit deposit.</remarks>
     AuctionCancel = 1710,
+    
+    /// <summary>Auction cancel result. Direction: Server→Client.</summary>
+    /// <remarks>Auction cancelled. Item returned to seller.</remarks>
     AuctionCancelResult = 1711,
+    
+    /// <summary>Auction expired unsold. Direction: Server→Client.</summary>
+    /// <remarks>Time ran out. No bids. Item returned to seller via mail.</remarks>
     AuctionExpired = 1712,
+    
+    /// <summary>Auction sold. Direction: Server→Client.</summary>
+    /// <remarks>Item sold. Gold sent to seller via mail.</remarks>
     AuctionSold = 1713,
+    
+    /// <summary>Player was outbid. Direction: Server→Client.</summary>
+    /// <remarks>Notification of higher bid. Bid gold returned.</remarks>
     AuctionOutbid = 1714,
+    
+    /// <summary>Won auction. Direction: Server→Client.</summary>
+    /// <remarks>Auction ended. Player had highest bid. Item sent via mail.</remarks>
     AuctionWon = 1715,
+    
+    /// <summary>List owned auctions. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Player's active listings with current bid status.</remarks>
     AuctionListOwned = 1716,
+    
+    /// <summary>List active bids. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Auctions player has bid on. Shows if winning or outbid.</remarks>
     AuctionListBids = 1717,
+    
+    /// <summary>Item price history. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Historical pricing data for market trends.</remarks>
     AuctionPriceHistory = 1718,
+    
+    /// <summary>Mark auction as favorite. Direction: Client→Server.</summary>
+    /// <remarks>Watch specific auction for quick access.</remarks>
     AuctionFavorite = 1719,
+    
+    /// <summary>Favorite auctions list. Direction: Server→Client.</summary>
+    /// <remarks>Saved auction searches or items.</remarks>
     AuctionFavoriteList = 1720,
 
     // ═══════════════════════════════════════════════════════════════
     // MAIL SYSTEM (1800-1899)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request mail inbox. Direction: Client→Server.</summary>
+    /// <remarks>Get list of received mail. Response: MailInboxResponse (1801).</remarks>
     MailInboxRequest = 1800,
+    
+    /// <summary>Mail inbox data. Direction: Server→Client.</summary>
+    /// <remarks>List of mail with: Sender, subject, has attachments, read status, time sent.</remarks>
     MailInboxResponse = 1801,
+    
+    /// <summary>Send mail. Direction: Client→Server.</summary>
+    /// <remarks>Send letter with optional gold/items. Response: MailSendResult (1803).</remarks>
     MailSend = 1802,
+    
+    /// <summary>Mail send result. Direction: Server→Client.</summary>
+    /// <remarks>Success or error: Recipient not found, insufficient postage, mailbox full.</remarks>
     MailSendResult = 1803,
+    
+    /// <summary>Read mail message. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Open mail. Displays body text and attachments.</remarks>
     MailRead = 1804,
+    
+    /// <summary>Mark mail as read. Direction: Client→Server.</summary>
+    /// <remarks>Updates read status. For UI organization.</remarks>
     MailMarkRead = 1805,
+    
+    /// <summary>Take item attachment. Direction: Client→Server.</summary>
+    /// <remarks>Remove item from mail to inventory. Response: MailTakeAttachmentResult (1807).</remarks>
     MailTakeAttachment = 1806,
+    
+    /// <summary>Take attachment result. Direction: Server→Client.</summary>
+    /// <remarks>Item added to inventory or error: Inventory full.</remarks>
     MailTakeAttachmentResult = 1807,
+    
+    /// <summary>Take gold from mail. Direction: Client→Server.</summary>
+    /// <remarks>Collect money. Response: MailTakeGoldResult (1809).</remarks>
     MailTakeGold = 1808,
+    
+    /// <summary>Take gold result. Direction: Server→Client.</summary>
+    /// <remarks>Gold added to currency.</remarks>
     MailTakeGoldResult = 1809,
+    
+    /// <summary>Take all attachments. Direction: Client→Server.</summary>
+    /// <remarks>Bulk collection of items and gold from mail.</remarks>
     MailTakeAll = 1810,
+    
+    /// <summary>Delete mail. Direction: Client→Server.</summary>
+    /// <remarks>Remove from inbox. Must have no attachments.</remarks>
     MailDelete = 1811,
+    
+    /// <summary>Return mail to sender. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Undeliverable or refused. Attachments sent back.</remarks>
     MailReturn = 1812,
+    
+    /// <summary>New mail notification. Direction: Server→Client.</summary>
+    /// <remarks>Alert player of incoming mail. Triggers UI indicator.</remarks>
     MailNotification = 1813,
+    
+    /// <summary>Cash on delivery mail. Direction: Server→Client.</summary>
+    /// <remarks>Requires payment to receive attachments.</remarks>
     MailCashOnDelivery = 1814,
+    
+    /// <summary>Pay COD and take items. Direction: Client→Server.</summary>
+    /// <remarks>Pay required amount to unlock attachments.</remarks>
     MailCashOnDeliveryPay = 1815,
+    
+    /// <summary>Mail expired. Direction: Server→Client.</summary>
+    /// <remarks>Unread mail auto-deleted after 30 days. Attachments returned to sender.</remarks>
     MailExpired = 1816,
 
     // ═══════════════════════════════════════════════════════════════
     // ACHIEVEMENTS / TITLES (1900-1999)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Achievement completed. Direction: Server→Client.</summary>
+    /// <remarks>Achievement earned. Triggers toast notification, rewards, points.</remarks>
     AchievementUnlocked = 1900,
+    
+    /// <summary>Achievement progress update. Direction: Server→Client.</summary>
+    /// <remarks>Criteria partially completed. Updates achievement tracker.</remarks>
     AchievementProgress = 1901,
+    
+    /// <summary>Request achievement list. Direction: Client→Server.</summary>
+    /// <remarks>Get all achievements. Response: AchievementListResponse (1903).</remarks>
     AchievementListRequest = 1902,
+    
+    /// <summary>Achievement list data. Direction: Server→Client.</summary>
+    /// <remarks>All achievements with completion status and progress.</remarks>
     AchievementListResponse = 1903,
+    
+    /// <summary>Achievement criteria updated. Direction: Server→Client.</summary>
+    /// <remarks>Specific criterion progress: Kill count, exploration, etc.</remarks>
     AchievementCriteriaUpdate = 1904,
+    
+    /// <summary>Achievement points total. Direction: Server→Client.</summary>
+    /// <remarks>Total points from completed achievements. For bragging rights.</remarks>
     AchievementPointsUpdate = 1905,
+    
+    /// <summary>Achievement toast notification. Direction: Server→Client.</summary>
+    /// <remarks>Popup achievement completion announcement.</remarks>
     AchievementToast = 1906,
+    
+    /// <summary>Share achievement link. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Post achievement in chat.</remarks>
     AchievementLink = 1907,
+    
+    /// <summary>Compare achievements with player. Direction: Client→Server.</summary>
+    /// <remarks>Inspect another player's achievement completion. Response: AchievementCompareResult (1909).</remarks>
     AchievementCompare = 1908,
+    
+    /// <summary>Achievement comparison data. Direction: Server→Client.</summary>
+    /// <remarks>Side-by-side achievement completion between players.</remarks>
     AchievementCompareResult = 1909,
+    
+    /// <summary>Title unlocked. Direction: Server→Client.</summary>
+    /// <remarks>New title available from achievement/reputation.</remarks>
     TitleUnlock = 1920,
+    
+    /// <summary>Select active title. Direction: Client→Server.</summary>
+    /// <remarks>Set displayed title.</remarks>
     TitleSelectMsg = 1921,
+    
+    /// <summary>Clear active title. Direction: Client→Server.</summary>
+    /// <remarks>Remove displayed title.</remarks>
     TitleClear = 1922,
+    
+    /// <summary>Request title list. Direction: Client→Server.</summary>
+    /// <remarks>All unlocked titles. Response: TitleListResponse (1924).</remarks>
     TitleListRequest = 1923,
+    
+    /// <summary>Title list data. Direction: Server→Client.</summary>
+    /// <remarks>Available titles with unlock status.</remarks>
     TitleListResponse = 1924,
 
     // ═══════════════════════════════════════════════════════════════
     // MOUNTS / PETS / COMPANIONS (2000-2099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Summon mount. Direction: Client→Server.</summary>
+    /// <remarks>Ride mount. Increases movement speed. Response: MountSummonResult (2001).</remarks>
     MountSummon = 2000,
+    
+    /// <summary>Mount summon result. Direction: Server→Client.</summary>
+    /// <remarks>Mounted or error: In combat, indoors, wrong zone type.</remarks>
     MountSummonResult = 2001,
+    
+    /// <summary>Dismount. Direction: Client→Server.</summary>
+    /// <remarks>Leave mount. Return to normal movement speed.</remarks>
     MountDismount = 2002,
+    
+    /// <summary>Request mount collection. Direction: Client→Server.</summary>
+    /// <remarks>All owned mounts. Response: MountListResponse (2004).</remarks>
     MountListRequest = 2003,
+    
+    /// <summary>Mount collection data. Direction: Server→Client.</summary>
+    /// <remarks>Mounts with: Unlock status, speed, type (ground/flying).</remarks>
     MountListResponse = 2004,
+    
+    /// <summary>Mark mount as favorite. Direction: Client→Server.</summary>
+    /// <remarks>Add to favorite list for random mount.</remarks>
     MountFavorite = 2005,
+    
+    /// <summary>Remove mount from favorites. Direction: Client→Server.</summary>
     MountUnfavorite = 2006,
+    
+    /// <summary>Summon random favorite mount. Direction: Client→Server.</summary>
+    /// <remarks>Picks random from favorites. Convenience feature.</remarks>
     MountRandomFavorite = 2007,
+    
+    /// <summary>Summon battle pet. Direction: Client→Server.</summary>
+    /// <remarks>Call companion for pet battles. Response: PetSummonResult (2021).</remarks>
     PetSummon = 2020,
+    
+    /// <summary>Pet summon result. Direction: Server→Client.</summary>
+    /// <remarks>Pet active or error: Pet limit, in combat.</remarks>
     PetSummonResult = 2021,
+    
+    /// <summary>Dismiss pet. Direction: Client→Server.</summary>
+    /// <remarks>Remove pet from world.</remarks>
     PetDismiss = 2022,
+    
+    /// <summary>Rename pet. Direction: Client→Server.</summary>
+    /// <remarks>Change pet name. Subject to profanity filter.</remarks>
     PetRename = 2023,
+    
+    /// <summary>Command pet action. Direction: Client→Server.</summary>
+    /// <remarks>Attack, follow, stay commands. Response: PetCommandResult (2025).</remarks>
     PetCommand = 2024,
+    
+    /// <summary>Pet command result. Direction: Server→Client.</summary>
+    /// <remarks>Pet executes command or cannot comply.</remarks>
     PetCommandResult = 2025,
+    
+    /// <summary>Pet state update. Direction: Server→Client.</summary>
+    /// <remarks>Health, happiness, level changes.</remarks>
     PetUpdate = 2026,
+    
+    /// <summary>Feed pet. Direction: Client→Server.</summary>
+    /// <remarks>Restore happiness. Requires food item.</remarks>
     PetFeed = 2027,
+    
+    /// <summary>Train pet ability. Direction: Client→Server.</summary>
+    /// <remarks>Learn new skill. May require training points.</remarks>
     PetTrain = 2028,
+    
+    /// <summary>Abandon pet permanently. Direction: Client→Server.</summary>
+    /// <remarks>Release pet. Cannot be undone.</remarks>
     PetAbandon = 2029,
+    
+    /// <summary>Store pet in stable. Direction: Client→Server.</summary>
+    /// <remarks>Inactive pets. Storage limit applies.</remarks>
     PetStable = 2030,
+    
+    /// <summary>Retrieve pet from stable. Direction: Client→Server.</summary>
+    /// <remarks>Make pet active again.</remarks>
     PetUnstable = 2031,
+    
+    /// <summary>Request pet list. Direction: Client→Server.</summary>
+    /// <remarks>All owned pets. Response: PetListResponse (2033).</remarks>
     PetListRequest = 2032,
+    
+    /// <summary>Pet collection data. Direction: Server→Client.</summary>
+    /// <remarks>Active and stabled pets with stats.</remarks>
     PetListResponse = 2033,
+    
+    /// <summary>Summon vanity companion. Direction: Client→Server.</summary>
+    /// <remarks>Cosmetic pet. Follows player.</remarks>
     CompanionSummon = 2050,
+    
+    /// <summary>Dismiss vanity companion. Direction: Client→Server.</summary>
     CompanionDismiss = 2051,
+    
+    /// <summary>Interact with companion. Direction: Client→Server.</summary>
+    /// <remarks>Pet tricks or emotes.</remarks>
     CompanionInteract = 2052,
+    
+    /// <summary>Request companion list. Direction: Client→Server.</summary>
+    /// <remarks>Response: CompanionListResponse (2054).</remarks>
     CompanionListRequest = 2053,
+    
+    /// <summary>Companion collection data. Direction: Server→Client.</summary>
     CompanionListResponse = 2054,
 
     // ═══════════════════════════════════════════════════════════════
     // SOCIAL (FRIENDS, BLOCK) (2100-2199)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Send friend request to player. Direction: Client→Server.</summary>
+    /// <remarks>Request friendship. Response: FriendRequestResult (2101).</remarks>
     FriendRequest = 2100,
+    
+    /// <summary>Friend request outcome. Direction: Server→Client.</summary>
+    /// <remarks>Pending, accepted, declined, or error: Player not found, already friends.</remarks>
     FriendRequestResult = 2101,
+    
+    /// <summary>Accept friend request. Direction: Client→Server.</summary>
+    /// <remarks>Confirm friendship. Both players added to friend lists.</remarks>
     FriendAccept = 2102,
+    
+    /// <summary>Decline friend request. Direction: Client→Server.</summary>
+    /// <remarks>Reject friendship offer.</remarks>
     FriendDecline = 2103,
+    
+    /// <summary>Remove friend. Direction: Client→Server.</summary>
+    /// <remarks>Delete from friend list. One-sided removal.</remarks>
     FriendRemove = 2104,
+    
+    /// <summary>Request friend list. Direction: Client→Server.</summary>
+    /// <remarks>Get all friends. Response: FriendListResponse (2106).</remarks>
     FriendListRequest = 2105,
+    
+    /// <summary>Friend list data. Direction: Server→Client.</summary>
+    /// <remarks>All friends with: Name, online status, zone/level, note.</remarks>
     FriendListResponse = 2106,
+    
+    /// <summary>Friend came online. Direction: Server→Client.</summary>
+    /// <remarks>Notification when friend logs in.</remarks>
     FriendOnline = 2107,
+    
+    /// <summary>Friend went offline. Direction: Server→Client.</summary>
+    /// <remarks>Notification when friend logs out.</remarks>
     FriendOffline = 2108,
+    
+    /// <summary>Friend info updated. Direction: Server→Client.</summary>
+    /// <remarks>Level, zone, or status changed.</remarks>
     FriendUpdate = 2109,
+    
+    /// <summary>Set friend note. Direction: Client→Server.</summary>
+    /// <remarks>Personal note about friend. Private text field.</remarks>
     FriendNote = 2110,
+    
+    /// <summary>Block player communications. Direction: Client→Server.</summary>
+    /// <remarks>Prevent messages/invites. Response: BlockPlayerResult (2121).</remarks>
     BlockPlayer = 2120,
+    
+    /// <summary>Block player result. Direction: Server→Client.</summary>
+    /// <remarks>Player blocked or error: Already blocked, cannot block self.</remarks>
     BlockPlayerResult = 2121,
+    
+    /// <summary>Unblock player. Direction: Client→Server.</summary>
+    /// <remarks>Remove from block list. Allow communication again.</remarks>
     UnblockPlayer = 2122,
+    
+    /// <summary>Request block list. Direction: Client→Server.</summary>
+    /// <remarks>Get all blocked players. Response: BlockListResponse (2124).</remarks>
     BlockListRequest = 2123,
+    
+    /// <summary>Block list data. Direction: Server→Client.</summary>
+    /// <remarks>All blocked players with timestamps.</remarks>
     BlockListResponse = 2124,
+    
+    /// <summary>Ignore player (temp block). Direction: Client→Server.</summary>
+    /// <remarks>Session-only block. Resets on logout.</remarks>
     IgnorePlayer = 2125,
+    
+    /// <summary>Unignore player. Direction: Client→Server.</summary>
+    /// <remarks>Remove from temporary ignore.</remarks>
     UnignorePlayer = 2126,
+    
+    /// <summary>Who query for players. Direction: Client→Server.</summary>
+    /// <remarks>Search online players by: Name, zone, level, class. Response: WhoResponse (2131).</remarks>
     WhoRequest = 2130,
+    
+    /// <summary>Who query results. Direction: Server→Client.</summary>
+    /// <remarks>List of matching players with basic info.</remarks>
     WhoResponse = 2131,
+    
+    /// <summary>Player location query. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Find friend's current zone/position.</remarks>
     PlayerLocation = 2132,
 
     // ═══════════════════════════════════════════════════════════════
     // EMOTES / ANIMATIONS / COSMETICS (2200-2299)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request to perform emote. Direction: Client→Server.</summary>
+    /// <remarks>Trigger animation and text. Response: EmoteBroadcast (2201) to nearby players.</remarks>
     EmoteRequest = 2200,
+    
+    /// <summary>Broadcast emote to area. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Player performed emote. Nearby clients play animation.</remarks>
     EmoteBroadcast = 2201,
+    
+    /// <summary>Targeted emote. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Emote directed at specific player. Includes target in text.</remarks>
     EmoteTargeted = 2202,
+    
+    /// <summary>Trigger custom animation. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Play specific animation. From abilities or cinematics.</remarks>
     AnimationTrigger = 2203,
+    
+    /// <summary>Cancel ongoing animation. Direction: Client→Server.</summary>
+    /// <remarks>Interrupt emote/animation.</remarks>
     AnimationCancel = 2204,
+    
+    /// <summary>Start dancing. Direction: Client→Server.</summary>
+    /// <remarks>Continuous dance animation. Loops until stopped.</remarks>
     DanceStart = 2210,
+    
+    /// <summary>Stop dancing. Direction: Client→Server.</summary>
+    /// <remarks>End dance animation.</remarks>
     DanceStop = 2211,
+    
+    /// <summary>Sit down. Direction: Client→Server.</summary>
+    /// <remarks>Character sits. May trigger resting/regeneration.</remarks>
     SitRequest = 2212,
+    
+    /// <summary>Stand up. Direction: Client→Server.</summary>
+    /// <remarks>Character stands. Exit sitting animation.</remarks>
     StandRequest = 2213,
+    
+    /// <summary>Sleep (lie down). Direction: Client→Server.</summary>
+    /// <remarks>Sleeping animation. Roleplay action.</remarks>
     SleepRequest = 2214,
+    
+    /// <summary>Kneel. Direction: Client→Server.</summary>
+    /// <remarks>Kneeling pose. Often used for roleplay/respect.</remarks>
     KneelRequest = 2215,
+    
+    /// <summary>Equip cosmetic item. Direction: Client→Server.</summary>
+    /// <remarks>Wear appearance item. No stat impact.</remarks>
     CosmeticEquip = 2230,
+    
+    /// <summary>Unequip cosmetic item. Direction: Client→Server.</summary>
+    /// <remarks>Remove appearance item.</remarks>
     CosmeticUnequip = 2231,
+    
+    /// <summary>Preview cosmetic. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Try appearance before purchase/applying.</remarks>
     CosmeticPreview = 2232,
+    
+    /// <summary>Apply transmog appearance. Direction: Client→Server.</summary>
+    /// <remarks>Change item look. Costs transmog currency.</remarks>
     TransmogApply = 2233,
+    
+    /// <summary>Remove transmog. Direction: Client→Server.</summary>
+    /// <remarks>Restore original item appearance.</remarks>
     TransmogRemove = 2234,
+    
+    /// <summary>Save transmog set. Direction: Client→Server.</summary>
+    /// <remarks>Store appearance loadout for quick switching.</remarks>
     TransmogSave = 2235,
+    
+    /// <summary>Load transmog set. Direction: Client→Server.</summary>
+    /// <remarks>Apply saved appearance loadout.</remarks>
     TransmogLoad = 2236,
+    
+    /// <summary>Use toy item. Direction: Client→Server.</summary>
+    /// <remarks>Activate fun item effect. Cosmetic actions.</remarks>
     ToyUse = 2240,
+    
+    /// <summary>Request toy collection. Direction: Client→Server.</summary>
+    /// <remarks>Get all owned toys. Response: ToyListResponse (2242).</remarks>
     ToyListRequest = 2241,
+    
+    /// <summary>Toy collection data. Direction: Server→Client.</summary>
+    /// <remarks>Unlocked toys with cooldowns and effects.</remarks>
     ToyListResponse = 2242,
 
     // ═══════════════════════════════════════════════════════════════
     // ADMIN / GM TOOLS (2300-2399)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Execute admin command. Direction: Client→Server.</summary>
+    /// <remarks>GM command with parameters. Response: AdminCommandResult (2301). Logged for audit.</remarks>
     AdminCommand = 2300,
+    
+    /// <summary>Admin command result. Direction: Server→Client.</summary>
+    /// <remarks>Success confirmation or error message.</remarks>
     AdminCommandResult = 2301,
+    
+    /// <summary>Teleport self to location. Direction: Client→Server.</summary>
+    /// <remarks>GM instant travel. Coordinates or zone name.</remarks>
     AdminTeleport = 2302,
+    
+    /// <summary>Teleport player to location. Direction: Client→Server.</summary>
+    /// <remarks>Move player forcibly. Logged action.</remarks>
     AdminTeleportPlayer = 2303,
+    
+    /// <summary>Kick player from server. Direction: Client→Server.</summary>
+    /// <remarks>Disconnect player. Optional reason message.</remarks>
     AdminKick = 2304,
+    
+    /// <summary>Ban player account. Direction: Client→Server.</summary>
+    /// <remarks>Prevent login. Duration: Temporary or permanent. Requires reason.</remarks>
     AdminBan = 2305,
+    
+    /// <summary>Unban player account. Direction: Client→Server.</summary>
+    /// <remarks>Lift ban. Restore access.</remarks>
     AdminUnban = 2306,
+    
+    /// <summary>Mute player chat. Direction: Client→Server.</summary>
+    /// <remarks>Prevent chat messages. Duration-based.</remarks>
     AdminMute = 2307,
+    
+    /// <summary>Unmute player. Direction: Client→Server.</summary>
+    /// <remarks>Restore chat privileges.</remarks>
     AdminUnmute = 2308,
+    
+    /// <summary>Spawn NPC/object. Direction: Client→Server.</summary>
+    /// <remarks>Create entity. For testing or events.</remarks>
     AdminSpawn = 2309,
+    
+    /// <summary>Despawn entity. Direction: Client→Server.</summary>
+    /// <remarks>Remove spawned NPC/object.</remarks>
     AdminDespawn = 2310,
+    
+    /// <summary>Kill player/NPC instantly. Direction: Client→Server.</summary>
+    /// <remarks>Set health to 0. Trigger death.</remarks>
     AdminKill = 2311,
+    
+    /// <summary>Revive dead player. Direction: Client→Server.</summary>
+    /// <remarks>Resurrect at current location. Full health/mana.</remarks>
     AdminRevive = 2312,
+    
+    /// <summary>Heal player fully. Direction: Client→Server.</summary>
+    /// <remarks>Restore health and resources to maximum.</remarks>
     AdminHeal = 2313,
+    
+    /// <summary>Toggle god mode. Direction: Client→Server.</summary>
+    /// <remarks>Invulnerability. For testing.</remarks>
     AdminGodMode = 2314,
+    
+    /// <summary>Toggle invisibility. Direction: Client→Server.</summary>
+    /// <remarks>Hide from players and NPCs.</remarks>
     AdminInvisible = 2315,
+    
+    /// <summary>Freeze player. Direction: Client→Server.</summary>
+    /// <remarks>Prevent movement and actions. Discipline tool.</remarks>
     AdminFreeze = 2316,
+    
+    /// <summary>Unfreeze player. Direction: Client→Server.</summary>
+    /// <remarks>Restore movement.</remarks>
     AdminUnfreeze = 2317,
+    
+    /// <summary>Give item to player. Direction: Client→Server.</summary>
+    /// <remarks>Add item directly to inventory. Specify quantity.</remarks>
     AdminGiveItem = 2318,
+    
+    /// <summary>Remove item from player. Direction: Client→Server.</summary>
+    /// <remarks>Delete item from inventory.</remarks>
     AdminRemoveItem = 2319,
+    
+    /// <summary>Set player level. Direction: Client→Server.</summary>
+    /// <remarks>Change character level directly.</remarks>
     AdminSetLevel = 2320,
+    
+    /// <summary>Modify player stat. Direction: Client→Server.</summary>
+    /// <remarks>Change strength, agility, etc. For testing.</remarks>
     AdminSetStat = 2321,
+    
+    /// <summary>Set faction reputation. Direction: Client→Server.</summary>
+    /// <remarks>Override reputation standing.</remarks>
     AdminSetReputation = 2322,
+    
+    /// <summary>Give gold to player. Direction: Client→Server.</summary>
+    /// <remarks>Add currency directly.</remarks>
     AdminAddGold = 2323,
+    
+    /// <summary>Remove gold from player. Direction: Client→Server.</summary>
+    /// <remarks>Deduct currency.</remarks>
     AdminRemoveGold = 2324,
+    
+    /// <summary>Broadcast announcement. Direction: Client→Server.</summary>
+    /// <remarks>Server-wide message. All online players.</remarks>
     AdminAnnounce = 2325,
+    
+    /// <summary>Whisper as GM. Direction: Client→Server.</summary>
+    /// <remarks>Private message with GM tag.</remarks>
     AdminWhisper = 2326,
+    
+    /// <summary>Summon player to GM. Direction: Client→Server.</summary>
+    /// <remarks>Teleport player to admin location.</remarks>
     AdminSummonPlayer = 2327,
+    
+    /// <summary>Appear at player location. Direction: Client→Server.</summary>
+    /// <remarks>Teleport to player for assistance/investigation.</remarks>
     AdminAppearPlayer = 2328,
+    
+    /// <summary>Request player detailed info. Direction: Client→Server.</summary>
+    /// <remarks>Get account, character, session data. For support.</remarks>
     AdminPlayerInfo = 2329,
+    
+    /// <summary>Request server info. Direction: Client→Server.</summary>
+    /// <remarks>Server stats: Population, uptime, performance.</remarks>
     AdminServerInfo = 2330,
+    
+    /// <summary>Reload configuration. Direction: Client→Server.</summary>
+    /// <remarks>Hot-reload config files without restart.</remarks>
     AdminReloadConfig = 2331,
+    
+    /// <summary>Reload scripts/lua. Direction: Client→Server.</summary>
+    /// <remarks>Refresh game scripts for rapid iteration.</remarks>
     AdminReloadScripts = 2332,
+    
+    /// <summary>Shutdown server gracefully. Direction: Client→Server.</summary>
+    /// <remarks>Save state and close connections. Optional delay.</remarks>
     AdminShutdown = 2333,
+    
+    /// <summary>Restart server. Direction: Client→Server.</summary>
+    /// <remarks>Shutdown and auto-restart. For updates.</remarks>
     AdminRestart = 2334,
+    
+    /// <summary>Enter maintenance mode. Direction: Client→Server.</summary>
+    /// <remarks>Prevent new logins. Existing players can finish.</remarks>
     AdminMaintenance = 2335,
+    
+    /// <summary>View admin action log. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Audit trail of GM commands for accountability.</remarks>
     AdminLog = 2336,
 
     // ═══════════════════════════════════════════════════════════════
