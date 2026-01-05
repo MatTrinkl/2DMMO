@@ -63,6 +63,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 ## 🧠 Datenmodell
 
 **DeathStateDto**  
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | CharacterId | long | Entity/Character Id | Ja |
@@ -77,6 +78,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 | Flags | DeathFlags | Bitmask für Sonderfälle | Ja |
 
 **CorpseDto**  
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | CorpseId | long | Server-generierte Id | Ja |
@@ -89,6 +91,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 | IsReleased | bool | Ob Spirit bereits freigesetzt | Ja |
 
 **RespawnPointDto**  
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | RespawnPointId | int | Graveyard/Checkpoint Id | Ja |
@@ -100,6 +103,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 | RequiresCorpse | bool | Ob Corpse-Abholung nötig | Ja |
 
 **ResurrectionOfferDto**  
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | OfferId | Guid | Eindeutige Offer-ID | Ja |
@@ -114,6 +118,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 | AllowedStates | DeathState[] | Erlaubte Ziel-States (Dead/Ghost) | Ja |
 
 **GhostStateDto**  
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
 | CharacterId | long | Geist-Charakter | Ja |
@@ -125,6 +130,7 @@ Scope dieser Kategorie: **death, downed, respawn, resurrection, penalties**. Die
 | Timestamp | long | Server-Zeit des Snapshots | Ja |
 
 **Vector2**  
+
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
 | X | float | Weltkoordination X |

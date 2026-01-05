@@ -26,4 +26,16 @@ public class EncryptionHandshake : IClientMessage, ITimestampedMessage
     /// </summary>
     [Key(1)]
     public long Timestamp { get; init; } = NetworkTime.Now;
+    /// <summary>
+    /// Client ECDH Public Key.
+    /// </summary>
+    [Key(2)] public byte[] ClientPublicKey { get; init; } = Array.Empty<byte>();
+    /// <summary>
+    /// Supported cipher suites.
+    /// </summary>
+    [Key(3)] public ushort[] SupportedCipherSuites { get; init; } = Array.Empty<ushort>();
+    /// <summary>
+    /// 32-byte Random for key derivation.
+    /// </summary>
+    [Key(4)] public byte[] ClientRandom { get; init; } = new byte[32];
 }

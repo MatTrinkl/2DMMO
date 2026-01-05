@@ -10,6 +10,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 ///     This class sends a response to a <see cref="RealmListRequest" /> to the client.
 ///     Server -> Client
 ///     Todo: We dont have different server currently but later at sometime.
+///     Todo: DTO
 /// </summary>
 [MessagePackObject]
 [NetworkMessage(MessageType.AccountDataResponse)]

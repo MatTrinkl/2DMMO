@@ -18,7 +18,7 @@ public enum CharacterCreateResponseErrorCode
     NameInvalid,
 
     /// <summary>
-    ///     The submitted name is too long.
+    ///     The maximum of characters per account is reached.
     /// </summary>
     MaxCharactersReached,
 

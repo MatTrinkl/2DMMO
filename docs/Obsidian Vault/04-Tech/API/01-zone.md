@@ -891,7 +891,7 @@ var delta = new ICharacterEntityDelta
 - **Eindeutige Semantik**: `null` = unverändert vs. `0` = Wert auf 0 geändert
 - **Flexibilität**: Jede Entity kann unterschiedliche Felder ändern
 
-#### O(1) Lookup mit IDeltaDto<TId>
+#### O(1) Lookup mit IDeltaDto TId
 
 Delta DTOs implementieren `IDeltaDto<Guid>` für effiziente Lookups:
 
@@ -2107,9 +2107,6 @@ public class ZoneLoadedAck : IClientMessage
 [Key(1)] public ushort ZoneId { get; set; }
 [Key(2)] public int? LoadTimeMs { get; set; }
 }
-
-````
-
 ### Client-Logik
 
 ```csharp

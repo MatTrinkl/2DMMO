@@ -17,7 +17,7 @@ namespace Mmo.Shared.Connection.Messages.Server_Client;
 public class RealmListResponse : IServerMessage
 {
     /// <summary>
-    ///     A list of all realms.
+    ///     A list of all realms. Todo: ListDTO
     /// </summary>
     [Key(1)]
     public List<RealmInfo> Realms { get; set; } = [];

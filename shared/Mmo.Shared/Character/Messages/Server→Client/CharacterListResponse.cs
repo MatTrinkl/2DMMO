@@ -16,7 +16,7 @@ namespace Mmo.Shared.Character.Messages.Server_Client;
 public class CharacterListResponse : IServerMessage
 {
     /// <summary>
-    ///     The reason the client needs to disconnect.
+    ///     The reason the client needs to disconnect. Todo: update to ListDTO.
     /// </summary>
     [Key(1)]
     public List<CharacterInfo> Characters { get; set; } = [];

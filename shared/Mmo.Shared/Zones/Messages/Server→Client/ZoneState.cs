@@ -18,14 +18,40 @@ namespace Mmo.Shared.Zones.Messages.Server_Client;
 [NetworkMessage(MessageType.ZoneState)]
 public class ZoneState : IServerMessage, ITimestampedMessage
 {
-    [Key(2)] public required ZoneConfigDto ZoneConfig { get; init; }
+    /// <summary>
+    /// Static Zone configuration
+    /// </summary>
+    [Key(2)]
+    public required ZoneConfigDto ZoneConfig { get; init; }
 
-    [Key(3)] public required ZoneContextDto ZoneContext { get; init; }
+    /// <summary>
+    /// Dynamic Zone state (without entities).
+    /// </summary>
+    [Key(3)]
+    public required ZoneContextDto ZoneContext { get; init; }
 
-    [Key(4)] public required List<EntityDtoUnion> Entities { get; init; }
-    [Key(5)] public ZoneStateType State { get; init; } = ZoneStateType.FullSync;
+    /// <summary>
+    /// All entities in the zone.
+    /// </summary>
+    [Key(4)]
+    public required List<EntityDtoUnion> Entities { get; init; }
+
+    /// <summary>
+    /// Which state is this message?
+    /// </summary>
+    [Key(5)]
+    public ZoneStateType State { get; init; } = ZoneStateType.FullSync;
+    /// <summary>
+    /// Player character entity.
+    /// </summary>
     [Key(6)] public CharacterEntityDto? MyCharacter { get; init; }
+    /// <summary>
+    /// If this is true an Entity Batch will follow.
+    /// </summary>
     [Key(7)] public bool HasMoreEntities { get; init; }
+    /// <summary>
+    /// Sum of all entities in the zone.
+    /// </summary>
     [Key(8)] public int TotalEntitiesCount { get; init; }
 
     /// <summary>

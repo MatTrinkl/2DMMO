@@ -20,7 +20,7 @@ public class CharacterSelectResponse : IResponseMessage<CharacterSelectResponseE
     ///     The ID of the selected character.
     /// </summary>
     [Key(5)]
-    public long? CharcterId { get; init; } = null;
+    public long? CharacterId { get; init; } = null;
 
     /// <summary>
     ///     Only if <see cref="Success" />==true.

@@ -422,19 +422,19 @@ var banDisconnect = new ForceDisconnect
 ```
 
 ### Disconnect Reasons
-| Reason           | CanReconnect | Beschreibung                    |
-|------------------|--------------|--------------------------------|
-| `Timeout`        | true         | Keine Heartbeats empfangen      |
-| `Kicked`         | true         | Admin-Kick                      |
-| `Banned`         | false        | Account gesperrt                |
-| `VersionMismatch`| false        | Client-Version inkompatibel     |
-| `Maintenance`    | true         | Server-Wartung                  |
-| `DuplicateLogin` | true         | Anderer Login mit gleichem Account |
-| `MAINTENANCE` | true | Server-Wartung |
-| `SERVER_SHUTDOWN` | true | Server fährt herunter |
-| `DUPLICATE_LOGIN` | true | Andere Session auf gleichem Account |
-| `PROTOCOL_ERROR` | true | Ungültige Message empfangen |
-| `VERSION_MISMATCH` | false | Client muss updaten |
+| Reason             | CanReconnect | Beschreibung                        |
+| ------------------ | ------------ | ----------------------------------- |
+| `Timeout`          | true         | Keine Heartbeats empfangen          |
+| `Kicked`           | true         | Admin-Kick                          |
+| `Banned`           | false        | Account gesperrt                    |
+| `VersionMismatch`  | false        | Client-Version inkompatibel         |
+| `Maintenance`      | true         | Server-Wartung                      |
+| `DuplicateLogin`   | true         | Anderer Login mit gleichem Account  |
+| `MAINTENANCE`      | true         | Server-Wartung                      |
+| `SERVER_SHUTDOWN`  | true         | Server fährt herunter               |
+| `DUPLICATE_LOGIN`  | true         | Andere Session auf gleichem Account |
+| `PROTOCOL_ERROR`   | true         | Ungültige Message empfangen         |
+| `VERSION_MISMATCH` | false        | Client muss updaten                 |
 
 ### Notizen
 - Server hat 5 Sekunden Zeit um State zu speichern
@@ -1093,6 +1093,7 @@ Liste aller Characters des Accounts mit Basic-Informationen für Character-Selec
 | Characters | List<CharacterInfo> | Liste der Characters | Ja |
 
 **CharacterInfo**:
+
 | Feld | Typ | Beschreibung |
 |------|-----|--------------|
 | CharacterId | long | Eindeutige Character-ID |
@@ -1355,79 +1356,525 @@ Detaillierte Account-Informationen.
 ## EncryptionHandshake (19)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Einmalig  
-**Authentifizierung:** Nein  
-**Spezielle Rechte:** Keine
+**Frequenz:** Einmalig (vor Login)  
+**Authentifizierung:** Nein (ist Teil des Verbindungsaufbaus)  
+**Spezielle Rechte:** Keine  
+**Phase:** Phase 3
 
 ### Beschreibung
-TLS-Encryption Handshake für sichere Verbindung. Client initiiert Handshake, Server antwortet mit separater Response-Message.
+
+TLS-ähnlicher Encryption Handshake für sichere Verbindung.  Client initiiert den Handshake als erste Message nach TCP-Connect.  Server antwortet mit `EncryptionHandshakeResponse (25)`. Nach erfolgreichem Handshake ist die gesamte Kommunikation verschlüsselt.
 
 ### Im Scope ✅
-- TLS 1.3 Handshake initiieren
-- Key Exchange für verschlüsselte Kommunikation
-- Certificate Validation
+
+- ECDH Key Exchange initiieren
+- Cipher Suite Negotiation
+- Client Random für Key Derivation
 
 ### Nicht im Scope ❌
-- Plaintext-Fallback → immer TLS oder Disconnect
-- Certificate Pinning → standard CA-Validation
 
-### Payload
+- Plaintext-Fallback → immer Encryption oder Disconnect
+- Certificate Pinning → Standard CA-Validation
+- Re-Keying während Session → geplant für Phase 4
+
+### Request Payload
+
 | Feld | Typ | Beschreibung | Pflicht |
 |------|-----|--------------|---------|
-| ClientPublicKey | byte[] | Client's ECDH Public Key | Ja |
-| SupportedCipherSuites | ushort[] | Unterstützte Cipher Suites | Ja |
+| ClientPublicKey | byte[] | Client's ECDH Public Key (32 Bytes) | Ja |
+| SupportedCipherSuites | ushort[] | Liste unterstützter Cipher Suites | Ja |
 | ClientRandom | byte[32] | 32-Byte Random für Key Derivation | Ja |
+| ProtocolVersion | ushort | Encryption Protocol Version | Ja |
+
+### Unterstützte Cipher Suites
+
+| ID | Name | Beschreibung |
+|----|------|--------------|
+| 0x0001 | `ECDHE_AES128_GCM_SHA256` | ECDH + AES-128-GCM (empfohlen) |
+| 0x0002 | `ECDHE_AES256_GCM_SHA384` | ECDH + AES-256-GCM |
+| 0x0003 | `ECDHE_CHACHA20_POLY1305` | ECDH + ChaCha20-Poly1305 |
 
 ### Erwartete Response
-- Server sendet eigene Handshake-Antwort mit Server Public Key
-- Danach: verschlüsselte Kommunikation
+
+- **Bei Erfolg:** `EncryptionHandshakeResponse` (25) mit Success=true
+- **Bei Fehler:** `EncryptionHandshakeResponse` (25) mit ErrorCode, danach Disconnect
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `EncryptionHandshakeResponse` | 25 | Response zu diesem Request |
+| `LoginRequest` | 1 | Darf erst NACH erfolgreichem Handshake gesendet werden |
+| `CompressionToggle` | 20 | Kann nach Encryption aktiviert werden |
+
+### Flow-Diagramm
+
+```
+Client                              Server
+  │                                    │
+  │  TCP Connect                       │
+  │═══════════════════════════════════►│
+  │                                    │
+  │  EncryptionHandshake (19)          │
+  │  [ClientPubKey, CipherSuites]      │
+  │───────────────────────────────────►│
+  │                                    │  Validate
+  │                                    │  Generate ServerKeyPair
+  │                                    │  Select CipherSuite
+  │  EncryptionHandshakeResponse (25)  │
+  │  [ServerPubKey, SelectedSuite]     │
+  │◄───────────────────────────────────│
+  │                                    │
+  │  ══════ ENCRYPTED FROM HERE ══════ │
+  │                                    │
+  │  LoginRequest (1)                  │
+  │───────────────────────────────────►│
+```
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.EncryptionHandshake)]
+public class EncryptionHandshake :  IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.EncryptionHandshake;
+    [Key(1)] public byte[] ClientPublicKey { get; set; } = Array.Empty<byte>();
+    [Key(2)] public ushort[] SupportedCipherSuites { get; set; } = Array.Empty<ushort>();
+    [Key(3)] public byte[] ClientRandom { get; set; } = new byte[32];
+    [Key(4)] public ushort ProtocolVersion { get; set; } = 1;
+}
+```
+
+### Beispiel Payload
+
+```csharp
+// Client generiert ECDH Keypair
+using var ecdh = ECDiffieHellman. Create(ECCurve. NamedCurves. nistP256);
+var clientPublicKey = ecdh. PublicKey. ExportSubjectPublicKeyInfo();
+
+var handshake = new EncryptionHandshake
+{
+    ClientPublicKey = clientPublicKey,
+    SupportedCipherSuites = new ushort[] { 0x0001, 0x0002, 0x0003 },
+    ClientRandom = RandomNumberGenerator.GetBytes(32),
+    ProtocolVersion = 1
+};
+```
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `UNSUPPORTED_CIPHER` | Keine gemeinsame Cipher Suite | Client updaten |
+| `INVALID_PUBLIC_KEY` | Public Key ungültig | Erneut versuchen |
+| `PROTOCOL_VERSION_MISMATCH` | Encryption-Version inkompatibel | Client updaten |
+| `HANDSHAKE_TIMEOUT` | Handshake dauerte > 5 Sekunden | Erneut verbinden |
 
 ### Notizen
-- Handshake MUSS vor LoginRequest erfolgen
-- Timeout: 5 Sekunden für Handshake-Completion
-- Bei Fehler: Connection wird geschlossen
+
+- **MUSS** erste Message nach TCP-Connect sein
+- **Timeout:** 5 Sekunden für kompletten Handshake
+- **Bei Fehler:** Server schließt Connection sofort
+- **Nach Erfolg:** Alle weiteren Messages sind mit SharedSecret verschlüsselt
+- **Key Derivation:** HKDF-SHA256 aus SharedSecret + ClientRandom + ServerRandom
+- **Im Prototyp:** Noch nicht implementiert (Phase 3)
+
+---
+
+## EncryptionHandshakeResponse (25)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Einmalig (nach EncryptionHandshake)  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine  
+**Phase:** Phase 3
+
+### Beschreibung
+
+Server-Antwort auf den Encryption Handshake.  Enthält Server's Public Key und die gewählte Cipher Suite.  Nach dieser Message ist die Verbindung verschlüsselt.
+
+### Im Scope ✅
+
+- Server ECDH Public Key
+- Gewählte Cipher Suite (aus Client-Liste)
+- Server Random für Key Derivation
+- Erfolgs-/Fehler-Status
+
+### Nicht im Scope ❌
+
+- Certificate Chain → TLS auf Socket-Ebene
+- Session Resumption → geplant
+
+### Response Payload
+
+| Feld                | Typ       | Beschreibung                        | Pflicht    |
+| ------------------- | --------- | ----------------------------------- | ---------- |
+| Success             | bool      | Handshake erfolgreich?              | Ja         |
+| ErrorCode           | string?   | Fehlercode bei Failure              | Nein       |
+| ErrorMessage        | string?   | Menschenlesbare Fehlermeldung       | Nein       |
+| ServerPublicKey     | byte[]?   | Server's ECDH Public Key (32 Bytes) | Bei Erfolg |
+| SelectedCipherSuite | ushort    | Gewählte Cipher Suite               | Bei Erfolg |
+| ServerRandom        | byte[32]? | 32-Byte Random für Key Derivation   | Bei Erfolg |
+| ProtocolVersion     | ushort    | Verwendete Protocol Version         | Bei Erfolg |
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `EncryptionHandshake` | 19 | Request zu dieser Response |
+| `LoginRequest` | 1 | Nächste Message nach erfolgreichem Handshake |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.EncryptionHandshakeResponse)]
+public class EncryptionHandshakeResponse : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.EncryptionHandshakeResponse;
+    [Key(1)] public bool Success { get; set; }
+    [Key(2)] public string?  ErrorCode { get; set; }
+    [Key(3)] public string? ErrorMessage { get; set; }
+    [Key(4)] public byte[]? ServerPublicKey { get; set; }
+    [Key(5)] public ushort SelectedCipherSuite { get; set; }
+    [Key(6)] public byte[]? ServerRandom { get; set; }
+    [Key(7)] public ushort ProtocolVersion { get; set; }
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Erfolg
+var successResponse = new EncryptionHandshakeResponse
+{
+    Success = true,
+    ServerPublicKey = serverEcdh.PublicKey. ExportSubjectPublicKeyInfo(),
+    SelectedCipherSuite = 0x0001, // ECDHE_AES128_GCM_SHA256
+    ServerRandom = RandomNumberGenerator.GetBytes(32),
+    ProtocolVersion = 1
+};
+
+// Fehler
+var errorResponse = new EncryptionHandshakeResponse
+{
+    Success = false,
+    ErrorCode = "UNSUPPORTED_CIPHER",
+    ErrorMessage = "No common cipher suite found.  Please update your client."
+};
+```
+
+### Client-Verhalten nach Response
+
+```csharp
+public void OnEncryptionHandshakeResponse(EncryptionHandshakeResponse response)
+{
+    if (! response.Success)
+    {
+        ShowError(response.ErrorMessage);
+        Disconnect();
+        return;
+    }
+    
+    // Derive shared secret
+    var serverPublicKey = ECDiffieHellman.Create();
+    serverPublicKey.ImportSubjectPublicKeyInfo(response.ServerPublicKey, out _);
+    
+    byte[] sharedSecret = _clientEcdh.DeriveKeyMaterial(serverPublicKey.PublicKey);
+    
+    // Derive encryption keys using HKDF
+    byte[] keyMaterial = HKDF.DeriveKey(
+        HashAlgorithmName.SHA256,
+        sharedSecret,
+        64, // 32 bytes client key + 32 bytes server key
+        salt: _clientRandom. Concat(response.ServerRandom).ToArray(),
+        info:  Encoding.UTF8.GetBytes("2DMMO-Encryption-v1")
+    );
+    
+    // Enable encryption
+    _connection.EnableEncryption(
+        clientKey: keyMaterial[.. 32],
+        serverKey: keyMaterial[32..],
+        cipherSuite: response.SelectedCipherSuite
+    );
+    
+    // Now safe to send LoginRequest
+    SendLoginRequest();
+}
+```
+
+### Notizen
+
+- **Nach Success:** Nächste Message (LoginRequest) ist bereits verschlüsselt
+- **Bei Fehler:** Connection wird vom Server geschlossen
+- **Key Derivation:** Beide Seiten berechnen identisches SharedSecret
+- **Cipher Selection:** Server wählt stärkste gemeinsame Suite
 
 ---
 
 ## CompressionToggle (20)
 
 **Richtung:** 📤 Client → Server  
-**Frequenz:** Selten  
+**Frequenz:** Selten (typisch 1x nach Login)  
 **Authentifizierung:** 🔒 Ja  
-**Spezielle Rechte:** Keine
+**Spezielle Rechte:** Keine  
+**Phase:** Phase 3
 
 ### Beschreibung
-Aktiviert/Deaktiviert Message-Kompression für bandwidth-intensive Kommunikation.
+
+Aktiviert oder deaktiviert Message-Kompression für die Verbindung.  Kann vom Client angefordert werden, Server bestätigt mit `CompressionToggleResponse (26)`. Kompression reduziert Bandbreite, erhöht aber CPU-Last.
 
 ### Im Scope ✅
+
 - Kompression aktivieren/deaktivieren
 - Kompression-Level wählen (0-9)
-- LZ4 Fast Compression
+- Algorithmus wählen (LZ4, Zstd)
 
 ### Nicht im Scope ❌
-- Per-Message Kompression → global toggle
-- Asymmetrische Kompression → beide Richtungen gleich
 
-### Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| Enabled | bool | Kompression aktiviert? | Ja |
-| Level | byte | Kompression-Level (0-9, 0=fastest) | Ja |
-| Algorithm | CompressionAlgorithm | LZ4 oder Zstd | Ja |
+- Per-Message Kompression → Global Toggle für alle Messages
+- Asymmetrische Kompression → Beide Richtungen nutzen gleiche Einstellungen
+- Selective Compression → Alle oder keine Messages
+
+### Request Payload
+
+| Feld           | Typ                  | Beschreibung                               | Pflicht |
+| -------------- | -------------------- | ------------------------------------------ | ------- |
+| Enabled        | bool                 | Kompression aktivieren?                    | Ja      |
+| Level          | byte                 | Kompression-Level (0-9, 0=fastest, 9=best) | Ja      |
+| Algorithm      | CompressionAlgorithm | LZ4 oder Zstd                              | Ja      |
+| MinMessageSize | ushort               | Mindestgröße für Kompression (Bytes)       | Nein    |
+
+### CompressionAlgorithm Enum
+
+```csharp
+public enum CompressionAlgorithm :  byte
+{
+    None = 0,    // Keine Kompression
+    LZ4 = 1,     // Schnell, moderate Kompression (empfohlen für Games)
+    Zstd = 2     // Langsamer, bessere Kompression
+}
+```
 
 ### Erwartete Response
-- Server bestätigt mit gleicher Message (Echo-Pattern)
-- Ab nächster Message: Kompression aktiv/inaktiv
+
+- **Immer:** `CompressionToggleResponse` (26)
+- **Ab nächster Message:** Kompression aktiv/inaktiv
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CompressionToggleResponse` | 26 | Response zu diesem Request |
+| `EncryptionHandshake` | 19 | Sollte VOR Kompression erfolgen |
+| `MessageBundle` | 950 | Profitiert stark von Kompression |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.CompressionToggle)]
+public class CompressionToggle : IClientMessage
+{
+    [Key(0)] public MessageType Type => MessageType.CompressionToggle;
+    [Key(1)] public bool Enabled { get; set; }
+    [Key(2)] public byte Level { get; set; } = 1; // Fast
+    [Key(3)] public CompressionAlgorithm Algorithm { get; set; } = CompressionAlgorithm.LZ4;
+    [Key(4)] public ushort MinMessageSize { get; set; } = 64; // Nur Messages > 64 Bytes komprimieren
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Kompression aktivieren (empfohlene Settings)
+var enableCompression = new CompressionToggle
+{
+    Enabled = true,
+    Level = 1, // LZ4 fast
+    Algorithm = CompressionAlgorithm.LZ4,
+    MinMessageSize = 64
+};
+
+// Kompression deaktivieren
+var disableCompression = new CompressionToggle
+{
+    Enabled = false,
+    Level = 0,
+    Algorithm = CompressionAlgorithm.None
+};
+
+// Maximale Kompression (für langsame Verbindungen)
+var maxCompression = new CompressionToggle
+{
+    Enabled = true,
+    Level = 6,
+    Algorithm = CompressionAlgorithm. Zstd,
+    MinMessageSize = 32
+};
+```
 
 ### Notizen
-- Standard: Kompression deaktiviert
-- Empfohlen: Level 3 für Balance aus Speed und Ratio
-- Bei Zone-Loading: temporär Level 6 für bessere Ratio
+
+- **Empfehlung:** LZ4 Level 1 für beste Balance (Speed vs.  Ratio)
+- **MinMessageSize:** Messages unter dieser Größe werden nicht komprimiert (Overhead)
+- **Timing:** Kompression gilt ab der Message NACH der Response
+- **CPU-Trade-off:** Höheres Level = mehr CPU, weniger Bandbreite
+- **Im Prototyp:** Noch nicht implementiert (Phase 3)
 
 ---
 
-**Letzte Aktualisierung**: 2026-01-02  
-**Version**: 2.0.0
+## CompressionToggleResponse (26)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** Selten  
+**Authentifizierung:** Nein  
+**Spezielle Rechte:** Keine  
+**Phase:** Phase 3
+
+### Beschreibung
+
+Server-Antwort auf CompressionToggle Request. Bestätigt die aktivierte Kompression oder gibt Fehler zurück.  Ab der nächsten Message nach dieser Response ist die neue Kompression aktiv.
+
+### Im Scope ✅
+
+- Bestätigung der Kompression-Einstellungen
+- Mögliche Anpassungen durch Server (z.B. Level-Cap)
+- Fehler bei nicht unterstütztem Algorithmus
+
+### Nicht im Scope ❌
+
+- Kompression pro Message-Typ
+
+### Response Payload
+
+| Feld           | Typ                  | Beschreibung                  | Pflicht    |
+| -------------- | -------------------- | ----------------------------- | ---------- |
+| Success        | bool                 | Toggle erfolgreich?           | Ja         |
+| ErrorCode      | string?              | Fehlercode bei Failure        | Nein       |
+| ErrorMessage   | string?              | Menschenlesbare Fehlermeldung | Nein       |
+| Enabled        | bool                 | Kompression jetzt aktiv?      | Ja         |
+| Level          | byte                 | Tatsächlich verwendetes Level | Bei Erfolg |
+| Algorithm      | CompressionAlgorithm | Verwendeter Algorithmus       | Bei Erfolg |
+| MinMessageSize | ushort               | Effektive Mindestgröße        | Bei Erfolg |
+|                |                      |                               |            |
+
+### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `CompressionToggle` | 20 | Request zu dieser Response |
+
+### Code-Beispiel
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType. CompressionToggleResponse)]
+public class CompressionToggleResponse : IServerMessage
+{
+    [Key(0)] public MessageType Type => MessageType.CompressionToggleResponse;
+    [Key(1)] public bool Success { get; set; }
+    [Key(2)] public string? ErrorCode { get; set; }
+    [Key(3)] public string? ErrorMessage { get; set; }
+    [Key(4)] public bool Enabled { get; set; }
+    [Key(5)] public byte Level { get; set; }
+    [Key(6)] public CompressionAlgorithm Algorithm { get; set; }
+    [Key(7)] public ushort MinMessageSize { get; set; }
+}
+```
+
+### Beispiel Payloads
+
+```csharp
+// Erfolg - Settings wie angefordert
+var successResponse = new CompressionToggleResponse
+{
+    Success = true,
+    Enabled = true,
+    Level = 1,
+    Algorithm = CompressionAlgorithm.LZ4,
+    MinMessageSize = 64
+};
+
+// Erfolg - Server hat Level angepasst
+var adjustedResponse = new CompressionToggleResponse
+{
+    Success = true,
+    Enabled = true,
+    Level = 3, // Client wollte 9, Server capped auf 3
+    Algorithm = CompressionAlgorithm.LZ4,
+    MinMessageSize = 64
+};
+
+// Fehler
+var errorResponse = new CompressionToggleResponse
+{
+    Success = false,
+    ErrorCode = "UNSUPPORTED_ALGORITHM",
+    ErrorMessage = "Zstd compression is not supported on this server",
+    Enabled = false
+};
+```
+
+### Error Codes
+
+| Code | Bedeutung | Aktion |
+|------|-----------|--------|
+| `UNSUPPORTED_ALGORITHM` | Algorithmus nicht unterstützt | Anderen Algorithmus wählen |
+| `COMPRESSION_DISABLED` | Server erlaubt keine Kompression | Ohne Kompression weitermachen |
+| `INVALID_LEVEL` | Level außerhalb 0-9 | Gültiges Level wählen |
+
+### Frame-Format mit Kompression
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  COMPRESSED MESSAGE FRAME                                    │
+│                                                              │
+│  ┌──────────┬──────────┬──────────┬───────────────────────┐ │
+│  │  1 Byte  │  4 Bytes │  4 Bytes │       N Bytes         │ │
+│  │  Flags   │  Length  │ Original │  Compressed Payload   │ │
+│  │          │(compress)│  Length  │                       │ │
+│  └──────────┴──────────┴──────────┴───────────────────────┘ │
+│                                                              │
+│  Flags Byte:                                                  │
+│  ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐         │
+│  │  7  │  6  │  5  │  4  │  3  │  2  │  1  │  0  │         │
+│  │ Res │ Res │ Res │ Res │ Res │ Res │ Alg │Comp │         │
+│  └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘         │
+│                                                              │
+│  Bit 0: IsCompressed (1 = ja, 0 = nein)                     │
+│  Bit 1: Algorithm (0 = LZ4, 1 = Zstd)                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Notizen
+
+- **Timing:** Kompression aktiv ab Message NACH dieser Response
+- **Beide Richtungen:** Client und Server nutzen gleiche Einstellungen
+- **Overhead:** Kleine Messages (<MinMessageSize) werden nicht komprimiert
+- **Fallback:** Bei Dekompressions-Fehler → Disconnect
+
+---
+
+## MessageType Enum Erweiterung
+
+```csharp
+// In MessageType.cs - CONNECTION / AUTHENTICATION (0000-0099)
+EncryptionHandshake = 19,
+CompressionToggle = 20,
+CharacterSelectResponse = 21,
+CharacterCreateResponse = 22,
+CharacterDeleteResponse = 23,
+ServerSelectResponse = 24,
+EncryptionHandshakeResponse = 25,  // NEU
+CompressionToggleResponse = 26,     // NEU
+```
+
+---
+
+**Letzte Aktualisierung**: 2026-01-04  
+**Version**: 2.1.0
 
 [← Zurück zur Übersicht](Message-Reference.md)
 

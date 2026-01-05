@@ -10,38 +10,33 @@ namespace Mmo.Shared.Connection.Enums;
 public enum LoginResponseErrorCode : byte
 {
     /// <summary>
-    ///     Default fallback.
-    /// </summary>
-    UnknownError = 0,
-
-    /// <summary>
     ///     Is sent when the <see cref="LoginRequest.Username" /> or <see cref="LoginRequest.Password" /> is incorrect.
     /// </summary>
-    InvalidCredentials = 1,
+    InvalidCredentials = 0,
 
     /// <summary>
     ///     Is sent when the requested account is flagged as banned.
     /// </summary>
-    AccountBanned = 2,
+    AccountBanned = 1,
 
     /// <summary>
     ///     Is sent when <see cref="LoginRequest.ClientVersion" /> doesn't match the accepted server version of the game.
     /// </summary>
-    VersionMismatch = 3,
+    VersionMismatch = 2,
 
     /// <summary>
     ///     Is sent when the server is full.
     /// </summary>
-    ServerFull = 4,
+    ServerFull = 3,
 
     /// <summary>
     ///     Is sent when the account is already logged in. Todo: Anti cheat system needs to handle this. (Maybe kick the old or
     ///     denie the new)
     /// </summary>
-    AlreadyLoggedIn = 5,
+    AlreadyLoggedIn = 4,
 
     /// <summary>
     ///     This is sent when the <see cref="RateLimits.LoginRequestPerMinute" /> of client requests is reached.
     /// </summary>
-    RateLimitExceeded = 6
+    RateLimitExceeded = 5
 }

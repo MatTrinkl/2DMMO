@@ -339,6 +339,8 @@ public enum MessageType : ushort
     /// On failure: ErrorCode (SERVER_FULL, SERVER_OFFLINE, etc.).
     /// </remarks>
     ServerSelectResponse = 24,
+    EncryptionHandshakeResponse = 25,
+    CompressionToggleResponse = 26,
 
     // ═══════════════════════════════════════════════════════════════
     // ZONE EVENTS (0100-0199)
