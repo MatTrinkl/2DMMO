@@ -17,17 +17,17 @@ Creation of a scalable online multiplayer game with:
 
 ## 📚 Documentation
 
-> **Note:** The documentation has been restructured. See [docs/README.md](docs/README.md) for the complete overview.
+The project documentation lives in the **Obsidian Vault**:
 
-### Quick Access
+👉 **[Open Documentation](docs/Obsidian%20Vault/00-Home/Home.md)**
 
-| Document | Description |
-|----------|--------------|
-| [📚 Documentation Index](docs/README.md) | Central overview of all documents |
-| [🎮 Game Design Document](docs/01-overview/GAME_DESIGN_DOCUMENT.md) | Gameplay, races, classes, systems |
-| [🏗️ Architecture](docs/02-architecture/README.md) | Technical architecture, network, database |
-| [🛠️ Technical Design](docs/03-technical-details/TECHNICAL_DESIGN.md) | Detailed technical decisions |
-| [🎯 Prototype Scope](docs/01-overview/PROTOTYPE_SCOPE.md) | What the prototype must be able to do |
+Key entry points:
+- [Home & Quick Links](docs/Obsidian%20Vault/00-Home/Home.md)
+- [Documentation Overview](docs/Obsidian%20Vault/00-Home/Docs-Overview.md)
+- [Tech Architecture](docs/Obsidian%20Vault/04-Tech/Tech%20(MOC).md)
+- [Planning & Roadmap](docs/Obsidian%20Vault/01-Planning/Planning%20(MOC).md)
+
+> 💡 **Tip:** Clone the repo and open `docs/Obsidian Vault/` as a vault in [Obsidian](https://obsidian.md/) for the best experience with linked notes and graph view.
 
 ## 🛠️ Tech-Stack
 
@@ -77,21 +77,15 @@ Creation of a scalable online multiplayer game with:
 │   ├── Mmo.Shared.Tests/
 │   └── Mmo.Server.Tests/
 ├── docs/                       # Documentation
-│   ├── README.md               # Documentation index
-│   ├── 01-overview/            # High-level project information
-│   │   ├── GAME_DESIGN_DOCUMENT.md
-│   │   ├── PROTOTYPE_SCOPE.md
-│   │   └── ASSETS.md
-│   ├── 02-architecture/        # Technical architecture
-│   │   ├── README.md           # Architecture overview
-│   │   ├── SERVER_COMPONENTS.md
-│   │   ├── NETWORK_PROTOCOL.md
-│   │   └── ...                 # More architecture documents
-│   ├── 03-technical-details/   # Implementation details
-│   │   └── TECHNICAL_DESIGN.md
-│   └── 04-project-management/  # Issue tracking & planning
-│       ├── ISSUE_HIERARCHY.md
-│       └── ISSUES_ROADMAP.md
+│   └── Obsidian Vault/         # Obsidian-based documentation (single source of truth)
+│       ├── 00-Home/            # Home page and documentation overview
+│       ├── 01-Planning/        # Project management, roadmap, issues
+│       ├── 02-Game-Design/     # Game design, races, classes, systems
+│       ├── 04-Tech/            # Technical architecture, protocols, implementation
+│       ├── 05-Decisions/       # Architectural Decision Records (ADRs)
+│       └── Templates/          # Templates for new documents
+├── _archive/                   # Archived legacy files
+│   └── docs-legacy/            # Old documentation (archived 2026-01-05)
 ├── Mmo.sln                     # .NET Solution
 └── .github/workflows/          # CI/CD Pipelines
 ```
