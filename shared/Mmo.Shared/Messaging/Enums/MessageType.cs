@@ -846,76 +846,277 @@ public enum MessageType : ushort
     /// Triggers healing numbers, heal effects, health bar updates.
     /// </remarks>
     HealEvent = 304,
+    
+    /// <summary>Attack missed the target. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Attack failed to connect. Triggers "Miss" combat text. No damage dealt.</remarks>
     MissEvent = 305,
+    
+    /// <summary>Target dodged/evaded the attack. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Target's dodge stat/ability caused attack to miss. Triggers "Dodge" combat text.</remarks>
     DodgeEvent = 306,
+    
+    /// <summary>Target parried the attack. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Melee attack deflected by target. May create counterattack opportunity.</remarks>
     ParryEvent = 307,
+    
+    /// <summary>Target blocked the attack with shield. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Damage reduced or negated by block. Contains: Original damage, Blocked amount.</remarks>
     BlockEvent = 308,
+    
+    /// <summary>Attack scored a critical hit. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Increased damage multiplier applied. Triggers special visual/sound effects.</remarks>
     CriticalHitEvent = 309,
+    
+    /// <summary>Entity enters combat state. Direction: Server→Client.</summary>
+    /// <remarks>Prevents logout, mount, eating. Activates combat UI. Cleared after no combat for duration.</remarks>
     CombatStart = 310,
+    
+    /// <summary>Entity exits combat state. Direction: Server→Client.</summary>
+    /// <remarks>Combat ended - no enemies engaged. Allows out-of-combat actions and regeneration.</remarks>
     CombatEnd = 311,
+    
+    /// <summary>Server updates threat/aggro level for entity. Direction: Server→Client.</summary>
+    /// <remarks>For tank classes and threat management. Contains: Target entity, Threat amount, Percentage of total.</remarks>
     ThreatUpdate = 312,
+    
+    /// <summary>Client requests threat table for current target. Direction: Client→Server.</summary>
+    /// <remarks>Shows who has aggro and threat levels. Response: ThreatListResponse (333).</remarks>
     ThreatListRequest = 313,
+    
+    /// <summary>Action was interrupted. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Casting/channeling stopped by stun, silence, or interrupt ability. Triggers lockout.</remarks>
     InterruptEvent = 314,
+    
+    /// <summary>Damage/effect was reflected back to caster. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>From reflect shield/ability. Contains: Original damage, Reflected amount.</remarks>
     ReflectEvent = 315,
+    
+    /// <summary>Damage was absorbed by shield/barrier. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Shield absorbed all or part of damage. Contains: Original damage, Absorbed amount, Remaining shield.</remarks>
     AbsorbEvent = 316,
+    
+    /// <summary>Lifesteal effect restored health from damage dealt. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Attacker healed for percentage of damage. Contains: Damage dealt, Health restored.</remarks>
     LifestealEvent = 317,
+    
+    /// <summary>Boss/NPC enters execute phase (low health). Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Special execute abilities now available. Triggers tactical changes and UI warnings.</remarks>
     ExecutePhase = 318,
+    
+    /// <summary>Entity enters enraged state. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Increased damage/speed, may trigger special mechanics. From: Low health, time limit, or ability.</remarks>
     EnrageEvent = 319,
+    
+    /// <summary>Combat log entry for detailed combat tracking. Direction: Server→Client.</summary>
+    /// <remarks>Detailed event for combat log UI: All damage, healing, buffs, abilities. Optional - for UI only.</remarks>
     CombatLogEntry = 320,
+    
+    /// <summary>Threat transferred to another entity. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>From: Taunt, threat drop, feign death. Contains: Old aggro target, New aggro target.</remarks>
     AggroTransfer = 321,
+    
+    /// <summary>Taunt ability used, forcing target to attack taunter. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Threat manipulation - sets threat to highest + 1. Duration-based forced targeting.</remarks>
     TauntEvent = 322,
+    
+    /// <summary>Feint/threat reduction ability used. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Reduces user's threat. Used by DPS to avoid pulling aggro.</remarks>
     FeintEvent = 323,
+    
+    /// <summary>Counterattack triggered after block/parry. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Automatic attack in response to enemy action. Free damage outside normal rotation.</remarks>
     CounterAttack = 324,
+    
+    /// <summary>Combo chain completed with finisher. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Powerful ability after combo point buildup. Consumes combo resources for enhanced effect.</remarks>
     ComboFinisher = 325,
+    
+    /// <summary>Area of Effect damage event. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Multiple targets damaged in radius. Contains: Center position, Radius, Damage per target.</remarks>
     AreaDamage = 326,
+    
+    /// <summary>Damage over time effect tick. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Periodic damage from DoT debuff (bleed, poison, burn). Contains: Tick damage, Remaining duration.</remarks>
     DamageOverTime = 327,
+    
+    /// <summary>Heal over time effect tick. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Periodic healing from HoT buff (regeneration, lifebloom). Contains: Tick heal, Remaining duration.</remarks>
     HealOverTime = 328,
+    
+    /// <summary>Damage absorption shield applied to entity. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Creates shield absorbing damage before health. Contains: Shield amount, Duration.</remarks>
     ShieldApplied = 329,
+    
+    /// <summary>Damage absorption shield depleted/broken. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Shield fully absorbed or expired. Triggers visual effect removal.</remarks>
     ShieldBroken = 330,
+    
+    /// <summary>Resurrection offer received. Direction: Server→Client.</summary>
+    /// <remarks>Another player offers to resurrect. Player must accept/decline. Contains: Resurrecter name, Type (battle rez vs normal).</remarks>
     Resurrection = 331,
+    
+    /// <summary>Full combat state synchronization. Direction: Server→Client.</summary>
+    /// <remarks>Complete combat state update: All buffs, debuffs, resources, cooldowns. Sent on zone in or reconnect.</remarks>
     CombatStateSync = 332,
+    
+    /// <summary>Server sends threat table data. Direction: Server→Client.</summary>
+    /// <remarks>Response to ThreatListRequest (313). Contains: Ordered list of entities with threat values.</remarks>
     ThreatListResponse = 333,
+    
+    /// <summary>Response to resurrection offer. Direction: Client→Server.</summary>
+    /// <remarks>Player accepts or declines resurrection. On accept: Triggers resurrection sequence.</remarks>
     ResurrectionResponse = 334,
 
     // ═══════════════════════════════════════════════════════════════
     // CHAT (0400-0499)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Client sends chat message. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Channel, Message text. Server validates, filters profanity, applies rate limiting. Response: ChatMessageResponse (440).</remarks>
     ChatMessage = 400,
+    
+    /// <summary>Server broadcasts chat message to recipients. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Delivered to: Channel members, zone, party, guild as appropriate. Contains: Sender, Channel, Message, Timestamp.</remarks>
     ChatBroadcast = 401,
+    
+    /// <summary>Private message to specific player. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Target player name, Message. Server routes to target or returns error if offline/blocked.</remarks>
     ChatWhisper = 402,
+    
+    /// <summary>Response to whisper. Direction: Server→Client or Client→Server.</summary>
+    /// <remarks>Confirms delivery status or contains the whisper content for recipient.</remarks>
     ChatWhisperResponse = 403,
+    
+    /// <summary>Party chat message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Broadcast to all party members. Requires active party membership.</remarks>
     ChatParty = 404,
+    
+    /// <summary>Guild chat message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Broadcast to all online guild members. Requires guild membership.</remarks>
     ChatGuild = 405,
+    
+    /// <summary>Raid chat message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Broadcast to all raid members. Requires active raid membership.</remarks>
     ChatRaid = 406,
+    
+    /// <summary>Zone-wide chat message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Visible to all players in current zone. May have level requirements or cooldowns.</remarks>
     ChatZone = 407,
+    
+    /// <summary>Trade channel message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>For trading/economy communication. May be zone-scoped or global.</remarks>
     ChatTrade = 408,
+    
+    /// <summary>Looking for Group channel message. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>For finding party/raid members. Often zone or region scoped.</remarks>
     ChatLfg = 409,
+    
+    /// <summary>System message from server. Direction: Server→Client.</summary>
+    /// <remarks>Server announcements, errors, info messages. Cannot be sent by players. Color-coded UI display.</remarks>
     ChatSystem = 410,
+    
+    /// <summary>Yell message heard by nearby players. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Larger radius than Say. Broadcast to extended area around player.</remarks>
     ChatYell = 411,
+    
+    /// <summary>Say message heard by very nearby players. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Small radius local chat. Broadcast to immediate vicinity only.</remarks>
     ChatSay = 412,
+    
+    /// <summary>Emote/roleplay action. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Emote text displayed as action ("PlayerName dances"). Broadcast to nearby players.</remarks>
     ChatEmote = 413,
+    
+    /// <summary>Away from keyboard status message. Direction: Client→Server.</summary>
+    /// <remarks>Sets AFK flag. Auto-responses to whispers. Appears in player status.</remarks>
     ChatAfk = 414,
+    
+    /// <summary>Do not disturb status message. Direction: Client→Server.</summary>
+    /// <remarks>Blocks whispers and invites. Auto-decline for requests.</remarks>
     ChatDnd = 415,
+    
+    /// <summary>Join custom chat channel. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Channel name, Password (if required). Response: ChatChannelJoinResponse (441).</remarks>
     ChatChannelJoin = 416,
+    
+    /// <summary>Leave custom chat channel. Direction: Client→Server.</summary>
+    /// <remarks>Unsubscribe from channel. No longer receives messages.</remarks>
     ChatChannelLeave = 417,
+    
+    /// <summary>Request list of available channels. Direction: Client→Server.</summary>
+    /// <remarks>Returns: Public channels, joined channels, popular channels with member counts.</remarks>
     ChatChannelList = 418,
+    
+    /// <summary>Create new custom chat channel. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Channel name, Password, Settings. Creator becomes owner. Response: ChatChannelCreateResponse (442).</remarks>
     ChatChannelCreate = 419,
+    
+    /// <summary>Delete custom chat channel. Direction: Client→Server.</summary>
+    /// <remarks>Owner-only action. Removes channel and kicks all members. Response: ChatChannelDeleteResponse (443).</remarks>
     ChatChannelDelete = 420,
+    
+    /// <summary>Set/change channel password. Direction: Client→Server.</summary>
+    /// <remarks>Owner/moderator action. Requires password for future joins. Response: ChatChannelPasswordResponse (444).</remarks>
     ChatChannelPassword = 421,
+    
+    /// <summary>Mute player in channel. Direction: Client→Server.</summary>
+    /// <remarks>Moderator action. Prevents target from sending messages. Response: ChatChannelMuteResponse (445).</remarks>
     ChatChannelMute = 422,
+    
+    /// <summary>Unmute player in channel. Direction: Client→Server.</summary>
+    /// <remarks>Moderator action. Restores messaging privileges.</remarks>
     ChatChannelUnmute = 423,
+    
+    /// <summary>Kick player from channel. Direction: Client→Server.</summary>
+    /// <remarks>Moderator action. Removes player from channel. Player can rejoin unless banned.</remarks>
     ChatChannelKick = 424,
+    
+    /// <summary>Ban player from channel. Direction: Client→Server.</summary>
+    /// <remarks>Moderator action. Permanent removal, prevents rejoining.</remarks>
     ChatChannelBan = 425,
+    
+    /// <summary>Transfer channel ownership. Direction: Client→Server.</summary>
+    /// <remarks>Owner action. Transfers all permissions to new owner.</remarks>
     ChatChannelOwner = 426,
+    
+    /// <summary>Grant/revoke moderator status. Direction: Client→Server.</summary>
+    /// <remarks>Owner action. Gives kick/mute/ban permissions.</remarks>
     ChatChannelModerator = 427,
+    
+    /// <summary>Message of the Day for channel. Direction: Server→Client.</summary>
+    /// <remarks>Displayed on channel join. Set by owner/moderator.</remarks>
     ChatMotd = 428,
+    
+    /// <summary>Profanity/spam filter settings. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Client can adjust local filter sensitivity. Server enforces minimum standards.</remarks>
     ChatFilter = 429,
+    
+    /// <summary>Warning for chat spam/abuse. Direction: Server→Client.</summary>
+    /// <remarks>Rate limiting warning before temporary mute. Contains: Violation count, Cooldown duration.</remarks>
     ChatSpamWarning = 430,
+    
+    /// <summary>Response to ChatMessage request. Direction: Server→Client.</summary>
+    /// <remarks>Confirms delivery or provides error (RATE_LIMITED, MUTED, INVALID_CHANNEL, etc.).</remarks>
     ChatMessageResponse = 440,
+    
+    /// <summary>Response to ChatChannelJoin request. Direction: Server→Client.</summary>
+    /// <remarks>Success with channel info or error (WRONG_PASSWORD, BANNED, FULL, etc.).</remarks>
     ChatChannelJoinResponse = 441,
+    
+    /// <summary>Response to ChatChannelCreate request. Direction: Server→Client.</summary>
+    /// <remarks>Success with new channel ID or error (NAME_TAKEN, INVALID_NAME, LIMIT_REACHED, etc.).</remarks>
     ChatChannelCreateResponse = 442,
+    
+    /// <summary>Response to ChatChannelDelete request. Direction: Server→Client.</summary>
+    /// <remarks>Confirms deletion or error (NOT_OWNER, CHANNEL_NOT_FOUND, etc.).</remarks>
     ChatChannelDeleteResponse = 443,
+    
+    /// <summary>Response to ChatChannelPassword request. Direction: Server→Client.</summary>
+    /// <remarks>Confirms password change or error (NOT_OWNER, INVALID_PASSWORD, etc.).</remarks>
     ChatChannelPasswordResponse = 444,
+    
+    /// <summary>Response to ChatChannelMute request. Direction: Server→Client.</summary>
+    /// <remarks>Confirms mute or error (NOT_MODERATOR, USER_NOT_FOUND, etc.).</remarks>
     ChatChannelMuteResponse = 445,
 
     // ═══════════════════════════════════════════════════════════════
@@ -1091,28 +1292,92 @@ public enum MessageType : ushort
     GuildBankWithdrawResponse = 850,
 
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // PING / LATENCY / SYSTEM (0900-0999)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Client latency measurement request. Direction: Client→Server.</summary>
+    /// <remarks>Contains: Timestamp, Sequence number. Server responds with Pong (901). Used for RTT calculation and connection monitoring.</remarks>
     Ping = 900,
+    
+    /// <summary>Server response to Ping. Direction: Server→Client.</summary>
+    /// <remarks>Echoes: Client timestamp, Sequence number. Adds: Server time. Client calculates RTT. DO NOT bundle in MessageBundle (950).</remarks>
     Pong = 901,
+    
+    /// <summary>Server sends latency statistics report. Direction: Server→Client.</summary>
+    /// <remarks>Periodic report (every 30s): Average latency, Min, Max, Packet loss, Jitter. Used for connection quality monitoring.</remarks>
     LatencyReport = 902,
+    
+    /// <summary>Network statistics update. Direction: Server→Client.</summary>
+    /// <remarks>Contains: Bytes sent/received, Messages sent/received, Bandwidth usage. For debugging and monitoring.</remarks>
     NetworkStats = 903,
+    
+    /// <summary>Connection quality assessment. Direction: Server→Client.</summary>
+    /// <remarks>Periodic (every 10s): Quality level (Excellent/Good/Fair/Poor/Bad), Latency, Packet loss. Triggers UI indicator.</remarks>
     ConnectionQuality = 904,
+    
+    /// <summary>Server error message notification. Direction: Server→Client.</summary>
+    /// <remarks>Generic error messages with severity (Info/Warning/Error/Fatal). Contains: Error code, Message, Details. May disconnect on Fatal.</remarks>
     ErrorMessage = 910,
+    
+    /// <summary>Server-wide announcement. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Admin announcements, events, news. Contains: Type (Info/Warning/Event), Message, Priority. Displayed prominently.</remarks>
     ServerAnnouncement = 911,
+    
+    /// <summary>Player kick notification. Direction: Server→Client.</summary>
+    /// <remarks>Admin kicked player. Contains: Reason, Admin name, Duration. Connection terminates after displaying message.</remarks>
     KickNotification = 912,
+    
+    /// <summary>Scheduled maintenance warning. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Countdown to shutdown: 60min, 30min, 10min, 1min intervals. Contains: Minutes remaining, Reason, Expected restart time.</remarks>
     MaintenanceWarning = 913,
+    
+    /// <summary>Server shutting down. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Final warning before shutdown. Contains: Reason, Expected restart time. All connections close shortly after.</remarks>
     ServerShutdown = 914,
+    
+    /// <summary>Client version incompatible with server. Direction: Server→Client.</summary>
+    /// <remarks>Client version too old/new. Contains: Required version, Download URL. Connection rejected.</remarks>
     VersionMismatch = 915,
+    
+    /// <summary>Account banned notification. Direction: Server→Client.</summary>
+    /// <remarks>Account ban details. Contains: Reason, Duration/Permanent, Appeal information. Connection terminates.</remarks>
     BanNotification = 916,
+    
+    /// <summary>Rate limit warning. Direction: Server→Client.</summary>
+    /// <remarks>Too many requests/actions. Contains: Action type, Current rate, Limit, Cooldown. Temporary throttling applied.</remarks>
     RateLimitWarning = 917,
+    
+    /// <summary>Server status information. Direction: Server→Client.</summary>
+    /// <remarks>Server health info: Population, Uptime, Load. Used for server selection and monitoring.</remarks>
     ServerStatus = 918,
+    
+    /// <summary>Server Message of the Day. Direction: Server→Client.</summary>
+    /// <remarks>MOTD displayed on login. Contains: Message, Last updated timestamp. Can contain news/events/patch notes.</remarks>
     ServerMotd = 919,
+    
+    /// <summary>Server authoritative time sync. Direction: Server→Client.</summary>
+    /// <remarks>Server timestamp for time sync. Client adjusts clock for server time display. Periodic (every few minutes).</remarks>
     ServerTime = 920,
+    
+    /// <summary>Server configuration update. Direction: Server→Client.</summary>
+    /// <remarks>Dynamic config changes: Feature flags, rates, limits. Client updates behavior without restart.</remarks>
     ServerConfig = 921,
+    
+    /// <summary>Client-specific configuration. Direction: Server→Client.</summary>
+    /// <remarks>Personalized settings: UI options, permissions, unlocks. Based on account tier/privileges.</remarks>
     ClientConfig = 922,
+    
+    /// <summary>Feature toggle enable/disable. Direction: Server→Client.</summary>
+    /// <remarks>Enable/disable features dynamically: Beta features, seasonal content, A/B testing. Updates client UI/functionality.</remarks>
     FeatureToggle = 923,
+    
+    /// <summary>Anti-cheat violation warning. Direction: Server→Client.</summary>
+    /// <remarks>Suspicious behavior detected. Contains: Warning type (speed_anomaly, teleport, etc.), Violation count. Escalates to kick.</remarks>
     AntiCheatWarning = 924,
+    
+    /// <summary>Anti-cheat automatic kick. Direction: Server→Client.</summary>
+    /// <remarks>Confirmed cheat detection. Contains: Detection type, Evidence, Can reconnect flag. Connection terminates.</remarks>
     AntiCheatKick = 925,
 
     /// <summary>
@@ -2148,56 +2413,207 @@ public enum MessageType : ushort
     DebugSpawn = 4904,
 
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // SERVER-TO-SERVER (5000-5099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>S2S: Initial handshake between cluster nodes. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY - Never sent by clients. Establishes trust between servers in cluster.</remarks>
     ClusterHandshakeRequest = 5000,
+    
+    /// <summary>S2S: Handshake response. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Confirms cluster membership and shared secrets.</remarks>
     ClusterHandshakeResponse = 5001,
+    
+    /// <summary>S2S: Authentication challenge. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Mutual authentication between cluster nodes.</remarks>
     ClusterAuthChallengeRequest = 5002,
+    
+    /// <summary>S2S: Auth challenge response. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Provides authentication proof.</remarks>
     ClusterAuthChallengeResponse = 5003,
+    
+    /// <summary>S2S: Encryption key rotation request. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Triggers security key refresh across cluster.</remarks>
     ClusterKeyRotationRequest = 5004,
+    
+    /// <summary>S2S: Key rotation confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Acknowledges key rotation completion.</remarks>
     ClusterKeyRotationResponse = 5005,
+    
+    /// <summary>S2S: Health check request. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Monitors server health: CPU, memory, active players.</remarks>
     HealthStatusRequest = 5006,
+    
+    /// <summary>S2S: Health status report. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Returns: Load level, player count, capacity.</remarks>
     HealthStatusResponse = 5007,
+    
+    /// <summary>S2S: Load metrics report request. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. For load balancing decisions.</remarks>
     LoadReportRequest = 5008,
+    
+    /// <summary>S2S: Load metrics data. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Detailed load: Tick time, bandwidth, zone populations.</remarks>
     LoadReportResponse = 5009,
+    
+    /// <summary>S2S: Time synchronization request. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Ensures consistent server timestamps across cluster.</remarks>
     TimeSyncRequest = 5010,
+    
+    /// <summary>S2S: Synchronized time response. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Returns authoritative time for clock adjustment.</remarks>
     TimeSyncResponse = 5011,
+    
+    /// <summary>S2S: Graceful node shutdown preparation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Triggers player migration before shutdown.</remarks>
     NodeDrainRequest = 5012,
+    
+    /// <summary>S2S: Node drain acknowledgment. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Confirms drain readiness or completion.</remarks>
     NodeDrainResponse = 5013,
+    
+    /// <summary>S2S: Prepare player transfer between zones/shards. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Two-phase commit: Lock player state for transfer.</remarks>
     PlayerTransferPrepareRequest = 5014,
+    
+    /// <summary>S2S: Transfer preparation confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Ready to receive player or reports error.</remarks>
     PlayerTransferPrepareResponse = 5015,
+    
+    /// <summary>S2S: Commit player transfer. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Finalizes transfer, releases source state.</remarks>
     PlayerTransferCommitRequest = 5016,
+    
+    /// <summary>S2S: Transfer commit confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Player now active on target server.</remarks>
     PlayerTransferCommitResponse = 5017,
+    
+    /// <summary>S2S: Abort player transfer. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Rollback transfer on error, unlock state.</remarks>
     PlayerTransferAbortRequest = 5018,
+    
+    /// <summary>S2S: Transfer abort confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. State restored on source server.</remarks>
     PlayerTransferAbortResponse = 5019,
+    
+    /// <summary>S2S: Hand off entity ownership. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Transfer entity control between zone servers.</remarks>
     EntityHandoffRequest = 5020,
+    
+    /// <summary>S2S: Entity handoff confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Target assumes entity ownership.</remarks>
     EntityHandoffResponse = 5021,
+    
+    /// <summary>S2S: Acquire distributed lease. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Distributed locking for: Guild leadership, rare spawns, singletons.</remarks>
     LeaseAcquireRequest = 5022,
+    
+    /// <summary>S2S: Lease acquisition result. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Granted or denied with current holder info.</remarks>
     LeaseAcquireResponse = 5023,
+    
+    /// <summary>S2S: Renew existing lease. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Extend lease before expiration.</remarks>
     LeaseRenewRequest = 5024,
+    
+    /// <summary>S2S: Lease renewal confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. New expiration time or renewal failed.</remarks>
     LeaseRenewResponse = 5025,
+    
+    /// <summary>S2S: Release held lease. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Voluntary lease release.</remarks>
     LeaseReleaseRequest = 5026,
+    
+    /// <summary>S2S: Lease release confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Lease now available for acquisition.</remarks>
     LeaseReleaseResponse = 5027,
+    
+    /// <summary>S2S: Query partition ownership. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Find which server owns data partition (guild, zone shard, etc.).</remarks>
     PartitionOwnershipQueryRequest = 5028,
+    
+    /// <summary>S2S: Partition owner info. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Returns: Owner server ID, routing info.</remarks>
     PartitionOwnershipQueryResponse = 5029,
+    
+    /// <summary>S2S: Publish event for replication. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Pub/sub for cross-zone events: World bosses, server announcements.</remarks>
     EventReplicationPublishRequest = 5030,
+    
+    /// <summary>S2S: Event publish acknowledgment. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Confirms event delivery.</remarks>
     EventReplicationPublishResponse = 5031,
+    
+    /// <summary>S2S: Synchronize guild data. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Cross-server guild state sync.</remarks>
     GuildSyncRequest = 5032,
+    
+    /// <summary>S2S: Guild sync data. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Guild roster, bank, perms across zones.</remarks>
     GuildSyncResponse = 5033,
+    
+    /// <summary>S2S: Synchronize party data. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Cross-server party state for member in different zones.</remarks>
     PartySyncRequest = 5034,
+    
+    /// <summary>S2S: Party sync data. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Party members, health, position updates.</remarks>
     PartySyncResponse = 5035,
+    
+    /// <summary>S2S: Register chat routing endpoint. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Announce chat relay capability to cluster.</remarks>
     ChatRouteRegisterRequest = 5036,
+    
+    /// <summary>S2S: Chat route registration confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Registered in routing table.</remarks>
     ChatRouteRegisterResponse = 5037,
+    
+    /// <summary>S2S: Relay chat message across zones. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Cross-zone guild/party chat routing.</remarks>
     ChatEnvelopeRelayRequest = 5038,
+    
+    /// <summary>S2S: Chat relay acknowledgment. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Message delivered to target zone.</remarks>
     ChatEnvelopeRelayResponse = 5039,
+    
+    /// <summary>S2S: Broadcast admin command cluster-wide. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Admin actions: Server shutdown, announcements, bans.</remarks>
     AdminBroadcastRequest = 5040,
+    
+    /// <summary>S2S: Admin broadcast confirmation. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Command executed on node.</remarks>
     AdminBroadcastResponse = 5041,
+    
+    /// <summary>S2S: Trigger config reload. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Hot-reload config changes without restart.</remarks>
     ConfigReloadRequest = 5042,
+    
+    /// <summary>S2S: Config reload result. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Success or error loading new config.</remarks>
     ConfigReloadResponse = 5043,
+    
+    /// <summary>S2S: Query circuit breaker state. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Check if service circuit is open/closed/half-open.</remarks>
     CircuitBreakerStateRequest = 5044,
+    
+    /// <summary>S2S: Circuit breaker state report. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Current state and trip conditions.</remarks>
     CircuitBreakerStateResponse = 5045,
+    
+    /// <summary>S2S: Backpressure alert. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Server overloaded, requesting reduced traffic.</remarks>
     BackpressureAlertRequest = 5046,
+    
+    /// <summary>S2S: Backpressure acknowledgment. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Will throttle requests to overloaded node.</remarks>
     BackpressureAlertResponse = 5047,
+    
+    /// <summary>S2S: Validate session token. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Gateway validates session against auth service.</remarks>
     SessionValidateS2SRequest = 5048,
+    
+    /// <summary>S2S: Session validation result. Direction: Server→Server.</summary>
+    /// <remarks>INTERNAL ONLY. Session valid with account info or invalid.</remarks>
     SessionValidateS2SResponse = 5049
 }
