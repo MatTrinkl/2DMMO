@@ -1120,51 +1120,176 @@ public enum MessageType : ushort
     ChatChannelMuteResponse = 445,
 
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // INVENTORY / ITEMS (0500-0599)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Complete inventory sync. Direction: Server→Client.</summary>
+    /// <remarks>Full inventory state on zone in or significant changes.</remarks>
     InventoryUpdate = 500,
+    
+    /// <summary>Single inventory slot update. Direction: Server→Client.</summary>
+    /// <remarks>Item added/removed/changed in specific slot.</remarks>
     InventorySlotUpdate = 501,
+    
+    /// <summary>Client requests to pick up item. Direction: Client→Server.</summary>
+    /// <remarks>Loot or ground item pickup. Response: InventorySlotUpdate or ItemPickupFailed.</remarks>
     ItemPickup = 502,
+    
+    /// <summary>Item pickup failed. Direction: Server→Client.</summary>
+    /// <remarks>Inventory full, too far, already looted, etc.</remarks>
     ItemPickupFailed = 503,
+    
+    /// <summary>Client requests to drop item. Direction: Client→Server.</summary>
+    /// <remarks>Remove from inventory and place in world.</remarks>
     ItemDrop = 504,
+    
+    /// <summary>Client uses/consumes item. Direction: Client→Server.</summary>
+    /// <remarks>Consumables, equipment, quest items. Response: ItemUseResponse.</remarks>
     ItemUse = 505,
+    
+    /// <summary>Item use result. Direction: Server→Client.</summary>
+    /// <remarks>Success with effects or failure with reason.</remarks>
     ItemUseResult = 506,
+    
+    /// <summary>Destroy/delete item. Direction: Client→Server.</summary>
+    /// <remarks>Permanent deletion. Response: ItemDeleteResponse.</remarks>
     ItemDestroy = 507,
+    
+    /// <summary>Split item stack. Direction: Client→Server.</summary>
+    /// <remarks>Divide stack into two. Response: ItemSplitResponse.</remarks>
     ItemSplit = 508,
+    
+    /// <summary>Merge/stack items. Direction: Client→Server.</summary>
+    /// <remarks>Combine compatible stacks.</remarks>
     ItemMerge = 509,
+    
+    /// <summary>Move item to different slot. Direction: Client→Server.</summary>
+    /// <remarks>Within inventory or to bank/equipment. Response: ItemMoveResponse.</remarks>
     ItemMove = 510,
+    
+    /// <summary>Swap two items. Direction: Client→Server.</summary>
+    /// <remarks>Exchange positions of two items.</remarks>
     ItemSwap = 511,
+    
+    /// <summary>Lock item to prevent sale/deletion. Direction: Client→Server.</summary>
+    /// <remarks>Protection against accidental loss. Response: ItemLockResponse.</remarks>
     ItemLock = 512,
+    
+    /// <summary>Unlock protected item. Direction: Client→Server.</summary>
+    /// <remarks>Allow normal item operations again.</remarks>
     ItemUnlock = 513,
+    
+    /// <summary>Item cooldown started. Direction: Server→Client.</summary>
+    /// <remarks>Cannot use item until cooldown expires.</remarks>
     ItemCooldownStart = 514,
+    
+    /// <summary>Item cooldown completed. Direction: Server→Client.</summary>
+    /// <remarks>Item available for use again.</remarks>
     ItemCooldownEnd = 515,
+    
+    /// <summary>Item durability changed. Direction: Server→Client.</summary>
+    /// <remarks>From use/damage. May need repair when 0.</remarks>
     ItemDurabilityChange = 516,
+    
+    /// <summary>Repair single item. Direction: Client→Server.</summary>
+    /// <remarks>Restore durability. Costs gold.</remarks>
     ItemRepair = 517,
+    
+    /// <summary>Repair all items. Direction: Client→Server.</summary>
+    /// <remarks>Convenience for full inventory repair.</remarks>
     ItemRepairAll = 518,
+    
+    /// <summary>Enchant item. Direction: Client→Server.</summary>
+    /// <remarks>Add magical enhancement. Response: ItemEnchantResult.</remarks>
     ItemEnchant = 519,
+    
+    /// <summary>Enchant result. Direction: Server→Client.</summary>
+    /// <remarks>Success/failure with new item state.</remarks>
     ItemEnchantResult = 520,
+    
+    /// <summary>Socket gem in item. Direction: Client→Server.</summary>
+    /// <remarks>Add gem to socket. Response: ItemSocketResult.</remarks>
     ItemSocket = 521,
+    
+    /// <summary>Socket result. Direction: Server→Client.</summary>
+    /// <remarks>Gem successfully socketed or error.</remarks>
     ItemSocketResult = 522,
+    
+    /// <summary>Upgrade item quality/level. Direction: Client→Server.</summary>
+    /// <remarks>Enhancement materials consumed. Response: ItemUpgradeResult.</remarks>
     ItemUpgrade = 523,
+    
+    /// <summary>Upgrade result. Direction: Server→Client.</summary>
+    /// <remarks>Success with new stats or failure.</remarks>
     ItemUpgradeResult = 524,
+    
+    /// <summary>Transmog item appearance. Direction: Client→Server.</summary>
+    /// <remarks>Change visual without affecting stats. Response: ItemTransmogResult.</remarks>
     ItemTransmog = 525,
+    
+    /// <summary>Transmog result. Direction: Server→Client.</summary>
+    /// <remarks>Appearance changed successfully.</remarks>
     ItemTransmogResult = 526,
+    
+    /// <summary>Salvage item for materials. Direction: Client→Server.</summary>
+    /// <remarks>Destroy item, receive components. Response: ItemSalvageResult.</remarks>
     ItemSalvage = 527,
+    
+    /// <summary>Salvage result. Direction: Server→Client.</summary>
+    /// <remarks>Materials received from salvage.</remarks>
     ItemSalvageResult = 528,
+    
+    /// <summary>Identify unknown item. Direction: Client→Server.</summary>
+    /// <remarks>Reveal item properties. Response: ItemIdentifyResult.</remarks>
     ItemIdentify = 529,
+    
+    /// <summary>Identify result. Direction: Server→Client.</summary>
+    /// <remarks>Item properties now known.</remarks>
     ItemIdentifyResult = 530,
+    
+    /// <summary>Auto-sort bag. Direction: Client→Server.</summary>
+    /// <remarks>Organize inventory. Response: ItemSortResponse.</remarks>
     BagSort = 531,
+    
+    /// <summary>Expand bag capacity. Direction: Client→Server.</summary>
+    /// <remarks>Purchase additional slots. Response: BagExpandResponse.</remarks>
     BagExpand = 532,
+    
+    /// <summary>Request item tooltip data. Direction: Client→Server.</summary>
+    /// <remarks>Detailed item info for UI. Response: ItemTooltipResponse.</remarks>
     ItemTooltipRequest = 533,
+    
+    /// <summary>Item tooltip data. Direction: Server→Client.</summary>
+    /// <remarks>Stats, requirements, lore text.</remarks>
     ItemTooltipResponse = 534,
+    
+    /// <summary>Item link in chat. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Share item reference in chat.</remarks>
     ItemLink = 535,
+    
+    /// <summary>Move response. Direction: Server→Client.</summary>
     ItemMoveResponse = 536,
+    
+    /// <summary>Split response. Direction: Server→Client.</summary>
     ItemSplitResponse = 537,
+    
+    /// <summary>Use response. Direction: Server→Client.</summary>
     ItemUseResponse = 538,
+    
+    /// <summary>Delete response. Direction: Server→Client.</summary>
     ItemDeleteResponse = 539,
+    
+    /// <summary>Stack response. Direction: Server→Client.</summary>
     ItemStackResponse = 540,
+    
+    /// <summary>Sort response. Direction: Server→Client.</summary>
     ItemSortResponse = 541,
+    
+    /// <summary>Lock response. Direction: Server→Client.</summary>
     ItemLockResponse = 542,
+    
+    /// <summary>Bag expand response. Direction: Server→Client.</summary>
     BagExpandResponse = 543,
 
     // ═══════════════════════════════════════════════════════════════
