@@ -1295,125 +1295,437 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // CHARACTER / STATS / PROGRESSION (0600-0699)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Character leveled up. Direction: Server→Client.</summary>
+    /// <remarks>Contains: New level, Stat increases, Rewards unlocked. Triggers celebration effects.</remarks>
     LevelUp = 600,
+    
+    /// <summary>Experience points gained. Direction: Server→Client.</summary>
+    /// <remarks>From: Combat, quests, exploration. Contains: XP amount, Source, Progress to next level.</remarks>
     XpGain = 601,
+    
+    /// <summary>Single stat changed. Direction: Server→Client.</summary>
+    /// <remarks>Individual stat update (Strength, Agility, etc.). Triggers UI refresh.</remarks>
     StatUpdate = 602,
+    
+    /// <summary>Full stats synchronization. Direction: Server→Client.</summary>
+    /// <remarks>Complete stat sheet on zone in or major changes. All base and modified stats.</remarks>
     StatFullSync = 603,
+    
+    /// <summary>Resource update (health/mana/energy). Direction: Server→Client.</summary>
+    /// <remarks>Current and max values for primary resources. High frequency.</remarks>
     ResourceUpdate = 604,
+    
+    /// <summary>Resource regeneration tick. Direction: Server→Client.</summary>
+    /// <remarks>Periodic regen from: Resting, buffs, equipment. Amount per tick.</remarks>
     ResourceRegen = 605,
+    
+    /// <summary>Character info snapshot. Direction: Server→Client.</summary>
+    /// <remarks>Complete character data: Stats, level, class, race, equipment summary.</remarks>
     CharacterInfo = 606,
+    
+    /// <summary>Request character info. Direction: Client→Server.</summary>
+    /// <remarks>For self or inspecting others. Response: CharacterInfo (606).</remarks>
     CharacterInfoRequest = 607,
+    
+    /// <summary>Skill points gained. Direction: Server→Client.</summary>
+    /// <remarks>From leveling. Used to learn/upgrade skills. Contains: Amount, Total available.</remarks>
     SkillPointGain = 608,
+    
+    /// <summary>Talent points gained. Direction: Server→Client.</summary>
+    /// <remarks>From leveling. Used in talent trees. Contains: Amount, Total available.</remarks>
     TalentPointGain = 609,
+    
+    /// <summary>Reputation changed with faction. Direction: Server→Client.</summary>
+    /// <remarks>Increase/decrease reputation. Contains: Faction, Amount, New standing level.</remarks>
     ReputationChange = 610,
+    
+    /// <summary>Request reputation standings. Direction: Client→Server.</summary>
+    /// <remarks>List all faction reputations. Response: ReputationListResponse (612).</remarks>
     ReputationListRequest = 611,
+    
+    /// <summary>Reputation standings list. Direction: Server→Client.</summary>
+    /// <remarks>All faction reputations with current standing and progress.</remarks>
     ReputationListResponse = 612,
+    
+    /// <summary>New title unlocked. Direction: Server→Client.</summary>
+    /// <remarks>From achievements, reputation, quests. Contains: Title ID, Name, Requirements met.</remarks>
     TitleUnlocked = 613,
+    
+    /// <summary>Select active title. Direction: Client→Server.</summary>
+    /// <remarks>Set displayed title. Response: TitleChangeResponse (655).</remarks>
     TitleSelect = 614,
+    
+    /// <summary>Change character appearance. Direction: Client→Server.</summary>
+    /// <remarks>Modify cosmetic features. May require item/payment. Response: CharacterCustomizeResponse (651).</remarks>
     AppearanceChange = 617,
+    
+    /// <summary>Preview appearance change. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Test appearance before committing. No cost to preview.</remarks>
     AppearancePreview = 618,
+    
+    /// <summary>Change character race. Direction: Client→Server.</summary>
+    /// <remarks>Paid service. Major change. May affect available classes/abilities.</remarks>
     RaceChange = 619,
+    
+    /// <summary>Change character class. Direction: Client→Server.</summary>
+    /// <remarks>Paid service. Resets talents/skills. Validate class availability for race.</remarks>
     ClassChange = 620,
+    
+    /// <summary>Change character name. Direction: Client→Server.</summary>
+    /// <remarks>Paid service. Subject to profanity filter and uniqueness check.</remarks>
     NameChange = 621,
+    
+    /// <summary>Change character gender. Direction: Client→Server.</summary>
+    /// <remarks>Paid service. Cosmetic change only.</remarks>
     GenderChange = 622,
+    
+    /// <summary>Rested XP bonus updated. Direction: Server→Client.</summary>
+    /// <remarks>Bonus XP from resting in inn/city. Contains: Bonus amount, Percentage.</remarks>
     RestXpUpdate = 623,
+    
+    /// <summary>Rest state changed. Direction: Server→Client.</summary>
+    /// <remarks>Entered/exited rested area. Affects XP gain and regen rates.</remarks>
     RestStateChange = 624,
+    
+    /// <summary>Attribute increase response. Direction: Server→Client.</summary>
     AttributeIncreaseResponse = 650,
+    
+    /// <summary>Character customization response. Direction: Server→Client.</summary>
     CharacterCustomizeResponse = 651,
+    
+    /// <summary>Talent learn response. Direction: Server→Client.</summary>
     TalentLearnResponse = 652,
+    
+    /// <summary>Talent reset response. Direction: Server→Client.</summary>
     TalentResetResponse = 653,
+    
+    /// <summary>Specialization change response. Direction: Server→Client.</summary>
     SpecializationChangeResponse = 654,
+    
+    /// <summary>Title change response. Direction: Server→Client.</summary>
     TitleChangeResponse = 655,
 
     // ═══════════════════════════════════════════════════════════════
     // GROUP / PARTY (0700-0799)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Invite player to party. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Target player name/ID. Response: PartyAcceptResponse (740) or PartyInviteResponse (701).</remarks>
     PartyInvite = 700,
+    
+    /// <summary>Party invite response from invitee. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Accept or decline invitation. Creates party if first member.</remarks>
     PartyInviteResponse = 701,
+    
+    /// <summary>Leave current party. Direction: Client→Server.</summary>
+    /// <remarks>Voluntary party exit. Response: PartyLeaveResponse (741). Broadcast to remaining members.</remarks>
     PartyLeave = 702,
+    
+    /// <summary>Kick member from party. Direction: Client→Server.</summary>
+    /// <remarks>Leader/assistant only. Payload: Target player. Response: PartyKickResponse (742).</remarks>
     PartyKick = 703,
+    
+    /// <summary>Party state update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Member list changes, settings updates. Sent to all party members.</remarks>
     PartyUpdate = 704,
+    
+    /// <summary>Disband party. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Removes all members. Response: PartyDisbandResponse (744).</remarks>
     PartyDisband = 705,
+    
+    /// <summary>Party leadership changed. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>New leader assigned. May be manual promotion or automated on leader leave.</remarks>
     PartyLeaderChange = 706,
+    
+    /// <summary>Loot distribution method changed. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Leader sets: Free-for-all, Round-robin, Master looter, Need/Greed.</remarks>
     PartyLootChange = 707,
+    
+    /// <summary>Ready check initiated. Direction: Client→Server or Server→Client (Broadcast).</summary>
+    /// <remarks>Leader asks if members are ready. Triggers ready check UI for all.</remarks>
     PartyReadyCheck = 708,
+    
+    /// <summary>Ready check response. Direction: Client→Server.</summary>
+    /// <remarks>Member indicates ready/not ready. Aggregated for leader.</remarks>
     PartyReadyResponse = 709,
+    
+    /// <summary>Party member data update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Level, class, equipment changes. For party UI updates.</remarks>
     PartyMemberUpdate = 710,
+    
+    /// <summary>Party member position update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>For party frames and map markers. Cross-zone support.</remarks>
     PartyPositionUpdate = 711,
+    
+    /// <summary>Party member health update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Current/max health for party frames. High frequency.</remarks>
     PartyHealthUpdate = 712,
+    
+    /// <summary>Party member resource update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Mana/energy/rage for party frames. High frequency.</remarks>
     PartyResourceUpdate = 713,
+    
+    /// <summary>Party member buff/debuff update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Active auras on party members. For dispel/cleanse coordination.</remarks>
     PartyBuffUpdate = 714,
+    
+    /// <summary>Party member target update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>What party member is targeting. For coordination.</remarks>
     PartyTargetUpdate = 715,
+    
+    /// <summary>Set party member role. Direction: Client→Server.</summary>
+    /// <remarks>Tank/Healer/DPS designation. For dungeon finder and organization.</remarks>
     PartyRoleSet = 716,
+    
+    /// <summary>Check party roles. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Verify role assignments before queuing. Response with role coverage.</remarks>
     PartyRoleCheck = 717,
+    
+    /// <summary>Convert party to raid. Direction: Client→Server.</summary>
+    /// <remarks>Expand 5-player party to raid (up to 40). Leader only.</remarks>
     PartyConvertToRaid = 718,
+    
+    /// <summary>Synchronize party state. Direction: Server→Client.</summary>
+    /// <remarks>Full party data on join or reconnect. All members, settings, loot rules.</remarks>
     PartySync = 719,
+    
+    /// <summary>Summon party to location. Direction: Client→Server.</summary>
+    /// <remarks>Warlock/mage summon ability. Response: PartySummonResponse (721) to target.</remarks>
     PartySummon = 720,
+    
+    /// <summary>Party summon response. Direction: Client→Server.</summary>
+    /// <remarks>Target accepts or declines summon.</remarks>
     PartySummonResponse = 721,
+    
+    /// <summary>Set raid marker on target. Direction: Client→Server.</summary>
+    /// <remarks>Visual markers (skull, cross, etc.) for coordination. Leader/assistant only.</remarks>
     PartyMarkerSet = 722,
+    
+    /// <summary>Clear raid marker. Direction: Client→Server.</summary>
+    /// <remarks>Remove specific or all markers.</remarks>
     PartyMarkerClear = 723,
+    
+    /// <summary>Vote on dungeon difficulty. Direction: Client→Server.</summary>
+    /// <remarks>Normal/Heroic/Mythic voting. Requires majority.</remarks>
     PartyDifficultyVote = 724,
+    
+    /// <summary>Difficulty set confirmed. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>New difficulty active. Affects loot and enemy stats.</remarks>
     PartyDifficultySet = 725,
+    
+    /// <summary>Party accept response. Direction: Server→Client.</summary>
     PartyAcceptResponse = 740,
+    
+    /// <summary>Party leave response. Direction: Server→Client.</summary>
     PartyLeaveResponse = 741,
+    
+    /// <summary>Party kick response. Direction: Server→Client.</summary>
     PartyKickResponse = 742,
+    
+    /// <summary>Party promote response. Direction: Server→Client.</summary>
     PartyPromoteResponse = 743,
+    
+    /// <summary>Party disband response. Direction: Server→Client.</summary>
     PartyDisbandResponse = 744,
+    
+    /// <summary>Loot mode change response. Direction: Server→Client.</summary>
     PartyLootModeResponse = 745,
+    
+    /// <summary>Ready check start response. Direction: Server→Client.</summary>
     PartyReadyCheckStartResponse = 746,
 
     // ═══════════════════════════════════════════════════════════════
     // GUILD (0800-0899)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Invite player to guild. Direction: Client→Server.</summary>
+    /// <remarks>Officer/leader action. Payload: Target player. Response: GuildInviteResponse (801).</remarks>
     GuildInvite = 800,
+    
+    /// <summary>Guild invite response. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Target accepts or declines invitation.</remarks>
     GuildInviteResponse = 801,
+    
+    /// <summary>Leave guild. Direction: Client→Server.</summary>
+    /// <remarks>Voluntary guild exit. Response: GuildLeaveResponse (841).</remarks>
     GuildLeave = 802,
+    
+    /// <summary>Kick member from guild. Direction: Client→Server.</summary>
+    /// <remarks>Officer action. Payload: Target member. Response: GuildKickResponse (842).</remarks>
     GuildKick = 803,
+    
+    /// <summary>Guild data update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>General guild info changes. Sent to all online members.</remarks>
     GuildUpdate = 804,
+    
+    /// <summary>Disband guild. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Permanent action. Response: GuildDisbandResponse (843).</remarks>
     GuildDisband = 805,
+    
+    /// <summary>Promote guild member. Direction: Client→Server.</summary>
+    /// <remarks>Leader action. Increase rank. Response: GuildPromoteResponse (844).</remarks>
     GuildPromote = 806,
+    
+    /// <summary>Demote guild member. Direction: Client→Server.</summary>
+    /// <remarks>Leader action. Decrease rank. Response: GuildDemoteResponse (845).</remarks>
     GuildDemote = 807,
+    
+    /// <summary>Guild Message of the Day. Direction: Server→Client.</summary>
+    /// <remarks>Displayed on login. Set by officers/leader.</remarks>
     GuildMotd = 808,
+    
+    /// <summary>Set guild MOTD. Direction: Client→Server.</summary>
+    /// <remarks>Officer action. Response: GuildMOTDResponse (847).</remarks>
     GuildMotdSet = 809,
+    
+    /// <summary>Request guild roster. Direction: Client→Server.</summary>
+    /// <remarks>Get member list. Response: GuildRosterResponse (811).</remarks>
     GuildRosterRequest = 810,
+    
+    /// <summary>Guild roster data. Direction: Server→Client.</summary>
+    /// <remarks>All members with: Name, rank, level, online status, last login.</remarks>
     GuildRosterResponse = 811,
+    
+    /// <summary>Create new guild rank. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Define rank name and permissions.</remarks>
     GuildRankCreate = 812,
+    
+    /// <summary>Delete guild rank. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Move members to default rank first.</remarks>
     GuildRankDelete = 813,
+    
+    /// <summary>Edit guild rank. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Change name/permissions. Response: GuildRankEditResponse (846).</remarks>
     GuildRankEdit = 814,
+    
+    /// <summary>Reorder guild ranks. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Change rank hierarchy.</remarks>
     GuildRankReorder = 815,
+    
+    /// <summary>Set guild permissions. Direction: Client→Server.</summary>
+    /// <remarks>Leader only. Fine-grained permission control per rank.</remarks>
     GuildPermissionSet = 816,
+    
+    /// <summary>Edit guild info. Direction: Client→Server.</summary>
+    /// <remarks>Change guild description, rules, requirements. Leader action.</remarks>
     GuildInfoEdit = 817,
+    
+    /// <summary>Change guild tabard. Direction: Client→Server.</summary>
+    /// <remarks>Modify guild emblem/colors. Leader only.</remarks>
     GuildTabardChange = 818,
+    
+    /// <summary>Open guild bank. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Access shared storage. Permissions-based access.</remarks>
     GuildBankOpen = 819,
+    
+    /// <summary>Deposit to guild bank. Direction: Client→Server.</summary>
+    /// <remarks>Add items/gold. Logged for audit. Response: GuildBankDepositResponse (849).</remarks>
     GuildBankDeposit = 820,
+    
+    /// <summary>Withdraw from guild bank. Direction: Client→Server.</summary>
+    /// <remarks>Take items/gold. Permission and daily limit checks. Response: GuildBankWithdrawResponse (850).</remarks>
     GuildBankWithdraw = 821,
+    
+    /// <summary>Guild bank transaction log. Direction: Server→Client.</summary>
+    /// <remarks>Audit trail of deposits/withdrawals.</remarks>
     GuildBankLog = 822,
+    
+    /// <summary>Create guild bank tab. Direction: Client→Server.</summary>
+    /// <remarks>Expand storage. Costs gold. Leader only.</remarks>
     GuildBankTabCreate = 823,
+    
+    /// <summary>Edit guild bank tab. Direction: Client→Server.</summary>
+    /// <remarks>Rename, set permissions. Officer action.</remarks>
     GuildBankTabEdit = 824,
+    
+    /// <summary>Set guild bank permissions. Direction: Client→Server.</summary>
+    /// <remarks>Control who can withdraw/deposit per tab and rank.</remarks>
     GuildBankPermission = 825,
+    
+    /// <summary>Guild achievement unlocked. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Guild-wide achievements. Broadcast to all members.</remarks>
     GuildAchievement = 826,
+    
+    /// <summary>Guild news/activity feed. Direction: Server→Client.</summary>
+    /// <remarks>Recent events: Achievements, member joins, level ups.</remarks>
     GuildNews = 827,
+    
+    /// <summary>Create guild event. Direction: Client→Server.</summary>
+    /// <remarks>Schedule raid/activity. Officer action.</remarks>
     GuildEventCreate = 828,
+    
+    /// <summary>Edit guild event. Direction: Client→Server.</summary>
+    /// <remarks>Modify event details. Creator/officer action.</remarks>
     GuildEventEdit = 829,
+    
+    /// <summary>Delete guild event. Direction: Client→Server.</summary>
+    /// <remarks>Cancel event. Creator/officer action.</remarks>
     GuildEventDelete = 830,
+    
+    /// <summary>Sign up for guild event. Direction: Client→Server.</summary>
+    /// <remarks>Member indicates attendance. Role selection.</remarks>
     GuildEventSignup = 831,
+    
+    /// <summary>Search for guilds. Direction: Client→Server.</summary>
+    /// <remarks>Find guilds to join. Filter by: Activity, size, focus.</remarks>
     GuildSearch = 832,
+    
+    /// <summary>Apply to guild. Direction: Client→Server.</summary>
+    /// <remarks>Submit application with message.</remarks>
     GuildApply = 833,
+    
+    /// <summary>List pending applications. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Officer view of applicants.</remarks>
     GuildApplicationList = 834,
+    
+    /// <summary>Application decision. Direction: Client→Server.</summary>
+    /// <remarks>Officer accepts or declines application.</remarks>
     GuildApplicationResponse = 835,
+    
+    /// <summary>Invite guild to alliance. Direction: Client→Server.</summary>
+    /// <remarks>Multi-guild cooperation. Leader action.</remarks>
     GuildAllianceInvite = 836,
+    
+    /// <summary>Alliance invite response. Direction: Client→Server.</summary>
+    /// <remarks>Accept or decline alliance.</remarks>
     GuildAllianceResponse = 837,
+    
+    /// <summary>Leave guild alliance. Direction: Client→Server.</summary>
+    /// <remarks>Break alliance. Leader action.</remarks>
     GuildAllianceLeave = 838,
+    
+    /// <summary>Guild create response. Direction: Server→Client.</summary>
     GuildCreateResponse = 840,
+    
+    /// <summary>Guild leave response. Direction: Server→Client.</summary>
     GuildLeaveResponse = 841,
+    
+    /// <summary>Guild kick response. Direction: Server→Client.</summary>
     GuildKickResponse = 842,
+    
+    /// <summary>Guild disband response. Direction: Server→Client.</summary>
     GuildDisbandResponse = 843,
+    
+    /// <summary>Guild promote response. Direction: Server→Client.</summary>
     GuildPromoteResponse = 844,
+    
+    /// <summary>Guild demote response. Direction: Server→Client.</summary>
     GuildDemoteResponse = 845,
+    
+    /// <summary>Guild rank edit response. Direction: Server→Client.</summary>
     GuildRankEditResponse = 846,
+    
+    /// <summary>Guild MOTD response. Direction: Server→Client.</summary>
     GuildMOTDResponse = 847,
+    
+    /// <summary>Guild message response. Direction: Server→Client.</summary>
     GuildMessageResponse = 848,
+    
+    /// <summary>Guild bank deposit response. Direction: Server→Client.</summary>
     GuildBankDepositResponse = 849,
+    
+    /// <summary>Guild bank withdraw response. Direction: Server→Client.</summary>
     GuildBankWithdrawResponse = 850,
 
     // ═══════════════════════════════════════════════════════════════
@@ -1516,74 +1828,251 @@ public enum MessageType : ushort
     // ═══════════════════════════════════════════════════════════════
     // QUEST (1000-1099)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Accept quest from NPC/object. Direction: Client→Server.</summary>
+    /// <remarks>Payload: Quest ID. Response: QuestAcceptResult (1001) with success or requirements not met.</remarks>
     QuestAccept = 1000,
+    
+    /// <summary>Quest accept result. Direction: Server→Client.</summary>
+    /// <remarks>Success adds to quest log. Failure indicates: Level too low, prerequisite missing, log full.</remarks>
     QuestAcceptResult = 1001,
+    
+    /// <summary>Abandon/drop quest. Direction: Client→Server.</summary>
+    /// <remarks>Remove from quest log. Progress lost. Some quests cannot be abandoned.</remarks>
     QuestAbandon = 1002,
+    
+    /// <summary>Quest progress update. Direction: Server→Client.</summary>
+    /// <remarks>Objective completion: Kill counts, item collection, exploration. Updates quest tracker.</remarks>
     QuestProgress = 1003,
+    
+    /// <summary>Complete/turn in quest. Direction: Client→Server.</summary>
+    /// <remarks>Submit to NPC. All objectives met. Response: QuestCompleteResult (1005).</remarks>
     QuestComplete = 1004,
+    
+    /// <summary>Quest completion result. Direction: Server→Client.</summary>
+    /// <remarks>Rewards granted: XP, gold, items, reputation. Quest removed from log.</remarks>
     QuestCompleteResult = 1005,
+    
+    /// <summary>Choose quest reward option. Direction: Client→Server.</summary>
+    /// <remarks>When multiple reward options available. Selection before completion.</remarks>
     QuestRewardChoose = 1006,
+    
+    /// <summary>Receive quest reward. Direction: Server→Client.</summary>
+    /// <remarks>Items/gold added to inventory. May fail if inventory full.</remarks>
     QuestRewardReceive = 1007,
+    
+    /// <summary>Request quest log. Direction: Client→Server.</summary>
+    /// <remarks>Get all active quests. Response: QuestListResponse (1009).</remarks>
     QuestListRequest = 1008,
+    
+    /// <summary>Quest log data. Direction: Server→Client.</summary>
+    /// <remarks>All active quests with current progress.</remarks>
     QuestListResponse = 1009,
+    
+    /// <summary>Quest log updated. Direction: Server→Client.</summary>
+    /// <remarks>Quest added, removed, or progress changed. Incremental update.</remarks>
     QuestLogUpdate = 1010,
+    
+    /// <summary>Share quest with party. Direction: Client→Server.</summary>
+    /// <remarks>Offer quest to party members. Response: QuestShareResponse (1012) from each member.</remarks>
     QuestShare = 1011,
+    
+    /// <summary>Quest share response. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Party member accepts or declines shared quest.</remarks>
     QuestShareResponse = 1012,
+    
+    /// <summary>Track quest. Direction: Client→Server.</summary>
+    /// <remarks>Pin quest for on-screen tracker. Client preference.</remarks>
     QuestTrack = 1013,
+    
+    /// <summary>Untrack quest. Direction: Client→Server.</summary>
+    /// <remarks>Remove from on-screen tracker.</remarks>
     QuestUntrack = 1014,
+    
+    /// <summary>Quest objective progress. Direction: Server→Client.</summary>
+    /// <remarks>Specific objective updated: "Kill 5/10 wolves". Real-time feedback.</remarks>
     QuestObjectiveUpdate = 1015,
+    
+    /// <summary>Request quest point of interest. Direction: Client→Server.</summary>
+    /// <remarks>Where to go for quest. Response: QuestPoiResponse (1017) with map coordinates.</remarks>
     QuestPoiRequest = 1016,
+    
+    /// <summary>Quest POI data. Direction: Server→Client.</summary>
+    /// <remarks>Map markers for quest objectives and turn-in location.</remarks>
     QuestPoiResponse = 1017,
+    
+    /// <summary>Quest giver status. Direction: Server→Client.</summary>
+    /// <remarks>NPC quest availability: Available, complete, in-progress. Visual indicators (!, ?).</remarks>
     QuestGiverStatus = 1018,
+    
+    /// <summary>Quest givers in area. Direction: Server→Client.</summary>
+    /// <remarks>NPCs with quests nearby. For minimap markers.</remarks>
     QuestGiverList = 1019,
+    
+    /// <summary>Daily quests reset. Direction: Server→Client.</summary>
+    /// <remarks>Daily quest cooldowns cleared. Can accept again.</remarks>
     DailyQuestReset = 1020,
+    
+    /// <summary>Weekly quests reset. Direction: Server→Client.</summary>
+    /// <remarks>Weekly quest cooldowns cleared.</remarks>
     WeeklyQuestReset = 1021,
+    
+    /// <summary>Quest chain progression. Direction: Server→Client.</summary>
+    /// <remarks>Next quest in chain unlocked. Story progression.</remarks>
     QuestChainUpdate = 1022,
+    
+    /// <summary>Repeatable quest available again. Direction: Server→Client.</summary>
+    /// <remarks>Cooldown expired for repeatable quest.</remarks>
     QuestRepeatableReset = 1023,
 
     // ═══════════════════════════════════════════════════════════════
     // TRADING (1100-1199)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Request player-to-player trade. Direction: Client→Server.</summary>
+    /// <remarks>Initiate trade with nearby player. Response: TradeRequestResponse (1101).</remarks>
     TradeRequest = 1100,
+    
+    /// <summary>Trade request response. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Target accepts or declines trade. Opens trade window on accept.</remarks>
     TradeRequestResponse = 1101,
+    
+    /// <summary>Trade state update. Direction: Server→Client (Broadcast).</summary>
+    /// <remarks>Items/gold changed. Sent to both traders.</remarks>
     TradeUpdate = 1102,
+    
+    /// <summary>Add item to trade. Direction: Client→Server.</summary>
+    /// <remarks>Place item in trade window. Unlocks both sides.</remarks>
     TradeSetItem = 1103,
+    
+    /// <summary>Remove item from trade. Direction: Client→Server.</summary>
+    /// <remarks>Take item back. Unlocks both sides.</remarks>
     TradeRemoveItem = 1104,
+    
+    /// <summary>Set gold amount in trade. Direction: Client→Server.</summary>
+    /// <remarks>Offer gold. Unlocks both sides if changed.</remarks>
     TradeSetGold = 1105,
+    
+    /// <summary>Confirm trade. Direction: Client→Server.</summary>
+    /// <remarks>Ready to complete. Both must confirm for completion.</remarks>
     TradeConfirm = 1106,
+    
+    /// <summary>Unconfirm trade. Direction: Client→Server.</summary>
+    /// <remarks>Cancel ready status. Change items again.</remarks>
     TradeUnconfirm = 1107,
+    
+    /// <summary>Lock trade for final confirm. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>Both locked and confirmed = trade executes.</remarks>
     TradeLock = 1108,
+    
+    /// <summary>Cancel trade. Direction: Client→Server.</summary>
+    /// <remarks>Abort trade. Items returned.</remarks>
     TradeCancel = 1109,
+    
+    /// <summary>Trade completed successfully. Direction: Server→Client.</summary>
+    /// <remarks>Items and gold exchanged. Trade window closes.</remarks>
     TradeComplete = 1110,
+    
+    /// <summary>Trade error. Direction: Server→Client.</summary>
+    /// <remarks>Trade failed: Inventory full, insufficient gold, item bound, etc.</remarks>
     TradeError = 1111,
+    
+    /// <summary>Trade request declined - busy. Direction: Server→Client.</summary>
+    /// <remarks>You are already in trade/combat/busy.</remarks>
     TradeBusy = 1112,
+    
+    /// <summary>Trade target busy. Direction: Server→Client.</summary>
+    /// <remarks>Target player is in trade/combat/busy.</remarks>
     TradeTargetBusy = 1113,
 
     // ═══════════════════════════════════════════════════════════════
     // TARGETING (1200-1299)
     // ═══════════════════════════════════════════════════════════════
+    
+    /// <summary>Select target entity. Direction: Client→Server.</summary>
+    /// <remarks>Set active target for abilities/info. Response: TargetSelectResponse (1220).</remarks>
     TargetSelect = 1200,
+    
+    /// <summary>Clear current target. Direction: Client→Server.</summary>
+    /// <remarks>Deselect target. UI updated.</remarks>
     TargetClear = 1201,
+    
+    /// <summary>Target changed update. Direction: Server→Client.</summary>
+    /// <remarks>Confirms new target. Sends target info.</remarks>
     TargetUpdate = 1202,
+    
+    /// <summary>Request target info. Direction: Client→Server.</summary>
+    /// <remarks>Get detailed target data. Response: TargetInfoResponse (1204).</remarks>
     TargetInfoRequest = 1203,
+    
+    /// <summary>Target info data. Direction: Server→Client.</summary>
+    /// <remarks>Target name, level, health, buffs, hostility.</remarks>
     TargetInfoResponse = 1204,
+    
+    /// <summary>Target of target. Direction: Client→Server or Server→Client.</summary>
+    /// <remarks>What your target is targeting. Tactical info.</remarks>
     TargetOfTarget = 1205,
+    
+    /// <summary>Target of target update. Direction: Server→Client.</summary>
+    /// <remarks>Your target changed their target.</remarks>
     TargetOfTargetUpdate = 1206,
+    
+    /// <summary>Set focus target. Direction: Client→Server.</summary>
+    /// <remarks>Secondary target for monitoring. Separate from main target.</remarks>
     FocusTarget = 1207,
+    
+    /// <summary>Clear focus target. Direction: Client→Server.</summary>
+    /// <remarks>Remove focus target.</remarks>
     FocusClear = 1208,
+    
+    /// <summary>Assist target. Direction: Client→Server.</summary>
+    /// <remarks>Target same as party member. Response: AssistTargetResponse (1221).</remarks>
     AssistTarget = 1209,
+    
+    /// <summary>Mark target with icon. Direction: Client→Server.</summary>
+    /// <remarks>Raid marker on enemy. Leader action. Response: MarkTargetResponse (1222).</remarks>
     MarkTarget = 1210,
+    
+    /// <summary>Clear single mark. Direction: Client→Server.</summary>
+    /// <remarks>Remove marker from target.</remarks>
     MarkClear = 1211,
+    
+    /// <summary>Clear all marks. Direction: Client→Server.</summary>
+    /// <remarks>Remove all raid markers.</remarks>
     MarkClearAll = 1212,
+    
+    /// <summary>Mouseover target. Direction: Client→Server.</summary>
+    /// <remarks>Get info on hovered entity. Tooltip data.</remarks>
     MouseoverTarget = 1213,
+    
+    /// <summary>Tab to next target. Direction: Client→Server.</summary>
+    /// <remarks>Cycle through nearby targets. Response: TabTargetResponse (1223).</remarks>
     TabTarget = 1214,
+    
+    /// <summary>Target nearest enemy. Direction: Client→Server.</summary>
+    /// <remarks>Auto-target closest hostile. Response: NearestEnemyTargetResponse (1224).</remarks>
     NearestEnemyTarget = 1215,
+    
+    /// <summary>Target nearest friend. Direction: Client→Server.</summary>
+    /// <remarks>Auto-target closest friendly. Response: NearestFriendTargetResponse (1225).</remarks>
     NearestFriendTarget = 1216,
+    
+    /// <summary>Target select response. Direction: Server→Client.</summary>
     TargetSelectResponse = 1220,
+    
+    /// <summary>Assist target response. Direction: Server→Client.</summary>
     AssistTargetResponse = 1221,
+    
+    /// <summary>Mark target response. Direction: Server→Client.</summary>
     MarkTargetResponse = 1222,
+    
+    /// <summary>Tab target response. Direction: Server→Client.</summary>
     TabTargetResponse = 1223,
+    
+    /// <summary>Nearest enemy target response. Direction: Server→Client.</summary>
     NearestEnemyTargetResponse = 1224,
+    
+    /// <summary>Nearest friend target response. Direction: Server→Client.</summary>
     NearestFriendTargetResponse = 1225,
 
     // ═══════════════════════════════════════════════════════════════
