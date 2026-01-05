@@ -43,7 +43,7 @@ This documentation provides a complete reference for **all MessageTypes** in the
 | **Character** | 0600-0699 | [06-character.md](06-character.md) | 30 |
 | **Party** | 0700-0799 | [07-party.md](07-party.md) | 33 |
 | **Guild** | 0800-0899 | [08-guild.md](08-guild.md) | 50 |
-| **System** | 0900-0999 | [09-system.md](09-system.md) | 26 |
+| **System** | 0900-0999 | [09-system.md](09-system.md) | 27 |
 | **Quest** | 1000-1099 | [10-quest.md](10-quest.md) | 24 |
 | **Trading** | 1100-1199 | [11-trading.md](11-trading.md) | 14 |
 | **Targeting** | 1200-1299 | [12-targeting.md](12-targeting.md) | 17 |
@@ -348,9 +348,9 @@ var message = new MessageName { ... };
 
 ## 📊 Statistics
 
-- **Total Messages**: ~1170
+- **Total Messages**: ~1171
 - **Prototype (Implemented)**: 114 Messages
-- **Phase 2 (In Progress)**: 674 Messages (incl. 54 S2S)
+- **Phase 2 (In Progress)**: 675 Messages (incl. 54 S2S)
 - **Phase 3 (Planned)**: 332 Messages (incl. 12 S2S)
 - **Server-to-Server (S2S)**: 70 Messages (5000-5999)
 - **Reserved**: 200 IDs
@@ -358,6 +358,6 @@ var message = new MessageName { ... };
 
 ---
 
-**Last Updated**: 2026-01-01  
-**Version**: 2.1.0  
+**Last Updated**: 2026-01-04  
+**Version**: 2.2.0  
 **Maintainer**: 2DMMO Team

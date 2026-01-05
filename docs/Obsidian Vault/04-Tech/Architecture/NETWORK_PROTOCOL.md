@@ -92,6 +92,176 @@ Der `MessageSerializer` registriert sie automatisch beim Start.
 
 ---
 
+## MessageBundle - Batching System
+
+### Motivation
+
+Das **MessageBundle-System** ermöglicht es dem Server, mehrere ausgehende Nachrichten pro Tick und Client zu bündeln. Dies reduziert:
+
+- **TCP-Overhead**: Weniger Frame-Headers pro Nachricht
+- **Syscalls**: Weniger `send()`-Aufrufe für kleine Payloads
+- **Latenz**: Konsistentere State-Updates (alle Änderungen kommen zusammen)
+
+### MessageBundle Frame-Format
+
+Wenn mehrere Messages gebündelt werden, verwendet der Server einen `MessageBundle`-Container:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MESSAGE BUNDLE FRAME                      │
+│                                                              │
+│  ┌──────────┬───────────────────────────────────────────┐   │
+│  │  4 Bytes │       N Bytes                             │   │
+│  │  Length  │   MessageBundle Payload                   │   │
+│  └──────────┴───────────────────────────────────────────┘   │
+│                                                              │
+│  MessageBundle Payload (MessagePack):                       │
+│  {                                                           │
+│    Type: 950,              // MessageType.MessageBundle     │
+│    ServerTick: 12345,      // Current tick number           │
+│    Timestamp: 1704398400,  // Server timestamp (ms)         │
+│    Messages: [             // Array von pre-serialized msgs │
+│      <bytes>,  // EntityUpdate (serialized)                 │
+│      <bytes>,  // PositionBroadcast (serialized)            │
+│      <bytes>,  // StatUpdate (serialized)                   │
+│      ...                                                     │
+│    ]                                                         │
+│  }                                                           │
+│                                                              │
+│  Beispiel: 3 Messages in einem Bundle                       │
+│  ┌────────────┬──────────────────────────────────────┐      │
+│  │ 8C 01 00 00│ 95 D6 03 B6 ... (MessageBundle)      │      │
+│  └────────────┴──────────────────────────────────────┘      │
+│         │                    │                               │
+│         │                    └─ MessagePack Payload         │
+│         │                       [Type:950, Tick, Messages]  │
+│         └─ 396 Bytes Bundle-Länge                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Wann Bundling verwenden?
+
+**✅ SOLLTE gebündelt werden:**
+
+- `EntityUpdateBatch` (1405) - Entity-State-Updates
+- `PositionBroadcast` (201) - Bewegungen anderer Spieler
+- `StatUpdate` (602) - Character-Stat-Änderungen
+- `BuffApplied` / `BuffRemoved` (1500/1501) - Buff-Events
+- `ChatBroadcast` (401) - Chat-Nachrichten (nicht zeitkritisch)
+- `EntitySpawnBatch` (1401) / `EntityDespawnBatch` (1403)
+
+**❌ NIEMALS bündeln (sofort senden):**
+
+- `ForceDisconnect` (5) - Muss sofort ankommen
+- `MovementCorrection` (202) - Latenz-kritisch für Prediction
+- `Pong` (901) - Für präzise Ping-Messung erforderlich
+- `KickNotification` (912) - Muss vor Connection-Close ankommen
+- `ServerShutdown` (914) - Kritische Server-Message
+
+**🟡 OPTIONAL bündeln (je nach Latenz-Anforderung):**
+
+- `DamageEvent` (302) - Combat-Feedback (möglichst schnell)
+- `HealEvent` (304) - Combat-Feedback
+- `TargetUpdate` (1202) - Target-Frame-Updates
+
+### MessageBundle Struktur
+
+```csharp
+[MessagePackObject]
+[NetworkMessage(MessageType.MessageBundle)]
+public class MessageBundle : IServerMessage
+{
+    [Key(0)]
+    public MessageType Type => MessageType.MessageBundle;
+    
+    [Key(1)]
+    public long ServerTick { get; set; }          // Current server tick number
+    
+    [Key(2)]
+    public long Timestamp { get; set; }           // Server timestamp (ms)
+    
+    [Key(3)]
+    public List<byte[]> Messages { get; set; }    // Pre-serialized sub-messages
+}
+```
+
+### Client-Side Handling
+
+```csharp
+// Client empfängt MessageBundle und entpackt alle Sub-Messages:
+public void HandleMessageBundle(MessageBundle bundle)
+{
+    foreach (var messageBytes in bundle.Messages)
+    {
+        // Deserialize each sub-message
+        var message = MessageSerializer.Deserialize(messageBytes);
+        
+        // Process normally
+        MessageRouter.Route(message);
+    }
+}
+```
+
+### Performance-Vorteile
+
+**Beispiel: 10 Messages pro Tick ohne Bundling:**
+```
+10 Messages × (4 Bytes Length + ~50 Bytes Payload) = ~540 Bytes
+10 TCP Frames = 10 Syscalls
+```
+
+**Mit Bundling:**
+```
+1 MessageBundle × (4 Bytes Length + 4 Bytes Type + 8 Bytes Tick + 8 Bytes Timestamp + 10×50 Bytes) = ~524 Bytes
+1 TCP Frame = 1 Syscall
+```
+
+**Einsparung:**
+- **Weniger Overhead**: ~16 Bytes gespart (durch gemeinsame Header)
+- **90% weniger Syscalls**: 1 statt 10 `send()` Aufrufe
+- **Konsistenz**: Alle Updates kommen im gleichen Frame an
+
+### Implementierungs-Strategie
+
+**Server-Side (pro Client, pro Tick):**
+
+```csharp
+// In OutputPhase des Game-Loops:
+var messagesToSend = new List<IServerMessage>();
+
+// Sammle alle Messages für diesen Client in diesem Tick
+messagesToSend.Add(new PositionBroadcast { ... });
+messagesToSend.Add(new StatUpdate { ... });
+messagesToSend.Add(new BuffApplied { ... });
+
+// Bundling-Logik:
+if (messagesToSend.Count > 1)
+{
+    // Serialize alle Messages
+    var serializedMessages = messagesToSend
+        .Select(msg => MessageSerializer.Serialize(msg))
+        .ToList();
+    
+    // Erstelle Bundle
+    var bundle = new MessageBundle
+    {
+        ServerTick = currentTick,
+        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+        Messages = serializedMessages
+    };
+    
+    // Sende Bundle statt einzelne Messages
+    await clientConnection.SendAsync(bundle);
+}
+else if (messagesToSend.Count == 1)
+{
+    // Einzelne Message direkt senden (kein Bundle-Overhead)
+    await clientConnection.SendAsync(messagesToSend[0]);
+}
+```
+
+---
+
 ## Server Networking Architektur
 
 ### Komponenten-Übersicht

@@ -1,7 +1,7 @@
-# ⚙️ System / Network Messages (0900-0925)
+# ⚙️ System / Network Messages (0900-0999)
 
 **Kategorie:** 9  
-**Range:** 0900-0925 (AKTIV)  
+**Range:** 0900-0999 (AKTIV)  
 **Phase:** Prototyp  
 **Status:** 🟢 In Entwicklung
 
@@ -13,7 +13,7 @@
 
 - [🔄 System Flow](#-system-flow)
 - [🧱 DTOs / Enums / Interfaces](#-dtos--enums--interfaces)
-- [📩 Aktive Messages (0900-0925)](#-aktive-messages-0900-0925)
+- [📩 Aktive Messages (0900-0999)](#-aktive-messages-0900-0999)
   - [Ping (900)](#ping-900)
   - [Pong (901)](#pong-901)
   - [LatencyReport (902)](#latencyreport-902)
@@ -35,6 +35,7 @@
   - [FeatureToggle (923)](#featuretoggle-923)
   - [AntiCheatWarning (924)](#anticheatwarning-924)
   - [AntiCheatKick (925)](#anticheatkick-925)
+  - [MessageBundle (950)](#messagebundle-950)
 - [🗑️ Obsolete Messages](#️-obsolete-messages)
 - [📎 Anhang](#-anhang)
 
@@ -275,7 +276,7 @@ public class ServerConfigDto
 
 ---
 
-## 📩 Aktive Messages (0900-0925)
+## 📩 Aktive Messages (0900-0999)
 
 ### Ping (900)
 
@@ -781,6 +782,125 @@ Anti-Cheat kicked Spieler. Connection wird geschlossen.
 
 ---
 
+### MessageBundle (950)
+
+**Richtung:** 📥 Server → Client  
+**Frequenz:** ⚡ High-Frequency (every tick)  
+**Authentifizierung:** 🔒 Ja  
+**Spezielle Rechte:** Keine
+
+#### Beschreibung
+
+Container-Message zum Bündeln mehrerer ausgehender Nachrichten pro Tick pro Client. Reduziert TCP-Overhead, Syscalls und verbessert Netzwerk-Effizienz durch das Zusammenfassen kleiner Payloads in einen Frame.
+
+#### Im Scope ✅
+
+- Bündeln mehrerer Server→Client Messages in einem TCP-Frame
+- Reduzierung von TCP-Overhead (weniger Frame-Headers)
+- Reduzierung von Syscalls (ein `send()` statt vielen)
+- Konsistente State-Updates (alle Änderungen kommen zusammen an)
+- ServerTick und Timestamp für Synchronisation
+
+#### Nicht im Scope ❌
+
+- Client→Server Messages bündeln
+- Latenz-kritische Messages bündeln (z.B. `MovementCorrection`, `Pong`)
+- Kritische Disconnect-Messages bündeln (z.B. `ForceDisconnect`)
+- Automatisches Entpacken (Client muss jede Sub-Message einzeln deserialisieren)
+
+#### Response Payload
+
+| Feld | Typ | Beschreibung | Pflicht |
+|------|-----|--------------|---------|
+| ServerTick | long | Aktueller Server-Tick-Number | Ja |
+| Timestamp | long | Server-Timestamp (Millisekunden) | Ja |
+| Messages | List&lt;byte[]&gt; | Array von pre-serialisierten Sub-Messages | Ja |
+
+#### Sub-Messages die GEBÜNDELT werden sollten
+
+✅ **High-Frequency Updates:**
+- `EntityUpdateBatch` (1405) - Entity-State-Änderungen
+- `PositionBroadcast` (201) - Bewegungen anderer Spieler
+- `StatUpdate` (602) - Character-Stat-Änderungen
+- `BuffApplied` (1500) / `BuffRemoved` (1501) - Buff-Events
+- `EntitySpawnBatch` (1401) / `EntityDespawnBatch` (1403)
+- `ChatBroadcast` (401) - Chat-Messages (nicht zeitkritisch)
+
+#### Sub-Messages die NIEMALS gebündelt werden dürfen
+
+❌ **Latenz-kritisch oder System-kritisch:**
+- `ForceDisconnect` (5) - Muss sofort ankommen
+- `MovementCorrection` (202) - Latenz-kritisch für Client-Side Prediction
+- `Pong` (901) - Für präzise RTT-Messung erforderlich
+- `KickNotification` (912) - Muss vor Connection-Close ankommen
+- `ServerShutdown` (914) - Kritische Server-Message
+- `BanNotification` (916) - Muss sofort zugestellt werden
+
+#### Verwandte Messages
+
+| Message | ID | Beziehung |
+|---------|-----|-----------|
+| `EntityUpdateBatch` | 1405 | Häufig in Bundle enthalten |
+| `PositionBroadcast` | 201 | Häufig in Bundle enthalten |
+| `StatUpdate` | 602 | Häufig in Bundle enthalten |
+| Alle anderen High-Frequency Messages | - | Potentielle Sub-Messages |
+
+#### Beispiel Payload
+
+```csharp
+// Server-Side: Messages sammeln und bündeln
+var messagesToSend = new List<IServerMessage>
+{
+    new PositionBroadcast { PlayerId = 123, X = 10.5f, Y = 20.3f },
+    new StatUpdate { PlayerId = 123, Health = 85, MaxHealth = 100 },
+    new BuffApplied { PlayerId = 123, BuffId = 5, Duration = 30 }
+};
+
+// Pre-serialize alle Sub-Messages
+var serializedMessages = messagesToSend
+    .Select(msg => MessageSerializer.Serialize(msg))
+    .ToList();
+
+// Erstelle MessageBundle
+var bundle = new MessageBundle
+{
+    Type = MessageType.MessageBundle,
+    ServerTick = gameServer.CurrentTick,
+    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+    Messages = serializedMessages
+};
+
+// Sende Bundle (ein TCP-Frame statt drei)
+await clientConnection.SendAsync(bundle);
+```
+
+```csharp
+// Client-Side: Bundle empfangen und entpacken
+public void HandleMessageBundle(MessageBundle bundle)
+{
+    // Verarbeite jeden Sub-Message einzeln
+    foreach (var messageBytes in bundle.Messages)
+    {
+        // Deserialize Sub-Message
+        var message = MessageSerializer.Deserialize(messageBytes);
+        
+        // Route zur entsprechenden Handler-Methode
+        MessageRouter.Route(message);
+    }
+}
+```
+
+#### Notizen
+
+- **Bundling-Strategie**: Server sammelt alle ausgehenden Messages pro Client während der Output-Phase (Game-Loop)
+- **Threshold**: Nur bündeln wenn ≥2 Messages vorhanden (sonst direktes Senden)
+- **Performance**: Bei 10 Messages pro Tick: ~90% weniger Syscalls, ~3% weniger Bytes
+- **Client-Implementation**: Client muss alle Sub-Messages einzeln deserialisieren und routen
+- **Server-Tick**: Ermöglicht Client-Side Interpolation/Prediction-Adjustments
+- **Timestamp**: Für Latency-Compensation und Time-Sync
+
+---
+
 ## 🗑️ Obsolete Messages
 
 *Derzeit keine obsoleten Messages in dieser Kategorie.*
@@ -814,6 +934,7 @@ ClientConfig = 922,
 FeatureToggle = 923,
 AntiCheatWarning = 924,
 AntiCheatKick = 925,
+MessageBundle = 950,
 ```
 
 ### Request/Response Paare
@@ -842,7 +963,7 @@ public static class SystemConstants
 
 ---
 
-**Letzte Aktualisierung**: 2026-01-02  
-**Version**: 3.0.0
+**Letzte Aktualisierung**: 2026-01-04  
+**Version**: 3.1.0
 
 [← Zurück zur Übersicht](README.md)
