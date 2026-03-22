@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build
-    runs-on:  ubuntu-latest
+    runs-on: self-hosted
     permissions: 
       contents: read
 
@@ -36,7 +36,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     permissions:
       contents: read
@@ -62,7 +62,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     permissions:
       contents: read
@@ -91,7 +91,7 @@ jobs:
   # Reference: https://github.com/MatTrinkl/2DMMO/actions/runs/20645203044/job/59282172433#step:5:1
   docker-integration-tests:
     name: Docker Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     timeout-minutes: 15
     # Temporarily disabled - re-enable when test server is ready
@@ -161,7 +161,7 @@ jobs:
 
   coverage:
     name: Code Coverage
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     # Removed docker-integration-tests from needs since it's temporarily disabled
     needs: [unit-tests, integration-tests]
     permissions:
@@ -312,7 +312,7 @@ jobs:
 
   code-quality:
     name: Code Quality
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
 
@@ -336,7 +336,7 @@ jobs:
   # Tracking: https://github.com/stryker-mutator/stryker-net/issues
   mutation-tests:
     name: Mutation Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     # Temporarily disabled until Stryker. NET supports .NET 10.0
     if: false && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
@@ -497,7 +497,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on:  ubuntu-latest
+    runs-on: self-hosted
     permissions: 
       contents: read
 
