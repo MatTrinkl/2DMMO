@@ -1,6 +1,6 @@
 // shared/Mmo.Shared/Entities/IEntity.cs
 
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.DirtyTracking.Attributes;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Generators;

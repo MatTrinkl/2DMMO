@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace Mmo.Shared.Core.Records;
+namespace Mmo.Shared.Movement.Records;
 
 /// <summary>
 ///     Represents a Position on the map.

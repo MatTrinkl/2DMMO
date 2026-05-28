@@ -15,7 +15,7 @@ using Mmo.Shared.Core.Constants;
 using Mmo.Shared.Core.Enums;
 using Mmo.Shared.Core.Interfaces;
 using Mmo.Shared.Core.Messages;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Zones.Messages.Server_Broadcast;
@@ -593,7 +593,7 @@ public class GameServer : IDisposable
         foreach (ServerPlayerCharacter player in players.Where(p =>
                      p.Connection.IsConnected && p.Connection.Id != outgoing.ExcludeConnectionId))
         {
-            Position pos = player.Entity.Position;
+            var pos = player.Entity.Position;
             float dx = pos.X - origin.X;
             float dy = pos.Y - origin.Y;
             float distanceSquared = dx * dx + dy * dy;

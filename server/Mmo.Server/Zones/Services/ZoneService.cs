@@ -4,7 +4,7 @@ using Mmo.Server.Zones.Interfaces;
 using Mmo.Server.Zones.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Server.Zones.Services;
 

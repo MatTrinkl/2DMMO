@@ -1,5 +1,3 @@
-using Mmo.Shared.Core.Records;
-
 namespace Mmo.Shared.Movement.Records;
 
 /// <summary>

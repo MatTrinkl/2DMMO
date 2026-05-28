@@ -1,5 +1,5 @@
 using Mmo.Server.Entities;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Structs;
 

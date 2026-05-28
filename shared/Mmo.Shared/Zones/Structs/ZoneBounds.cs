@@ -1,5 +1,5 @@
 using MessagePack;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Zones.Records;
 
 namespace Mmo.Shared.Zones.Structs;

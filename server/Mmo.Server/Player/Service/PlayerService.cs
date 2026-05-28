@@ -7,7 +7,7 @@ using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Records;
 using Mmo.Shared.Core;
 using Mmo.Shared.Core.Interfaces;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Structs;
 
 namespace Mmo.Server.Player.Service;

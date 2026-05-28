@@ -2,7 +2,7 @@ using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Combat.Enums;
 using Mmo.Shared.Combat.Records;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Interfaces;
 using Mmo.Shared.Entities.Structs;

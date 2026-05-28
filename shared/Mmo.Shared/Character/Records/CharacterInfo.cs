@@ -1,6 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Networking;
 
 namespace Mmo.Shared.Character.Records;

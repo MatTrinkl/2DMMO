@@ -1,5 +1,5 @@
 using Mmo.Shared.Account.Interfaces;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Server.Player;
 

@@ -3,11 +3,13 @@ using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Enums;
 using Mmo.Shared.Connection.Messages.Client_Server;
 using Mmo.Shared.Connection.Messages.Server_Client;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Messaging.Interfaces;
 using Mmo.Shared.Messaging.Serialization;
 using Mmo.Shared.Movement;
+using Mmo.Shared.Movement.Messages;
+using Mmo.Shared.Movement.Messages.Server_Broadcast;
 using Mmo.Shared.Zones.Messages.Client_Server;
 
 namespace Mmo.Shared.Tests.Serialization;

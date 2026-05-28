@@ -1,6 +1,6 @@
 using Mmo.Server.Connections;
 using Mmo.Server.Player;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Server.Network.Interfaces;

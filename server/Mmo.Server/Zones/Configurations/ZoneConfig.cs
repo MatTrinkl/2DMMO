@@ -1,5 +1,5 @@
 using Mmo.Shared.Character.Enums;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Zones.Configurations;
 using Mmo.Shared.Zones.Enums;
 using Mmo.Shared.Zones.Interfaces;

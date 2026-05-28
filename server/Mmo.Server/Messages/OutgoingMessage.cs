@@ -1,7 +1,8 @@
 using Mmo.Server.Connections;
 using Mmo.Server.Messages.Enums;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Messaging.Interfaces;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Server.Messages;
 

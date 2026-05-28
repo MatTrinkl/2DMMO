@@ -383,18 +383,18 @@ Client sendet aktuelle Position, Velocity, Rotation und Input-State. Dies ist di
 - Emotes → verwende `EmoteRequest` (2200)
 
 ### Request Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SequenceNumber | uint | Aufsteigende Input-Sequence | Ja |
-| Timestamp | long | Client Unix Timestamp (ms) | Ja |
-| X | float | Position X-Koordinate | Ja |
-| Y | float | Position Y-Koordinate | Ja |
-| Z | float | Position Z-Koordinate (Höhe) | Ja |
-| VelocityX | float | Velocity X | Ja |
-| VelocityY | float | Velocity Y | Ja |
-| VelocityZ | float | Velocity Z (Fallgeschwindigkeit) | Ja |
-| Yaw | float | Rotation (0-360 Grad) | Ja |
-| InputFlags | byte | Bit-Flags: Forward=1, Back=2, Left=4, Right=8, Jump=16, Sprint=32 | Ja |
+| Feld           | Typ   | Beschreibung                                                      | Pflicht |
+| -------------- | ----- | ----------------------------------------------------------------- | ------- |
+| SequenceNumber | uint  | Aufsteigende Input-Sequence                                       | Ja      |
+| Timestamp      | long  | Client Unix Timestamp (ms)                                        | Ja      |
+| X              | float | Position X-Koordinate                                             | Ja      |
+| Y              | float | Position Y-Koordinate                                             | Ja      |
+| Z              | float | Position Z-Koordinate (Höhe)                                      | Ja      |
+| VelocityX      | float | Velocity X                                                        | Ja      |
+| VelocityY      | float | Velocity Y                                                        | Ja      |
+| VelocityZ      | float | Velocity Z (Fallgeschwindigkeit)                                  | Ja      |
+| Yaw            | float | Rotation (0-360 Grad)                                             | Ja      |
+| InputFlags     | byte  | Bit-Flags: Forward=1, Back=2, Left=4, Right=8, Jump=16, Sprint=32 | Ja      |
 
 ### Erwartete Response
 - **Bei Erfolg:** `PositionBroadcast` (201) an andere Spieler in Range
@@ -445,12 +445,12 @@ var posUpdate = new PositionUpdate
 ```
 
 ### Error Codes
-| Code | Bedeutung | Aktion |
-|------|-----------|--------|
-| `SPEED_TOO_HIGH` | Velocity > MAX_SPEED * TOLERANCE | Disconnect bei 3+ Verstößen |
-| `POSITION_OUT_OF_BOUNDS` | Position außerhalb der Zone | Teleport zur letzten gültigen Position |
-| `COLLISION_INVALID` | Position in Wand/Objekt | Correction zur gültigen Position |
-| `SEQUENCE_TOO_OLD` | SequenceNumber < erwartete | Ignorieren (Packet-Loss) |
+| Code                     | Bedeutung                        | Aktion                                 |
+| ------------------------ | -------------------------------- | -------------------------------------- |
+| `SPEED_TOO_HIGH`         | Velocity > MAX_SPEED * TOLERANCE | Disconnect bei 3+ Verstößen            |
+| `POSITION_OUT_OF_BOUNDS` | Position außerhalb der Zone      | Teleport zur letzten gültigen Position |
+| `COLLISION_INVALID`      | Position in Wand/Objekt          | Correction zur gültigen Position       |
+| `SEQUENCE_TOO_OLD`       | SequenceNumber < erwartete       | Ignorieren (Packet-Loss)               |
 
 ### Notizen
 - **Bandbreite**: ~60 Bytes pro Update bei 20 Hz = ~1.2 KB/s pro Spieler
@@ -556,16 +556,16 @@ Server korrigiert Client-Position bei Desync (Speed-Hack, Collision-Fehler, Lag-
 - Admin-Teleport → verwende `ForcePosition` (213) oder `TeleportExecute` (204)
 
 ### Response Payload
-| Feld | Typ | Beschreibung | Pflicht |
-|------|-----|--------------|---------|
-| SequenceNumber | uint | Input-Sequence die korrigiert wird | Ja |
-| Reason | string | "collision", "speed_too_high", "bounds", "stuck" | Ja |
-| X | float | Korrekte Position X | Ja |
-| Y | float | Korrekte Position Y | Ja |
-| Z | float | Korrekte Position Z | Ja |
-| VelocityX | float | Korrekte Velocity X | Ja |
-| VelocityY | float | Korrekte Velocity Y | Ja |
-| VelocityZ | float | Korrekte Velocity Z | Ja |
+| Feld           | Typ    | Beschreibung                                     | Pflicht |
+| -------------- | ------ | ------------------------------------------------ | ------- |
+| SequenceNumber | uint   | Input-Sequence die korrigiert wird               | Ja      |
+| Reason         | string | "collision", "speed_too_high", "bounds", "stuck" | Ja      |
+| X              | float  | Korrekte Position X                              | Ja      |
+| Y              | float  | Korrekte Position Y                              | Ja      |
+| Z              | float  | Korrekte Position Z                              | Ja      |
+| VelocityX      | float  | Korrekte Velocity X                              | Ja      |
+| VelocityY      | float  | Korrekte Velocity Y                              | Ja      |
+| VelocityZ      | float  | Korrekte Velocity Z                              | Ja      |
 
 ### Erwartete Response
 - **Client:** Snap zur Position, re-apply alle Inputs > SequenceNumber

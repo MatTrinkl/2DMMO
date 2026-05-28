@@ -1,5 +1,5 @@
 using Mmo.Server.Zones.Records;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Server.Zones.Interfaces;
 

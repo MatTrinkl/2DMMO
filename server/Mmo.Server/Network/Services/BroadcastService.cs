@@ -4,7 +4,7 @@ using Mmo.Server.Messages;
 using Mmo.Server.Network.Interfaces;
 using Mmo.Server.Player;
 using Mmo.Shared.Core.Messages;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Messaging.Interfaces;
 
 namespace Mmo.Server.Network.Services;

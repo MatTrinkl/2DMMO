@@ -1,5 +1,5 @@
 using Mmo.Shared.Combat.Enums;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Shared.Combat.Records;
 

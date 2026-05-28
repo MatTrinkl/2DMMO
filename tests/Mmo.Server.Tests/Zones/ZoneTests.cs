@@ -2,7 +2,7 @@ using Mmo.Server.Entities;
 using Mmo.Server.Zones;
 using Mmo.Server.Zones.Configurations;
 using Mmo.Shared.Core;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Zones.Records;
 using Mmo.Shared.Zones.Structs;

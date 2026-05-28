@@ -23,6 +23,7 @@
   <ItemGroup>
     <Folder Include="Character\Entities\"/>
     <Folder Include="Combat\Entities\"/>
+    <Folder Include="Core\Records\" />
     <Folder Include="Entities\Extensions\"/>
     <Folder Include="Entities\Messages\"/>
     <Folder Include="Groups\"/>

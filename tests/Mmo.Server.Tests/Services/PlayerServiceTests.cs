@@ -6,7 +6,7 @@ using Mmo.Server.Zones;
 using Mmo.Shared.Character.Enums;
 using Mmo.Shared.Character.Records;
 using Mmo.Shared.Core;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 
 namespace Mmo.Server.Tests.Services;
 

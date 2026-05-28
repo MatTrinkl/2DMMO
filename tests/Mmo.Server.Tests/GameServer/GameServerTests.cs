@@ -5,9 +5,11 @@ using Mmo.Server.Tests.Helpers;
 using Mmo.Shared.Character.Interfaces;
 using Mmo.Shared.Chat.Messages;
 using Mmo.Shared.Connection.Messages.Client_Server;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Structs;
 using Mmo.Shared.Movement;
+using Mmo.Shared.Movement.Messages;
+using Mmo.Shared.Movement.Messages.Client_Server;
 using Mmo.Shared.Prefab;
 
 namespace Mmo.Server.Tests.GameServer;

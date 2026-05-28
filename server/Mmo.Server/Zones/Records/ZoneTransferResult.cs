@@ -1,4 +1,4 @@
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Zones.Enums;
 
 namespace Mmo.Server.Zones.Records;

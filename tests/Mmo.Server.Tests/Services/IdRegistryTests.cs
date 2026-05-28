@@ -1,7 +1,7 @@
 using Mmo.Server.Entities;
 using Mmo.Server.Entities.Interfaces;
 using Mmo.Shared.Core;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Enums;
 using Mmo.Shared.Entities.Structs;
 
@@ -353,7 +353,7 @@ public class IdRegistryTests : IDisposable
         public TestEntity(EntityIdentity runtimeId, Guid persistentId, Position position)
             : base(runtimeId, persistentId, position)
         {
-            // Hide base RuntimeId with own settable version  
+            // Hide base RuntimeId with own settable version
             RuntimeId = runtimeId;
         }
 

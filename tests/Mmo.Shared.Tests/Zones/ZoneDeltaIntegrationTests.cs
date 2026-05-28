@@ -1,6 +1,6 @@
 using MessagePack;
 using Mmo.Shared.Character.Interfaces.Dtos;
-using Mmo.Shared.Core.Records;
+using Mmo.Shared.Movement.Records;
 using Mmo.Shared.Entities.Dtos;
 using Mmo.Shared.Messaging.Enums;
 using Mmo.Shared.Npc.Interfaces.Dtos;
